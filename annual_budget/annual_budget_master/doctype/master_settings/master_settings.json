@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-13 16:14:41.996911",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "fincial_year_details_section",
+  "current_financial_year",
+  "current_month"
+ ],
+ "fields": [
+  {
+   "fieldname": "fincial_year_details_section",
+   "fieldtype": "Section Break",
+   "label": "Fincial Year Details"
+  },
+  {
+   "fieldname": "current_financial_year",
+   "fieldtype": "Link",
+   "label": "Current Fincial Year",
+   "options": "Financial year list"
+  },
+  {
+   "fieldname": "current_month",
+   "fieldtype": "Link",
+   "label": "Current Month",
+   "options": "Months List"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-10-28 10:04:44.580113",
+ "modified_by": "Administrator",
+ "module": "Annual Budget Master",
+ "name": "Master Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
