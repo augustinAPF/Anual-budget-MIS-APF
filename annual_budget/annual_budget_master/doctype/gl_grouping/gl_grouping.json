@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "EX-.####",
  "creation": "2026-02-12 12:58:18.572974",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -39,10 +40,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 13:02:21.912143",
+ "modified": "2026-02-12 15:16:58.103978",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "GL Grouping",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
