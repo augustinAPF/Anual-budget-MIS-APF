@@ -21,7 +21,7 @@
   {
    "fetch_from": "type_of_expense.gl_code",
    "fieldname": "gl_code",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "GL Code",
    "options": "Expenses"
   },
@@ -40,7 +40,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 15:16:58.103978",
+ "modified": "2026-02-12 15:40:17.159390",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "GL Grouping",
