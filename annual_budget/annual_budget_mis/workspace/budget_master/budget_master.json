@@ -15,7 +15,7 @@
  "label": "Budget Master",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-02-11 10:45:25.332779",
+ "modified": "2026-02-12 12:25:58.074681",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Budget Master",
@@ -136,6 +136,13 @@
    "label": "Unit",
    "link_to": "Unit",
    "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "#ECAD4B",
+   "doc_view": "List",
+   "label": "Expenses Line Items",
+   "link_to": "Expenses Line Items",
    "type": "DocType"
   }
  ],
