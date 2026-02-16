@@ -1,20 +1,25 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "EX-.####",
  "creation": "2026-02-12 12:58:18.572974",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "type_of_expense",
+  "type_of_expense_id",
   "gl_code",
+  "column_break_jpad",
+  "type_of_expense",
+  "sequence_id",
   "sub_gl_codes_section",
   "sub_gl_code"
  ],
  "fields": [
   {
+   "fetch_from": "type_of_expense_id.type_of_expense",
    "fieldname": "type_of_expense",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Type of expense",
    "options": "Expenses"
   },
@@ -35,15 +40,30 @@
    "fieldtype": "Table",
    "label": "Sub GL Code",
    "options": "GL code Map"
+  },
+  {
+   "fieldname": "type_of_expense_id",
+   "fieldtype": "Link",
+   "label": "Type of expense ID",
+   "options": "Expenses Line Items"
+  },
+  {
+   "fieldname": "column_break_jpad",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sequence_id",
+   "fieldtype": "Int",
+   "label": "Sequence id"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 15:40:17.159390",
+ "modified": "2026-02-16 14:52:58.369823",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
- "name": "GL Grouping",
+ "name": "GL Grouping Actuals",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

@@ -1,8 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
- "allow_rename": 1,
- "autoname": "prompt",
+ "autoname": "autoincrement",
  "creation": "2025-09-26 11:57:37.906288",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -12,7 +11,14 @@
   "sequence_id",
   "column_break_zshy",
   "type_of_expense",
-  "gl_code"
+  "gl_code",
+  "actuals_lineitems_dec_section",
+  "gl_id",
+  "actuals_gl_code",
+  "column_break_frgc",
+  "actuals_type_of_expenses",
+  "sub_gl_mapping_section",
+  "sub_gl"
  ],
  "fields": [
   {
@@ -39,6 +45,7 @@
   {
    "fieldname": "gl_code",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "GL code"
@@ -53,16 +60,52 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Sequence ID"
+  },
+  {
+   "fieldname": "sub_gl_mapping_section",
+   "fieldtype": "Section Break",
+   "label": "Sub GL Mapping"
+  },
+  {
+   "fieldname": "sub_gl",
+   "fieldtype": "Table",
+   "label": "Sub GL",
+   "options": "GL code Map"
+  },
+  {
+   "fieldname": "actuals_lineitems_dec_section",
+   "fieldtype": "Section Break",
+   "label": "Actuals Lineitems & Dec"
+  },
+  {
+   "fieldname": "gl_id",
+   "fieldtype": "Link",
+   "label": "GL ID",
+   "options": "Expenses Line Items"
+  },
+  {
+   "fieldname": "actuals_gl_code",
+   "fieldtype": "Data",
+   "label": "Actuals GL code"
+  },
+  {
+   "fieldname": "column_break_frgc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actuals_type_of_expenses",
+   "fieldtype": "Data",
+   "label": "Actuals Type of Expenses"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 12:44:13.242309",
+ "modified": "2026-02-16 15:05:29.234903",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Expenses",
- "naming_rule": "Set by user",
+ "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [
   {
@@ -81,5 +124,7 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "type_of_expense",
+ "track_changes": 1
 }

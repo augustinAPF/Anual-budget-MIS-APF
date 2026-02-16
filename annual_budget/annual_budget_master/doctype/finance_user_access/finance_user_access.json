@@ -6,39 +6,34 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "unit__entity",
-  "column_break_qjjc",
-  "cost_center",
-  "location_code"
+  "user",
+  "financial_year",
+  "mapping"
  ],
  "fields": [
   {
-   "fieldname": "unit__entity",
+   "fieldname": "user",
    "fieldtype": "Link",
-   "label": "Unit / Entity",
-   "options": "Unit"
+   "label": "User",
+   "options": "User"
   },
   {
-   "fieldname": "column_break_qjjc",
-   "fieldtype": "Column Break"
+   "fieldname": "financial_year",
+   "fieldtype": "Link",
+   "label": "Financial Year",
+   "options": "Financial year list"
   },
   {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center"
-  },
-  {
-   "fieldname": "location_code",
-   "fieldtype": "Link",
-   "label": "Location code",
-   "options": "Location Code"
+   "fieldname": "mapping",
+   "fieldtype": "Table",
+   "label": "Mapping",
+   "options": "User mapping"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-14 10:23:00.394011",
+ "modified": "2026-02-13 10:58:47.651563",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Finance user access",

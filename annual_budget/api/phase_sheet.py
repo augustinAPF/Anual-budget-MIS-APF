@@ -733,26 +733,13 @@
 #     return final
 
 
-
-
-
-
-
-
-
-
 import frappe
 import re
 from decimal import Decimal
 
 
 @frappe.whitelist(allow_guest=True)
-def get_consolidated_report(
-    financial_year=None,
-    units=None,
-    cost_center=None,
-    location_code=None
-):
+def get_consolidated_report(financial_year=None,units=None,cost_center=None,location_code=None):
     # -------------------------------
     # Validation
     # -------------------------------
@@ -956,8 +943,6 @@ def get_consolidated_report(
         final.append(heads[h])
 
     return final
-
-
 
 def _num(x):
     """Safe numeric conversion"""

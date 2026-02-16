@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GLGrouping(Document):
+class Usermapping(Document):
 	pass
