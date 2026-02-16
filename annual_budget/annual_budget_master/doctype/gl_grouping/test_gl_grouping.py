@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestGLGroupingActuals(IntegrationTestCase):
+class IntegrationTestGLGrouping(IntegrationTestCase):
 	"""
-	Integration tests for GLGroupingActuals.
+	Integration tests for GLGrouping.
 	Use this class for testing interactions between multiple components.
 	"""
 

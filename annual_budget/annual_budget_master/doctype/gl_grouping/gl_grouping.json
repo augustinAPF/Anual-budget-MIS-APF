@@ -63,7 +63,7 @@
  "modified": "2026-02-16 14:52:58.369823",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
- "name": "GL Grouping Actuals",
+ "name": "GL Grouping",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
