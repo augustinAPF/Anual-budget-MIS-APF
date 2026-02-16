@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "autoincrement",
- "creation": "2025-09-26 11:57:37.906288",
+ "creation": "2026-02-16 17:12:54.461199",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -36,6 +36,17 @@
    "label": "Sub head of expense"
   },
   {
+   "fieldname": "sequence_id",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sequence ID"
+  },
+  {
+   "fieldname": "column_break_zshy",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "type_of_expense",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -49,28 +60,6 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "GL code"
-  },
-  {
-   "fieldname": "column_break_zshy",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "sequence_id",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Sequence ID"
-  },
-  {
-   "fieldname": "sub_gl_mapping_section",
-   "fieldtype": "Section Break",
-   "label": "Sub GL Mapping"
-  },
-  {
-   "fieldname": "sub_gl",
-   "fieldtype": "Table",
-   "label": "Sub GL",
-   "options": "GL code Map"
   },
   {
    "fieldname": "actuals_lineitems_dec_section",
@@ -94,6 +83,17 @@
    "label": "Actuals Type of Expenses"
   },
   {
+   "fieldname": "sub_gl_mapping_section",
+   "fieldtype": "Section Break",
+   "label": "Sub GL Mapping"
+  },
+  {
+   "fieldname": "sub_gl",
+   "fieldtype": "Table",
+   "label": "Sub GL",
+   "options": "GL code Map"
+  },
+  {
    "fieldname": "budget_lineitems_section",
    "fieldtype": "Section Break",
    "label": "Budget Lineitems & Dec"
@@ -102,10 +102,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-16 17:19:07.874461",
+ "modified": "2026-02-16 17:18:35.578902",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
- "name": "Expenses",
+ "name": "Expenses Test",
  "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [
