@@ -1,5 +1,6 @@
 import frappe
 from annual_budget.api.actuals import get_actuals_from_erp
+from annual_budget.api.actuals import get_grouped_actuals
 
 @frappe.whitelist(allow_guest=True)  
 def format_actuals_for_ppt_report(fiscal_year, month, entity):
@@ -17,7 +18,6 @@ def format_actuals_for_ppt_report(fiscal_year, month, entity):
     for r in rows:
         bu = (r.get("business_unit") or "").strip()
 
-        # Filter by entity
         if bu != entity:
             continue
 
@@ -34,18 +34,16 @@ def format_actuals_for_ppt_report(fiscal_year, month, entity):
             grouped[key] = {
                 "business_unit": bu,
                 "deptid": dept,
-                "plus_total": 0,     # sum of positive values
-                "minus_total": 0,    # sum of negative values
-                "actual": 0          # final result
+                "plus_total": 0,    
+                "minus_total": 0,   
+                "actual": 0         
             }
 
-        # 🔹 Separate plus and minus
         if amt >= 0:
             grouped[key]["plus_total"] += amt
         else:
-            grouped[key]["minus_total"] += amt   # this is already negative
+            grouped[key]["minus_total"] += amt  
 
-        # 🔹 Actual = plus + minus
         grouped[key]["actual"] = (
             grouped[key]["plus_total"] + grouped[key]["minus_total"]
         )
@@ -143,10 +141,6 @@ def format_actuals_for_ppt_report(fiscal_year, month, entity):
 
 @frappe.whitelist(allow_guest=True)
 def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
-
-    # -------------------------------------------------
-    # STEP 1: Build GL → Head of Expense map from Expenses
-    # -------------------------------------------------
     expenses = frappe.get_list(
         "Expenses",
         fields=["gl_code", "head_of_expense"],
@@ -160,9 +154,6 @@ def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
         if gl:
             gl_head_map[gl] = head
 
-    # -------------------------------------------------
-    # STEP 2: Fetch Actuals from PeopleSoft API
-    # -------------------------------------------------
     result = get_accounting_period_from_month(accounting_period, fiscal_year)
     accounting_period = result.get("accounting_period")
     fiscal_year = result.get("fiscal_year")
@@ -173,9 +164,6 @@ def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
 
     actual_rows = actuals_response.get("data", [])
 
-    # -------------------------------------------------
-    # STEP 3: Group & Aggregate
-    # -------------------------------------------------
     grouped_data = {}
 
     for row in actual_rows:
@@ -207,20 +195,12 @@ def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
             grouped_data[key]["operating_total"]
         )
 
-    # -------------------------------------------------
-    # STEP 3.5: Filter for Multiple Units (Unit = "APF,APU")
-    # -------------------------------------------------
-    # Convert comma-separated Unit string into a list
     unit_list = [u.strip() for u in Unit.split(",")] if Unit else []
 
     filtered_data = [
         v for v in grouped_data.values()
         if not unit_list or v.get("business_unit") in unit_list
     ]
-
-    # -------------------------------------------------
-    # STEP 4: Final Response
-    # -------------------------------------------------
     return {
         "status": "success",
         "count": len(filtered_data),
@@ -306,6 +286,7 @@ def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
 #     }
 
 # #============================= Formatting Year and Month =============================================
+@frappe.whitelist(allow_guest=True)
 def get_accounting_period_from_month(month, financial_year=None):
     month_map = {
         "march":12,
@@ -342,3 +323,31 @@ def get_accounting_period_from_month(month, financial_year=None):
         "fiscal_year": fiscal_year_start
     }
  
+@frappe.whitelist(allow_guest=True)
+def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,location_code=None):
+
+    formatted = get_accounting_period_from_month(
+        month,
+        financial_year
+    )
+    accounting_period = formatted.get("accounting_period")
+    fiscal_year = formatted.get("fiscal_year")
+    result = get_grouped_actuals(
+        fiscal_year,
+        accounting_period
+    )
+
+    data = result.get("data", [])
+    if unit:
+        data = [d for d in data if d.get("business_unit") == unit]
+
+    if cost_center:
+        data = [d for d in data if d.get("deptid") == cost_center]
+
+    if location_code:
+        data = [d for d in data if d.get("operating_unit") == location_code]
+    result["data"] = data
+    result["filtered_record_count"] = len(data)
+
+    return result
+

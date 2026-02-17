@@ -815,223 +815,556 @@
 
 
 
+// frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
+
+// 	const page = frappe.ui.make_app_page({
+// 		parent: wrapper,
+// 		title: 'Budget vs Actuals Phase Sheet',
+// 		single_column: true
+// 	});
+
+// 	/* =====================================================
+// 	   HTML STRUCTURE
+// 	===================================================== */
+
+// 	const html = `
+// 	<div class="phase-wrapper">
+
+// 		<div class="filters">
+// 			<input type="text" id="fiscal_year" value="2025" placeholder="Fiscal Year">
+// 			<input type="text" id="accounting_period" value="10" placeholder="Accounting Period">
+// 			<button class="btn btn-primary btn-sm" id="load-btn">Load</button>
+// 			<input type="text" id="search-input" placeholder="🔍 Search expense...">
+// 		</div>
+
+// 		<div class="scroll-wrapper">
+// 			<table id="phase-table" class="phase-table">
+// 				<thead id="phase-header"></thead>
+// 				<tbody id="phase-body"></tbody>
+// 			</table>
+// 		</div>
+
+// 	</div>
+// 	`;
+
+// 	$(page.body).html(html);
+// 	injectStyles();
+
+// 	document.getElementById("load-btn").addEventListener("click", loadData);
+// 	document.getElementById("search-input").addEventListener("input", filterTable);
+
+// 	loadData();
+// };
+
+
+// /* =====================================================
+//    STYLE
+// ===================================================== */
+
+// function injectStyles(){
+
+// 	$(`
+// 	<style>
+// 	.phase-wrapper { padding:16px; background:#f4f6f9; }
+
+// 	.filters{
+// 		display:flex;
+// 		gap:10px;
+// 		margin-bottom:12px;
+// 	}
+
+// 	.filters input{
+// 		padding:6px 8px;
+// 		border:1px solid #ccc;
+// 		border-radius:4px;
+// 	}
+
+// 	.scroll-wrapper{
+// 		max-height:70vh;
+// 		overflow:auto;
+// 		border:1px solid #ccc;
+// 	}
+
+// 	table.phase-table{
+// 		border-collapse:collapse;
+// 		min-width:1200px;
+// 		font-size:13px;
+// 	}
+
+// 	th, td{
+// 		border:1px solid #000;
+// 		padding:6px 8px;
+// 		text-align:right;
+// 		white-space:nowrap;
+// 	}
+
+// 	th{
+// 		background:#0076B6;
+// 		color:white;
+// 		position:sticky;
+// 		top:0;
+// 		z-index:50;
+// 	}
+
+// 	th:first-child, td:first-child{
+// 		position:sticky;
+// 		left:0;
+// 		background:white;
+// 		text-align:left;
+// 		font-weight:600;
+// 		z-index:60;
+// 	}
+
+// 	tr.group-row{
+// 		background:#f0f8ff;
+// 		font-weight:700;
+// 	}
+
+// 	tr.total-row{
+// 		background:#f9f9f9;
+// 		font-weight:700;
+// 		border-top:2px solid #000;
+// 	}
+// 	</style>
+// 	`).appendTo("body");
+// }
+
+
+// /* =====================================================
+//    LOAD DATA FROM API
+// ===================================================== */
+
+// function loadData(){
+
+// 	const fiscal_year = document.getElementById("fiscal_year").value;
+// 	const accounting_period = document.getElementById("accounting_period").value;
+
+// 	frappe.call({
+// 		method: "annual_budget.api.actuals.get_grouped_actuals",
+// 		args: {
+// 			fiscal_year: fiscal_year,
+// 			accounting_period: accounting_period
+// 		},
+// 		freeze: true,
+// 		freeze_message: "Loading Phase Sheet...",
+// 		callback: function(r){
+
+// 			const data = r.message?.data || [];
+// 			renderTable(data);
+// 		}
+// 	});
+// }
+
+
+// /* =====================================================
+//    RENDER TABLE
+// ===================================================== */
+
+// function renderTable(data){
+
+// 	const header = document.getElementById("phase-header");
+// 	const body = document.getElementById("phase-body");
+
+// 	header.innerHTML="";
+// 	body.innerHTML="";
+
+// 	if(!data.length){
+// 		body.innerHTML="<tr><td>No data found</td></tr>";
+// 		return;
+// 	}
+
+// 	/* HEADER */
+// 	header.innerHTML = `
+// 	<tr>
+// 		<th>Expense Head</th>
+// 		<th>Business Unit</th>
+// 		<th>Dept ID</th>
+// 		<th>Operating Unit</th>
+// 		<th>Budget</th>
+// 		<th>Actuals</th>
+// 		<th>Previous Year</th>
+// 	</tr>
+// 	`;
+
+// 	let html="";
+// 	let grandTotal=0;
+
+// 	data.forEach(row=>{
+
+// 		html+=`
+// 		<tr>
+// 			<td>${row.type_of_expense}</td>
+// 			<td>${row.business_unit}</td>
+// 			<td>${row.deptid}</td>
+// 			<td>${row.operating_unit}</td>
+// 			<td>${(row.budget||0).toLocaleString()}</td>
+// 			<td>${(row.total_posted_amt||0).toLocaleString()}</td>
+// 			<td>${(row.previous_year||0).toLocaleString()}</td>
+// 		</tr>
+// 		`;
+
+// 		grandTotal += parseFloat(row.total_posted_amt || 0);
+// 	});
+
+// 	html+=`
+// 	<tr class="total-row">
+// 		<td colspan="5">Grand Total</td>
+// 		<td>${grandTotal.toLocaleString()}</td>
+// 		<td></td>
+// 	</tr>
+// 	`;
+
+// 	body.innerHTML=html;
+// }
+
+
+// /* =====================================================
+//    SEARCH FILTER
+// ===================================================== */
+
+// function filterTable(){
+
+// 	const term = document.getElementById("search-input").value.toLowerCase();
+
+// 	document.querySelectorAll("#phase-body tr").forEach(row=>{
+
+// 		const txt = row.querySelector("td")?.innerText.toLowerCase();
+
+// 		row.style.display = txt?.includes(term) || row.classList.contains("total-row")
+// 			? ""
+// 			: "none";
+// 	});
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
-	const page = frappe.ui.make_app_page({
-		parent: wrapper,
-		title: 'Budget vs Actuals Phase Sheet',
-		single_column: true
-	});
+    /* ------------------------------------------------
+       PAGE
+    --------------------------------------------------*/
+    let page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: 'Budget vs Actuals Phase Sheet',
+        single_column: true
+    });
 
-	/* =====================================================
-	   HTML STRUCTURE
-	===================================================== */
+    /* ------------------------------------------------
+       FILTER SECTION
+    --------------------------------------------------*/
+    let filter_section = $(`
+        <div class="frappe-control-group row custom-filter-row"></div>
+    `).appendTo(page.body);
 
-	const html = `
-	<div class="phase-wrapper">
+    function make_field() {
+        return $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+    }
 
-		<div class="filters">
-			<input type="text" id="fiscal_year" value="2025" placeholder="Fiscal Year">
-			<input type="text" id="accounting_period" value="10" placeholder="Accounting Period">
-			<button class="btn btn-primary btn-sm" id="load-btn">Load</button>
-			<input type="text" id="search-input" placeholder="🔍 Search expense...">
-		</div>
+    /* ------------------------------------------------
+       FINANCIAL YEAR
+    --------------------------------------------------*/
+    let fy_col = make_field();
+    let fiscal_year_filter = frappe.ui.form.make_control({
+        parent: fy_col,
+        df: {
+            label: "Financial Year",
+            fieldtype: "Select",
+            fieldname: "financial_year",
+            options: ["2025-26", "2026-27"].join("\n"),
+            default: "2025-26",
+            reqd: 1,
+            change() {
+                loadData();
+            }
+        },
+        render_input: true
+    });
 
-		<div class="scroll-wrapper">
-			<table id="phase-table" class="phase-table">
-				<thead id="phase-header"></thead>
-				<tbody id="phase-body"></tbody>
-			</table>
-		</div>
+    /* ------------------------------------------------
+       UNIT
+    --------------------------------------------------*/
+    let unit_col = make_field();
+    let unit_filter = frappe.ui.form.make_control({
+        parent: unit_col,
+        df: {
+            label: "Unit",
+            fieldtype: "MultiSelectList",
+            fieldname: "unit",
+            reqd: 1,
+            get_data() {
+                return frappe.call({
+                    method: "annual_budget.api.filter_options.get_units"
+                }).then(r => r.message?.data || []);
+            },
+            change() {
+                loadData();
+            }
+        },
+        render_input: true
+    });
 
-	</div>
-	`;
+    /* ------------------------------------------------
+       STYLES
+    --------------------------------------------------*/
+    const style = `
+    <style>
+    #tables-container { margin:20px; }
+    .scroll-wrapper { overflow:auto; max-height:70vh; border:1px solid #ccc; }
+    table.university-table {
+        width:100%;
+        border-collapse:collapse;
+        font-size:13px;
+    }
+    table.university-table th,
+    table.university-table td {
+        border:1px solid #ddd;
+        padding:8px;
+        text-align:center;
+    }
+    table.university-table th:first-child,
+    table.university-table td:first-child {
+        text-align:left;
+    }
+    table.university-table thead th {
+        background:#0076B6;
+        color:#fff;
+    }
+    tr.expense-head { font-weight:700; cursor:pointer; }
+    tr.sub-head { background:#f9f9f9; cursor:pointer; }
+    tr.line-item td:first-child { padding-left:30px; }
+    tr.grand-total-row td {
+        background:#003B63;
+        color:#fff;
+        font-weight:700;
+    }
+    #controls-row {
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:10px;
+    }
+    #global-search-box {
+        width:250px;
+        padding:6px;
+    }
+    </style>
+    `;
+    $(style).appendTo(page.body);
 
-	$(page.body).html(html);
-	injectStyles();
+    /* ------------------------------------------------
+       TABLE UI
+    --------------------------------------------------*/
+    const container = $(`
+        <div id="tables-container">
 
-	document.getElementById("load-btn").addEventListener("click", loadData);
-	document.getElementById("search-input").addEventListener("input", filterTable);
+            <div id="controls-row">
+                <input id="global-search-box" type="text" placeholder="Search...">
+                <label>
+                    <input type="checkbox" id="expand-items">
+                    Expand All
+                </label>
+            </div>
 
-	loadData();
+            <div class="scroll-wrapper">
+                <table class="university-table" id="phase-table"></table>
+            </div>
+        </div>
+    `);
+    $(page.body).append(container);
+
+    /* ------------------------------------------------
+       STATE
+    --------------------------------------------------*/
+    let expense_heads = [];
+    let expandedHeads = [];
+    let expandedSubHeads = [];
+    let searchText = "";
+
+    const formatNumber = n => (n || 0).toLocaleString();
+
+    /* ------------------------------------------------
+       LOAD DATA
+    --------------------------------------------------*/
+    function loadData() {
+
+        let fy = fiscal_year_filter.get_value();
+        let unit = unit_filter.get_value();
+
+        if (!fy || !unit?.length) return;
+
+        frappe.call({
+            method: "annual_budget.api.phase_sheet.get_budget_actuals_report",
+            args: {
+                financial_year: fy,
+                units: unit.join(",")
+            },
+            callback: function(r) {
+                expense_heads = r.message || [];
+                renderTable();
+            }
+        });
+    }
+
+    /* ------------------------------------------------
+       SEARCH
+    --------------------------------------------------*/
+    function matchesSearch(...values) {
+        return values.some(v =>
+            String(v || "").toLowerCase().includes(searchText.toLowerCase())
+        );
+    }
+
+    /* ------------------------------------------------
+       RENDER TABLE
+    --------------------------------------------------*/
+    function renderTable() {
+
+        const $table = $('#phase-table');
+        $table.empty();
+
+        const $thead = $(`
+            <thead>
+                <tr>
+                    <th>Expense Head / Line Item</th>
+                    <th>Budget</th>
+                    <th>Previous Year Actuals</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+        `);
+
+        $table.append($thead);
+        const $tbody = $('<tbody></tbody>');
+
+        expense_heads.forEach(head => {
+
+            if (!matchesSearch(head.name)) return;
+
+            const budget = head.budget || 0;
+            const prev = head.previous_year_actual || 0;
+            const total = head.total || budget;
+
+            $tbody.append(`
+                <tr class="expense-head" data-head="${head.name}">
+                    <td>${expandedHeads.includes(head.name) ? '▼' : '▶'} ${head.name}</td>
+                    <td>${formatNumber(budget)}</td>
+                    <td>${formatNumber(prev)}</td>
+                    <td>${formatNumber(total)}</td>
+                </tr>
+            `);
+
+            /* Sub-Heads */
+            if (expandedHeads.includes(head.name) && head.sub_heads) {
+
+                head.sub_heads.forEach(sub => {
+
+                    const key = head.name + "__" + sub.name;
+
+                    const subBudget = sub.budget || 0;
+                    const subPrev = sub.previous_year_actual || 0;
+                    const subTotal = sub.total || subBudget;
+
+                    $tbody.append(`
+                        <tr class="sub-head" data-sub="${key}">
+                            <td>${expandedSubHeads.includes(key) ? '▼' : '▶'} ${sub.name}</td>
+                            <td>${formatNumber(subBudget)}</td>
+                            <td>${formatNumber(subPrev)}</td>
+                            <td>${formatNumber(subTotal)}</td>
+                        </tr>
+                    `);
+
+                    if (expandedSubHeads.includes(key) && sub.items) {
+
+                        sub.items.forEach(item => {
+
+                            const itemBudget = item.budget || 0;
+                            const itemPrev = item.previous_year_actual || 0;
+                            const itemTotal = item.total || itemBudget;
+
+                            $tbody.append(`
+                                <tr class="line-item">
+                                    <td>${item.name}</td>
+                                    <td>${formatNumber(itemBudget)}</td>
+                                    <td>${formatNumber(itemPrev)}</td>
+                                    <td>${formatNumber(itemTotal)}</td>
+                                </tr>
+                            `);
+                        });
+                    }
+                });
+            }
+        });
+
+        /* GRAND TOTAL */
+        const grandBudget = expense_heads.reduce((s,h)=>s+(h.budget||0),0);
+        const grandPrev = expense_heads.reduce((s,h)=>s+(h.previous_year_actual||0),0);
+        const grandTotal = expense_heads.reduce((s,h)=>s+(h.total||h.budget||0),0);
+
+        $tbody.append(`
+            <tr class="grand-total-row">
+                <td>GRAND TOTAL</td>
+                <td>${formatNumber(grandBudget)}</td>
+                <td>${formatNumber(grandPrev)}</td>
+                <td>${formatNumber(grandTotal)}</td>
+            </tr>
+        `);
+
+        $table.append($tbody);
+
+        /* EVENTS */
+        $table.find('.expense-head').off('click').on('click', function() {
+            const name = $(this).data('head');
+            expandedHeads = expandedHeads.includes(name)
+                ? expandedHeads.filter(x=>x!==name)
+                : [...expandedHeads, name];
+            renderTable();
+        });
+
+        $table.find('.sub-head').off('click').on('click', function() {
+            const key = $(this).data('sub');
+            expandedSubHeads = expandedSubHeads.includes(key)
+                ? expandedSubHeads.filter(x=>x!==key)
+                : [...expandedSubHeads, key];
+            renderTable();
+        });
+    }
+
+    /* ------------------------------------------------
+       EVENTS
+    --------------------------------------------------*/
+    $("#expand-items").on("change", function() {
+        if (this.checked) {
+            expandedHeads = expense_heads.map(h=>h.name);
+            expandedSubHeads = expense_heads.flatMap(h =>
+                (h.sub_heads || []).map(s => h.name + "__" + s.name)
+            );
+        } else {
+            expandedHeads = [];
+            expandedSubHeads = [];
+        }
+        renderTable();
+    });
+
+    $("#global-search-box").on("input", function() {
+        searchText = this.value;
+        renderTable();
+    });
+
+    loadData();
 };
-
-
-/* =====================================================
-   STYLE
-===================================================== */
-
-function injectStyles(){
-
-	$(`
-	<style>
-	.phase-wrapper { padding:16px; background:#f4f6f9; }
-
-	.filters{
-		display:flex;
-		gap:10px;
-		margin-bottom:12px;
-	}
-
-	.filters input{
-		padding:6px 8px;
-		border:1px solid #ccc;
-		border-radius:4px;
-	}
-
-	.scroll-wrapper{
-		max-height:70vh;
-		overflow:auto;
-		border:1px solid #ccc;
-	}
-
-	table.phase-table{
-		border-collapse:collapse;
-		min-width:1200px;
-		font-size:13px;
-	}
-
-	th, td{
-		border:1px solid #000;
-		padding:6px 8px;
-		text-align:right;
-		white-space:nowrap;
-	}
-
-	th{
-		background:#0076B6;
-		color:white;
-		position:sticky;
-		top:0;
-		z-index:50;
-	}
-
-	th:first-child, td:first-child{
-		position:sticky;
-		left:0;
-		background:white;
-		text-align:left;
-		font-weight:600;
-		z-index:60;
-	}
-
-	tr.group-row{
-		background:#f0f8ff;
-		font-weight:700;
-	}
-
-	tr.total-row{
-		background:#f9f9f9;
-		font-weight:700;
-		border-top:2px solid #000;
-	}
-	</style>
-	`).appendTo("body");
-}
-
-
-/* =====================================================
-   LOAD DATA FROM API
-===================================================== */
-
-function loadData(){
-
-	const fiscal_year = document.getElementById("fiscal_year").value;
-	const accounting_period = document.getElementById("accounting_period").value;
-
-	frappe.call({
-		method: "annual_budget.api.actuals.get_grouped_actuals",
-		args: {
-			fiscal_year: fiscal_year,
-			accounting_period: accounting_period
-		},
-		freeze: true,
-		freeze_message: "Loading Phase Sheet...",
-		callback: function(r){
-
-			const data = r.message?.data || [];
-			renderTable(data);
-		}
-	});
-}
-
-
-/* =====================================================
-   RENDER TABLE
-===================================================== */
-
-function renderTable(data){
-
-	const header = document.getElementById("phase-header");
-	const body = document.getElementById("phase-body");
-
-	header.innerHTML="";
-	body.innerHTML="";
-
-	if(!data.length){
-		body.innerHTML="<tr><td>No data found</td></tr>";
-		return;
-	}
-
-	/* HEADER */
-	header.innerHTML = `
-	<tr>
-		<th>Expense Head</th>
-		<th>Business Unit</th>
-		<th>Dept ID</th>
-		<th>Operating Unit</th>
-		<th>Budget</th>
-		<th>Actuals</th>
-		<th>Previous Year</th>
-	</tr>
-	`;
-
-	let html="";
-	let grandTotal=0;
-
-	data.forEach(row=>{
-
-		html+=`
-		<tr>
-			<td>${row.type_of_expense}</td>
-			<td>${row.business_unit}</td>
-			<td>${row.deptid}</td>
-			<td>${row.operating_unit}</td>
-			<td>${(row.budget||0).toLocaleString()}</td>
-			<td>${(row.total_posted_amt||0).toLocaleString()}</td>
-			<td>${(row.previous_year||0).toLocaleString()}</td>
-		</tr>
-		`;
-
-		grandTotal += parseFloat(row.total_posted_amt || 0);
-	});
-
-	html+=`
-	<tr class="total-row">
-		<td colspan="5">Grand Total</td>
-		<td>${grandTotal.toLocaleString()}</td>
-		<td></td>
-	</tr>
-	`;
-
-	body.innerHTML=html;
-}
-
-
-/* =====================================================
-   SEARCH FILTER
-===================================================== */
-
-function filterTable(){
-
-	const term = document.getElementById("search-input").value.toLowerCase();
-
-	document.querySelectorAll("#phase-body tr").forEach(row=>{
-
-		const txt = row.querySelector("td")?.innerText.toLowerCase();
-
-		row.style.display = txt?.includes(term) || row.classList.contains("total-row")
-			? ""
-			: "none";
-	});
-}

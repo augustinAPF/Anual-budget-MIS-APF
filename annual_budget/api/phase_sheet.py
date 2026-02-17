@@ -213,6 +213,188 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
 
         final.append(head)
     return final
+
+
+
+
+
+import frappe
+from decimal import Decimal
+from datetime import datetime
+
+
+@frappe.whitelist(allow_guest=True)
+def get_consolidated_report_actual_ytd(
+    financial_year=None,
+    units=None,
+    cost_center=None,
+    location_code=None,
+    upto_month=None
+):
+
+    if not financial_year:
+        frappe.throw("Financial Year is required")
+
+    # -------------------------------------------------
+    # Safe Number Conversion
+    # -------------------------------------------------
+    def _num(x):
+        if not x:
+            return 0.0
+        try:
+            return float(Decimal(str(x)))
+        except Exception:
+            return 0.0
+
+    # -------------------------------------------------
+    # Month Order (Matches Child Table Fields EXACTLY)
+    # -------------------------------------------------
+    MONTH_FIELDS = [
+        "april", "may", "june",
+        "july", "august", "september",
+        "october", "november", "december",
+        "january", "february", "march"
+    ]
+
+    if not upto_month:
+        upto_month = datetime.now().strftime("%B").lower()
+
+    upto_month = upto_month.lower().strip()
+
+    if upto_month not in MONTH_FIELDS:
+        frappe.throw("Invalid Month")
+
+    month_index = MONTH_FIELDS.index(upto_month)
+
+    # -------------------------------------------------
+    # Resolve Financial Year (Link Safe)
+    # -------------------------------------------------
+    financial_year = financial_year.strip()
+
+    fy_doc = frappe.db.exists("Financial year list", financial_year)
+
+    if not fy_doc:
+        possible_fy = frappe.get_all(
+            "Financial year list",
+            filters={"name": ["like", f"%{financial_year}%"]},
+            fields=["name"],
+            limit=1
+        )
+        if possible_fy:
+            financial_year = possible_fy[0].name
+        else:
+            return []
+
+    filters = {"financial_year": financial_year}
+
+    # -------------------------------------------------
+    # Resolve Unit (set_id → Link to Unit)
+    # -------------------------------------------------
+    if units:
+        unit_doc = frappe.get_all(
+            "Unit",
+            filters={"name": ["like", f"%{units.strip()}%"]},
+            fields=["name"],
+            limit=1
+        )
+        if unit_doc:
+            filters["set_id"] = unit_doc[0].name
+
+    # -------------------------------------------------
+    # Resolve Cost Center (Link)
+    # -------------------------------------------------
+    if cost_center:
+        cc_doc = frappe.get_all(
+            "Cost Center",
+            filters={"name": ["like", f"%{cost_center.strip()}%"]},
+            fields=["name"],
+            limit=1
+        )
+        if cc_doc:
+            filters["cost_center"] = cc_doc[0].name
+
+    # -------------------------------------------------
+    # Resolve Location Code (Link)
+    # -------------------------------------------------
+    if location_code:
+        loc_doc = frappe.get_all(
+            "Location Code",
+            filters={"name": ["like", f"%{location_code.strip()}%"]},
+            fields=["name"],
+            limit=1
+        )
+        if loc_doc:
+            filters["location_code"] = loc_doc[0].name
+
+    # -------------------------------------------------
+    # Fetch Parent Finance Budget
+    # -------------------------------------------------
+    parents = frappe.get_all(
+        "Finance Budget",
+        filters=filters,
+        fields=["name"]
+    )
+
+    if not parents:
+        return []
+
+    parent_names = [p.name for p in parents]
+
+    # -------------------------------------------------
+    # Fetch Child Table Rows (Month Fields)
+    # -------------------------------------------------
+    rows = frappe.get_all(
+        "Finance Budget Amounts",
+        filters={"parent": ["in", parent_names]},
+        fields=[
+            "type_of_expense",
+            "gl_code",
+            "head_of_expense",
+            "sub_head_of_expense",
+            "april", "may", "june",
+            "july", "august", "september",
+            "october", "november", "december",
+            "january", "february", "march"
+        ]
+    )
+
+    if not rows:
+        return []
+
+    # -------------------------------------------------
+    # YTD Calculation (Based on Child Month Fields)
+    # -------------------------------------------------
+    result = []
+
+    for r in rows:
+
+        ytd_total = 0.0
+
+        # Sum from April → upto_month
+        for m in MONTH_FIELDS[:month_index + 1]:
+            ytd_total += _num(getattr(r, m))
+
+        result.append({
+            "head_of_expense": r.head_of_expense,
+            "sub_head_of_expense": r.sub_head_of_expense,
+            "type_of_expense": r.type_of_expense,
+            "gl_code": r.gl_code,
+            "ytd": ytd_total
+        })
+
+    return result
+
+
+
+
+
+
+
+
+
+
+
+
 # ! =======================================================  Consolidated Number Card Totals =============================================================================
 @frappe.whitelist(allow_guest=True)
 def get_number_card_totals(financial_year=None):
