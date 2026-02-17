@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 @frappe.whitelist(allow_guest=True)
 def get_gl_from_erp():
     try:
-        # Get credentials securely
         username = "MISUSER"
         password = "[REDACTED-CREDENTIAL]"
 

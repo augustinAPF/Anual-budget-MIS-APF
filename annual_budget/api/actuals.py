@@ -2,7 +2,9 @@ import frappe
 import requests
 import xmltodict
 import xml.etree.ElementTree as ET
+from collections import defaultdict
 
+# ! =======================================================  Actuals API Testing server  ================================================================================
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp(fiscal_year, accounting_period):
 
@@ -87,10 +89,7 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
             "error": "Unexpected error occurred"
         }
 
-
-
-
-
+# * ==============================================================  Actual API Prod  =====================================================================================
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):
     try:
@@ -167,3 +166,164 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
             "error": "Unexpected server error"
         }
 
+
+@frappe.whitelist(allow_guest=True)
+def get_erp_and_expenses(fiscal_year, accounting_period):
+
+    # 1️⃣ ERP Data
+    erp_response = get_actuals_from_erp_prod(fiscal_year, accounting_period)
+
+    if "message" in erp_response:
+        erp_data = erp_response.get("message", {})
+    else:
+        erp_data = erp_response
+
+    # 2️⃣ Fetch all Expense names first
+    expense_names = frappe.get_all("Expenses", pluck="name")
+
+    expenses_with_children = []
+
+    for name in expense_names:
+        doc = frappe.get_doc("Expenses", name)
+
+        expenses_with_children.append({
+            "name": doc.name,
+            "head_of_expense": doc.head_of_expense,
+            "sub_head_of_expense": doc.sub_head_of_expense,
+            "type_of_expense": doc.type_of_expense,
+            "gl_code": doc.gl_code,
+
+            # ✅ Child Table Values
+            "sub_gl": doc.sub_gl
+        })
+
+    return {
+        "status": "success",
+        "erp_data": erp_data,
+        "expenses": expenses_with_children
+    }
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals(fiscal_year, accounting_period):
+
+    # --------------------------------------------------
+    # 1️⃣ Fetch ERP Data
+    # --------------------------------------------------
+    erp_response = get_actuals_from_erp_prod(fiscal_year, accounting_period)
+
+    if "message" in erp_response:
+        erp_data = erp_response.get("message", {}).get("data", [])
+    else:
+        erp_data = erp_response.get("data", [])
+
+    if not erp_data:
+        return {"status": "success", "data": []}
+
+    # --------------------------------------------------
+    # 2️⃣ Fetch Expenses + GL Mapping
+    # --------------------------------------------------
+    expenses = frappe.get_all(
+        "Expenses",
+        fields=[
+            "name",
+            "head_of_expense",
+            "sub_head_of_expense",
+            "type_of_expense"
+        ]
+    )
+
+    expense_lookup = {str(e.name): e for e in expenses}
+
+    child_rows = frappe.get_all(
+        "GL code Map",
+        fields=["parent", "gl_code_map", "type_of_expense"]
+    )
+
+    expense_gl_map = defaultdict(list)
+    gl_parent_map = {}
+
+    for row in child_rows:
+        parent = str(row.parent)
+        gl = str(row.gl_code_map).strip()
+
+        expense_gl_map[parent].append({
+            "gl_code_map": gl,
+            "type_of_expense": row.type_of_expense
+        })
+
+        gl_parent_map[gl] = parent
+
+    # --------------------------------------------------
+    # 3️⃣ Group ERP Data
+    # --------------------------------------------------
+    # Key = (parent, business_unit, deptid, operating_unit)
+    grouped = defaultdict(lambda: defaultdict(float))
+
+    for record in erp_data:
+
+        account = str(record.get("account")).strip()
+        amount = float(record.get("posted_total_amt", 0))
+
+        if account not in gl_parent_map:
+            continue
+
+        parent = gl_parent_map[account]
+
+        key = (
+            parent,
+            record.get("business_unit"),
+            record.get("deptid"),
+            record.get("operating_unit")
+        )
+
+        grouped[key][account] += amount
+
+    # --------------------------------------------------
+    # 4️⃣ Build Final Output
+    # --------------------------------------------------
+    final_output = []
+
+    for (parent, business_unit, deptid, operating_unit), gl_totals in grouped.items():
+
+        if parent not in expense_lookup:
+            continue
+
+        expense = expense_lookup[parent]
+
+        sub_gl_list = []
+        total_sum = 0
+
+        for gl_info in expense_gl_map[parent]:
+
+            gl_code = gl_info["gl_code_map"]
+            gl_total = gl_totals.get(gl_code, 0)
+
+            total_sum += gl_total
+
+            sub_gl_list.append({
+                "gl_code_map": gl_code,
+                "account": gl_code,
+                "type_of_expense": gl_info["type_of_expense"],
+                "posted_total_amt": str(gl_total)
+            })
+
+        final_output.append({
+            "business_unit": business_unit,
+            "deptid": deptid,
+            "operating_unit": operating_unit,
+            "head_of_expense": expense.head_of_expense,
+            "sub_head_of_expense": expense.sub_head_of_expense,
+            "type_of_expense": expense.type_of_expense,
+            "actuals_type_of_expenses": expense.type_of_expense,
+            "total_posted_amt": str(total_sum),
+            "sub_gl": sub_gl_list
+        })
+
+    return {
+        "status": "success",
+        "fiscal_year": fiscal_year,
+        "accounting_period": accounting_period,
+        "data": final_output
+    }

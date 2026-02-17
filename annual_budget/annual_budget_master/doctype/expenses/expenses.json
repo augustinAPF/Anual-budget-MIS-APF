@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "autoincrement",
- "creation": "2025-09-26 11:57:37.906288",
+ "creation": "2026-02-16 21:49:41.940160",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -102,7 +102,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-16 17:19:07.874461",
+ "modified": "2026-02-17 12:32:08.494209",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Expenses",

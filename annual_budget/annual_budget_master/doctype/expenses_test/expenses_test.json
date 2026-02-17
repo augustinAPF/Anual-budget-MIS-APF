@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
- "autoname": "autoincrement",
+ "autoname": "EXP-.####",
  "creation": "2026-02-16 17:12:54.461199",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -102,11 +102,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-16 17:18:35.578902",
+ "modified": "2026-02-16 21:04:39.442253",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Expenses Test",
- "naming_rule": "Autoincrement",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
