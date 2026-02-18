@@ -50,7 +50,9 @@ def get_cost_centers_by_set_id(units=None):
     for cc in cost_centers:
         data.append({
             "label": f"{cc.cost_center} - {cc.cc_descr}",
-            "value": cc.name
+            "value": cc.name,
+            "erp_cost_center_value": cc.cost_center
+
         })
 
     return {
@@ -69,7 +71,7 @@ def get_location_codes_by_unit(unit=None):
     locations = frappe.get_all(
         "Location Code",
         filters={
-            "unit": ["in", unit]   # ✅ MULTIPLE
+            "unit": ["in", unit]  
         },
         fields=["name", "location_code", "decription"],
         order_by="location_code asc"
@@ -80,7 +82,9 @@ def get_location_codes_by_unit(unit=None):
     for loc in locations:
         data.append({
             "label": f"{loc.location_code} - {loc.decription}",
-            "value": loc.name
+            "value": loc.name,
+            "erp_loc_value": loc.location_code,
+
         })
 
     return {

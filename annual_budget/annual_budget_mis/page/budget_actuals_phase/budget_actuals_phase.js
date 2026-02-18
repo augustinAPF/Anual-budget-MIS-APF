@@ -1038,34 +1038,202 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
-    /* ------------------------------------------------
+    /* =====================================================
+       STYLE INJECTION
+    =====================================================*/
+    const style = `
+    <style>
+    #tables-container { 
+        margin: 20px; 
+        background-color: #ffffff; 
+        border-radius: 8px; 
+        padding: 8px; 
+    }
+
+    #controls-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        background: #f7f9fb;
+        border: 1px solid #dcdcdc;
+        border-radius: 6px;
+    }
+
+    #global-search-box { 
+        width: 280px; 
+        padding: 7px 12px; 
+        border: 1px solid #aaa; 
+        border-radius: 6px; 
+        font-size: 13px;
+    }
+
+    .scroll-wrapper { 
+        border: 1px solid #ccc; 
+        border-radius: 6px; 
+        overflow-x: auto; 
+        overflow-y: auto; 
+        max-height: 70vh; 
+        background: #fff; 
+    }
+
+    table.university-table { 
+        min-width: 1200px; 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 13px; 
+    }
+
+    table.university-table th, 
+    table.university-table td {
+        border: 1px solid #ddd;
+        padding: 8px 10px;
+        white-space: nowrap;
+        vertical-align: middle;
+        text-align: center;
+        background:#fff !important;
+    }
+
+    table.university-table th:first-child,
+    table.university-table td:first-child { 
+        text-align: left !important; 
+    }
+
+    table.university-table thead tr.main-row th { 
+        background-color: #0076B6 !important; 
+        color: #fff !important; 
+        position: sticky; 
+        top: 0; 
+        z-index: 25; 
+    }
+
+    tr.expense-head { 
+        font-weight: 700; 
+        cursor: pointer; 
+    }
+
+    tr.expense-head:hover td {
+        background: #F4F9FD !important;
+    }
+
+    tr.sub-head { 
+        background-color: #FFF3E6 !important;
+        font-weight: 600; 
+        cursor: pointer;
+    }
+
+    tr.sub-head:hover td {
+        background-color: #FFEAD5 !important;
+    }
+
+    tr.line-item td:first-child { 
+        padding-left: 35px !important; 
+    }
+
+    tr.sub-head td:first-child { 
+        padding-left: 20px !important; 
+    }
+
+    .text-blue { 
+        color: #0076B6; 
+        font-weight: 600; 
+    }
+
+    tr.grand-total-row td {
+        background:#003B63 !important;
+        color:#fff !important;
+        font-weight:700 !important;
+    }
+
+    .card-row{
+        display:grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap:14px;
+        margin:14px 20px;
+    }
+
+    .number-card{
+        background:#ffffff;
+        border:1px solid #dcdcdc;
+        border-radius:8px;
+        padding:14px 16px;
+        box-shadow:0 2px 6px rgba(0,0,0,.06);
+        transition:.15s ease;
+    }
+
+    .number-card:hover{
+        transform:translateY(-2px);
+        box-shadow:0 6px 14px rgba(0,0,0,.12);
+    }
+
+    .number-title{
+        font-size:12px;
+        font-weight:600;
+        color:#666;
+        text-transform:uppercase;
+        margin-bottom:6px;
+    }
+
+    .number-value{
+        font-size:20px;
+        font-weight:700;
+        color:#0076B6;
+    }
+
+    .number-card.grand{
+        border:2px solid #0076B6;
+        background:#F4F9FD;
+    }
+
+    .number-card.grand .number-value{
+        font-size:24px;
+        font-weight:800;
+    }
+    </style>
+    `;
+
+        $('head').append(style);
+            if (!$("#global-loader").length) {
+        $("body").append(`
+            <div id="global-loader" class="loader-overlay">
+                <div class="loader-box">
+                    <img src="/files/apf.png" class="loader-logo">
+                    <div class="loader-text">Loading, please wait…</div>
+                </div>
+            </div>
+        `);
+    }
+
+    /* Always hide on page load */
+    $("#global-loader").hide();
+    const Loader = {
+        show(message = "Loading, please wait…") {
+            const loader = $("#global-loader");
+            if (!loader.length) return;
+
+            loader.find(".loader-text").text(message);
+            loader.fadeIn(200);
+        },
+
+        hide() {
+            const loader = $("#global-loader");
+            if (!loader.length) return;
+
+            loader.fadeOut(200);
+        }
+    };
+
+    /* =====================================================
        PAGE
-    --------------------------------------------------*/
+    =====================================================*/
     let page = frappe.ui.make_app_page({
         parent: wrapper,
         title: 'Budget vs Actuals Phase Sheet',
         single_column: true
     });
-
     /* ------------------------------------------------
        FILTER SECTION
     --------------------------------------------------*/
@@ -1073,8 +1241,132 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         <div class="frappe-control-group row custom-filter-row"></div>
     `).appendTo(page.body);
 
+    $(`<style>
+        .custom-filter-row {
+            padding: 15px 20px;
+            background: #fff;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .custom-filter-row.row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .custom-filter-row .col-md-4,
+        .custom-filter-row .col-sm-12 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+                
+                    /* Full screen overlay – soft light black glass look */
+        #global-loader.loader-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(18, 18, 18, 0.92); /* light black */
+            backdrop-filter: blur(6px);
+            display: none;
+            z-index: 999999;
+
+            /* Perfect center */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Center container */
+        .loader-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        /* Rounded logo */
+        .loader-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffffff, #eaeaea);
+            padding: 14px;
+            object-fit: contain;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.35),
+                0 0 0 4px rgba(255, 255, 255, 0.08);
+            animation: pulse 1.6s infinite ease-in-out;
+        }
+
+        /* Loader text */
+        .loader-text {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #ffffff; /* white text */
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+            opacity: 0.85;
+        }
+
+        /* Subtle loading dots animation (optional, looks premium) */
+        .loader-text::after {
+            content: "";
+            display: inline-block;
+            width: 1em;
+            animation: dots 1.5s infinite;
+        }
+
+        /* Pulse animation */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+            }
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+                box-shadow: 0 0 20px 8px rgba(255, 255, 255, 0.15);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Loading dots animation */
+        @keyframes dots {
+            0%   { content: ""; }	
+            33%  { content: "."; }
+            66%  { content: ".."; }
+            100% { content: "..."; }
+        }
+    </style>`).appendTo("head");
+
     function make_field() {
         return $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+    }
+
+    /* ------------------------------------------------
+       HELPER — PRESERVE LABELS (CRITICAL)
+    --------------------------------------------------*/
+    function mergeSelectedOptions(control, new_options) {
+        let selected = (control.get_value() || []).map(String);
+        let existing = control.df.options || [];
+        let map = {};
+
+        existing.forEach(o => map[String(o.value)] = o);
+        new_options.forEach(o => map[String(o.value)] = o);
+
+        selected.forEach(v => {
+            if (!map[v]) {
+                map[v] = { label: v, value: v, description: "" };
+            }
+        });
+
+        return Object.values(map);
     }
 
     /* ------------------------------------------------
@@ -1096,9 +1388,41 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         },
         render_input: true
     });
+    let month_col = make_field();
+    // 🔥 Get current month name (e.g., "February")
+    let currentMonth = new Date().toLocaleString('default', { month: 'long' });
+
+    let month_filter = frappe.ui.form.make_control({
+        parent: month_col,
+        df: {
+            label: "YTD Month",
+            fieldtype: "Select",
+            fieldname: "month",
+            options: [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ].join("\n"),
+            default: currentMonth,  
+            reqd: 1,
+            change() {
+                loadData();
+            }
+        },
+        render_input: true
+    });
 
     /* ------------------------------------------------
-       UNIT
+       UNIT (MULTI SELECT)
     --------------------------------------------------*/
     let unit_col = make_field();
     let unit_filter = frappe.ui.form.make_control({
@@ -1111,8 +1435,44 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             get_data() {
                 return frappe.call({
                     method: "annual_budget.api.filter_options.get_units"
-                }).then(r => r.message?.data || []);
+                }).then(r => {
+                    return (r.message?.data || [])
+                        .filter(d => d.value)
+                        .map(d => ({
+                            label: d.label,
+                            value: String(d.value),
+                            description: ""
+                        }));
+                });
             },
+            change() {
+                units = unit_filter.get_value().map(String);
+                cost_center_filter.set_value([]);
+                location_code_filter.df.options = [];
+                location_code_filter.refresh();
+                cost_center_filter.df.options = [];
+                cost_center_filter.refresh();
+                if (units.length) {
+                    loadCostCenters(units);
+                    loadLocationCodes(units);
+                    loadData();
+                }
+            }
+        },
+        render_input: true
+    });
+
+    /* ------------------------------------------------
+       COST CENTER (MULTI SELECT)
+    --------------------------------------------------*/
+    let cc_col = make_field();
+    let cost_center_filter = frappe.ui.form.make_control({
+        parent: cc_col,
+        df: {
+            label: "Cost Center",
+            fieldtype: "MultiSelectList",
+            fieldname: "cost_center",
+            options: [],
             change() {
                 loadData();
             }
@@ -1121,64 +1481,82 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     });
 
     /* ------------------------------------------------
-       STYLES
+       LOCATION CODE (MULTI SELECT)
     --------------------------------------------------*/
-    const style = `
-    <style>
-    #tables-container { margin:20px; }
-    .scroll-wrapper { overflow:auto; max-height:70vh; border:1px solid #ccc; }
-    table.university-table {
-        width:100%;
-        border-collapse:collapse;
-        font-size:13px;
-    }
-    table.university-table th,
-    table.university-table td {
-        border:1px solid #ddd;
-        padding:8px;
-        text-align:center;
-    }
-    table.university-table th:first-child,
-    table.university-table td:first-child {
-        text-align:left;
-    }
-    table.university-table thead th {
-        background:#0076B6;
-        color:#fff;
-    }
-    tr.expense-head { font-weight:700; cursor:pointer; }
-    tr.sub-head { background:#f9f9f9; cursor:pointer; }
-    tr.line-item td:first-child { padding-left:30px; }
-    tr.grand-total-row td {
-        background:#003B63;
-        color:#fff;
-        font-weight:700;
-    }
-    #controls-row {
-        display:flex;
-        justify-content:space-between;
-        margin-bottom:10px;
-    }
-    #global-search-box {
-        width:250px;
-        padding:6px;
-    }
-    </style>
-    `;
-    $(style).appendTo(page.body);
+    let lc_col = make_field();
+    let location_code_filter = frappe.ui.form.make_control({
+        parent: lc_col,
+        df: {
+            label: "Location Code",
+            fieldtype: "MultiSelectList",
+            fieldname: "location_code",
+            options: [],
+            change() {
+                loadData();
+            }
+        },
+        render_input: true
+    });
 
     /* ------------------------------------------------
-       TABLE UI
+       LOAD COST CENTERS
     --------------------------------------------------*/
-    const container = $(`
-        <div id="tables-container">
+    function loadCostCenters(units) {
+				    cost_center_filter.set_value([]);
 
+        frappe.call({
+            method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
+            args: { units: units.join(",") },
+            callback(r) {
+                let api_options = (r.message?.data || [])
+                    .filter(d => d.value)
+                    .map(d => ({
+                        label: d.label,
+                        value: String(d.value),
+                        description: "",
+                        erp_cost_center_value: String(d.erp_cost_center_value)
+
+                    }));
+
+                cost_center_filter.df.options =
+                    mergeSelectedOptions(cost_center_filter, api_options);
+
+                cost_center_filter.refresh();
+            }
+        });
+    }
+
+    /* ------------------------------------------------
+       LOAD LOCATION CODES
+    --------------------------------------------------*/
+    function loadLocationCodes(units) {
+		     location_code_filter.set_value([]);
+        frappe.call({
+            method: "annual_budget.api.filter_options.get_location_codes_by_unit",
+            args: { unit: units.join(",") },
+            callback(r) {
+                let api_options = (r.message?.data || [])
+                    .filter(d => d.value)
+                    .map(d => ({
+                        label: d.label,
+                        value: String(d.value),
+                        description: "",
+                        erp_loc_value: String(d.erp_loc_value)
+                    }));
+
+                location_code_filter.df.options =
+                    mergeSelectedOptions(location_code_filter, api_options);
+
+                location_code_filter.refresh();
+            }
+        });
+    }
+
+      const container = $(`
+        <div id="tables-container">
             <div id="controls-row">
-                <input id="global-search-box" type="text" placeholder="Search...">
-                <label>
-                    <input type="checkbox" id="expand-items">
-                    Expand All
-                </label>
+                <input id="global-search-box" type="text"
+                    placeholder="Search Expense / Sub Head / Item...">
             </div>
 
             <div class="scroll-wrapper">
@@ -1186,123 +1564,227 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             </div>
         </div>
     `);
+
     $(page.body).append(container);
 
-    /* ------------------------------------------------
+    /* =====================================================
        STATE
-    --------------------------------------------------*/
+    =====================================================*/
     let expense_heads = [];
     let expandedHeads = [];
     let expandedSubHeads = [];
     let searchText = "";
 
-    const formatNumber = n => (n || 0).toLocaleString();
-
-    /* ------------------------------------------------
-       LOAD DATA
-    --------------------------------------------------*/
-    function loadData() {
-
-        let fy = fiscal_year_filter.get_value();
-        let unit = unit_filter.get_value();
-
-        if (!fy || !unit?.length) return;
-
-        frappe.call({
-            method: "annual_budget.api.phase_sheet.get_budget_actuals_report",
-            args: {
-                financial_year: fy,
-                units: unit.join(",")
-            },
-            callback: function(r) {
-                expense_heads = r.message || [];
-                renderTable();
-            }
+    const formatNumber = n =>
+        (Number(n) || 0).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
-    }
 
-    /* ------------------------------------------------
-       SEARCH
-    --------------------------------------------------*/
     function matchesSearch(...values) {
         return values.some(v =>
             String(v || "").toLowerCase().includes(searchText.toLowerCase())
         );
     }
+/* ------------------------------------------------
+   HELPER — GET SELECTED WITH EXTRA KEY
+--------------------------------------------------*/
+function getSelectedWithKey(control, key) {
+    return (control.get_value() || [])
+        .map(val => {
+            let option = control.df.options.find(
+                o => String(o.value) === String(val)
+            );
+            return option?.[key];
+        })
+        .filter(Boolean);
+}
 
-    /* ------------------------------------------------
+    /* =====================================================
+       LOAD DATA
+    =====================================================*/
+function loadData() {
+
+    let financial_year = fiscal_year_filter.get_value();
+    let month = month_filter.get_value();
+    let unit = (unit_filter.get_value() || [])[0] || null;
+    let erp_cost_center_value =getSelectedWithKey(cost_center_filter, "erp_cost_center_value")[0] || null;
+    let erp_loc_value =getSelectedWithKey(location_code_filter, "erp_loc_value")[0] || null;
+    let missing = [];
+    if (!financial_year) missing.push("Financial Year");
+    if (!month) missing.push("Month");
+    if (!unit) missing.push("Unit");
+    if (!erp_cost_center_value) missing.push("Cost Center");
+    if (missing.length) {
+        console.warn("⚠ Missing Filters:", missing.join(", "));
+        return;
+    }
+
+    Loader.show("Loading University Summary");
+
+    frappe.call({
+        method: "annual_budget.api.phase_sheet.get_combined_actuals",
+        args: {
+            financial_year,
+            month,
+            unit,
+            erp_cost_center_value,
+            erp_loc_value
+        },
+        callback: function(r) {
+            expense_heads = r.message?.message || r.message || [];
+            renderTable();
+        },
+        error: function(err) {
+            console.error("API Error:", err);
+            frappe.msgprint({
+                title: "Error",
+                message: "Failed to load data. Please try again.",
+                indicator: "red"
+            });
+        }
+    }).always(function() {
+        Loader.hide();
+    });
+}
+
+
+    /* =====================================================
        RENDER TABLE
-    --------------------------------------------------*/
+    =====================================================*/
     function renderTable() {
 
         const $table = $('#phase-table');
         $table.empty();
 
-        const $thead = $(`
+        if (!expense_heads.length) {
+            $table.append(`<tr><td>No Data Found</td></tr>`);
+            return;
+        }
+
+        $table.append(`
             <thead>
-                <tr>
-                    <th>Expense Head / Line Item</th>
+                <tr class="main-row">
+                    <th>Expense Head</th>
                     <th>Budget</th>
-                    <th>Previous Year Actuals</th>
+                    <th>Actuals</th>
+                    <th>Previous Year</th>
                     <th>Total</th>
                 </tr>
             </thead>
         `);
 
-        $table.append($thead);
         const $tbody = $('<tbody></tbody>');
+
+        let grand_budget = 0;
+        let grand_actuals = 0;
 
         expense_heads.forEach(head => {
 
-            if (!matchesSearch(head.name)) return;
+            if (searchText &&
+                !matchesSearch(head.name) &&
+                !(head.items || []).some(i => matchesSearch(i.name)) &&
+                !(head.sub_heads || []).some(s =>
+                    matchesSearch(s.name) ||
+                    (s.items || []).some(i => matchesSearch(i.name))
+                )
+            ) return;
 
-            const budget = head.budget || 0;
-            const prev = head.previous_year_actual || 0;
-            const total = head.total || budget;
+            const headBudget = Number(head.ytd || 0);
+            let headActual = 0;
+
+            (head.items || []).forEach(i => {
+                headActual += Number(i.total_posted_amt || 0);
+            });
+
+            (head.sub_heads || []).forEach(s => {
+                (s.items || []).forEach(i => {
+                    headActual += Number(i.total_posted_amt || 0);
+                });
+            });
+
+            grand_budget += headBudget;
+            grand_actuals += headActual;
+
+            const headTotal = headBudget + headActual;
 
             $tbody.append(`
                 <tr class="expense-head" data-head="${head.name}">
                     <td>${expandedHeads.includes(head.name) ? '▼' : '▶'} ${head.name}</td>
-                    <td>${formatNumber(budget)}</td>
-                    <td>${formatNumber(prev)}</td>
-                    <td>${formatNumber(total)}</td>
+                    <td>${formatNumber(headBudget)}</td>
+                    <td>${formatNumber(headActual)}</td>
+                    <td>${formatNumber(0)}</td>
+                    <td class="text-blue">${formatNumber(headTotal)}</td>
                 </tr>
             `);
 
-            /* Sub-Heads */
-            if (expandedHeads.includes(head.name) && head.sub_heads) {
+            if (expandedHeads.includes(head.name)) {
 
-                head.sub_heads.forEach(sub => {
+                /* Direct Items */
+                (head.items || []).forEach(item => {
+
+                    if (searchText && !matchesSearch(item.name)) return;
+
+                    const budget = Number(item.ytd || 0);
+                    const actual = Number(item.total_posted_amt || 0);
+                    const total = budget + actual;
+
+                    $tbody.append(`
+                        <tr class="line-item">
+                            <td>${item.name}</td>
+                            <td>${formatNumber(budget)}</td>
+                            <td>${formatNumber(actual)}</td>
+                            <td>${formatNumber(0)}</td>
+                            <td>${formatNumber(total)}</td>
+                        </tr>
+                    `);
+                });
+
+                /* Sub Heads */
+                (head.sub_heads || []).forEach(sub => {
 
                     const key = head.name + "__" + sub.name;
 
-                    const subBudget = sub.budget || 0;
-                    const subPrev = sub.previous_year_actual || 0;
-                    const subTotal = sub.total || subBudget;
+                    if (searchText &&
+                        !matchesSearch(sub.name) &&
+                        !(sub.items || []).some(i => matchesSearch(i.name))
+                    ) return;
+
+                    let subActual = 0;
+                    (sub.items || []).forEach(i => {
+                        subActual += Number(i.total_posted_amt || 0);
+                    });
+
+                    const subBudget = Number(sub.ytd || 0);
+                    const subTotal = subBudget + subActual;
 
                     $tbody.append(`
                         <tr class="sub-head" data-sub="${key}">
                             <td>${expandedSubHeads.includes(key) ? '▼' : '▶'} ${sub.name}</td>
                             <td>${formatNumber(subBudget)}</td>
-                            <td>${formatNumber(subPrev)}</td>
-                            <td>${formatNumber(subTotal)}</td>
+                            <td>${formatNumber(subActual)}</td>
+                            <td>${formatNumber(0)}</td>
+                            <td class="text-blue">${formatNumber(subTotal)}</td>
                         </tr>
                     `);
 
-                    if (expandedSubHeads.includes(key) && sub.items) {
+                    if (expandedSubHeads.includes(key)) {
 
-                        sub.items.forEach(item => {
+                        (sub.items || []).forEach(item => {
 
-                            const itemBudget = item.budget || 0;
-                            const itemPrev = item.previous_year_actual || 0;
-                            const itemTotal = item.total || itemBudget;
+                            if (searchText && !matchesSearch(item.name)) return;
+
+                            const budget = Number(item.ytd || 0);
+                            const actual = Number(item.total_posted_amt || 0);
+                            const total = budget + actual;
 
                             $tbody.append(`
                                 <tr class="line-item">
                                     <td>${item.name}</td>
-                                    <td>${formatNumber(itemBudget)}</td>
-                                    <td>${formatNumber(itemPrev)}</td>
-                                    <td>${formatNumber(itemTotal)}</td>
+                                    <td>${formatNumber(budget)}</td>
+                                    <td>${formatNumber(actual)}</td>
+                                    <td>${formatNumber(0)}</td>
+                                    <td>${formatNumber(total)}</td>
                                 </tr>
                             `);
                         });
@@ -1311,60 +1793,43 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             }
         });
 
-        /* GRAND TOTAL */
-        const grandBudget = expense_heads.reduce((s,h)=>s+(h.budget||0),0);
-        const grandPrev = expense_heads.reduce((s,h)=>s+(h.previous_year_actual||0),0);
-        const grandTotal = expense_heads.reduce((s,h)=>s+(h.total||h.budget||0),0);
+        const grand_total = grand_budget + grand_actuals;
 
         $tbody.append(`
             <tr class="grand-total-row">
                 <td>GRAND TOTAL</td>
-                <td>${formatNumber(grandBudget)}</td>
-                <td>${formatNumber(grandPrev)}</td>
-                <td>${formatNumber(grandTotal)}</td>
+                <td>${formatNumber(grand_budget)}</td>
+                <td>${formatNumber(grand_actuals)}</td>
+                <td>${formatNumber(0)}</td>
+                <td>${formatNumber(grand_total)}</td>
             </tr>
         `);
 
         $table.append($tbody);
 
-        /* EVENTS */
-        $table.find('.expense-head').off('click').on('click', function() {
+        /* Toggle Head */
+        $('.expense-head').off().on('click', function() {
             const name = $(this).data('head');
             expandedHeads = expandedHeads.includes(name)
-                ? expandedHeads.filter(x=>x!==name)
+                ? expandedHeads.filter(x => x !== name)
                 : [...expandedHeads, name];
             renderTable();
         });
 
-        $table.find('.sub-head').off('click').on('click', function() {
+        /* Toggle Sub Head */
+        $('.sub-head').off().on('click', function() {
             const key = $(this).data('sub');
             expandedSubHeads = expandedSubHeads.includes(key)
-                ? expandedSubHeads.filter(x=>x!==key)
+                ? expandedSubHeads.filter(x => x !== key)
                 : [...expandedSubHeads, key];
             renderTable();
         });
     }
-
-    /* ------------------------------------------------
-       EVENTS
-    --------------------------------------------------*/
-    $("#expand-items").on("change", function() {
-        if (this.checked) {
-            expandedHeads = expense_heads.map(h=>h.name);
-            expandedSubHeads = expense_heads.flatMap(h =>
-                (h.sub_heads || []).map(s => h.name + "__" + s.name)
-            );
-        } else {
-            expandedHeads = [];
-            expandedSubHeads = [];
-        }
-        renderTable();
-    });
 
     $("#global-search-box").on("input", function() {
         searchText = this.value;
         renderTable();
     });
 
-    loadData();
 };
+

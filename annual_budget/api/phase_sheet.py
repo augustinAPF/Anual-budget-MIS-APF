@@ -1,6 +1,7 @@
 import frappe
 import re
 from decimal import Decimal
+from annual_budget.api.actual_format import get_filtered_actuals
 
 # ! =======================================================  Consolidated report Line item wise Grouping  ================================================================================
 @frappe.whitelist(allow_guest=True)
@@ -215,12 +216,9 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
     return final
 
 
-
-
-
 import frappe
+import re
 from decimal import Decimal
-from datetime import datetime
 
 
 @frappe.whitelist(allow_guest=True)
@@ -229,106 +227,84 @@ def get_consolidated_report_actual_ytd(
     units=None,
     cost_center=None,
     location_code=None,
-    upto_month=None
+    month=None
 ):
 
     if not financial_year:
         frappe.throw("Financial Year is required")
 
-    # -------------------------------------------------
-    # Safe Number Conversion
-    # -------------------------------------------------
+    if not month:
+        frappe.throw("Month is required")
+
+    # ---------------------------------------------------
+    # Safe Numeric Conversion
+    # ---------------------------------------------------
     def _num(x):
-        if not x:
+        if x is None:
             return 0.0
         try:
             return float(Decimal(str(x)))
         except Exception:
             return 0.0
 
-    # -------------------------------------------------
-    # Month Order (Matches Child Table Fields EXACTLY)
-    # -------------------------------------------------
-    MONTH_FIELDS = [
+    # ---------------------------------------------------
+    # Financial Year Month Order (April → March)
+    # ---------------------------------------------------
+    MONTHS = [
         "april", "may", "june",
         "july", "august", "september",
         "october", "november", "december",
         "january", "february", "march"
     ]
 
-    if not upto_month:
-        upto_month = datetime.now().strftime("%B").lower()
+    month = month.lower().strip()
 
-    upto_month = upto_month.lower().strip()
+    if month not in MONTHS:
+        frappe.throw("Invalid month")
 
-    if upto_month not in MONTH_FIELDS:
-        frappe.throw("Invalid Month")
+    end_index = MONTHS.index(month)
 
-    month_index = MONTH_FIELDS.index(upto_month)
+    # ---------------------------------------------------
+    # Load Sequence Mapping (Same as Original)
+    # ---------------------------------------------------
+    expense_rows = frappe.db.get_all(
+        "Expenses",
+        fields=[
+            "head_of_expense",
+            "sub_head_of_expense",
+            "type_of_expense",
+            "sequence_id"
+        ]
+    )
 
-    # -------------------------------------------------
-    # Resolve Financial Year (Link Safe)
-    # -------------------------------------------------
-    financial_year = financial_year.strip()
+    sequence_map = {}
 
-    fy_doc = frappe.db.exists("Financial year list", financial_year)
+    for e in expense_rows:
+        seq = int(e.sequence_id) if e.sequence_id else 9999
 
-    if not fy_doc:
-        possible_fy = frappe.get_all(
-            "Financial year list",
-            filters={"name": ["like", f"%{financial_year}%"]},
-            fields=["name"],
-            limit=1
-        )
-        if possible_fy:
-            financial_year = possible_fy[0].name
-        else:
-            return []
+        if e.head_of_expense:
+            sequence_map[str(e.head_of_expense).strip().upper()] = seq
 
+        if e.sub_head_of_expense:
+            sequence_map[str(e.sub_head_of_expense).strip().upper()] = seq
+
+        if e.type_of_expense:
+            sequence_map[str(e.type_of_expense).strip().upper()] = seq
+
+    # ---------------------------------------------------
+    # Filters
+    # ---------------------------------------------------
     filters = {"financial_year": financial_year}
 
-    # -------------------------------------------------
-    # Resolve Unit (set_id → Link to Unit)
-    # -------------------------------------------------
     if units:
-        unit_doc = frappe.get_all(
-            "Unit",
-            filters={"name": ["like", f"%{units.strip()}%"]},
-            fields=["name"],
-            limit=1
-        )
-        if unit_doc:
-            filters["set_id"] = unit_doc[0].name
+        filters["set_id"] = ["in", [u.strip() for u in units.split(",")]]
 
-    # -------------------------------------------------
-    # Resolve Cost Center (Link)
-    # -------------------------------------------------
     if cost_center:
-        cc_doc = frappe.get_all(
-            "Cost Center",
-            filters={"name": ["like", f"%{cost_center.strip()}%"]},
-            fields=["name"],
-            limit=1
-        )
-        if cc_doc:
-            filters["cost_center"] = cc_doc[0].name
+        filters["cost_center"] = ["in", [c.strip() for c in cost_center.split(",")]]
 
-    # -------------------------------------------------
-    # Resolve Location Code (Link)
-    # -------------------------------------------------
     if location_code:
-        loc_doc = frappe.get_all(
-            "Location Code",
-            filters={"name": ["like", f"%{location_code.strip()}%"]},
-            fields=["name"],
-            limit=1
-        )
-        if loc_doc:
-            filters["location_code"] = loc_doc[0].name
+        filters["location_code"] = ["in", [l.strip() for l in location_code.split(",")]]
 
-    # -------------------------------------------------
-    # Fetch Parent Finance Budget
-    # -------------------------------------------------
     parents = frappe.get_all(
         "Finance Budget",
         filters=filters,
@@ -340,9 +316,9 @@ def get_consolidated_report_actual_ytd(
 
     parent_names = [p.name for p in parents]
 
-    # -------------------------------------------------
-    # Fetch Child Table Rows (Month Fields)
-    # -------------------------------------------------
+    # ---------------------------------------------------
+    # Fetch ALL Month Fields (Important Fix)
+    # ---------------------------------------------------
     rows = frappe.get_all(
         "Finance Budget Amounts",
         filters={"parent": ["in", parent_names]},
@@ -361,39 +337,258 @@ def get_consolidated_report_actual_ytd(
     if not rows:
         return []
 
-    # -------------------------------------------------
-    # YTD Calculation (Based on Child Month Fields)
-    # -------------------------------------------------
-    result = []
+    # ---------------------------------------------------
+    # Grouping Logic (Same as Your Quarterly Version)
+    # ---------------------------------------------------
+    TOP_LEVEL_HEADS = ["CAPITAL EXPENSES", "OPERATING EXPENSES"]
+    heads = {}
 
     for r in rows:
 
+        raw_head = re.sub(r"\s+", " ", str(r.get("head_of_expense") or "")).strip().upper()
+        sub = re.sub(r"\s+", " ", str(r.get("sub_head_of_expense") or "")).strip().upper()
+        item = str(r.get("type_of_expense") or "UNKNOWN ITEM").strip()
+        gl = str(r.get("gl_code") or "").strip()
+
+        # ---------------------------------------------------
+        # Correct YTD Calculation (April → Selected Month)
+        # ---------------------------------------------------
         ytd_total = 0.0
+        for m in MONTHS[:end_index + 1]:
+            ytd_total += _num(r.get(m))
 
-        # Sum from April → upto_month
-        for m in MONTH_FIELDS[:month_index + 1]:
-            ytd_total += _num(getattr(r, m))
+        # ---------------------------------------------------
+        # Determine Parent Head
+        # ---------------------------------------------------
+        if raw_head not in TOP_LEVEL_HEADS:
+            parent_head = "OPERATING EXPENSES"
+            sub = raw_head
+        else:
+            parent_head = raw_head
 
-        result.append({
-            "head_of_expense": r.head_of_expense,
-            "sub_head_of_expense": r.sub_head_of_expense,
-            "type_of_expense": r.type_of_expense,
-            "gl_code": r.gl_code,
-            "ytd": ytd_total
-        })
+        if parent_head not in heads:
+            heads[parent_head] = {
+                "name": parent_head,
+                "sequence_id": sequence_map.get(parent_head, 9999),
+                "ytd": 0.0,
+                "items": {},
+                "sub_heads": {}
+            }
 
-    return result
+        heads[parent_head]["ytd"] += ytd_total
 
+        # ---------------------------------------------------
+        # CAPITAL EXPENSES
+        # ---------------------------------------------------
+        if parent_head == "CAPITAL EXPENSES":
 
+            if item not in heads[parent_head]["items"]:
+                heads[parent_head]["items"][item] = {
+                    "name": item,
+                    "sequence_id": sequence_map.get(item.upper(), 9999),
+                    "gl_code": gl,
+                    "ytd": 0.0
+                }
 
+            heads[parent_head]["items"][item]["ytd"] += ytd_total
 
+        # ---------------------------------------------------
+        # OPERATING EXPENSES
+        # ---------------------------------------------------
+        else:
 
+            if sub:
 
+                if sub not in heads[parent_head]["sub_heads"]:
+                    heads[parent_head]["sub_heads"][sub] = {
+                        "name": sub,
+                        "sequence_id": sequence_map.get(sub, 9999),
+                        "ytd": 0.0,
+                        "items": {}
+                    }
 
+                heads[parent_head]["sub_heads"][sub]["ytd"] += ytd_total
 
+                if item not in heads[parent_head]["sub_heads"][sub]["items"]:
+                    heads[parent_head]["sub_heads"][sub]["items"][item] = {
+                        "name": item,
+                        "sequence_id": sequence_map.get(item.upper(), 9999),
+                        "gl_code": gl,
+                        "ytd": 0.0
+                    }
 
+                heads[parent_head]["sub_heads"][sub]["items"][item]["ytd"] += ytd_total
 
+    # ---------------------------------------------------
+    # Final Sorting (Same As Original)
+    # ---------------------------------------------------
+    final = []
 
+    for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+
+        head["items"] = sorted(
+            head["items"].values(),
+            key=lambda x: x["sequence_id"]
+        )
+
+        sorted_subs = []
+
+        for sub in head["sub_heads"].values():
+
+            sub["items"] = sorted(
+                sub["items"].values(),
+                key=lambda x: x["sequence_id"]
+            )
+
+            if sub["items"]:
+                sub["sequence_id"] = min(
+                    item["sequence_id"] for item in sub["items"]
+                )
+            else:
+                sub["sequence_id"] = 9999
+
+            sorted_subs.append(sub)
+
+        head["sub_heads"] = sorted(
+            sorted_subs,
+            key=lambda x: x["sequence_id"]
+        )
+
+        final.append(head)
+
+    return final
+
+@frappe.whitelist(allow_guest=True)
+def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None,erp_loc_value=None,erp_cost_center=None):
+
+    first_response = get_consolidated_report_actual_ytd(
+        financial_year=financial_year,
+        units=unit,
+        cost_center=cost_center,
+        location_code=location_code,
+        month=month
+    )
+
+    second_response = get_filtered_actuals(
+        month=month,
+        financial_year=financial_year,
+        unit=unit,
+        cost_center=erp_cost_center,
+        location_code=erp_loc_value
+    )
+
+    def normalize_string(value):
+        if not value:
+            return ""
+        return " ".join(value.strip().lower().split())
+
+    actuals_lookup = {}
+
+    for row in second_response.get("data", []):
+        key = normalize_string(row.get("type_of_expense"))
+
+        actuals_lookup[key] = {
+            "type_of_expense": row.get("type_of_expense"),
+            "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
+            "total_posted_amt": row.get("total_posted_amt", "0")
+        }
+
+    for head in first_response:
+
+        for item in head.get("items", []):
+            name_key = normalize_string(item.get("name"))
+
+            if name_key in actuals_lookup:
+                item.update(actuals_lookup[name_key])
+            else:
+                item.update({
+                    "type_of_expense": item.get("name"),
+                    "actuals_type_of_expenses": item.get("name"),
+                    "total_posted_amt": "0"
+                })
+
+        for sub_head in head.get("sub_heads", []):
+            for item in sub_head.get("items", []):
+                name_key = normalize_string(item.get("name"))
+
+                if name_key in actuals_lookup:
+                    item.update(actuals_lookup[name_key])
+                else:
+                    item.update({
+                        "type_of_expense": item.get("name"),
+                        "actuals_type_of_expenses": item.get("name"),
+                        "total_posted_amt": "0"
+                    })
+
+    return first_response
+
+# def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None):
+
+#     first_response = get_consolidated_report_actual_ytd(
+#         financial_year=financial_year,
+#         units=unit,
+#         cost_center=cost_center,
+#         location_code=location_code,
+#         month=month
+#     )
+
+#     second_response = get_filtered_actuals(
+#         month="january",
+#         financial_year=financial_year,
+#         unit=unit,
+#         cost_center="122300",
+#         location_code=location_code
+#     )
+
+#     def normalize_string(value):
+#         if not value:
+#             return ""
+#         return " ".join(value.strip().lower().split())
+
+#     # Build lookup
+#     actuals_lookup = {}
+
+#     for row in second_response.get("data", []):   # ✅ FIX HERE
+#         key = normalize_string(row.get("type_of_expense"))
+
+#         actuals_lookup[key] = {
+#             "type_of_expense": row.get("type_of_expense"),
+#             "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
+#             "total_posted_amt": row.get("total_posted_amt", "0")
+#         }
+
+#     # Inject into first response
+#     for head in first_response:
+
+#         for item in head.get("items", []):
+#             name_key = normalize_string(item.get("name"))
+
+#             if name_key in actuals_lookup:
+#                 item.update(actuals_lookup[name_key])
+#             else:
+#                 item.update({
+#                     "type_of_expense": item.get("name"),
+#                     "actuals_type_of_expenses": item.get("name"),
+#                     "total_posted_amt": "0"
+#                 })
+
+#         for sub_head in head.get("sub_heads", []):
+#             for item in sub_head.get("items", []):
+#                 name_key = normalize_string(item.get("name"))
+
+#                 if name_key in actuals_lookup:
+#                     item.update(actuals_lookup[name_key])
+#                 else:
+#                     item.update({
+#                         "type_of_expense": item.get("name"),
+#                         "actuals_type_of_expenses": item.get("name"),
+#                         "total_posted_amt": "0"
+#                     })
+
+#     return {
+#         "combined_report": first_response,
+#         "filtered_actuals": second_response
+#     }
 
 # ! =======================================================  Consolidated Number Card Totals =============================================================================
 @frappe.whitelist(allow_guest=True)
