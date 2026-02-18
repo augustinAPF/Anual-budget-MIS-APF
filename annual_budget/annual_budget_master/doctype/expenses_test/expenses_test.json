@@ -91,7 +91,7 @@
    "fieldname": "sub_gl",
    "fieldtype": "Table",
    "label": "Sub GL",
-   "options": "GL code Map"
+   "options": "GL code Mapping"
   },
   {
    "fieldname": "budget_lineitems_section",
@@ -102,7 +102,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-16 21:04:39.442253",
+ "modified": "2026-02-18 12:31:35.672517",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Expenses Test",

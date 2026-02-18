@@ -1,10 +1,11 @@
 {
  "actions": [],
  "allow_import": 1,
- "autoname": "EXPS-.####",
+ "autoname": "EXS-.####",
  "creation": "2026-02-16 21:49:41.940160",
  "doctype": "DocType",
  "engine": "InnoDB",
+ "custom":1,
  "field_order": [
   "budget_lineitems_section",
   "head_of_expense",
@@ -70,7 +71,7 @@
    "fieldname": "sub_gl",
    "fieldtype": "Table",
    "label": "Sub GL",
-   "options": "GL code Map"
+   "options": "GL code Mapping"
   },
   {
    "fieldname": "actuals_lineitems_dec_section",
@@ -102,7 +103,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-17 16:03:34.919858",
+ "modified": "2026-02-18 12:31:35.605418",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Expenses",

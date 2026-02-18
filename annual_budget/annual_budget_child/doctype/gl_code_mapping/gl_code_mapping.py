@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GLcodeMap(Document):
+class GLcodeMapping(Document):
 	pass
