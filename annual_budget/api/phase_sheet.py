@@ -458,9 +458,74 @@ def get_consolidated_report_actual_ytd(
 
     return final
 
-@frappe.whitelist(allow_guest=True)
-def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None,erp_loc_value=None,erp_cost_center=None):
+# @frappe.whitelist(allow_guest=True)
+# def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None,erp_loc_value=None,erp_cost_center=None):
 
+#     first_response = get_consolidated_report_actual_ytd(
+#         financial_year=financial_year,
+#         units=unit,
+#         cost_center=cost_center,
+#         location_code=location_code,
+#         month=month
+#     )
+
+#     second_response = get_filtered_actuals(
+#         month=month,
+#         financial_year=financial_year,
+#         unit=unit,
+#         cost_center=erp_cost_center,
+#         location_code=erp_loc_value
+#     )
+
+#     def normalize_string(value):
+#         if not value:
+#             return ""
+#         return " ".join(value.strip().lower().split())
+
+#     actuals_lookup = {}
+
+#     for row in second_response.get("data", []):
+#         key = normalize_string(row.get("type_of_expense"))
+
+#         actuals_lookup[key] = {
+#             "type_of_expense": row.get("type_of_expense"),
+#             "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
+#             "total_posted_amt": row.get("total_posted_amt", "0")
+#         }
+
+#     for head in first_response:
+
+#         for item in head.get("items", []):
+#             name_key = normalize_string(item.get("name"))
+
+#             if name_key in actuals_lookup:
+#                 item.update(actuals_lookup[name_key])
+#             else:
+#                 item.update({
+#                     "type_of_expense": item.get("name"),
+#                     "actuals_type_of_expenses": item.get("name"),
+#                     "total_posted_amt": "0"
+#                 })
+
+#         for sub_head in head.get("sub_heads", []):
+#             for item in sub_head.get("items", []):
+#                 name_key = normalize_string(item.get("name"))
+
+#                 if name_key in actuals_lookup:
+#                     item.update(actuals_lookup[name_key])
+#                 else:
+#                     item.update({
+#                         "type_of_expense": item.get("name"),
+#                         "actuals_type_of_expenses": item.get("name"),
+#                         "total_posted_amt": "0"
+#                     })
+
+#     return first_response
+
+
+@frappe.whitelist(allow_guest=True)
+def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None, erp_loc_value=None, erp_cost_center_value=None):
+    print(erp_cost_center_value,erp_loc_value)
     first_response = get_consolidated_report_actual_ytd(
         financial_year=financial_year,
         units=unit,
@@ -473,33 +538,32 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
         month=month,
         financial_year=financial_year,
         unit=unit,
-        cost_center=erp_cost_center,
+        cost_center=erp_cost_center_value,
         location_code=erp_loc_value
     )
 
-    def normalize_string(value):
-        if not value:
-            return ""
-        return " ".join(value.strip().lower().split())
-
+    # 🔹 Build lookup using sequence_id instead of type_of_expense
     actuals_lookup = {}
 
     for row in second_response.get("data", []):
-        key = normalize_string(row.get("type_of_expense"))
+        sequence_id = row.get("sequence_id")
 
-        actuals_lookup[key] = {
-            "type_of_expense": row.get("type_of_expense"),
-            "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
-            "total_posted_amt": row.get("total_posted_amt", "0")
-        }
+        if sequence_id:
+            actuals_lookup[sequence_id] = {
+                "type_of_expense": row.get("type_of_expense"),
+                "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
+                "total_posted_amt": row.get("total_posted_amt", "0")
+            }
 
+    # 🔹 Map using sequence_id
     for head in first_response:
 
+        # Main items
         for item in head.get("items", []):
-            name_key = normalize_string(item.get("name"))
+            sequence_id = item.get("sequence_id")
 
-            if name_key in actuals_lookup:
-                item.update(actuals_lookup[name_key])
+            if sequence_id in actuals_lookup:
+                item.update(actuals_lookup[sequence_id])
             else:
                 item.update({
                     "type_of_expense": item.get("name"),
@@ -507,12 +571,13 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
                     "total_posted_amt": "0"
                 })
 
+        # Sub head items
         for sub_head in head.get("sub_heads", []):
             for item in sub_head.get("items", []):
-                name_key = normalize_string(item.get("name"))
+                sequence_id = item.get("sequence_id")
 
-                if name_key in actuals_lookup:
-                    item.update(actuals_lookup[name_key])
+                if sequence_id in actuals_lookup:
+                    item.update(actuals_lookup[sequence_id])
                 else:
                     item.update({
                         "type_of_expense": item.get("name"),
@@ -521,6 +586,7 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
                     })
 
     return first_response
+
 
 # def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None):
 
