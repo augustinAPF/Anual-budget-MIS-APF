@@ -237,7 +237,7 @@ def get_grouped_actuals_detailed_gl(fiscal_year, accounting_period):
     expense_lookup = {str(e.name): e for e in expenses}
 
     child_rows = frappe.get_all(
-        "GL code Map",
+        "GL code Mapping",
         fields=["parent", "gl_code_map", "type_of_expense"]
     )
 
@@ -359,7 +359,7 @@ def get_grouped_actuals(fiscal_year, accounting_period):
     expense_lookup = {str(e.name): e for e in expenses}
 
     child_rows = frappe.get_all(
-        "GL code Map",
+        "GL code Mapping",
         fields=["parent", "gl_code_map"]
     )
 
@@ -442,7 +442,7 @@ def get_grouped_actuals(fiscal_year, accounting_period):
     expense_lookup = {str(e.name): e for e in expenses}
 
     child_rows = frappe.get_all(
-        "GL code Map",
+        "GL code Mapping",
         fields=["parent", "gl_code_map"]
     )
 
