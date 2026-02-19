@@ -1652,12 +1652,14 @@ function loadData() {
     let financial_year = fiscal_year_filter.get_value();
     let month = month_filter.get_value();
     let unit = (unit_filter.get_value() || [])[0] || null;
+    let location_code =getSelectedWithKey(location_code_filter, "value")[0] || null;
+    let cost_center =getSelectedWithKey(cost_center_filter, "value")[0] || null;
     let erp_cost_center_value =getSelectedWithKey(cost_center_filter, "erp_cost_center_value")[0] || null;
+    let erp_loc_value =getSelectedWithKey(location_code_filter, "erp_loc_value")[0] || null;
+    console.log(erp_cost_center_value,"erp_cost_center_value");
+    console.log(cost_center,"cost_center_value")
+    console.log(location_code,"loc_value")
 
-
-    let erp_loc_value =
-        getSelectedWithKey(location_code_filter, "erp_loc_value")[0] || null;
-    console.log(erp_cost_center_value,"erp_cost_center_value")
     let missing = [];
     if (!financial_year) missing.push("Financial Year");
     if (!month) missing.push("Month");
@@ -1677,9 +1679,11 @@ function loadData() {
             financial_year,
             month,
             unit,
+            cost_center,
+            location_code,
             erp_loc_value,
             erp_cost_center_value,
-
+            
         }
     })
     .done(function(r) {
