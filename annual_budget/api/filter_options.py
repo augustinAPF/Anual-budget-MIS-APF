@@ -1,6 +1,6 @@
 import frappe
 
-
+# ! =======================================================  Units filter values =============================================================================
 @frappe.whitelist(allow_guest=True)
 def get_units():
     unit_data = frappe.get_all(
@@ -26,7 +26,7 @@ def get_units():
     return {
         "data": data
     }
-
+# ! ======================================================= Cost center filter values =============================================================================
 @frappe.whitelist(allow_guest=True)
 def get_cost_centers_by_set_id(units=None):
     if not units:
@@ -58,7 +58,7 @@ def get_cost_centers_by_set_id(units=None):
     return {
         "data": data
     }
-
+# ! =======================================================  Location code filter values =============================================================================
 @frappe.whitelist(allow_guest=True)
 def get_location_codes_by_unit(unit=None):
     if not unit:

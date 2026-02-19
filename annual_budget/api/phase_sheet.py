@@ -524,8 +524,81 @@ def get_consolidated_report_actual_ytd(
 
 
 @frappe.whitelist(allow_guest=True)
-def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None, erp_loc_value=None, erp_cost_center_value=None):
-    print(erp_cost_center_value,erp_loc_value)
+# def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None, erp_loc_value=None, erp_cost_center_value=None):
+#     print(erp_cost_center_value,erp_loc_value)
+#     first_response = get_consolidated_report_actual_ytd(
+#         financial_year=financial_year,
+#         units=unit,
+#         cost_center=cost_center,
+#         location_code=location_code,
+#         month=month
+#     )
+
+#     second_response = get_filtered_actuals(
+#         month=month,
+#         financial_year=financial_year,
+#         unit=unit,
+#         cost_center=erp_cost_center_value,
+#         location_code=erp_loc_value
+#     )
+
+#     # 🔹 Build lookup using sequence_id instead of type_of_expense
+#     actuals_lookup = {}
+
+#     for row in second_response.get("data", []):
+#         sequence_id = row.get("sequence_id")
+
+#         if sequence_id:
+#             actuals_lookup[sequence_id] = {
+#                 "type_of_expense": row.get("type_of_expense"),
+#                 "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
+#                 "total_posted_amt": row.get("total_posted_amt", "0")
+#             }
+
+#     # 🔹 Map using sequence_id
+#     for head in first_response:
+
+#         # Main items
+#         for item in head.get("items", []):
+#             sequence_id = item.get("sequence_id")
+
+#             if sequence_id in actuals_lookup:
+#                 item.update(actuals_lookup[sequence_id])
+#             else:
+#                 item.update({
+#                     "type_of_expense": item.get("name"),
+#                     "actuals_type_of_expenses": item.get("name"),
+#                     "total_posted_amt": "0"
+#                 })
+
+#         # Sub head items
+#         for sub_head in head.get("sub_heads", []):
+#             for item in sub_head.get("items", []):
+#                 sequence_id = item.get("sequence_id")
+
+#                 if sequence_id in actuals_lookup:
+#                     item.update(actuals_lookup[sequence_id])
+#                 else:
+#                     item.update({
+#                         "type_of_expense": item.get("name"),
+#                         "actuals_type_of_expenses": item.get("name"),
+#                         "total_posted_amt": "0"
+#                     })
+
+#     return first_response
+
+
+
+def get_combined_actuals(
+    financial_year,
+    month,
+    unit=None,
+    cost_center=None,
+    location_code=None,
+    erp_loc_value=None,
+    erp_cost_center_value=None
+):
+
     first_response = get_consolidated_report_actual_ytd(
         financial_year=financial_year,
         units=unit,
@@ -542,7 +615,14 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
         location_code=erp_loc_value
     )
 
-    # 🔹 Build lookup using sequence_id instead of type_of_expense
+    # 🔹 Helper to safely convert to float
+    def safe_float(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    # 🔹 Build lookup using sequence_id
     actuals_lookup = {}
 
     for row in second_response.get("data", []):
@@ -552,13 +632,15 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
             actuals_lookup[sequence_id] = {
                 "type_of_expense": row.get("type_of_expense"),
                 "actuals_type_of_expenses": row.get("actuals_type_of_expenses"),
-                "total_posted_amt": row.get("total_posted_amt", "0")
+                "total_posted_amt": row.get("total_posted_amt", 0)
             }
 
-    # 🔹 Map using sequence_id
+    # 🔹 Map actuals into first_response
     for head in first_response:
 
-        # Main items
+        # -------------------------
+        # 1️⃣ Update direct head items
+        # -------------------------
         for item in head.get("items", []):
             sequence_id = item.get("sequence_id")
 
@@ -568,10 +650,12 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
                 item.update({
                     "type_of_expense": item.get("name"),
                     "actuals_type_of_expenses": item.get("name"),
-                    "total_posted_amt": "0"
+                    "total_posted_amt": 0
                 })
 
-        # Sub head items
+        # -------------------------
+        # 2️⃣ Update sub-head items
+        # -------------------------
         for sub_head in head.get("sub_heads", []):
             for item in sub_head.get("items", []):
                 sequence_id = item.get("sequence_id")
@@ -582,8 +666,36 @@ def get_combined_actuals(financial_year, month, unit=None, cost_center=None, loc
                     item.update({
                         "type_of_expense": item.get("name"),
                         "actuals_type_of_expenses": item.get("name"),
-                        "total_posted_amt": "0"
+                        "total_posted_amt": 0
                     })
+
+    # 🔹 3️⃣ Aggregate totals
+    for head in first_response:
+
+        head_total = 0.0
+
+        # Case A: Head has sub-heads → sum sub-head totals only
+        if head.get("sub_heads"):
+
+            for sub_head in head.get("sub_heads", []):
+
+                sub_total = 0.0
+
+                for item in sub_head.get("items", []):
+                    sub_total += safe_float(item.get("total_posted_amt"))
+
+                # Add total at sub-head level
+                sub_head["total_posted_amt_ytd"] = sub_total
+
+                head_total += sub_total
+
+        # Case B: Head has no sub-heads → sum direct items
+        else:
+            for item in head.get("items", []):
+                head_total += safe_float(item.get("total_posted_amt"))
+
+        # Add total at head level
+        head["total_posted_amt_ytd"] = head_total
 
     return first_response
 

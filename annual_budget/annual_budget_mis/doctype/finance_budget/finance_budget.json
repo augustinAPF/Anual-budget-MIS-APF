@@ -124,17 +124,17 @@
   {
    "fieldname": "supporting_document",
    "fieldtype": "Attach",
-   "label": "Supporting Document"
+   "label": "Budget Supporting Document"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-16 09:31:35.862362",
+ "modified": "2026-02-19 10:37:56.974222",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Finance Budget",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

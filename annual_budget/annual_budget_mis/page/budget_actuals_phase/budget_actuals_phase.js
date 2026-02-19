@@ -1455,7 +1455,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                 if (units.length) {
                     loadCostCenters(units);
                     loadLocationCodes(units);
-                    loadData();
+                        // loadData();
                 }
             }
         },
@@ -1474,7 +1474,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             fieldname: "cost_center",
             options: [],
             change() {
-                loadData();
+                // loadData();
             }
         },
         render_input: true
@@ -1492,11 +1492,32 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             fieldname: "location_code",
             options: [],
             change() {
+                // loadData();
+            }
+        },
+        render_input: true
+    });
+    
+    let btn_col = make_field();
+
+    let load_button = frappe.ui.form.make_control({
+        parent: btn_col,
+        df: {
+            label: " ",
+            fieldtype: "Button",
+            fieldname: "load_button",
+            click() {
                 loadData();
             }
         },
         render_input: true
     });
+
+    load_button.$input.addClass("btn-primary");
+    load_button.$input.text("Get Report");
+
+    // 🔥 Only for button
+    load_button.$wrapper.css("margin-top", "26px");
 
     /* ------------------------------------------------
        LOAD COST CENTERS
@@ -1716,191 +1737,13 @@ function loadData() {
 }
 
 
+function safePercentage(budget, actual) {
+    if (!budget || budget === 0) return "0.00";
+    return ((actual / budget) * 100).toFixed(2);
+}
 
 
-    /* =====================================================
-       RENDER TABLE
-    =====================================================*/
-    // function renderTable() {
-
-    //     const $table = $('#phase-table');
-    //     $table.empty();
-
-    //     if (!expense_heads.length) {
-    //         $table.append(`<tr><td>No Data Found</td></tr>`);
-    //         return;
-    //     }
-
-    //     $table.append(`
-    //         <thead>
-    //             <tr class="main-row">
-    //                 <th>Expense Head</th>
-    //                 <th>Budget</th>
-    //                 <th>Actuals</th>
-    //                 <th>Previous Year</th>
-    //                 <th>Total</th>
-    //             </tr>
-    //         </thead>
-    //     `);
-
-    //     const $tbody = $('<tbody></tbody>');
-
-    //     let grand_budget = 0;
-    //     let grand_actuals = 0;
-
-    //     expense_heads.forEach(head => {
-
-    //         if (searchText &&
-    //             !matchesSearch(head.name) &&
-    //             !(head.items || []).some(i => matchesSearch(i.name)) &&
-    //             !(head.sub_heads || []).some(s =>
-    //                 matchesSearch(s.name) ||
-    //                 (s.items || []).some(i => matchesSearch(i.name))
-    //             )
-    //         ) return;
-
-    //         const headBudget = Number(head.ytd || 0);
-    //         let headActual = 0;
-
-    //         (head.items || []).forEach(i => {
-    //             headActual += Number(i.total_posted_amt || 0);
-    //         });
-
-    //         (head.sub_heads || []).forEach(s => {
-    //             (s.items || []).forEach(i => {
-    //                 headActual += Number(i.total_posted_amt || 0);
-    //             });
-    //         });
-
-    //         grand_budget += headBudget;
-    //         grand_actuals += headActual;
-
-    //         const headTotal = headBudget + headActual;
-
-    //         $tbody.append(`
-    //             <tr class="expense-head" data-head="${head.name}">
-    //                 <td>${expandedHeads.includes(head.name) ? '▼' : '▶'} ${head.name}</td>
-    //                 <td>${formatNumber(headBudget)}</td>
-    //                 <td>${formatNumber(headActual)}</td>
-    //                 <td>${formatNumber(0)}</td>
-    //                 <td class="text-blue">${formatNumber(headTotal)}</td>
-    //             </tr>
-    //         `);
-
-    //         if (expandedHeads.includes(head.name)) {
-
-    //             /* Direct Items */
-    //             (head.items || []).forEach(item => {
-
-    //                 if (searchText && !matchesSearch(item.name)) return;
-
-    //                 const budget = Number(item.ytd || 0);
-    //                 const actual = Number(item.total_posted_amt || 0);
-    //                 const total = budget + actual;
-
-    //                 $tbody.append(`
-    //                     <tr class="line-item">
-    //                         <td>${item.name}</td>
-    //                         <td>${formatNumber(budget)}</td>
-    //                         <td>${formatNumber(actual)}</td>
-    //                         <td>${formatNumber(0)}</td>
-    //                         <td>${formatNumber(total)}</td>
-    //                     </tr>
-    //                 `);
-    //             });
-
-    //             /* Sub Heads */
-    //             (head.sub_heads || []).forEach(sub => {
-
-    //                 const key = head.name + "__" + sub.name;
-
-    //                 if (searchText &&
-    //                     !matchesSearch(sub.name) &&
-    //                     !(sub.items || []).some(i => matchesSearch(i.name))
-    //                 ) return;
-
-    //                 let subActual = 0;
-    //                 (sub.items || []).forEach(i => {
-    //                     subActual += Number(i.total_posted_amt || 0);
-    //                 });
-
-    //                 const subBudget = Number(sub.ytd || 0);
-    //                 const subTotal = subBudget + subActual;
-
-    //                 $tbody.append(`
-    //                     <tr class="sub-head" data-sub="${key}">
-    //                         <td>${expandedSubHeads.includes(key) ? '▼' : '▶'} ${sub.name}</td>
-    //                         <td>${formatNumber(subBudget)}</td>
-    //                         <td>${formatNumber(subActual)}</td>
-    //                         <td>${formatNumber(0)}</td>
-    //                         <td class="text-blue">${formatNumber(subTotal)}</td>
-    //                     </tr>
-    //                 `);
-
-    //                 if (expandedSubHeads.includes(key)) {
-
-    //                     (sub.items || []).forEach(item => {
-
-    //                         if (searchText && !matchesSearch(item.name)) return;
-
-    //                         const budget = Number(item.ytd || 0);
-    //                         const actual = Number(item.total_posted_amt || 0);
-    //                         const total = budget + actual;
-
-    //                         $tbody.append(`
-    //                             <tr class="line-item">
-    //                                 <td>${item.name}</td>
-    //                                 <td>${formatNumber(budget)}</td>
-    //                                 <td>${formatNumber(actual)}</td>
-    //                                 <td>${formatNumber(0)}</td>
-    //                                 <td>${formatNumber(total)}</td>
-    //                             </tr>
-    //                         `);
-    //                     });
-    //                 }
-    //             });
-    //         }
-    //     });
-
-    //     const grand_total = grand_budget + grand_actuals;
-
-    //     $tbody.append(`
-    //         <tr class="grand-total-row">
-    //             <td>GRAND TOTAL</td>
-    //             <td>${formatNumber(grand_budget)}</td>
-    //             <td>${formatNumber(grand_actuals)}</td>
-    //             <td>${formatNumber(0)}</td>
-    //             <td>${formatNumber(grand_total)}</td>
-    //         </tr>
-    //     `);
-
-    //     $table.append($tbody);
-
-    //     /* Toggle Head */
-    //     $('.expense-head').off().on('click', function() {
-    //         const name = $(this).data('head');
-    //         expandedHeads = expandedHeads.includes(name)
-    //             ? expandedHeads.filter(x => x !== name)
-    //             : [...expandedHeads, name];
-    //         renderTable();
-    //     });
-
-    //     /* Toggle Sub Head */
-    //     $('.sub-head').off().on('click', function() {
-    //         const key = $(this).data('sub');
-    //         expandedSubHeads = expandedSubHeads.includes(key)
-    //             ? expandedSubHeads.filter(x => x !== key)
-    //             : [...expandedSubHeads, key];
-    //         renderTable();
-    //     });
-    // }
-
-    // $("#global-search-box").on("input", function() {
-    //     searchText = this.value;
-    //     renderTable();
-    // });
-
-    function renderTable() {
+function renderTable() {
 
     const $table = $('#phase-table');
     $table.html('');
@@ -1916,8 +1759,8 @@ function loadData() {
                 <th>Expense Head</th>
                 <th>Budget</th>
                 <th>Actuals</th>
-                <th>Previous Year</th>
-                <th>Total</th>
+                <th>Util %</th>
+                <th>Variance</th>
             </tr>
         </thead>
     `);
@@ -1939,10 +1782,11 @@ function loadData() {
             )
         ) return;
 
-        // 🔥 FIX: Use backend totals
+        // ✅ Use correct actual field
         const headBudget = Number(head.ytd || 0);
-        const headActual = Number(head.total_posted_actual || 0);
-        const headTotal = headBudget + headActual;
+        const headActual = Number(head.total_posted_amt_ytd || 0);
+        const headTotal = headBudget - headActual;
+        const headPer = safePercentage(headBudget, headActual);
 
         grand_budget += headBudget;
         grand_actuals += headActual;
@@ -1958,7 +1802,7 @@ function loadData() {
                 </td>
                 <td>${formatNumber(headBudget)}</td>
                 <td>${formatNumber(headActual)}</td>
-                <td>${formatNumber(0)}</td>
+                 <td class="text-blue">${headPer} %</td>
                 <td class="text-blue">${formatNumber(headTotal)}</td>
             </tr>
         `);
@@ -1973,14 +1817,15 @@ function loadData() {
 
                 const budget = Number(item.ytd || 0);
                 const actual = Number(item.total_posted_amt || 0);
-                const total = budget + actual;
+                const total = budget - actual;
+                const total_per = safePercentage(budget, actual);
 
                 $tbody.append(`
                     <tr class="line-item">
                         <td style="padding-left:35px">${item.name}</td>
                         <td>${formatNumber(budget)}</td>
                         <td>${formatNumber(actual)}</td>
-                        <td>${formatNumber(0)}</td>
+                        <td>${total_per} %</td>
                         <td>${formatNumber(total)}</td>
                     </tr>
                 `);
@@ -1998,8 +1843,12 @@ function loadData() {
                 const key = head.name + "__" + sub.name;
 
                 const subBudget = Number(sub.ytd || 0);
-                const subActual = Number(sub.total_posted_actual || 0);
-                const subTotal = subBudget + subActual;
+
+                // ✅ Use correct actual field
+                const subActual = Number(sub.total_posted_amt_ytd || 0);
+
+                const subTotal = subBudget - subActual;
+                const subTotal_per = safePercentage(subBudget, subActual);
 
                 $tbody.append(`
                     <tr class="sub-head" data-sub="${key}">
@@ -2012,7 +1861,7 @@ function loadData() {
                         </td>
                         <td>${formatNumber(subBudget)}</td>
                         <td>${formatNumber(subActual)}</td>
-                        <td>${formatNumber(0)}</td>
+                        <td class="text-blue">${subTotal_per} %</td>
                         <td class="text-blue">${formatNumber(subTotal)}</td>
                     </tr>
                 `);
@@ -2026,14 +1875,15 @@ function loadData() {
 
                         const budget = Number(item.ytd || 0);
                         const actual = Number(item.total_posted_amt || 0);
-                        const total = budget + actual;
+                        const total = budget - actual;
+                        const total_per1 = safePercentage(budget, actual);
 
                         $tbody.append(`
                             <tr class="line-item">
                                 <td style="padding-left:55px">${item.name}</td>
                                 <td>${formatNumber(budget)}</td>
                                 <td>${formatNumber(actual)}</td>
-                                <td>${formatNumber(0)}</td>
+                                <td>${total_per1} %</td>
                                 <td>${formatNumber(total)}</td>
                             </tr>
                         `);
@@ -2043,14 +1893,15 @@ function loadData() {
         }
     });
 
-    const grand_total = grand_budget + grand_actuals;
+    const grand_total = grand_budget - grand_actuals;
+    const grandPer = safePercentage(grand_budget, grand_actuals);
 
     $tbody.append(`
         <tr class="grand-total-row">
             <td>GRAND TOTAL</td>
             <td>${formatNumber(grand_budget)}</td>
             <td>${formatNumber(grand_actuals)}</td>
-            <td>${formatNumber(0)}</td>
+            <td>${grandPer} %</td>
             <td>${formatNumber(grand_total)}</td>
         </tr>
     `);
@@ -2081,6 +1932,8 @@ function loadData() {
         renderTable();
     });
 }
+
+
 
 };
 
