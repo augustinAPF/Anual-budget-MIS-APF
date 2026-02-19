@@ -1948,16 +1948,11 @@ function renderCards(data){
     let grand_total = 0;
     let cards_html = "";
 
-    /* Text color palette */
-    const colors = [
-        "#1abc9c", // teal
-        "#3498db", // blue
-        "#9b59b6", // purple
-        "#e67e22", // orange
-        "#e74c3c", // red
-        "#2ecc71", // green
-        "#f1c40f"  // yellow
-    ];
+   /* Text color palette - All Black */
+const colors = [
+    "#000000"
+];
+
 
     let colorIndex = 0;
 

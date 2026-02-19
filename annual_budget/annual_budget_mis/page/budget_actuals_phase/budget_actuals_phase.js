@@ -1231,7 +1231,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     =====================================================*/
     let page = frappe.ui.make_app_page({
         parent: wrapper,
-        title: 'Budget vs Actuals Phase Sheet',
+        title: 'Budget vs Actuals Face Sheet',
         single_column: true
     });
     /* ------------------------------------------------
@@ -1343,6 +1343,41 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             66%  { content: ".."; }
             100% { content: "..."; }
         }
+    .kpi-row,
+    .kpi-bottom{
+        display:flex;
+        justify-content:space-between;
+        margin-top:8px;
+    }
+
+    .kpi-block{
+        text-align:left;
+    }
+
+    .kpi-label{
+        font-size:11px;
+        color:#777;
+        text-transform:uppercase;
+    }
+
+    .kpi-value{
+        font-size:14px;
+        font-weight:700;
+        color:#000;
+    }
+
+    .kpi-bottom{
+        margin-top:10px;
+        padding-top:8px;
+        border-top:1px solid #eee;
+    }
+
+    .number-card.sub{
+        background:#fafafa;
+        border-left:4px solid #ccc;
+    }
+
+        
     </style>`).appendTo("head");
 
     function make_field() {
@@ -1389,37 +1424,40 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         render_input: true
     });
     let month_col = make_field();
-    // 🔥 Get current month name (e.g., "February")
-    let currentMonth = new Date().toLocaleString('default', { month: 'long' });
+   // Get current month name
+let currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
-    let month_filter = frappe.ui.form.make_control({
-        parent: month_col,
-        df: {
-            label: "YTD Month",
-            fieldtype: "Select",
-            fieldname: "month",
-            options: [
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December"
-            ].join("\n"),
-            default: currentMonth,  
-            reqd: 1,
-            change() {
-                loadData();
-            }
-        },
-        render_input: true
-    });
+let month_filter = frappe.ui.form.make_control({
+    parent: month_col,
+    df: {
+        label: "YTD Month",
+        fieldtype: "Select",
+        fieldname: "month",
+        options: [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+        ].join("\n"),
+        reqd: 1,
+        change() {
+            loadData();
+        }
+    },
+    render_input: true
+});
+
+// ✅ FORCE SET DEFAULT VALUE
+month_filter.set_value(currentMonth);
+
 
     /* ------------------------------------------------
        UNIT (MULTI SELECT)
@@ -1573,20 +1611,41 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         });
     }
 
-      const container = $(`
-        <div id="tables-container">
-            <div id="controls-row">
-                <input id="global-search-box" type="text"
-                    placeholder="Search Expense / Sub Head / Item...">
-            </div>
+    //   const container = $(`
+    //     <div id="tables-container">
+    //         <div id="controls-row">
+    //             <input id="global-search-box" type="text"
+    //                 placeholder="Search Expense / Sub Head / Item...">
+    //         </div>
 
-            <div class="scroll-wrapper">
-                <table class="university-table" id="phase-table"></table>
-            </div>
+    //         <div class="scroll-wrapper">
+    //             <table class="university-table" id="phase-table"></table>
+    //         </div>
+    //     </div>
+    // `);
+
+    // $(page.body).append(container);
+const container = $(`
+    <div id="tables-container">
+
+        <!-- ✅ NUMBER CARDS ROW -->
+        <div class="card-row" id="cards-container"></div>
+
+        <div id="controls-row">
+            <input id="global-search-box" type="text"
+                placeholder="Search Expense / Sub Head / Item...">
         </div>
-    `);
 
-    $(page.body).append(container);
+        <div class="scroll-wrapper">
+            <table class="university-table" id="phase-table"></table>
+        </div>
+
+    </div>
+`);
+
+
+$(page.body).append(container);
+
 
     /* =====================================================
        STATE
@@ -1621,53 +1680,6 @@ function getSelectedWithKey(control, key) {
         .filter(Boolean);
 }
 
-    /* =====================================================
-       LOAD DATA
-    =====================================================*/
-// function loadData() {
-
-//     let financial_year = fiscal_year_filter.get_value();
-//     let month = month_filter.get_value();
-//     let unit = (unit_filter.get_value() || [])[0] || null;
-//     let erp_cost_center_value =getSelectedWithKey(cost_center_filter, "erp_cost_center_value")[0] || null;
-//     let erp_loc_value =getSelectedWithKey(location_code_filter, "erp_loc_value")[0] || null;
-//     let missing = [];
-//     if (!financial_year) missing.push("Financial Year");
-//     if (!month) missing.push("Month");
-//     if (!unit) missing.push("Unit");
-//     if (!erp_cost_center_value) missing.push("Cost Center");
-//     if (missing.length) {
-//         console.warn("⚠ Missing Filters:", missing.join(", "));
-//         return;
-//     }
-
-//     Loader.show("Loading University Summary");
-
-//     frappe.call({
-//         method: "annual_budget.api.phase_sheet.get_combined_actuals",
-//         args: {
-//             financial_year,
-//             month,
-//             unit,
-//             erp_cost_center_value,
-//             erp_loc_value
-//         },
-//         callback: function(r) {
-//             expense_heads = r.message?.message || r.message || [];
-//             renderTable();
-//         },
-//         error: function(err) {
-//             console.error("API Error:", err);
-//             frappe.msgprint({
-//                 title: "Error",
-//                 message: "Failed to load data. Please try again.",
-//                 indicator: "red"
-//             });
-//         }
-//     }).always(function() {
-//         Loader.hide();
-//     });
-// }
 function loadData() {
 
     let financial_year = fiscal_year_filter.get_value();
@@ -1692,7 +1704,7 @@ function loadData() {
         return;
     }
 
-    Loader.show("Loading University Summary");
+    Loader.show("We're crafting your report with care");
 
     frappe.call({
         method: "annual_budget.api.phase_sheet.get_combined_actuals",
@@ -1743,7 +1755,201 @@ function safePercentage(budget, actual) {
 }
 
 
+// function renderTable() {
+//     const $table = $('#phase-table');
+//     $table.html('');
+
+//     if (!expense_heads || !expense_heads.length) {
+//         $table.append(`<tr><td colspan="5">No Data Found</td></tr>`);
+//         return;
+//     }
+
+//     $table.append(`
+//         <thead>
+//             <tr class="main-row">
+//                 <th>Expense Head</th>
+//                 <th>Budget</th>
+//                 <th>Actuals</th>
+//                 <th>Util %</th>
+//                 <th>Variance</th>
+//             </tr>
+//         </thead>
+//     `);
+
+//     const $tbody = $('<tbody></tbody>');
+
+//     let grand_budget = 0;
+//     let grand_actuals = 0;
+
+//     expense_heads.forEach(head => {
+
+//         if (
+//             searchText &&
+//             !matchesSearch(head.name) &&
+//             !(head.items || []).some(i => matchesSearch(i.name)) &&
+//             !(head.sub_heads || []).some(s =>
+//                 matchesSearch(s.name) ||
+//                 (s.items || []).some(i => matchesSearch(i.name))
+//             )
+//         ) return;
+
+//         // ✅ Use correct actual field
+//         const headBudget = Number(head.ytd || 0);
+//         const headActual = Number(head.total_posted_amt_ytd || 0);
+//         const headTotal = headBudget - headActual;
+//         const headPer = safePercentage(headBudget, headActual);
+
+//         grand_budget += headBudget;
+//         grand_actuals += headActual;
+
+//         $tbody.append(`
+//             <tr class="expense-head" data-head="${head.name}">
+//                 <td>
+//                     ${(head.items?.length || head.sub_heads?.length)
+//                         ? (expandedHeads.includes(head.name) ? '▼' : '▶')
+//                         : ''
+//                     }
+//                     ${head.name}
+//                 </td>
+//                 <td>${formatNumber(headBudget)}</td>
+//                 <td>${formatNumber(headActual)}</td>
+//                  <td class="text-blue">${headPer} %</td>
+//                 <td class="text-blue">${formatNumber(headTotal)}</td>
+//             </tr>
+//         `);
+
+//         /* ===== Expand Head ===== */
+//         if (expandedHeads.includes(head.name)) {
+
+//             /* Direct Items */
+//             (head.items || []).forEach(item => {
+
+//                 if (searchText && !matchesSearch(item.name)) return;
+
+//                 const budget = Number(item.ytd || 0);
+//                 const actual = Number(item.total_posted_amt || 0);
+//                 const total = budget - actual;
+//                 const total_per = safePercentage(budget, actual);
+
+//                 $tbody.append(`
+//                     <tr class="line-item">
+//                         <td style="padding-left:35px">${item.name}</td>
+//                         <td>${formatNumber(budget)}</td>
+//                         <td>${formatNumber(actual)}</td>
+//                         <td>${total_per} %</td>
+//                         <td>${formatNumber(total)}</td>
+//                     </tr>
+//                 `);
+//             });
+
+//             /* Sub Heads */
+//             (head.sub_heads || []).forEach(sub => {
+
+//                 if (
+//                     searchText &&
+//                     !matchesSearch(sub.name) &&
+//                     !(sub.items || []).some(i => matchesSearch(i.name))
+//                 ) return;
+
+//                 const key = head.name + "__" + sub.name;
+
+//                 const subBudget = Number(sub.ytd || 0);
+
+//                 // ✅ Use correct actual field
+//                 const subActual = Number(sub.total_posted_amt_ytd || 0);
+
+//                 const subTotal = subBudget - subActual;
+//                 const subTotal_per = safePercentage(subBudget, subActual);
+
+//                 $tbody.append(`
+//                     <tr class="sub-head" data-sub="${key}">
+//                         <td style="padding-left:20px">
+//                             ${(sub.items?.length)
+//                                 ? (expandedSubHeads.includes(key) ? '▼' : '▶')
+//                                 : ''
+//                             }
+//                             ${sub.name}
+//                         </td>
+//                         <td>${formatNumber(subBudget)}</td>
+//                         <td>${formatNumber(subActual)}</td>
+//                         <td class="text-blue">${subTotal_per} %</td>
+//                         <td class="text-blue">${formatNumber(subTotal)}</td>
+//                     </tr>
+//                 `);
+
+//                 /* Expand Sub Head */
+//                 if (expandedSubHeads.includes(key)) {
+
+//                     (sub.items || []).forEach(item => {
+
+//                         if (searchText && !matchesSearch(item.name)) return;
+
+//                         const budget = Number(item.ytd || 0);
+//                         const actual = Number(item.total_posted_amt || 0);
+//                         const total = budget - actual;
+//                         const total_per1 = safePercentage(budget, actual);
+
+//                         $tbody.append(`
+//                             <tr class="line-item">
+//                                 <td style="padding-left:55px">${item.name}</td>
+//                                 <td>${formatNumber(budget)}</td>
+//                                 <td>${formatNumber(actual)}</td>
+//                                 <td>${total_per1} %</td>
+//                                 <td>${formatNumber(total)}</td>
+//                             </tr>
+//                         `);
+//                     });
+//                 }
+//             });
+//         }
+        
+//     });
+
+//     const grand_total = grand_budget - grand_actuals;
+//     const grandPer = safePercentage(grand_budget, grand_actuals);
+
+//     $tbody.append(`
+//         <tr class="grand-total-row">
+//             <td>GRAND TOTAL</td>
+//             <td>${formatNumber(grand_budget)}</td>
+//             <td>${formatNumber(grand_actuals)}</td>
+//             <td>${grandPer} %</td>
+//             <td>${formatNumber(grand_total)}</td>
+//         </tr>
+//     `);
+
+//     $table.append($tbody);
+
+//     /* Toggle Head */
+//     $('.expense-head').off('click').on('click', function () {
+
+//         const name = $(this).data('head');
+
+//         expandedHeads = expandedHeads.includes(name)
+//             ? expandedHeads.filter(x => x !== name)
+//             : [...expandedHeads, name];
+
+//         renderTable();
+//     });
+
+//     /* Toggle Sub Head */
+//     $('.sub-head').off('click').on('click', function () {
+
+//         const key = $(this).data('sub');
+
+//         expandedSubHeads = expandedSubHeads.includes(key)
+//             ? expandedSubHeads.filter(x => x !== key)
+//             : [...expandedSubHeads, key];
+
+//         renderTable();
+//         renderCards(expense_heads); 
+
+//     });
+// }
 function renderTable() {
+
+    // ✅ VERY IMPORTANT — renders cards every time table refreshes
+    renderCards(expense_heads);
 
     const $table = $('#phase-table');
     $table.html('');
@@ -1782,7 +1988,6 @@ function renderTable() {
             )
         ) return;
 
-        // ✅ Use correct actual field
         const headBudget = Number(head.ytd || 0);
         const headActual = Number(head.total_posted_amt_ytd || 0);
         const headTotal = headBudget - headActual;
@@ -1802,7 +2007,7 @@ function renderTable() {
                 </td>
                 <td>${formatNumber(headBudget)}</td>
                 <td>${formatNumber(headActual)}</td>
-                 <td class="text-blue">${headPer} %</td>
+                <td class="text-blue">${headPer} %</td>
                 <td class="text-blue">${formatNumber(headTotal)}</td>
             </tr>
         `);
@@ -1810,7 +2015,6 @@ function renderTable() {
         /* ===== Expand Head ===== */
         if (expandedHeads.includes(head.name)) {
 
-            /* Direct Items */
             (head.items || []).forEach(item => {
 
                 if (searchText && !matchesSearch(item.name)) return;
@@ -1831,22 +2035,12 @@ function renderTable() {
                 `);
             });
 
-            /* Sub Heads */
             (head.sub_heads || []).forEach(sub => {
-
-                if (
-                    searchText &&
-                    !matchesSearch(sub.name) &&
-                    !(sub.items || []).some(i => matchesSearch(i.name))
-                ) return;
 
                 const key = head.name + "__" + sub.name;
 
                 const subBudget = Number(sub.ytd || 0);
-
-                // ✅ Use correct actual field
                 const subActual = Number(sub.total_posted_amt_ytd || 0);
-
                 const subTotal = subBudget - subActual;
                 const subTotal_per = safePercentage(subBudget, subActual);
 
@@ -1866,12 +2060,9 @@ function renderTable() {
                     </tr>
                 `);
 
-                /* Expand Sub Head */
                 if (expandedSubHeads.includes(key)) {
 
                     (sub.items || []).forEach(item => {
-
-                        if (searchText && !matchesSearch(item.name)) return;
 
                         const budget = Number(item.ytd || 0);
                         const actual = Number(item.total_posted_amt || 0);
@@ -1931,6 +2122,88 @@ function renderTable() {
 
         renderTable();
     });
+}
+
+function renderCards(data){
+
+    const cards_container = $('#cards-container');
+    cards_container.empty();
+
+    let grand_budget = 0;
+    let grand_actual = 0;
+    let cards_html = "";
+
+    /* ===== Grand Total Calculation ===== */
+    data.forEach(head => {
+        grand_budget += Number(head.ytd || 0);
+        grand_actual += Number(head.total_posted_amt_ytd || 0);
+    });
+
+    const grand_variance = grand_budget - grand_actual;
+
+    /* ===== GRAND TOTAL CARD ===== */
+    cards_html += createCard("Grand Total", grand_budget, grand_actual, grand_variance, true);
+
+    /* ===== Heads + Sub Heads ===== */
+    data.forEach(head => {
+
+        const headBudget = Number(head.ytd || 0);
+        const headActual = Number(head.total_posted_amt_ytd || 0);
+        const headVariance = headBudget - headActual;
+
+        cards_html += createCard(head.name, headBudget, headActual, headVariance);
+
+        (head.sub_heads || []).forEach(sub => {
+
+            const subBudget = Number(sub.ytd || 0);
+            const subActual = Number(sub.total_posted_amt_ytd || 0);
+            const subVariance = subBudget - subActual;
+
+            cards_html += createCard(sub.name, subBudget, subActual, subVariance, false, true);
+        });
+    });
+
+    cards_container.append(cards_html);
+}
+
+
+function createCard(title, budget, actual, variance, isGrand = false, isSub = false){
+
+    const utilization = budget > 0 
+        ? ((actual / budget) * 100).toFixed(2) 
+        : "0.00";
+
+    return `
+        <div class="number-card ${isGrand ? 'grand' : ''} ${isSub ? 'sub' : ''}">
+            
+            <div class="number-title">${title}</div>
+
+            <div class="kpi-row">
+                <div class="kpi-block">
+                    <div class="kpi-label">Budget</div>
+                    <div class="kpi-value">${formatNumber(budget)}</div>
+                </div>
+
+                <div class="kpi-block">
+                    <div class="kpi-label">Actual</div>
+                    <div class="kpi-value">${formatNumber(actual)}</div>
+                </div>
+            </div>
+
+            <div class="kpi-bottom">
+                <div class="kpi-block">
+                    <div class="kpi-label">Variance</div>
+                    <div class="kpi-value">${formatNumber(variance)}</div>
+                </div>
+
+                <div class="kpi-block">
+                    <div class="kpi-label">Util %</div>
+                    <div class="kpi-value">${utilization} %</div>
+                </div>
+            </div>
+
+        </div>
+    `;
 }
 
 
