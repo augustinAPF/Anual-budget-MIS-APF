@@ -458,6 +458,284 @@ def get_consolidated_report_actual_ytd(
 
     return final
 
+import frappe
+import json
+import re
+from decimal import Decimal
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_consolidated_report_actual_ytd(
+#     financial_year=None,
+#     units=None,
+#     cost_center=None,
+#     location_code=None,
+#     month=None
+# ):
+
+#     # ---------------------------------------------------
+#     # Validations
+#     # ---------------------------------------------------
+#     if not financial_year:
+#         frappe.throw("Financial Year is required")
+
+#     if not month:
+#         frappe.throw("Month is required")
+
+#     # ---------------------------------------------------
+#     # Safe Numeric Conversion
+#     # ---------------------------------------------------
+#     def _num(x):
+#         if x is None:
+#             return 0.0
+#         try:
+#             return float(Decimal(str(x)))
+#         except Exception:
+#             return 0.0
+
+#     # ---------------------------------------------------
+#     # Multi-Value Filter Parser
+#     # ---------------------------------------------------
+#     def _parse_multi(value):
+#         if not value:
+#             return None
+
+#         # Already list/tuple
+#         if isinstance(value, (list, tuple)):
+#             return [str(v).strip() for v in value if v]
+
+#         # Try JSON string
+#         try:
+#             parsed = json.loads(value)
+#             if isinstance(parsed, list):
+#                 return [str(v).strip() for v in parsed if v]
+#         except Exception:
+#             pass
+
+#         # Comma separated fallback
+#         return [v.strip() for v in str(value).split(",") if v.strip()]
+
+#     # ---------------------------------------------------
+#     # Financial Year Month Order (April → March)
+#     # ---------------------------------------------------
+#     MONTHS = [
+#         "april", "may", "june",
+#         "july", "august", "september",
+#         "october", "november", "december",
+#         "january", "february", "march"
+#     ]
+
+#     month = month.lower().strip()
+
+#     if month not in MONTHS:
+#         frappe.throw("Invalid month")
+
+#     end_index = MONTHS.index(month)
+
+#     # ---------------------------------------------------
+#     # Load Sequence Mapping
+#     # ---------------------------------------------------
+#     expense_rows = frappe.db.get_all(
+#         "Expenses",
+#         fields=[
+#             "head_of_expense",
+#             "sub_head_of_expense",
+#             "type_of_expense",
+#             "sequence_id"
+#         ]
+#     )
+
+#     sequence_map = {}
+
+#     for e in expense_rows:
+#         seq = int(e.sequence_id) if e.sequence_id else 9999
+
+#         if e.head_of_expense:
+#             sequence_map[str(e.head_of_expense).strip().upper()] = seq
+
+#         if e.sub_head_of_expense:
+#             sequence_map[str(e.sub_head_of_expense).strip().upper()] = seq
+
+#         if e.type_of_expense:
+#             sequence_map[str(e.type_of_expense).strip().upper()] = seq
+
+#     # ---------------------------------------------------
+#     # Filters
+#     # ---------------------------------------------------
+#     filters = {"financial_year": financial_year}
+
+#     unit_list = _parse_multi(units)
+#     cost_center_list = _parse_multi(cost_center)
+#     location_list = _parse_multi(location_code)
+
+#     if unit_list:
+#         filters["set_id"] = ["in", unit_list]
+
+#     if cost_center_list:
+#         filters["cost_center"] = ["in", cost_center_list]
+
+#     if location_list:
+#         filters["location_code"] = ["in", location_list]
+
+#     # ---------------------------------------------------
+#     # Get Parent Budgets
+#     # ---------------------------------------------------
+#     parents = frappe.get_all(
+#         "Finance Budget",
+#         filters=filters,
+#         fields=["name"]
+#     )
+
+#     if not parents:
+#         return []
+
+#     parent_names = [p.name for p in parents]
+
+#     # ---------------------------------------------------
+#     # Fetch Budget Amount Rows
+#     # ---------------------------------------------------
+#     rows = frappe.get_all(
+#         "Finance Budget Amounts",
+#         filters={"parent": ["in", parent_names]},
+#         fields=[
+#             "type_of_expense",
+#             "gl_code",
+#             "head_of_expense",
+#             "sub_head_of_expense",
+#             "april", "may", "june",
+#             "july", "august", "september",
+#             "october", "november", "december",
+#             "january", "february", "march"
+#         ]
+#     )
+
+#     if not rows:
+#         return []
+
+#     # ---------------------------------------------------
+#     # Grouping Logic
+#     # ---------------------------------------------------
+#     TOP_LEVEL_HEADS = ["CAPITAL EXPENSES", "OPERATING EXPENSES"]
+#     heads = {}
+
+#     for r in rows:
+
+#         raw_head = re.sub(r"\s+", " ", str(r.get("head_of_expense") or "")).strip().upper()
+#         sub = re.sub(r"\s+", " ", str(r.get("sub_head_of_expense") or "")).strip().upper()
+#         item = str(r.get("type_of_expense") or "UNKNOWN ITEM").strip()
+#         gl = str(r.get("gl_code") or "").strip()
+
+#         # ---------------------------------------------------
+#         # YTD Calculation (April → Selected Month)
+#         # ---------------------------------------------------
+#         ytd_total = 0.0
+#         for m in MONTHS[:end_index + 1]:
+#             ytd_total += _num(r.get(m))
+
+#         # ---------------------------------------------------
+#         # Determine Parent Head
+#         # ---------------------------------------------------
+#         if raw_head not in TOP_LEVEL_HEADS:
+#             parent_head = "OPERATING EXPENSES"
+#             sub = raw_head
+#         else:
+#             parent_head = raw_head
+
+#         if parent_head not in heads:
+#             heads[parent_head] = {
+#                 "name": parent_head,
+#                 "sequence_id": sequence_map.get(parent_head, 9999),
+#                 "ytd": 0.0,
+#                 "items": {},
+#                 "sub_heads": {}
+#             }
+
+#         heads[parent_head]["ytd"] += ytd_total
+
+#         # ---------------------------------------------------
+#         # CAPITAL EXPENSES
+#         # ---------------------------------------------------
+#         if parent_head == "CAPITAL EXPENSES":
+
+#             if item not in heads[parent_head]["items"]:
+#                 heads[parent_head]["items"][item] = {
+#                     "name": item,
+#                     "sequence_id": sequence_map.get(item.upper(), 9999),
+#                     "gl_code": gl,
+#                     "ytd": 0.0
+#                 }
+
+#             heads[parent_head]["items"][item]["ytd"] += ytd_total
+
+#         # ---------------------------------------------------
+#         # OPERATING EXPENSES
+#         # ---------------------------------------------------
+#         else:
+
+#             if sub:
+
+#                 if sub not in heads[parent_head]["sub_heads"]:
+#                     heads[parent_head]["sub_heads"][sub] = {
+#                         "name": sub,
+#                         "sequence_id": sequence_map.get(sub, 9999),
+#                         "ytd": 0.0,
+#                         "items": {}
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub]["ytd"] += ytd_total
+
+#                 if item not in heads[parent_head]["sub_heads"][sub]["items"]:
+#                     heads[parent_head]["sub_heads"][sub]["items"][item] = {
+#                         "name": item,
+#                         "sequence_id": sequence_map.get(item.upper(), 9999),
+#                         "gl_code": gl,
+#                         "ytd": 0.0
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub]["items"][item]["ytd"] += ytd_total
+
+#     # ---------------------------------------------------
+#     # Final Sorting
+#     # ---------------------------------------------------
+#     final = []
+
+#     for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+
+#         # Sort capital items
+#         head["items"] = sorted(
+#             head["items"].values(),
+#             key=lambda x: x["sequence_id"]
+#         )
+
+#         sorted_subs = []
+
+#         for sub in head["sub_heads"].values():
+
+#             sub["items"] = sorted(
+#                 sub["items"].values(),
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             if sub["items"]:
+#                 sub["sequence_id"] = min(
+#                     item["sequence_id"] for item in sub["items"]
+#                 )
+#             else:
+#                 sub["sequence_id"] = 9999
+
+#             sorted_subs.append(sub)
+
+#         head["sub_heads"] = sorted(
+#             sorted_subs,
+#             key=lambda x: x["sequence_id"]
+#         )
+
+#         final.append(head)
+
+#     return final
+
+
+
 # @frappe.whitelist(allow_guest=True)
 # def get_combined_actuals(financial_year, month, unit=None, cost_center=None, location_code=None,erp_loc_value=None,erp_cost_center=None):
 

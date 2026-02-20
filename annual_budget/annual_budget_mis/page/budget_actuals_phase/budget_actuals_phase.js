@@ -1521,21 +1521,80 @@ month_filter.set_value(currentMonth);
     /* ------------------------------------------------
        LOCATION CODE (MULTI SELECT)
     --------------------------------------------------*/
+    // let lc_col = make_field();
+    // let location_code_filter = frappe.ui.form.make_control({
+    //     parent: lc_col,
+    //     df: {
+    //         label: "Location Code",
+    //         fieldtype: "MultiSelectList",
+    //         fieldname: "location_code",
+    //         options: [],
+    //         change() {
+    //             // loadData();
+    //         }
+    //     },
+    //     render_input: true
+    // });
     let lc_col = make_field();
-    let location_code_filter = frappe.ui.form.make_control({
-        parent: lc_col,
-        df: {
-            label: "Location Code",
-            fieldtype: "MultiSelectList",
-            fieldname: "location_code",
-            options: [],
-            change() {
-                // loadData();
+
+let location_code_filter = frappe.ui.form.make_control({
+    parent: lc_col,
+    df: {
+        label: "Location Code",
+        fieldtype: "MultiSelectList",
+        fieldname: "location_code",
+        options: [],
+        change() {
+            // loadData();
+        }
+    },
+    render_input: true
+});
+
+// 🔹 Add Select All inside dropdown
+location_code_filter.$wrapper.on("click", function () {
+
+    setTimeout(() => {
+
+        let dropdown = location_code_filter.$wrapper.find(".multiselect-list");
+
+        if (!dropdown.length) return;
+
+        // Avoid duplicate button
+        if (dropdown.find(".select-all-btn").length) return;
+
+        let select_all_btn = $(`
+            <button type="button"
+                class="btn btn-xs btn-default select-all-btn"
+                style="margin-right: 5px;">
+                Select All
+            </button>
+        `);
+
+        select_all_btn.on("click", async function (e) {
+            e.stopPropagation();
+
+            let values = [];
+
+            // If using get_data (dynamic data)
+            if (location_code_filter.get_data) {
+                let data = await location_code_filter.get_data();
+                values = data.map(d => d.value);
+            } 
+            // If using static options
+            else if (location_code_filter.df.options) {
+                values = location_code_filter.df.options;
             }
-        },
-        render_input: true
-    });
-    
+
+            location_code_filter.set_value(values);
+        });
+
+        // Add button before Clear All
+        dropdown.find(".dropdown-footer").prepend(select_all_btn);
+
+    }, 200);
+});
+
     let btn_col = make_field();
 
     let load_button = frappe.ui.form.make_control({
@@ -1610,32 +1669,13 @@ month_filter.set_value(currentMonth);
             }
         });
     }
-
-    //   const container = $(`
-    //     <div id="tables-container">
-    //         <div id="controls-row">
-    //             <input id="global-search-box" type="text"
-    //                 placeholder="Search Expense / Sub Head / Item...">
-    //         </div>
-
-    //         <div class="scroll-wrapper">
-    //             <table class="university-table" id="phase-table"></table>
-    //         </div>
-    //     </div>
-    // `);
-
-    // $(page.body).append(container);
 const container = $(`
     <div id="tables-container">
-
-        <!-- ✅ NUMBER CARDS ROW -->
         <div class="card-row" id="cards-container"></div>
-
         <div id="controls-row">
             <input id="global-search-box" type="text"
                 placeholder="Search Expense / Sub Head / Item...">
         </div>
-
         <div class="scroll-wrapper">
             <table class="university-table" id="phase-table"></table>
         </div>
@@ -1684,11 +1724,19 @@ function loadData() {
 
     let financial_year = fiscal_year_filter.get_value();
     let month = month_filter.get_value();
-    let unit = (unit_filter.get_value() || [])[0] || null;
-    let location_code =getSelectedWithKey(location_code_filter, "value")[0] || null;
-    let cost_center =getSelectedWithKey(cost_center_filter, "value")[0] || null;
+    // let unit = (unit_filter.get_value() || [])[0] || null;
+    // let location_code =getSelectedWithKey(location_code_filter, "value")[18] || null;
+
+    // let cost_center =getSelectedWithKey(cost_center_filter, "value")[0] || null;
     let erp_cost_center_value =getSelectedWithKey(cost_center_filter, "erp_cost_center_value")[0] || null;
     let erp_loc_value =getSelectedWithKey(location_code_filter, "erp_loc_value")[0] || null;
+
+    let unit = (unit_filter.get_value() || []).join(",") || null;
+    let location_code = (getSelectedWithKey(location_code_filter, "value") || []).join(",") || null;
+    let cost_center = (getSelectedWithKey(cost_center_filter, "value") || []).join(",") || null;
+    // let erp_cost_center_value = (getSelectedWithKey(cost_center_filter, "erp_cost_center_value") || []).join(",") || null;
+    // let erp_loc_value = (getSelectedWithKey(location_code_filter, "erp_loc_value") || []).join(",") || null;
+
     console.log(erp_cost_center_value,"erp_cost_center_value");
     console.log(cost_center,"cost_center_value")
     console.log(location_code,"loc_value")
@@ -1697,7 +1745,7 @@ function loadData() {
     if (!financial_year) missing.push("Financial Year");
     if (!month) missing.push("Month");
     if (!unit) missing.push("Unit");
-    if (!erp_cost_center_value) missing.push("Cost Center");
+    // if (!erp_cost_center_value) missing.push("Cost Center");
 
     if (missing.length) {
         console.warn("⚠ Missing Filters:", missing.join(", "));
@@ -1755,200 +1803,8 @@ function safePercentage(budget, actual) {
 }
 
 
-// function renderTable() {
-//     const $table = $('#phase-table');
-//     $table.html('');
-
-//     if (!expense_heads || !expense_heads.length) {
-//         $table.append(`<tr><td colspan="5">No Data Found</td></tr>`);
-//         return;
-//     }
-
-//     $table.append(`
-//         <thead>
-//             <tr class="main-row">
-//                 <th>Expense Head</th>
-//                 <th>Budget</th>
-//                 <th>Actuals</th>
-//                 <th>Util %</th>
-//                 <th>Variance</th>
-//             </tr>
-//         </thead>
-//     `);
-
-//     const $tbody = $('<tbody></tbody>');
-
-//     let grand_budget = 0;
-//     let grand_actuals = 0;
-
-//     expense_heads.forEach(head => {
-
-//         if (
-//             searchText &&
-//             !matchesSearch(head.name) &&
-//             !(head.items || []).some(i => matchesSearch(i.name)) &&
-//             !(head.sub_heads || []).some(s =>
-//                 matchesSearch(s.name) ||
-//                 (s.items || []).some(i => matchesSearch(i.name))
-//             )
-//         ) return;
-
-//         // ✅ Use correct actual field
-//         const headBudget = Number(head.ytd || 0);
-//         const headActual = Number(head.total_posted_amt_ytd || 0);
-//         const headTotal = headBudget - headActual;
-//         const headPer = safePercentage(headBudget, headActual);
-
-//         grand_budget += headBudget;
-//         grand_actuals += headActual;
-
-//         $tbody.append(`
-//             <tr class="expense-head" data-head="${head.name}">
-//                 <td>
-//                     ${(head.items?.length || head.sub_heads?.length)
-//                         ? (expandedHeads.includes(head.name) ? '▼' : '▶')
-//                         : ''
-//                     }
-//                     ${head.name}
-//                 </td>
-//                 <td>${formatNumber(headBudget)}</td>
-//                 <td>${formatNumber(headActual)}</td>
-//                  <td class="text-blue">${headPer} %</td>
-//                 <td class="text-blue">${formatNumber(headTotal)}</td>
-//             </tr>
-//         `);
-
-//         /* ===== Expand Head ===== */
-//         if (expandedHeads.includes(head.name)) {
-
-//             /* Direct Items */
-//             (head.items || []).forEach(item => {
-
-//                 if (searchText && !matchesSearch(item.name)) return;
-
-//                 const budget = Number(item.ytd || 0);
-//                 const actual = Number(item.total_posted_amt || 0);
-//                 const total = budget - actual;
-//                 const total_per = safePercentage(budget, actual);
-
-//                 $tbody.append(`
-//                     <tr class="line-item">
-//                         <td style="padding-left:35px">${item.name}</td>
-//                         <td>${formatNumber(budget)}</td>
-//                         <td>${formatNumber(actual)}</td>
-//                         <td>${total_per} %</td>
-//                         <td>${formatNumber(total)}</td>
-//                     </tr>
-//                 `);
-//             });
-
-//             /* Sub Heads */
-//             (head.sub_heads || []).forEach(sub => {
-
-//                 if (
-//                     searchText &&
-//                     !matchesSearch(sub.name) &&
-//                     !(sub.items || []).some(i => matchesSearch(i.name))
-//                 ) return;
-
-//                 const key = head.name + "__" + sub.name;
-
-//                 const subBudget = Number(sub.ytd || 0);
-
-//                 // ✅ Use correct actual field
-//                 const subActual = Number(sub.total_posted_amt_ytd || 0);
-
-//                 const subTotal = subBudget - subActual;
-//                 const subTotal_per = safePercentage(subBudget, subActual);
-
-//                 $tbody.append(`
-//                     <tr class="sub-head" data-sub="${key}">
-//                         <td style="padding-left:20px">
-//                             ${(sub.items?.length)
-//                                 ? (expandedSubHeads.includes(key) ? '▼' : '▶')
-//                                 : ''
-//                             }
-//                             ${sub.name}
-//                         </td>
-//                         <td>${formatNumber(subBudget)}</td>
-//                         <td>${formatNumber(subActual)}</td>
-//                         <td class="text-blue">${subTotal_per} %</td>
-//                         <td class="text-blue">${formatNumber(subTotal)}</td>
-//                     </tr>
-//                 `);
-
-//                 /* Expand Sub Head */
-//                 if (expandedSubHeads.includes(key)) {
-
-//                     (sub.items || []).forEach(item => {
-
-//                         if (searchText && !matchesSearch(item.name)) return;
-
-//                         const budget = Number(item.ytd || 0);
-//                         const actual = Number(item.total_posted_amt || 0);
-//                         const total = budget - actual;
-//                         const total_per1 = safePercentage(budget, actual);
-
-//                         $tbody.append(`
-//                             <tr class="line-item">
-//                                 <td style="padding-left:55px">${item.name}</td>
-//                                 <td>${formatNumber(budget)}</td>
-//                                 <td>${formatNumber(actual)}</td>
-//                                 <td>${total_per1} %</td>
-//                                 <td>${formatNumber(total)}</td>
-//                             </tr>
-//                         `);
-//                     });
-//                 }
-//             });
-//         }
-        
-//     });
-
-//     const grand_total = grand_budget - grand_actuals;
-//     const grandPer = safePercentage(grand_budget, grand_actuals);
-
-//     $tbody.append(`
-//         <tr class="grand-total-row">
-//             <td>GRAND TOTAL</td>
-//             <td>${formatNumber(grand_budget)}</td>
-//             <td>${formatNumber(grand_actuals)}</td>
-//             <td>${grandPer} %</td>
-//             <td>${formatNumber(grand_total)}</td>
-//         </tr>
-//     `);
-
-//     $table.append($tbody);
-
-//     /* Toggle Head */
-//     $('.expense-head').off('click').on('click', function () {
-
-//         const name = $(this).data('head');
-
-//         expandedHeads = expandedHeads.includes(name)
-//             ? expandedHeads.filter(x => x !== name)
-//             : [...expandedHeads, name];
-
-//         renderTable();
-//     });
-
-//     /* Toggle Sub Head */
-//     $('.sub-head').off('click').on('click', function () {
-
-//         const key = $(this).data('sub');
-
-//         expandedSubHeads = expandedSubHeads.includes(key)
-//             ? expandedSubHeads.filter(x => x !== key)
-//             : [...expandedSubHeads, key];
-
-//         renderTable();
-//         renderCards(expense_heads); 
-
-//     });
-// }
 function renderTable() {
 
-    // ✅ VERY IMPORTANT — renders cards every time table refreshes
     renderCards(expense_heads);
 
     const $table = $('#phase-table');
