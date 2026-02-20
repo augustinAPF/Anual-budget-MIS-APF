@@ -1387,22 +1387,68 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     /* ------------------------------------------------
        HELPER — PRESERVE LABELS (CRITICAL)
     --------------------------------------------------*/
-    function mergeSelectedOptions(control, new_options) {
-        let selected = (control.get_value() || []).map(String);
-        let existing = control.df.options || [];
-        let map = {};
+    // function mergeSelectedOptions(control, new_options) {
+    //     let selected = (control.get_value() || []).map(String);
+    //     let existing = control.df.options || [];
+    //     let map = {};
 
-        existing.forEach(o => map[String(o.value)] = o);
-        new_options.forEach(o => map[String(o.value)] = o);
+    //     existing.forEach(o => map[String(o.value)] = o);
+    //     new_options.forEach(o => map[String(o.value)] = o);
 
-        selected.forEach(v => {
-            if (!map[v]) {
-                map[v] = { label: v, value: v, description: "" };
-            }
-        });
+    //     selected.forEach(v => {
+    //         if (!map[v]) {
+    //             map[v] = { label: v, value: v, description: "" };
+    //         }
+    //     });
 
-        return Object.values(map);
-    }
+    //     return Object.values(map);
+    // }
+function add_select_all_button(multiselect_control) {
+
+    multiselect_control.$wrapper.on("click", function () {
+
+        setTimeout(() => {
+
+            let dropdown = multiselect_control.$wrapper.find(".multiselect-list");
+
+            if (!dropdown.length) return;
+
+            // Prevent duplicate button
+            if (dropdown.find(".select-all-btn").length) return;
+
+            let select_all_btn = $(`
+                <button type="button"
+                    class="btn btn-xs btn-default select-all-btn"
+                    style="margin-right: 5px;">
+                    Select All
+                </button>
+            `);
+
+            select_all_btn.on("click", async function (e) {
+                e.stopPropagation();
+
+                let values = [];
+
+                // If dynamic get_data exists
+                if (multiselect_control.get_data) {
+                    let data = await multiselect_control.get_data();
+                    values = data.map(d => String(d.value));
+                }
+                // If static options
+                else if (multiselect_control.df.options) {
+                    values = multiselect_control.df.options.map(o => 
+                        typeof o === "object" ? String(o.value) : String(o)
+                    );
+                }
+
+                multiselect_control.set_value(values);
+            });
+
+            dropdown.find(".dropdown-footer").prepend(select_all_btn);
+
+        }, 200);
+    });
+}
 
     /* ------------------------------------------------
        FINANCIAL YEAR
@@ -1499,6 +1545,7 @@ month_filter.set_value(currentMonth);
         },
         render_input: true
     });
+add_select_all_button(unit_filter);
 
     /* ------------------------------------------------
        COST CENTER (MULTI SELECT)
@@ -1517,6 +1564,7 @@ month_filter.set_value(currentMonth);
         },
         render_input: true
     });
+add_select_all_button(cost_center_filter);
 
     /* ------------------------------------------------
        LOCATION CODE (MULTI SELECT)
@@ -1550,50 +1598,51 @@ let location_code_filter = frappe.ui.form.make_control({
     },
     render_input: true
 });
+add_select_all_button(location_code_filter);
 
 // 🔹 Add Select All inside dropdown
-location_code_filter.$wrapper.on("click", function () {
+// location_code_filter.$wrapper.on("click", function () {
 
-    setTimeout(() => {
+//     setTimeout(() => {
 
-        let dropdown = location_code_filter.$wrapper.find(".multiselect-list");
+//         let dropdown = location_code_filter.$wrapper.find(".multiselect-list");
 
-        if (!dropdown.length) return;
+//         if (!dropdown.length) return;
 
-        // Avoid duplicate button
-        if (dropdown.find(".select-all-btn").length) return;
+//         // Avoid duplicate button
+//         if (dropdown.find(".select-all-btn").length) return;
 
-        let select_all_btn = $(`
-            <button type="button"
-                class="btn btn-xs btn-default select-all-btn"
-                style="margin-right: 5px;">
-                Select All
-            </button>
-        `);
+//         let select_all_btn = $(`
+//             <button type="button"
+//                 class="btn btn-xs btn-default select-all-btn"
+//                 style="margin-right: 5px;">
+//                 Select All
+//             </button>
+//         `);
 
-        select_all_btn.on("click", async function (e) {
-            e.stopPropagation();
+//         select_all_btn.on("click", async function (e) {
+//             e.stopPropagation();
 
-            let values = [];
+//             let values = [];
 
-            // If using get_data (dynamic data)
-            if (location_code_filter.get_data) {
-                let data = await location_code_filter.get_data();
-                values = data.map(d => d.value);
-            } 
-            // If using static options
-            else if (location_code_filter.df.options) {
-                values = location_code_filter.df.options;
-            }
+//             // If using get_data (dynamic data)
+//             if (location_code_filter.get_data) {
+//                 let data = await location_code_filter.get_data();
+//                 values = data.map(d => d.value);
+//             } 
+//             // If using static options
+//             else if (location_code_filter.df.options) {
+//                 values = location_code_filter.df.options;
+//             }
 
-            location_code_filter.set_value(values);
-        });
+//             location_code_filter.set_value(values);
+//         });
 
-        // Add button before Clear All
-        dropdown.find(".dropdown-footer").prepend(select_all_btn);
+//         // Add button before Clear All
+//         dropdown.find(".dropdown-footer").prepend(select_all_btn);
 
-    }, 200);
-});
+//     }, 200);
+// });
 
     let btn_col = make_field();
 
