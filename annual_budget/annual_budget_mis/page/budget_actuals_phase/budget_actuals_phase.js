@@ -3803,7 +3803,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         $("body").append(`
             <div id="global-loader" class="loader-overlay">
                 <div class="loader-box">
-                    <img src="/files/apf.png" class="loader-logo">
+                    <img src="/files/APF logo.png" class="loader-logo">
                     <div class="loader-text">Loading, please wait…</div>
                 </div>
             </div>
@@ -3962,6 +3962,169 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         }
     </style>`).appendTo("head");
 
+    // function make_field() {
+    //     return $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+    // }
+
+    // function mergeSelectedOptions(control, new_options) {
+    //     let selected = (control.get_value() || []).map(String);
+    //     let existing = control.df.options || [];
+    //     let map = {};
+    //     existing.forEach(o => map[String(o.value)] = o);
+    //     new_options.forEach(o => map[String(o.value)] = o);
+    //     selected.forEach(v => {
+    //         if (!map[v]) map[v] = { label: v, value: v, description: "" };
+    //     });
+    //     return Object.values(map);
+    // }
+
+    // function add_select_all_button(multiselect_control) {
+    //     multiselect_control.$wrapper.on("click", function () {
+    //         setTimeout(() => {
+    //             let dropdown = multiselect_control.$wrapper.find(".multiselect-list");
+    //             if (!dropdown.length) return;
+    //             if (dropdown.find(".select-all-btn").length) return;
+
+    //             let select_all_btn = $(`
+    //                 <button type="button" class="btn btn-xs btn-default select-all-btn"
+    //                     style="margin-right:5px;">Select All</button>
+    //             `);
+
+    //             select_all_btn.on("click", async function (e) {
+    //                 e.stopPropagation();
+    //                 let values = [];
+    //                 if (multiselect_control.get_data) {
+    //                     let data = await multiselect_control.get_data();
+    //                     values = data.map(d => String(d.value));
+    //                 } else if (multiselect_control.df.options) {
+    //                     values = multiselect_control.df.options.map(o =>
+    //                         typeof o === "object" ? String(o.value) : String(o)
+    //                     );
+    //                 }
+    //                 multiselect_control.set_value(values);
+    //             });
+
+    //             dropdown.find(".dropdown-footer").prepend(select_all_btn);
+    //         }, 200);
+    //     });
+    // }
+
+    // /* ── Financial Year ── */
+    // let fy_col = make_field();
+    // let fiscal_year_filter = frappe.ui.form.make_control({
+    //     parent: fy_col,
+    //     df: {
+    //         label: "Financial Year",
+    //         fieldtype: "Select",
+    //         fieldname: "financial_year",
+    //         options: ["2025-26", "2026-27"].join("\n"),
+    //         default: "2025-26",
+    //         reqd: 1,
+    //         change() { loadData(); }
+    //     },
+    //     render_input: true
+    // });
+
+    // /* ── YTD Month ── */
+    // let month_col = make_field();
+    // let currentMonth = new Date().toLocaleString('default', { month: 'long' });
+    // let month_filter = frappe.ui.form.make_control({
+    //     parent: month_col,
+    //     df: {
+    //         label: "YTD Month",
+    //         fieldtype: "Select",
+    //         fieldname: "month",
+    //         options: [
+    //             "January","February","March","April","May","June",
+    //             "July","August","September","October","November","December"
+    //         ].join("\n"),
+    //         reqd: 1,
+    //         change() { loadData(); }
+    //     },
+    //     render_input: true
+    // });
+    // month_filter.set_value(currentMonth);
+
+    // /* ── Unit ── */
+    // let unit_col = make_field();
+    // let unit_filter = frappe.ui.form.make_control({
+    //     parent: unit_col,
+    //     df: {
+    //         label: "Unit",
+    //         fieldtype: "MultiSelectList",
+    //         fieldname: "unit",
+    //         reqd: 1,
+    //         get_data() {
+    //             return frappe.call({
+    //                 method: "annual_budget.api.filter_options.get_units"
+    //             }).then(r => {
+    //                 return (r.message?.data || [])
+    //                     .filter(d => d.value)
+    //                     .map(d => ({ label: d.label, value: String(d.value), description: "" }));
+    //             });
+    //         },
+    //         change() {
+    //             units = unit_filter.get_value().map(String);
+    //             cost_center_filter.set_value([]);
+    //             location_code_filter.df.options = [];
+    //             location_code_filter.refresh();
+    //             cost_center_filter.df.options = [];
+    //             cost_center_filter.refresh();
+    //             if (units.length) {
+    //                 loadCostCenters(units);
+    //                 loadLocationCodes(units);
+    //             }
+    //         }
+    //     },
+    //     render_input: true
+    // });
+    // add_select_all_button(unit_filter);
+
+    // /* ── Cost Center ── */
+    // let cc_col = make_field();
+    // let cost_center_filter = frappe.ui.form.make_control({
+    //     parent: cc_col,
+    //     df: {
+    //         label: "Cost Center",
+    //         fieldtype: "MultiSelectList",
+    //         fieldname: "cost_center",
+    //         options: [],
+    //         change() {}
+    //     },
+    //     render_input: true
+    // });
+    // add_select_all_button(cost_center_filter);
+
+    // /* ── Location Code ── */
+    // let lc_col = make_field();
+    // let location_code_filter = frappe.ui.form.make_control({
+    //     parent: lc_col,
+    //     df: {
+    //         label: "Location Code",
+    //         fieldtype: "MultiSelectList",
+    //         fieldname: "location_code",
+    //         options: [],
+    //         change() {}
+    //     },
+    //     render_input: true
+    // });
+    // add_select_all_button(location_code_filter);
+
+    // /* ── Get Report button ── */
+    // let btn_col = make_field();
+    // let load_button = frappe.ui.form.make_control({
+    //     parent: btn_col,
+    //     df: {
+    //         label: " ",
+    //         fieldtype: "Button",
+    //         fieldname: "load_button",
+    //         click() { loadData(); }
+    //     },
+    //     render_input: true
+    // });
+    // load_button.$wrapper.find('button').addClass("btn-primary").text("Get Report");
+    // load_button.$wrapper.css("margin-top", "26px");
+
     function make_field() {
         return $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
     }
@@ -3978,34 +4141,57 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         return Object.values(map);
     }
 
-    function add_select_all_button(multiselect_control) {
-        multiselect_control.$wrapper.on("click", function () {
-            setTimeout(() => {
-                let dropdown = multiselect_control.$wrapper.find(".multiselect-list");
-                if (!dropdown.length) return;
-                if (dropdown.find(".select-all-btn").length) return;
+    // ──────────────────────────────────────────────────────────────
+    // IMPROVED: Add Select All using MutationObserver – reliable on Cloud
+    // ──────────────────────────────────────────────────────────────
+    function addSelectAllButton(control) {
+        if (!control || !control.$wrapper) return;
 
-                let select_all_btn = $(`
+        const observer = new MutationObserver(() => {
+            const footer = control.$wrapper.find('.dropdown-footer');
+            const list = control.$wrapper.find('.multiselect-list');
+
+            if (footer.length && list.length && !footer.find('.select-all-btn').length) {
+                let btn = $(`
                     <button type="button" class="btn btn-xs btn-default select-all-btn"
-                        style="margin-right:5px;">Select All</button>
+                        style="margin-right:5px; margin-left:5px;">
+                        Select All
+                    </button>
                 `);
 
-                select_all_btn.on("click", async function (e) {
+                btn.on("click", async function (e) {
                     e.stopPropagation();
+                    e.preventDefault();
+
                     let values = [];
-                    if (multiselect_control.get_data) {
-                        let data = await multiselect_control.get_data();
-                        values = data.map(d => String(d.value));
-                    } else if (multiselect_control.df.options) {
-                        values = multiselect_control.df.options.map(o =>
-                            typeof o === "object" ? String(o.value) : String(o)
-                        );
+                    try {
+                        if (control.get_data) {
+                            // async get_data – most common in Frappe MultiSelectList with dynamic source
+                            let data = await control.get_data();
+                            values = data.map(d => String(d.value || d));
+                        } else if (control.df.options) {
+                            values = control.df.options.map(o =>
+                                String(typeof o === "object" ? (o.value || o) : o)
+                            );
+                        }
+                        control.set_value(values);
+                        // Optional: close dropdown after action
+                        // control.$wrapper.find('input').blur();
+                    } catch (err) {
+                        console.error("Select All failed:", err);
                     }
-                    multiselect_control.set_value(values);
                 });
 
-                dropdown.find(".dropdown-footer").prepend(select_all_btn);
-            }, 200);
+                footer.prepend(btn);
+                // You can keep observing or disconnect after first add:
+                // observer.disconnect();
+            }
+        });
+
+        observer.observe(control.$wrapper[0], {
+            childList: true,
+            subtree: true,
+            attributes: false
         });
     }
 
@@ -4078,7 +4264,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         },
         render_input: true
     });
-    add_select_all_button(unit_filter);
+    addSelectAllButton(unit_filter);
 
     /* ── Cost Center ── */
     let cc_col = make_field();
@@ -4093,7 +4279,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         },
         render_input: true
     });
-    add_select_all_button(cost_center_filter);
+    addSelectAllButton(cost_center_filter);
 
     /* ── Location Code ── */
     let lc_col = make_field();
@@ -4108,7 +4294,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         },
         render_input: true
     });
-    add_select_all_button(location_code_filter);
+    addSelectAllButton(location_code_filter);
 
     /* ── Get Report button ── */
     let btn_col = make_field();
@@ -4124,7 +4310,6 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     });
     load_button.$wrapper.find('button').addClass("btn-primary").text("Get Report");
     load_button.$wrapper.css("margin-top", "26px");
-
     /* ------------------------------------------------
        LOAD COST CENTERS
     --------------------------------------------------*/
@@ -4625,3 +4810,4 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         `;
     }
 };
+
