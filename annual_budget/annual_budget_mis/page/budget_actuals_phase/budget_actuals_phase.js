@@ -5287,62 +5287,125 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     // ──────────────────────────────────────────────────────────────
     // IMPROVED Select All – with fallback polling + debug logs
     // ──────────────────────────────────────────────────────────────
-    function addSelectAllButton(control, fieldnameForDebug = '') {
-        if (!control || !control.$wrapper) {
-            console.warn(`addSelectAllButton: No wrapper for ${fieldnameForDebug}`);
-            return;
-        }
+    // function addSelectAllButton(control, fieldnameForDebug = '') {
+    //     if (!control || !control.$wrapper) {
+    //         console.warn(`addSelectAllButton: No wrapper for ${fieldnameForDebug}`);
+    //         return;
+    //     }
 
-        let buttonAdded = false;
+    //     let buttonAdded = false;
 
-        // 1. MutationObserver – primary method
-        const observer = new MutationObserver((mutations) => {
-            if (buttonAdded) return;
+    //     // 1. MutationObserver – primary method
+    //     const observer = new MutationObserver((mutations) => {
+    //         if (buttonAdded) return;
 
-            const footer = control.$wrapper.find('.dropdown-footer');
-            const list   = control.$wrapper.find('.multiselect-list, .awesomplete, .dropdown-menu');
+    //         const footer = control.$wrapper.find('.dropdown-footer');
+    //         const list   = control.$wrapper.find('.multiselect-list, .awesomplete, .dropdown-menu');
 
-            if (footer.length && list.length && !footer.find('.select-all-btn').length) {
-                console.log(`[${fieldnameForDebug}] Dropdown footer detected → adding Select All`);
-                addTheButton(footer);
-                buttonAdded = true;
-                observer.disconnect();
-            } else if (footer.length || list.length) {
-                console.log(`[${fieldnameForDebug}] Partial dropdown found (footer:${footer.length}, list:${list.length})`);
-            }
-        });
+    //         if (footer.length && list.length && !footer.find('.select-all-btn').length) {
+    //             console.log(`[${fieldnameForDebug}] Dropdown footer detected → adding Select All`);
+    //             addTheButton(footer);
+    //             buttonAdded = true;
+    //             observer.disconnect();
+    //         } else if (footer.length || list.length) {
+    //             console.log(`[${fieldnameForDebug}] Partial dropdown found (footer:${footer.length}, list:${list.length})`);
+    //         }
+    //     });
 
-        observer.observe(control.$wrapper[0], {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            characterData: true
-        });
+    //     observer.observe(control.$wrapper[0], {
+    //         childList: true,
+    //         subtree: true,
+    //         attributes: true,
+    //         characterData: true
+    //     });
 
-        // 2. Fallback polling (every 300ms for ~5 seconds)
-        let pollCount = 0;
-        const pollInterval = setInterval(() => {
-            pollCount++;
-            if (buttonAdded || pollCount > 15) {
-                clearInterval(pollInterval);
-                return;
-            }
+    //     // 2. Fallback polling (every 300ms for ~5 seconds)
+    //     let pollCount = 0;
+    //     const pollInterval = setInterval(() => {
+    //         pollCount++;
+    //         if (buttonAdded || pollCount > 15) {
+    //             clearInterval(pollInterval);
+    //             return;
+    //         }
 
-            const footer = control.$wrapper.find('.dropdown-footer');
-            if (footer.length && !footer.find('.select-all-btn').length) {
-                console.log(`[${fieldnameForDebug}] Polling success – footer appeared`);
-                addTheButton(footer);
-                buttonAdded = true;
-                clearInterval(pollInterval);
-                observer.disconnect();
-            }
-        }, 300);
+    //         const footer = control.$wrapper.find('.dropdown-footer');
+    //         if (footer.length && !footer.find('.select-all-btn').length) {
+    //             console.log(`[${fieldnameForDebug}] Polling success – footer appeared`);
+    //             addTheButton(footer);
+    //             buttonAdded = true;
+    //             clearInterval(pollInterval);
+    //             observer.disconnect();
+    //         }
+    //     }, 300);
 
-        // Helper: create & attach button
-        function addTheButton(footer) {
-            let btn = $(`
-                <button type="button" class="btn btn-xs btn-default select-all-btn"
-                    style="margin: 4px 6px;">
+    //     // Helper: create & attach button
+    //     function addTheButton(footer) {
+    //         let btn = $(`
+    //             <button type="button" class="btn btn-xs btn-default select-all-btn"
+    //                 style="margin: 4px 6px;">
+    //                 Select All
+    //             </button>
+    //         `);
+
+    //         btn.on("click", async function (e) {
+    //             e.stopPropagation();
+    //             e.preventDefault();
+
+    //             console.log(`[${fieldnameForDebug}] Select All clicked`);
+
+    //             let values = [];
+    //             try {
+    //                 if (control.get_data) {
+    //                     let data = await control.get_data();
+    //                     values = data.map(d => String(d.value || d));
+    //                 } else if (control.df && control.df.options) {
+    //                     values = control.df.options.map(o => String(typeof o === "object" ? o.value : o));
+    //                 }
+    //                 if (values.length) {
+    //                     control.set_value(values);
+    //                     console.log(`[${fieldnameForDebug}] Selected ${values.length} items`);
+    //                 } else {
+    //                     console.warn(`[${fieldnameForDebug}] No values to select`);
+    //                 }
+    //             } catch (err) {
+    //                 console.error(`[${fieldnameForDebug}] Select All error:`, err);
+    //             }
+    //         });
+
+    //         footer.prepend(btn);
+    //         console.log(`[${fieldnameForDebug}] Select All button added`);
+    //     }
+
+    //     // Initial delayed check
+    //     setTimeout(() => {
+    //         const footer = control.$wrapper.find('.dropdown-footer');
+    //         if (footer.length && !footer.find('.select-all-btn').length) {
+    //             console.log(`[${fieldnameForDebug}] Initial check success`);
+    //             addTheButton(footer);
+    //             buttonAdded = true;
+    //         }
+    //     }, 800);
+    // }
+function addSelectAllButton(control, fieldnameForDebug = '') {
+    if (!control || !control.$input) return;
+
+    control.$input.on("focus", function () {
+
+        setTimeout(() => {
+
+            const dropdown = $('.multiselect-dropdown:visible').last();
+            if (!dropdown.length) return;
+
+            const actions = dropdown.find('.multiselect-actions');
+            if (!actions.length) return;
+
+            // 🔥 Remove any existing injected buttons first
+            actions.find('.custom-select-all-btn').remove();
+
+            const btn = $(`
+                <button type="button"
+                    class="btn btn-xs btn-default custom-select-all-btn"
+                    style="margin-right:8px;">
                     Select All
                 </button>
             `);
@@ -5351,42 +5414,33 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                 e.stopPropagation();
                 e.preventDefault();
 
-                console.log(`[${fieldnameForDebug}] Select All clicked`);
-
                 let values = [];
+
                 try {
                     if (control.get_data) {
                         let data = await control.get_data();
                         values = data.map(d => String(d.value || d));
                     } else if (control.df && control.df.options) {
-                        values = control.df.options.map(o => String(typeof o === "object" ? o.value : o));
+                        values = control.df.options.map(o =>
+                            String(typeof o === "object" ? o.value : o)
+                        );
                     }
+
                     if (values.length) {
                         control.set_value(values);
-                        console.log(`[${fieldnameForDebug}] Selected ${values.length} items`);
-                    } else {
-                        console.warn(`[${fieldnameForDebug}] No values to select`);
                     }
+
                 } catch (err) {
-                    console.error(`[${fieldnameForDebug}] Select All error:`, err);
+                    console.error(err);
                 }
             });
 
-            footer.prepend(btn);
-            console.log(`[${fieldnameForDebug}] Select All button added`);
-        }
+            // Insert beside Clear All
+            actions.prepend(btn);
 
-        // Initial delayed check
-        setTimeout(() => {
-            const footer = control.$wrapper.find('.dropdown-footer');
-            if (footer.length && !footer.find('.select-all-btn').length) {
-                console.log(`[${fieldnameForDebug}] Initial check success`);
-                addTheButton(footer);
-                buttonAdded = true;
-            }
-        }, 800);
-    }
-
+        }, 120);
+    });
+}
     /* ── Financial Year ── */
     let fy_col = make_field();
     let fiscal_year_filter = frappe.ui.form.make_control({
