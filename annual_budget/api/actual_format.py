@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import frappe
 from annual_budget.api.actuals import get_actuals_from_erp
 from annual_budget.api.actuals import get_grouped_actuals
@@ -323,31 +325,99 @@ def get_accounting_period_from_month(month, financial_year=None):
         "fiscal_year": fiscal_year_start
     }
  
+# @frappe.whitelist(allow_guest=True)
+# def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,location_code=None):
+
+#     formatted = get_accounting_period_from_month(
+#         month,
+#         financial_year
+#     )
+#     accounting_period = formatted.get("accounting_period")
+#     fiscal_year = formatted.get("fiscal_year")
+#     result = get_grouped_actuals(
+#         fiscal_year,
+#         accounting_period
+#     )
+
+#     data = result.get("data", [])
+#     if unit:
+#         data = [d for d in data if d.get("business_unit") == unit]
+
+#     if cost_center:
+#         data = [d for d in data if d.get("deptid") == cost_center]
+
+#     if location_code:
+#         data = [d for d in data if d.get("operating_unit") == location_code]
+#     result["data"] = data
+#     result["filtered_record_count"] = len(data)
+
+#     return result
+
+
 @frappe.whitelist(allow_guest=True)
 def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,location_code=None):
-
     formatted = get_accounting_period_from_month(
         month,
         financial_year
     )
     accounting_period = formatted.get("accounting_period")
     fiscal_year = formatted.get("fiscal_year")
+
     result = get_grouped_actuals(
         fiscal_year,
         accounting_period
     )
 
     data = result.get("data", [])
-    if unit:
-        data = [d for d in data if d.get("business_unit") == unit]
+    def to_list(value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return [value.strip() for value in value.split(",") if value.strip()]
+        if isinstance(value, (list, tuple)):
+            return [str(v).strip() for v in value if v]
+        return None
+    units = to_list(unit)
+    if units:
+        data = [d for d in data if d.get("business_unit") in units]
 
-    if cost_center:
-        data = [d for d in data if d.get("deptid") == cost_center]
+    ccs = to_list(cost_center)
+    if ccs:
+        data = [d for d in data if d.get("deptid") in ccs]
 
-    if location_code:
-        data = [d for d in data if d.get("operating_unit") == location_code]
+    locs = to_list(location_code)
+    if locs:
+        data = [d for d in data if d.get("operating_unit") in locs]
+
     result["data"] = data
     result["filtered_record_count"] = len(data)
 
     return result
 
+
+
+@frappe.whitelist(allow_guest=True)
+def sum_of_actuals_by_sequence(month, financial_year, unit=None, cost_center=None, location_code=None):
+
+    response = get_filtered_actuals(month, financial_year, unit, cost_center, location_code)
+
+    # DO NOT use response["message"]
+    data = response.get("data", [])
+
+    merged_data = {}
+
+    for record in data:
+        seq_id = record.get("sequence_id")
+
+        if seq_id not in merged_data:
+            merged_data[seq_id] = record.copy()
+        else:
+            merged_data[seq_id]["total_posted_amt"] += record.get("total_posted_amt", 0)
+
+    return {
+        "status": "success",
+        "fiscal_year": response.get("fiscal_year"),
+        "accounting_period": response.get("accounting_period"),
+        "data": list(merged_data.values()),
+        "filtered_record_count": len(merged_data)
+    }
