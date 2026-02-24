@@ -2,10 +2,11 @@ from annual_budget.api.consolidated_budget_report import get_consolidated_report
 import frappe
 from frappe import _
 from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side,Protection
 from openpyxl.utils import get_column_letter
+from frappe.desk.page.setup_wizard.install_fixtures import _
 from io import BytesIO
-
+import datetime
 
 @frappe.whitelist()
 def download_phase_sheet_excel(financial_year, units):
@@ -1845,52 +1846,58 @@ def download_phase_sheet_excel(financial_year, units):
 #         "file_name": file.file_name
 #     }
 
+
+
+
+
+
+
+
+
+
 @frappe.whitelist()
-def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
+def export_phase_sheet_excel(
+    financial_year=None,
+    units=None,
+    cost_center=None,
+    location_code=None
+):
     import frappe, io
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from openpyxl.utils import get_column_letter
     from annual_budget.api.phase_sheet import get_consolidated_report
 
-    # ======================================================
-    # FETCH DATA
-    # ======================================================
-    data = get_consolidated_report(financial_year=financial_year, units=units,cost_center=cost_center)
+    # ⚠️ IMPORTANT:
+    # Do NOT convert units/cost_center/location_code here.
+    # get_consolidated_report already handles string → list conversion.
 
-    # ======================================================
-    # WORKBOOK SETUP
-    # ======================================================
+    data = get_consolidated_report(
+        financial_year=financial_year,
+        units=units,
+        cost_center=cost_center,
+        location_code=location_code
+    )
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Phase Sheet"
 
     center = Alignment(horizontal="center", vertical="center")
 
-    # ======================================================
-    # FONTS & FILLS (STYLES)
-    # ======================================================
-    bold = Font(bold=True)
-
-    # Main Header (Blue background, White text)
-    main_header_fill = PatternFill(start_color="0076B6", end_color="0076B6", fill_type="solid")
+    # ================= STYLES =================
+    main_header_fill = PatternFill(fill_type="solid", start_color="0076B6")
     main_header_font = Font(color="FFFFFF", bold=True)
 
-    # Sub Header (Orange background, White text)
-    sub_header_fill = PatternFill(start_color="F26B21", end_color="F26B21", fill_type="solid")
+    sub_header_fill = PatternFill(fill_type="solid", start_color="F26B21")
     sub_header_font = Font(color="FFFFFF", bold=True)
 
-    # Sub Head / Total Rows (Light Orange background, Dark text)
-    sub_head_fill = PatternFill(start_color="FFF3E6", end_color="FFF3E6", fill_type="solid")
-    sub_head_font = Font(bold=True, color="000000")
+    sub_head_fill = PatternFill(fill_type="solid", start_color="FFF3E6")
+    sub_head_font = Font(bold=True)
 
-    # Grand Total (Dark Blue background, White text)
-    grand_total_fill = PatternFill(start_color="003B63", end_color="003B63", fill_type="solid")
+    grand_total_fill = PatternFill(fill_type="solid", start_color="003B63")
     grand_total_font = Font(color="FFFFFF", bold=True)
 
-    # ======================================================
-    # BORDERS
-    # ======================================================
     thin_border = Border(
         left=Side(style="thin"),
         right=Side(style="thin"),
@@ -1898,20 +1905,12 @@ def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
         bottom=Side(style="thin")
     )
 
-    def apply_border_to_row(row, start_col=1, end_col=20):
-        for col in range(start_col, end_col + 1):
+    def apply_border(row):
+        for col in range(1, 21):
             ws.cell(row=row, column=col).border = thin_border
 
-    def apply_border_to_merged(start_row, end_row, start_col, end_col):
-        for r in range(start_row, end_row + 1):
-            for c in range(start_col, end_col + 1):
-                ws.cell(row=r, column=c).border = thin_border
-
-    # ======================================================
-    # COMMON STYLE APPLIER
-    # ======================================================
-    def apply_style(row, fill=None, font=None, start_col=1, end_col=20):
-        for col in range(start_col, end_col + 1):
+    def apply_style(row, fill=None, font=None):
+        for col in range(1, 21):
             cell = ws.cell(row=row, column=col)
             if fill:
                 cell.fill = fill
@@ -1919,45 +1918,12 @@ def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
                 cell.font = font
             cell.alignment = center
 
-    # ======================================================
-    # HELPER FUNCTIONS FOR TOTALS
-    # ======================================================
-    def q_total(q):
-        return sum(q)
-
-    def y_total(q1, q2, q3, q4):
-        return q_total(q1) + q_total(q2) + q_total(q3) + q_total(q4)
-
-    # ======================================================
-    # AUTO FIT COLUMN WIDTH (LIKE EXCEL AUTOFIT)
-    # ======================================================
-    def auto_adjust_column_width(ws, min_width=8, max_width=60):
-        for col in ws.columns:
-            max_length = 0
-            col_letter = get_column_letter(col[0].column)
-            for cell in col:
-                try:
-                    if cell.value:
-                        max_length = max(max_length, len(str(cell.value)))
-                except:
-                    pass
-            adjusted = max(min_width, min(max_width, max_length + 2))
-            ws.column_dimensions[col_letter].width = adjusted
-
-    # ======================================================
-    # TOP INFO
-    # ======================================================
-    ws.append([f"Unit : {units}"])
+    # ================= TOP INFO =================
+    ws.append([f"Unit : {units or ''}"])
     ws.append([f"Financial Year : {financial_year}"])
     ws.append([])
 
-    # Optional borders for top info
-    apply_border_to_row(1, 1, 3)
-    apply_border_to_row(2, 1, 3)
-
-    # ------------------------------------------------------
-    # HEADER ROW 1  (Quarter blocks)
-    # ------------------------------------------------------
+    # ================= HEADER ROW 1 =================
     ws.append([
         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
         "QTR-1", "", "",
@@ -1974,12 +1940,10 @@ def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
     ws.merge_cells(start_row=r1, start_column=10, end_row=r1, end_column=12)
     ws.merge_cells(start_row=r1, start_column=13, end_row=r1, end_column=15)
 
-    apply_style(r1, fill=main_header_fill, font=main_header_font)
-    apply_border_to_merged(r1, r1, 1, 20)
+    apply_style(r1, main_header_fill, main_header_font)
+    apply_border(r1)
 
-    # ------------------------------------------------------
-    # HEADER ROW 2 (Months + Totals)
-    # ------------------------------------------------------
+    # ================= HEADER ROW 2 =================
     ws.append([
         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
         "Apr", "May", "Jun",
@@ -1990,10 +1954,10 @@ def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
         f"YEAR {financial_year}"
     ])
     r2 = ws.max_row
-    apply_style(r2, fill=main_header_fill, font=main_header_font)
-    apply_border_to_merged(r2, r2, 1, 20)
 
-    # Vertical merges
+    apply_style(r2, main_header_fill, main_header_font)
+    apply_border(r2)
+
     ws.merge_cells(start_row=r1, start_column=1, end_row=r2, end_column=1)
     ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
     ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
@@ -2003,238 +1967,820 @@ def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
     ws.merge_cells(start_row=r1, start_column=19, end_row=r2, end_column=19)
     ws.merge_cells(start_row=r1, start_column=20, end_row=r2, end_column=20)
 
-    # Borders for merged columns
-    apply_border_to_merged(r1, r2, 1, 1)
-    apply_border_to_merged(r1, r2, 2, 2)
-    apply_border_to_merged(r1, r2, 3, 3)
-    apply_border_to_merged(r1, r2, 16, 16)
-    apply_border_to_merged(r1, r2, 17, 17)
-    apply_border_to_merged(r1, r2, 18, 18)
-    apply_border_to_merged(r1, r2, 19, 19)
-    apply_border_to_merged(r1, r2, 20, 20)
+    ws.freeze_panes = "A6"
 
-    # ======================================================
-    # ACCUMULATORS
-    # ======================================================
     sl_no = 1
-    gq1 = [0, 0, 0]
-    gq2 = [0, 0, 0]
-    gq3 = [0, 0, 0]
-    gq4 = [0, 0, 0]
+    item_rows = []
 
-    special_operating = {"months": [0]*12, "quarters": [0, 0, 0, 0], "year": 0}
-    operating_heads = [
-        "PROGRAM EXPENSES",
-        "PARTNER EXPENSES",
-        "PEOPLE EXPENSES",
-        "TRAVEL EXPENSES",
-        "STUDENT SUPPORT EXPENSES"
-        "MEDICAL EXPENSES",
-        "OTHER OPERATING EXPENSES",
-    ]
-
-    def add_to_special(q1, q2, q3, q4):
-        months = [*q1, *q2, *q3, *q4]
-        quarters = [q_total(q1), q_total(q2), q_total(q3), q_total(q4)]
-        for i in range(12):
-            special_operating["months"][i] += months[i]
-        for i in range(4):
-            special_operating["quarters"][i] += quarters[i]
-        special_operating["year"] += y_total(q1, q2, q3, q4)
-
-    # ======================================================
-    # DATA LOOP
-    # ======================================================
+    # ================= DATA LOOP =================
     for head in data:
 
-        # Main Head Title
         ws.append(["", head["name"].upper()])
         row = ws.max_row
         ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=20)
-        cell = ws.cell(row=row, column=2)
-        cell.font = main_header_font
-        cell.fill = main_header_fill
-        cell.alignment = center
-        apply_border_to_merged(row, row, 2, 20)
-
-        hq1 = [0, 0, 0]
-        hq2 = [0, 0, 0]
-        hq3 = [0, 0, 0]
-        hq4 = [0, 0, 0]
+        ws.cell(row, 2).fill = main_header_fill
+        ws.cell(row, 2).font = main_header_font
+        apply_border(row)
 
         if head.get("sub_heads"):
             for sub in head["sub_heads"]:
 
-                # Sub Head Title
                 ws.append(["", sub["name"].upper()])
                 row = ws.max_row
                 ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=20)
-                cell = ws.cell(row=row, column=2)
-                cell.font = sub_header_font
-                cell.fill = sub_header_fill
-                cell.alignment = center
-                apply_border_to_merged(row, row, 2, 20)
-
-                sq1 = [0, 0, 0]
-                sq2 = [0, 0, 0]
-                sq3 = [0, 0, 0]
-                sq4 = [0, 0, 0]
+                ws.cell(row, 2).fill = sub_header_fill
+                ws.cell(row, 2).font = sub_header_font
+                apply_border(row)
 
                 for item in sub["items"]:
+                    row_idx = ws.max_row + 1
                     q1, q2, q3, q4 = item["q1"], item["q2"], item["q3"], item["q4"]
-                    head_of_expense = (
-                        item.get("sub_head_of_expense")
-                        or item.get("sub_head")
-                        or sub["name"]
-                        or head["name"]
-                    )
 
                     ws.append([
-                        sl_no, head_of_expense, item["name"],
-                        q1[0], q1[1], q1[2],
-                        q2[0], q2[1], q2[2],
-                        q3[0], q3[1], q3[2],
-                        q4[0], q4[1], q4[2],
-                        q_total(q1), q_total(q2), q_total(q3), q_total(q4),
-                        y_total(q1, q2, q3, q4)
+                        sl_no, head["name"], item["name"],
+                        *q1, *q2, *q3, *q4,
+                        f"=SUM(D{row_idx}:F{row_idx})",
+                        f"=SUM(G{row_idx}:I{row_idx})",
+                        f"=SUM(J{row_idx}:L{row_idx})",
+                        f"=SUM(M{row_idx}:O{row_idx})",
+                        f"=SUM(D{row_idx}:O{row_idx})"
                     ])
-                    apply_border_to_row(ws.max_row)
+
+                    item_rows.append(row_idx)
+                    apply_border(ws.max_row)
                     sl_no += 1
 
-                    for i in range(3):
-                        sq1[i] += q1[i]
-                        sq2[i] += q2[i]
-                        sq3[i] += q3[i]
-                        sq4[i] += q4[i]
+    # ================= GRAND TOTAL (ONLY ITEM ROWS) =================
+    def build_sum_formula(col):
+        cells = [f"{col}{r}" for r in item_rows]
+        return f"=SUM({','.join(cells)})" if cells else 0
 
-                        hq1[i] += q1[i]
-                        hq2[i] += q2[i]
-                        hq3[i] += q3[i]
-                        hq4[i] += q4[i]
-
-                        gq1[i] += q1[i]
-                        gq2[i] += q2[i]
-                        gq3[i] += q3[i]
-                        gq4[i] += q4[i]
-
-                # Total Sub Head
-                ws.append([
-                    "", f"TOTAL {sub['name'].upper()}", "",
-                    sq1[0], sq1[1], sq1[2],
-                    sq2[0], sq2[1], sq2[2],
-                    sq3[0], sq3[1], sq3[2],
-                    sq4[0], sq4[1], sq4[2],
-                    q_total(sq1), q_total(sq2), q_total(sq3), q_total(sq4),
-                    y_total(sq1, sq2, sq3, sq4)
-                ])
-                row = ws.max_row
-                apply_style(row, fill=sub_head_fill, font=sub_head_font)
-                apply_border_to_row(row)
-
-                if sub["name"].upper() in operating_heads:
-                    add_to_special(sq1, sq2, sq3, sq4)
-
-        else:
-            for item in head["items"]:
-                q1, q2, q3, q4 = item["q1"], item["q2"], item["q3"], item["q4"]
-                head_of_expense = (
-                    item.get("sub_head_of_expense")
-                    or item.get("sub_head")
-                    or head["name"]
-                )
-
-                ws.append([
-                    sl_no, head_of_expense, item["name"],
-                    q1[0], q1[1], q1[2],
-                    q2[0], q2[1], q2[2],
-                    q3[0], q3[1], q3[2],
-                    q4[0], q4[1], q4[2],
-                    q_total(q1), q_total(q2), q_total(q3), q_total(q4),
-                    y_total(q1, q2, q3, q4)
-                ])
-                apply_border_to_row(ws.max_row)
-                sl_no += 1
-
-                for i in range(3):
-                    hq1[i] += q1[i]
-                    hq2[i] += q2[i]
-                    hq3[i] += q3[i]
-                    hq4[i] += q4[i]
-
-                    gq1[i] += q1[i]
-                    gq2[i] += q2[i]
-                    gq3[i] += q3[i]
-                    gq4[i] += q4[i]
-
-        # Total Main Head (skip OPERATING EXPENSES)
-        total_head_label = f"TOTAL {head['name'].upper()}"
-        if total_head_label != "TOTAL OPERATING EXPENSES":
-            ws.append([
-                "", total_head_label, "",
-                hq1[0], hq1[1], hq1[2],
-                hq2[0], hq2[1], hq2[2],
-                hq3[0], hq3[1], hq3[2],
-                hq4[0], hq4[1], hq4[2],
-                q_total(hq1), q_total(hq2), q_total(hq3), q_total(hq4),
-                y_total(hq1, hq2, hq3, hq4)
-            ])
-            row = ws.max_row
-            apply_style(row, fill=sub_head_fill, font=sub_head_font)
-            apply_border_to_row(row)
-
-            if head["name"].upper() in operating_heads:
-                add_to_special(hq1, hq2, hq3, hq4)
-
-    # ======================================================
-    # TOTAL OPERATING EXPENSES (ONLY ONCE)
-    # ======================================================
-    ws.append([
-        "", "TOTAL OPERATING EXPENSES", "",
-        *special_operating["months"],
-        *special_operating["quarters"],
-        special_operating["year"]
-    ])
-    row = ws.max_row
-    apply_style(row, fill=sub_header_fill, font=sub_header_font)
-    apply_border_to_row(row)
-    # GRAND TOTAL VALUES
     ws.append([
         "", "GRAND TOTAL", "",
-        gq1[0], gq1[1], gq1[2],
-        gq2[0], gq2[1], gq2[2],
-        gq3[0], gq3[1], gq3[2],
-        gq4[0], gq4[1], gq4[2],
-        q_total(gq1), q_total(gq2), q_total(gq3), q_total(gq4),
-        y_total(gq1, gq2, gq3, gq4)
+        build_sum_formula("D"),
+        build_sum_formula("E"),
+        build_sum_formula("F"),
+        build_sum_formula("G"),
+        build_sum_formula("H"),
+        build_sum_formula("I"),
+        build_sum_formula("J"),
+        build_sum_formula("K"),
+        build_sum_formula("L"),
+        build_sum_formula("M"),
+        build_sum_formula("N"),
+        build_sum_formula("O"),
+        build_sum_formula("P"),
+        build_sum_formula("Q"),
+        build_sum_formula("R"),
+        build_sum_formula("S"),
+        build_sum_formula("T"),
     ])
-    row = ws.max_row
-    apply_style(row, fill=grand_total_fill, font=grand_total_font)
-    apply_border_to_row(row)
 
-    # ======================================================
-    # AUTOFIT COLUMN WIDTHS
-    # ======================================================
-    auto_adjust_column_width(ws)
-    ws.column_dimensions["B"].width += 5
-    ws.column_dimensions["C"].width += 8
+    apply_style(ws.max_row, grand_total_fill, grand_total_font)
+    apply_border(ws.max_row)
 
-    # ======================================================
-    # SAVE FILE INTO FRAPPE
-    # ======================================================
+    # ================= AUTO COLUMN WIDTH =================
+    for column_cells in ws.columns:
+        max_length = 0
+        column = column_cells[0].column
+        letter = get_column_letter(column)
+
+        for cell in column_cells:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+
+        ws.column_dimensions[letter].width = max_length + 2
+
+    # ================= DIRECT DOWNLOAD =================
     stream = io.BytesIO()
     wb.save(stream)
     stream.seek(0)
 
-    file = frappe.get_doc({
-        "doctype": "File",
-        "file_name": f"Phase_Sheet_{financial_year}.xlsx",
-        "content": stream.read(),
-        "is_private": 0
-    })
-    file.insert(ignore_permissions=True)
+    frappe.response["filename"] = f"Phase_Sheet_{financial_year}.xlsx"
+    frappe.response["filecontent"] = stream.getvalue()
+    frappe.response["type"] = "binary"
 
-    return {
-        "file_url": file.file_url,
-        "file_name": file.file_name
-    }
 
+
+
+
+
+
+
+
+
+
+
+@frappe.whitelist()
+def download_finance_budget_import_template(user):
+
+    if not user:
+        frappe.throw(_("User is required"))
+    doc_name = frappe.db.get_value(
+        "Finance user access",
+        {"user": user},
+        "name"
+    )
+
+    if not doc_name:
+        frappe.throw(_("No Finance User Access found"))
+
+    access_doc = frappe.get_doc("Finance user access", doc_name)
+    financial_year = frappe.db.get_single_value(
+        "Master Settings",
+        "current_financial_year"
+    )
+    headers = [
+        "Entity / Unit",
+        "Entity / Unit Decription",
+        "Cost Center",
+        "Cost Center(Original)",
+        "Cost Center Description",
+        "Location code",
+        "Location code(Original)",
+        "Function / Sub Unit / Divison",
+        "State",
+        "Financial year",
+        "Type of expense ID (Budget Amounts)",
+        "Head of expense (Budget Amounts)",
+        "Sub head of expense (Budget Amounts)",
+        "Type of expense (Budget Amounts)",
+        "April (Budget Amounts)",
+        "May (Budget Amounts)",
+        "June (Budget Amounts)",
+        "July (Budget Amounts)",
+        "August (Budget Amounts)",
+        "September (Budget Amounts)",
+        "October (Budget Amounts)",
+        "November (Budget Amounts)",
+        "December (Budget Amounts)",
+        "January (Budget Amounts)",
+        "February (Budget Amounts)",
+        "March (Budget Amounts)",
+        "Quarter 1 Total Amount (Budget Amounts)",
+        "Quarter 2 Total Amount (Budget Amounts)",
+        "Quarter 3 Total Amount (Budget Amounts)",
+        "Quarter 4 Total Amount (Budget Amounts)",
+        "Year Total Amount (Budget Amounts)"
+    ]
+    expenses = frappe.get_all(
+        "Expenses",
+        fields=[
+            "name",
+            "type_of_expense",
+            "sub_head_of_expense",
+            "head_of_expense"
+        ],
+        order_by="sequence_id asc"
+    )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Finance Budget Import"
+
+    ws.append(headers)
+
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    ws.freeze_panes = "A2"
+
+    row_index = 2
+    for mapping in access_doc.mapping:
+
+        first_row = True
+
+        for exp in expenses:
+
+            if first_row:
+                parent_values = [
+                    mapping.unit,
+                    mapping.unit_description,
+                    mapping.cost_center,
+                    mapping.cost_center_erp,
+                    mapping.cost_center_description,
+                    mapping.location_code,
+                    mapping.location_code_erp,
+                    mapping.location_description,
+                    mapping.state,
+                    financial_year
+                ]
+                first_row = False
+            else:
+                parent_values = [""] * 10
+
+            ws.append(parent_values + [
+                exp.name,
+                exp.head_of_expense,
+                exp.sub_head_of_expense,
+                exp.type_of_expense,
+                0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00, 0.00, 0.00,
+                "", "", "", "", ""
+            ])
+            ws[f"AA{row_index}"] = f"=SUM(O{row_index}:Q{row_index})"  
+            ws[f"AB{row_index}"] = f"=SUM(R{row_index}:T{row_index})"  
+            ws[f"AC{row_index}"] = f"=SUM(U{row_index}:W{row_index})"  
+            ws[f"AD{row_index}"] = f"=SUM(X{row_index}:Z{row_index})"  
+            ws[f"AE{row_index}"] = f"=SUM(AA{row_index}:AD{row_index})"  
+
+            for col in range(15, 32):
+                ws.cell(row=row_index, column=col).number_format = '0.00'
+
+            row_index += 1
+
+    for row in ws.iter_rows(min_row=1, max_row=row_index-1):
+        for cell in row:
+            cell.protection = Protection(locked=True)
+
+    for row in ws.iter_rows(min_row=2, max_row=row_index-1, min_col=15, max_col=31):
+        for cell in row:
+            cell.protection = Protection(locked=False)
+
+    ws.protection.sheet = True
+    ws.protection.password = "budget"
+
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[column_letter].width = max_length + 2
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    frappe.response["filename"] = f"Budget_mis_Import_{current_date}.xlsx"    
+    frappe.response["filecontent"] = output.getvalue()
+    frappe.response["type"] = "download"
+
+
+# @frappe.whitelist()
+# def export_phase_sheet_excel(financial_year=None, units=None,cost_center=None):
+#     import frappe, io
+#     from openpyxl import Workbook
+#     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+#     from openpyxl.utils import get_column_letter
+#     from annual_budget.api.phase_sheet import get_consolidated_report
+
+#     # ======================================================
+#     # FETCH DATA
+#     # ======================================================
+#     data = get_consolidated_report(financial_year=financial_year, units=units,cost_center=cost_center)
+
+#     # ======================================================
+#     # WORKBOOK SETUP
+#     # ======================================================
+#     wb = Workbook()
+#     ws = wb.active
+#     ws.title = "Phase Sheet"
+
+#     center = Alignment(horizontal="center", vertical="center")
+
+#     # ======================================================
+#     # FONTS & FILLS (STYLES)
+#     # ======================================================
+#     bold = Font(bold=True)
+
+#     # Main Header (Blue background, White text)
+#     main_header_fill = PatternFill(start_color="0076B6", end_color="0076B6", fill_type="solid")
+#     main_header_font = Font(color="FFFFFF", bold=True)
+
+#     # Sub Header (Orange background, White text)
+#     sub_header_fill = PatternFill(start_color="F26B21", end_color="F26B21", fill_type="solid")
+#     sub_header_font = Font(color="FFFFFF", bold=True)
+
+#     # Sub Head / Total Rows (Light Orange background, Dark text)
+#     sub_head_fill = PatternFill(start_color="FFF3E6", end_color="FFF3E6", fill_type="solid")
+#     sub_head_font = Font(bold=True, color="000000")
+
+#     # Grand Total (Dark Blue background, White text)
+#     grand_total_fill = PatternFill(start_color="003B63", end_color="003B63", fill_type="solid")
+#     grand_total_font = Font(color="FFFFFF", bold=True)
+
+#     # ======================================================
+#     # BORDERS
+#     # ======================================================
+#     thin_border = Border(
+#         left=Side(style="thin"),
+#         right=Side(style="thin"),
+#         top=Side(style="thin"),
+#         bottom=Side(style="thin")
+#     )
+
+#     def apply_border_to_row(row, start_col=1, end_col=20):
+#         for col in range(start_col, end_col + 1):
+#             ws.cell(row=row, column=col).border = thin_border
+
+#     def apply_border_to_merged(start_row, end_row, start_col, end_col):
+#         for r in range(start_row, end_row + 1):
+#             for c in range(start_col, end_col + 1):
+#                 ws.cell(row=r, column=c).border = thin_border
+
+#     # ======================================================
+#     # COMMON STYLE APPLIER
+#     # ======================================================
+#     def apply_style(row, fill=None, font=None, start_col=1, end_col=20):
+#         for col in range(start_col, end_col + 1):
+#             cell = ws.cell(row=row, column=col)
+#             if fill:
+#                 cell.fill = fill
+#             if font:
+#                 cell.font = font
+#             cell.alignment = center
+
+#     # ======================================================
+#     # HELPER FUNCTIONS FOR TOTALS
+#     # ======================================================
+#     def q_total(q):
+#         return sum(q)
+
+#     def y_total(q1, q2, q3, q4):
+#         return q_total(q1) + q_total(q2) + q_total(q3) + q_total(q4)
+
+#     # ======================================================
+#     # AUTO FIT COLUMN WIDTH (LIKE EXCEL AUTOFIT)
+#     # ======================================================
+#     def auto_adjust_column_width(ws, min_width=8, max_width=60):
+#         for col in ws.columns:
+#             max_length = 0
+#             col_letter = get_column_letter(col[0].column)
+#             for cell in col:
+#                 try:
+#                     if cell.value:
+#                         max_length = max(max_length, len(str(cell.value)))
+#                 except:
+#                     pass
+#             adjusted = max(min_width, min(max_width, max_length + 2))
+#             ws.column_dimensions[col_letter].width = adjusted
+
+#     # ======================================================
+#     # TOP INFO
+#     # ======================================================
+#     ws.append([f"Unit : {units}"])
+#     ws.append([f"Financial Year : {financial_year}"])
+#     ws.append([])
+
+#     # Optional borders for top info
+#     apply_border_to_row(1, 1, 3)
+#     apply_border_to_row(2, 1, 3)
+
+#     # ------------------------------------------------------
+#     # HEADER ROW 1  (Quarter blocks)
+#     # ------------------------------------------------------
+#     ws.append([
+#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
+#         "QTR-1", "", "",
+#         "QTR-2", "", "",
+#         "QTR-3", "", "",
+#         "QTR-4", "", "",
+#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
+#         "YEAR TOTAL"
+#     ])
+#     r1 = ws.max_row
+
+#     ws.merge_cells(start_row=r1, start_column=4, end_row=r1, end_column=6)
+#     ws.merge_cells(start_row=r1, start_column=7, end_row=r1, end_column=9)
+#     ws.merge_cells(start_row=r1, start_column=10, end_row=r1, end_column=12)
+#     ws.merge_cells(start_row=r1, start_column=13, end_row=r1, end_column=15)
+
+#     apply_style(r1, fill=main_header_fill, font=main_header_font)
+#     apply_border_to_merged(r1, r1, 1, 20)
+
+#     # ------------------------------------------------------
+#     # HEADER ROW 2 (Months + Totals)
+#     # ------------------------------------------------------
+#     ws.append([
+#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
+#         "Apr", "May", "Jun",
+#         "Jul", "Aug", "Sep",
+#         "Oct", "Nov", "Dec",
+#         "Jan", "Feb", "Mar",
+#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
+#         f"YEAR {financial_year}"
+#     ])
+#     r2 = ws.max_row
+#     apply_style(r2, fill=main_header_fill, font=main_header_font)
+#     apply_border_to_merged(r2, r2, 1, 20)
+
+#     # Vertical merges
+#     ws.merge_cells(start_row=r1, start_column=1, end_row=r2, end_column=1)
+#     ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
+#     ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
+#     ws.merge_cells(start_row=r1, start_column=16, end_row=r2, end_column=16)
+#     ws.merge_cells(start_row=r1, start_column=17, end_row=r2, end_column=17)
+#     ws.merge_cells(start_row=r1, start_column=18, end_row=r2, end_column=18)
+#     ws.merge_cells(start_row=r1, start_column=19, end_row=r2, end_column=19)
+#     ws.merge_cells(start_row=r1, start_column=20, end_row=r2, end_column=20)
+
+#     # Borders for merged columns
+#     apply_border_to_merged(r1, r2, 1, 1)
+#     apply_border_to_merged(r1, r2, 2, 2)
+#     apply_border_to_merged(r1, r2, 3, 3)
+#     apply_border_to_merged(r1, r2, 16, 16)
+#     apply_border_to_merged(r1, r2, 17, 17)
+#     apply_border_to_merged(r1, r2, 18, 18)
+#     apply_border_to_merged(r1, r2, 19, 19)
+#     apply_border_to_merged(r1, r2, 20, 20)
+
+#     # ======================================================
+#     # ACCUMULATORS
+#     # ======================================================
+#     sl_no = 1
+#     gq1 = [0, 0, 0]
+#     gq2 = [0, 0, 0]
+#     gq3 = [0, 0, 0]
+#     gq4 = [0, 0, 0]
+
+#     special_operating = {"months": [0]*12, "quarters": [0, 0, 0, 0], "year": 0}
+#     operating_heads = [
+#         "PROGRAM EXPENSES",
+#         "PARTNER EXPENSES",
+#         "PEOPLE EXPENSES",
+#         "TRAVEL EXPENSES",
+#         "STUDENT SUPPORT EXPENSES"
+#         "MEDICAL EXPENSES",
+#         "OTHER OPERATING EXPENSES",
+#     ]
+
+#     def add_to_special(q1, q2, q3, q4):
+#         months = [*q1, *q2, *q3, *q4]
+#         quarters = [q_total(q1), q_total(q2), q_total(q3), q_total(q4)]
+#         for i in range(12):
+#             special_operating["months"][i] += months[i]
+#         for i in range(4):
+#             special_operating["quarters"][i] += quarters[i]
+#         special_operating["year"] += y_total(q1, q2, q3, q4)
+
+#     # ======================================================
+#     # DATA LOOP
+#     # ======================================================
+#     for head in data:
+
+#         # Main Head Title
+#         ws.append(["", head["name"].upper()])
+#         row = ws.max_row
+#         ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=20)
+#         cell = ws.cell(row=row, column=2)
+#         cell.font = main_header_font
+#         cell.fill = main_header_fill
+#         cell.alignment = center
+#         apply_border_to_merged(row, row, 2, 20)
+
+#         hq1 = [0, 0, 0]
+#         hq2 = [0, 0, 0]
+#         hq3 = [0, 0, 0]
+#         hq4 = [0, 0, 0]
+
+#         if head.get("sub_heads"):
+#             for sub in head["sub_heads"]:
+
+#                 # Sub Head Title
+#                 ws.append(["", sub["name"].upper()])
+#                 row = ws.max_row
+#                 ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=20)
+#                 cell = ws.cell(row=row, column=2)
+#                 cell.font = sub_header_font
+#                 cell.fill = sub_header_fill
+#                 cell.alignment = center
+#                 apply_border_to_merged(row, row, 2, 20)
+
+#                 sq1 = [0, 0, 0]
+#                 sq2 = [0, 0, 0]
+#                 sq3 = [0, 0, 0]
+#                 sq4 = [0, 0, 0]
+
+#                 for item in sub["items"]:
+#                     q1, q2, q3, q4 = item["q1"], item["q2"], item["q3"], item["q4"]
+#                     head_of_expense = (
+#                         item.get("sub_head_of_expense")
+#                         or item.get("sub_head")
+#                         or sub["name"]
+#                         or head["name"]
+#                     )
+
+#                     ws.append([
+#                         sl_no, head_of_expense, item["name"],
+#                         q1[0], q1[1], q1[2],
+#                         q2[0], q2[1], q2[2],
+#                         q3[0], q3[1], q3[2],
+#                         q4[0], q4[1], q4[2],
+#                         q_total(q1), q_total(q2), q_total(q3), q_total(q4),
+#                         y_total(q1, q2, q3, q4)
+#                     ])
+#                     apply_border_to_row(ws.max_row)
+#                     sl_no += 1
+
+#                     for i in range(3):
+#                         sq1[i] += q1[i]
+#                         sq2[i] += q2[i]
+#                         sq3[i] += q3[i]
+#                         sq4[i] += q4[i]
+
+#                         hq1[i] += q1[i]
+#                         hq2[i] += q2[i]
+#                         hq3[i] += q3[i]
+#                         hq4[i] += q4[i]
+
+#                         gq1[i] += q1[i]
+#                         gq2[i] += q2[i]
+#                         gq3[i] += q3[i]
+#                         gq4[i] += q4[i]
+
+#                 # Total Sub Head
+#                 ws.append([
+#                     "", f"TOTAL {sub['name'].upper()}", "",
+#                     sq1[0], sq1[1], sq1[2],
+#                     sq2[0], sq2[1], sq2[2],
+#                     sq3[0], sq3[1], sq3[2],
+#                     sq4[0], sq4[1], sq4[2],
+#                     q_total(sq1), q_total(sq2), q_total(sq3), q_total(sq4),
+#                     y_total(sq1, sq2, sq3, sq4)
+#                 ])
+#                 row = ws.max_row
+#                 apply_style(row, fill=sub_head_fill, font=sub_head_font)
+#                 apply_border_to_row(row)
+
+#                 if sub["name"].upper() in operating_heads:
+#                     add_to_special(sq1, sq2, sq3, sq4)
+
+#         else:
+#             for item in head["items"]:
+#                 q1, q2, q3, q4 = item["q1"], item["q2"], item["q3"], item["q4"]
+#                 head_of_expense = (
+#                     item.get("sub_head_of_expense")
+#                     or item.get("sub_head")
+#                     or head["name"]
+#                 )
+
+#                 ws.append([
+#                     sl_no, head_of_expense, item["name"],
+#                     q1[0], q1[1], q1[2],
+#                     q2[0], q2[1], q2[2],
+#                     q3[0], q3[1], q3[2],
+#                     q4[0], q4[1], q4[2],
+#                     q_total(q1), q_total(q2), q_total(q3), q_total(q4),
+#                     y_total(q1, q2, q3, q4)
+#                 ])
+#                 apply_border_to_row(ws.max_row)
+#                 sl_no += 1
+
+#                 for i in range(3):
+#                     hq1[i] += q1[i]
+#                     hq2[i] += q2[i]
+#                     hq3[i] += q3[i]
+#                     hq4[i] += q4[i]
+
+#                     gq1[i] += q1[i]
+#                     gq2[i] += q2[i]
+#                     gq3[i] += q3[i]
+#                     gq4[i] += q4[i]
+
+#         # Total Main Head (skip OPERATING EXPENSES)
+#         total_head_label = f"TOTAL {head['name'].upper()}"
+#         if total_head_label != "TOTAL OPERATING EXPENSES":
+#             ws.append([
+#                 "", total_head_label, "",
+#                 hq1[0], hq1[1], hq1[2],
+#                 hq2[0], hq2[1], hq2[2],
+#                 hq3[0], hq3[1], hq3[2],
+#                 hq4[0], hq4[1], hq4[2],
+#                 q_total(hq1), q_total(hq2), q_total(hq3), q_total(hq4),
+#                 y_total(hq1, hq2, hq3, hq4)
+#             ])
+#             row = ws.max_row
+#             apply_style(row, fill=sub_head_fill, font=sub_head_font)
+#             apply_border_to_row(row)
+
+#             if head["name"].upper() in operating_heads:
+#                 add_to_special(hq1, hq2, hq3, hq4)
+
+#     # ======================================================
+#     # TOTAL OPERATING EXPENSES (ONLY ONCE)
+#     # ======================================================
+#     ws.append([
+#         "", "TOTAL OPERATING EXPENSES", "",
+#         *special_operating["months"],
+#         *special_operating["quarters"],
+#         special_operating["year"]
+#     ])
+#     row = ws.max_row
+#     apply_style(row, fill=sub_header_fill, font=sub_header_font)
+#     apply_border_to_row(row)
+#     # GRAND TOTAL VALUES
+#     ws.append([
+#         "", "GRAND TOTAL", "",
+#         gq1[0], gq1[1], gq1[2],
+#         gq2[0], gq2[1], gq2[2],
+#         gq3[0], gq3[1], gq3[2],
+#         gq4[0], gq4[1], gq4[2],
+#         q_total(gq1), q_total(gq2), q_total(gq3), q_total(gq4),
+#         y_total(gq1, gq2, gq3, gq4)
+#     ])
+#     row = ws.max_row
+#     apply_style(row, fill=grand_total_fill, font=grand_total_font)
+#     apply_border_to_row(row)
+
+#     # ======================================================
+#     # AUTOFIT COLUMN WIDTHS
+#     # ======================================================
+#     auto_adjust_column_width(ws)
+#     ws.column_dimensions["B"].width += 5
+#     ws.column_dimensions["C"].width += 8
+
+#     # ======================================================
+#     # SAVE FILE INTO FRAPPE
+#     # ======================================================
+#     stream = io.BytesIO()
+#     wb.save(stream)
+#     stream.seek(0)
+
+#     file = frappe.get_doc({
+#         "doctype": "File",
+#         "file_name": f"Phase_Sheet_{financial_year}.xlsx",
+#         "content": stream.read(),
+#         "is_private": 0
+#     })
+#     file.insert(ignore_permissions=True)
+
+#     return {
+#         "file_url": file.file_url,
+#         "file_name": file.file_name
+#     }
+
+import frappe
+import csv
+import io
+
+@frappe.whitelist(allow_guest=True)
+def generate_budget_file():
+
+    # 1️⃣ Get Expenses ordered by sequence_id
+    expenses = frappe.db.sql("""
+        SELECT
+            name,
+            sub_head_of_expense,
+            type_of_expense,
+            sequence_id
+        FROM `tabExpenses`
+        ORDER BY sequence_id ASC
+    """, as_dict=True)
+
+    # 2️⃣ Get ALL User Mapping rows (no financial year filter)
+    mappings = frappe.db.sql("""
+        SELECT
+            fua.financial_year,
+            um.unit,
+            um.unit_description,
+            um.cost_center,
+            um.cost_center_description,
+            um.location_code,
+            um.location_description
+        FROM `tabFinance user access` fua
+        JOIN `tabUser mapping` um
+            ON um.parent = fua.name
+    """, as_dict=True)
+
+    if not expenses:
+        frappe.throw("No Expenses found")
+
+    if not mappings:
+        frappe.throw("No User Mappings found")
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow([
+        "Entity / Unit",
+        "Entity / Unit Description",
+        "Cost Center",
+        "Cost Center Description",
+        "Location Code",
+        "Location Description",
+        "State",
+        "Financial Year",
+        "Type of expense ID",
+        "Sub head of expense",
+        "Type of expense",
+        "April","May","June","July","August","September",
+        "October","November","December","January","February","March",
+        "Quarter 1 Total Amount",
+        "Quarter 2 Total Amount",
+        "Quarter 3 Total Amount",
+        "Quarter 4 Total Amount",
+        "Year Total Amount"
+    ])
+
+    # 3️⃣ Cross combination
+    for mapping in mappings:
+        for expense in expenses:
+            writer.writerow([
+                mapping.unit,
+                mapping.unit_description,
+                mapping.cost_center,
+                mapping.cost_center_description,
+                mapping.location_code,
+                mapping.location_description,
+                "Karnataka",   # change if dynamic
+                mapping.financial_year,
+                expense.name,
+                expense.sub_head_of_expense,
+                expense.type_of_expense,
+                0,0,0,0,0,0,0,0,0,0,0,0,
+                0,0,0,0,0
+            ])
+
+    frappe.response['filename'] = "Budget_Export.csv"
+    frappe.response['filecontent'] = output.getvalue()
+    frappe.response['type'] = 'download'
+
+    if not financial_year:
+        frappe.throw("Financial Year is required")
+
+    # Get all Expenses ordered by sequence_id
+    expenses = frappe.db.sql("""
+        SELECT
+            name,
+            sub_head_of_expense,
+            type_of_expense,
+            sequence_id
+        FROM `tabExpenses`
+        ORDER BY sequence_id ASC
+    """, as_dict=True)
+
+    # Get all User Mapping rows for given financial year
+    mappings = frappe.db.sql("""
+        SELECT
+            fua.financial_year,
+            um.unit,
+            um.unit_description,
+            um.cost_center,
+            um.cost_center_description,
+            um.location_code,
+            um.location_description
+        FROM `tabFinance user access` fua
+        JOIN `tabUser mapping` um
+            ON um.parent = fua.name
+        WHERE fua.financial_year = %s
+    """, financial_year, as_dict=True)
+
+    if not expenses:
+        frappe.throw("No Expenses found")
+
+    if not mappings:
+        frappe.throw("No User Mappings found")
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow([
+        "Entity / Unit",
+        "Entity / Unit Description",
+        "Cost Center",
+        "Cost Center Description",
+        "Location Code",
+        "Location Description",
+        "State",
+        "Financial Year",
+        "Type of expense ID",
+        "Sub head of expense",
+        "Type of expense",
+        "April","May","June","July","August","September",
+        "October","November","December","January","February","March",
+        "Quarter 1 Total Amount",
+        "Quarter 2 Total Amount",
+        "Quarter 3 Total Amount",
+        "Quarter 4 Total Amount",
+        "Year Total Amount"
+    ])
+
+    # Cross combination
+    for mapping in mappings:
+        for expense in expenses:
+
+            writer.writerow([
+                mapping.unit,
+                mapping.unit_description,
+                mapping.cost_center,
+                mapping.cost_center_description,
+                mapping.location_code,
+                mapping.location_description,
+                "Karnataka",  # change if dynamic
+                mapping.financial_year,
+                expense.name,
+                expense.sub_head_of_expense,
+                expense.type_of_expense,
+                0,0,0,0,0,0,0,0,0,0,0,0,
+                0,0,0,0,0
+            ])
+
+    frappe.response['filename'] = f"Budget_{financial_year}.csv"
+    frappe.response['filecontent'] = output.getvalue()
+    frappe.response['type'] = 'download'
+
+    return

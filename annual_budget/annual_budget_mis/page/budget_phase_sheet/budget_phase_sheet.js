@@ -1632,39 +1632,69 @@ let cards_container = $('<div class="card-row"></div>').appendTo(page.body);
         export_phase_sheet();
     });
 
+    // function export_phase_sheet() {
+    //     let financial_year = fiscal_year_filter.get_value();
+    //     let units = unit_filter.get_value();
+    //     let cost_centers = cost_center_filter.get_value();
+    //     let locations = location_code_filter.get_value();
+
+    //     if (!financial_year || !units.length) {
+    //         frappe.msgprint(__('Please select Financial Year and Unit'));
+    //         return;
+    //     }
+
+    //     frappe.call({
+    //         method: "annual_budget.api.export_reports.export_phase_sheet_excel",
+    //         args: {
+    //             financial_year,
+    //             units: units.join(","),
+    //             cost_center: cost_centers,
+    //             location_code: locations
+    //         },
+    //         freeze: true,
+    //         freeze_message: __("Preparing CSV file..."),
+    //         callback(r) {
+    //             if (r.message?.file_url) {
+    //                 window.open(r.message.file_url);
+    //                 frappe.msgprint({
+    //                     title: __("Success"),
+    //                     message: __("Exported successfully"),
+    //                     indicator: "green"
+    //                 });
+    //             }
+    //         }
+    //     });
+    // }
     function export_phase_sheet() {
-        let financial_year = fiscal_year_filter.get_value();
-        let units = unit_filter.get_value();
-        let cost_centers = cost_center_filter.get_value();
-        let locations = location_code_filter.get_value();
+    let financial_year = fiscal_year_filter.get_value();
+    let units = unit_filter.get_value();
+    let cost_centers = cost_center_filter.get_value();
+    let locations = location_code_filter.get_value();
 
-        if (!financial_year || !units.length) {
-            frappe.msgprint(__('Please select Financial Year and Unit'));
-            return;
-        }
-
-        frappe.call({
-            method: "annual_budget.api.export_reports.export_phase_sheet_excel",
-            args: {
-                financial_year,
-                units: units.join(","),
-                cost_center: cost_centers,
-                location_code: locations
-            },
-            freeze: true,
-            freeze_message: __("Preparing CSV file..."),
-            callback(r) {
-                if (r.message?.file_url) {
-                    window.open(r.message.file_url);
-                    frappe.msgprint({
-                        title: __("Success"),
-                        message: __("Exported successfully"),
-                        indicator: "green"
-                    });
-                }
-            }
-        });
+    if (!financial_year || !units.length) {
+        frappe.msgprint(__('Please select Financial Year and Unit'));
+        return;
     }
+
+    let params = new URLSearchParams({
+        financial_year: financial_year,
+        units: units.join(","),
+        cost_center: cost_centers || "",
+        location_code: locations || ""
+    });
+
+    let url = `/api/method/annual_budget.api.export_reports.export_phase_sheet_excel?${params.toString()}`;
+
+    // Optional freeze indicator
+    frappe.dom.freeze(__('Preparing Excel file...'));
+
+    window.open(url);
+
+    // Unfreeze after short delay (browser handles download)
+    setTimeout(() => {
+        frappe.dom.unfreeze();
+    }, 2000);
+}
 const style = `
 <style>
 

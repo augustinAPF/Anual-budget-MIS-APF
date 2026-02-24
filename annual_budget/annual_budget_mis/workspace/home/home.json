@@ -1,7 +1,7 @@
 {
  "app": "annual_budget",
  "charts": [],
- "content": "[{\"id\":\"FAytx_193h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Home</span>\",\"col\":12}},{\"id\":\"SJGRECD3lH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget List\",\"col\":3}},{\"id\":\"2xdK9DCEAs\",\"type\":\"paragraph\",\"data\":{\"text\":\"Budget Import\",\"col\":12}},{\"id\":\"rJBJloRenc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Data Import\",\"col\":4}}]",
+ "content": "[{\"id\":\"FAytx_193h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Home</span>\",\"col\":12}},{\"id\":\"SJGRECD3lH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget List\",\"col\":3}},{\"id\":\"2xdK9DCEAs\",\"type\":\"paragraph\",\"data\":{\"text\":\"Budget Import\",\"col\":12}},{\"id\":\"W2f35NYM8m\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Import Template\",\"col\":4}},{\"id\":\"rJBJloRenc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Data Import\",\"col\":4}}]",
  "creation": "2026-02-09 10:47:37.145579",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,13 +9,13 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "retail",
- "idx": 0,
+ "idx": 1,
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Home",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-02-09 10:50:14.627779",
+ "modified": "2026-02-24 16:18:48.309438",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Home",
@@ -42,6 +42,13 @@
    "link_to": "Finance Budget",
    "stats_filter": "[]",
    "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Budget Import Template",
+   "link_to": "import-template",
+   "type": "Page"
   }
  ],
  "title": "Home",
