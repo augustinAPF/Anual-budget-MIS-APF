@@ -360,12 +360,11 @@ def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,locatio
         month,
         financial_year
     )
-    accounting_period = formatted.get("accounting_period")
+    # accounting_period = formatted.get("accounting_period")
     fiscal_year = formatted.get("fiscal_year")
 
     result = get_grouped_actuals(
-        fiscal_year,
-        accounting_period
+        fiscal_year
     )
 
     data = result.get("data", [])
