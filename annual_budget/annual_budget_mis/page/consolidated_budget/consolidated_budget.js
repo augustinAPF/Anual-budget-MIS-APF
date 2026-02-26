@@ -5,11 +5,7 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 		title: 'Consolidated Budget',
 		single_column: true
 	});
-
-	/* =====================================================
-	   PAGE STRUCTURE
-	===================================================== */
-
+	//!=============================================================== Tab Design code ================================================================
 	$(page.body).html(`
 
 	<style>
@@ -48,11 +44,6 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 		</div>
 	</div>
 	`);
-
-	/* =====================================================
-	   TAB SWITCHING
-	===================================================== */
-
 	$(document).on("click", "#budgetTab .nav-link", function() {
 		$("#budgetTab .nav-link").removeClass("active");
 		$(this).addClass("active");
@@ -60,422 +51,446 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 		$("#" + $(this).data("tab")).addClass("active");
 	});
 
-	/* =====================================================
-	   FULL YOUR STYLE (EXACT)
-	===================================================== */
+	//!=============================================================== Annual Budget Consolidated ================================================================
+		/* =====================================================
+		STYLE
+		===================================================== */
 
-const style = `
-<style>
+		const style = `
+		<style>
 
-/* =====================================================
-   CONTAINER
-   ===================================================== */
+		/* Container */
+		#tables-container { 
+			margin: 20px; 
+			background-color: #ffffff; 
+			border-radius: 8px; 
+			padding: 8px; 
+		}
 
-#tables-container { 
-    margin: 20px; 
-    background-color: #ffffff; 
-    border-radius: 8px; 
-    padding: 8px; 
-}
+		/* Controls */
+		#controls-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 12px;
+			padding: 6px 10px;
+			background: #f7f9fb;
+			border: 1px solid #dcdcdc;
+			border-radius: 6px;
+		}
 
+		#global-search-box { 
+			width: 280px; 
+			padding: 7px 12px; 
+			border: 1px solid #aaa; 
+			border-radius: 6px; 
+			font-size: 13px;
+		}
 
-/* =====================================================
-   CONTROLS ROW
-   ===================================================== */
+		#checkbox-area {
+			display: flex;
+			gap: 18px;
+			font-size: 13px;
+			font-weight: 500;
+		}
 
-#controls-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 6px 10px;
-    background: #f7f9fb;
-    border: 1px solid #dcdcdc;
-    border-radius: 6px;
-}
+		/* Table */
+		.scroll-wrapper { 
+			border: 1px solid #ccc; 
+			border-radius: 6px; 
+			overflow: auto; 
+			max-height: 70vh; 
+			background: #fff; 
+		}
 
-#global-search-box { 
-    width: 280px; 
-    padding: 7px 12px; 
-    border: 1px solid #aaa; 
-    border-radius: 6px; 
-    font-size: 13px;
-}
+		table.university-table { 
+			min-width: 1200px; 
+			width: 100%; 
+			border-collapse: collapse; 
+			font-size: 13px; 
+		}
 
-#checkbox-area {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #333;
-}
+		table.university-table th, 
+		table.university-table td {
+			border: 1px solid #ddd;
+			padding: 8px 10px;
+			white-space: nowrap;
+			text-align: center;
+		}
 
-#checkbox-area input {
-    transform: scale(1.15);
-    cursor: pointer;
-}
+		table.university-table th:first-child,
+		table.university-table td:first-child { 
+			text-align: left; 
+		}
 
+		thead .main-row th { 
+			background-color: #0076B6; 
+			color: #fff; 
+			position: sticky; 
+			top: 0; 
+			z-index: 25; 
+		}
 
-/* =====================================================
-   TABLE DESIGN
-   ===================================================== */
+		thead .sub-row th { 
+			background-color: #F26B21; 
+			color: #fff; 
+			position: sticky; 
+			top: 34px; 
+			z-index: 24; 
+		}
 
-.scroll-wrapper { 
-    border: 1px solid #ccc; 
-    border-radius: 6px; 
-    overflow-x: auto; 
-    overflow-y: auto; 
-    max-height: 70vh; 
-    background: #fff; 
-}
+		tr.expense-head { font-weight: 700; cursor: pointer; }
+		tr.sub-head { background:#FFF3E6; font-weight:600; cursor:pointer; }
+		tr.line-item td:first-child { padding-left: 35px; }
 
-table.university-table { 
-    min-width: 1200px; 
-    width: 100%; 
-    border-collapse: collapse; 
-    font-size: 13px; 
-    color: #111; 
-    background:#fff; 
-}
+		.text-blue { color:#0076B6; font-weight:600; }
+			/* TABLE */
+		.table-title {
+			font-size: 15px;
+			font-weight: 600;
+			color: #003B63;
+			margin-bottom: 12px;
+		}
 
-table.university-table th, 
-table.university-table td {
-    border: 1px solid #ddd;
-    padding: 8px 10px;
-    white-space: nowrap;
-    vertical-align: middle;
-    text-align: center;
-    background:#fff !important;
-}
+		</style>
+		`;
 
-table.university-table th:first-child,
-table.university-table td:first-child { 
-    text-align: left !important; 
-}
+		$(style).appendTo(page.body);
 
-table.university-table th:nth-child(2),
-table.university-table td:nth-child(2) { 
-    text-align: left !important; 
-}
+		/* =====================================================
+		STATE
+		===================================================== */
 
+		let expense_heads = [];
+		let expandedHeads = [];
+		let expandedSubHeads = [];
+		let expandedQuarters = [];
+		let annualLoaded = false;
 
-/* =====================================================
-   TABLE HEADERS
-   ===================================================== */
+		const quarters = {
+			q1: { label: 'Quarter 1', months: ['April','May','June'] },
+			q2: { label: 'Quarter 2', months: ['July','August','September'] },
+			q3: { label: 'Quarter 3', months: ['October','November','December'] },
+			q4: { label: 'Quarter 4', months: ['January','February','March'] }
+		};
 
-table.university-table thead tr.main-row th { 
-    background-color: #0076B6 !important; 
-    color: #fff !important; 
-    position: sticky; 
-    top: 0; 
-    z-index: 25; 
-}
+		const sumArray = arr => (arr || []).reduce((a,b)=>a+(b||0),0);
+		const formatNumber = n => (n || 0).toLocaleString();
 
-table.university-table thead tr.sub-row th { 
-    background-color: #F26B21 !important; 
-    color: #fff !important; 
-    position: sticky; 
-    top: 34px; 
-    z-index: 24; 
-}
+		/* =====================================================
+		BUILD UI
+		===================================================== */
 
+		function buildUI(){
 
-/* =====================================================
-   ROW TYPES
-   ===================================================== */
+			const container = $(`
+				<div id="tables-container">
+				<h3 class="table-title">	
+				Annual Budget Consolidated
+				</h3>
+					<div id="controls-row">
+						<input id="global-search-box" type="text"
+							placeholder="Search Expense / Item / GL Code...">
+						<div id="checkbox-area">
+							<label><input type="checkbox" id="expand-quarters"> Expand Quarters</label>
+							<label><input type="checkbox" id="expand-items"> Expand Line Items</label>
+						</div>
+					</div>
 
-tr.expense-head { 
-    font-weight: 700; 
-    cursor: pointer; 
-}
-
-tr.expense-head:hover td {
-    background: #F4F9FD !important;
-}
-
-tr.sub-head { 
-    background-color: #FFF3E6 !important;
-    font-weight: 600; 
-}
-
-tr.sub-head:hover td {
-    background-color: #FFEAD5 !important;
-}
-
-tr.line-item td:first-child { 
-    padding-left: 35px !important; 
-}
-
-tr.sub-head td:first-child { 
-    padding-left: 20px !important; 
-}
-
-.text-blue { 
-    color: #0076B6; 
-    font-weight: 600; 
-}
-
-td.gl-empty { 
-    color: #aaa; 
-    font-style: italic; 
-}
-
-
-/* =====================================================
-   GRAND TOTAL TABLE ROW
-   ===================================================== */
-
-tr.grand-total-row td {
-    background:#003B63 !important;
-    color:#fff !important;
-    font-weight:700 !important;
-    border-top: 2px solid #000 !important;
-}
-
-
-</style>
-`;	$(style).appendTo(page.body);
-
-	/* =====================================================
-	   STATE
-	===================================================== */
-
-	let expense_heads = [];
-	let expandedHeads = [];
-	let expandedSubHeads = [];
-	let expandedQuarters = [];
-	let searchText = "";
-	let annualLoaded = false;
-
-	const cards_container = $("#annual-cards");
-
-	const quarters = {
-		q1: { label: 'Quarter 1', months: ['April','May','June'] },
-		q2: { label: 'Quarter 2', months: ['July','August','September'] },
-		q3: { label: 'Quarter 3', months: ['October','November','December'] },
-		q4: { label: 'Quarter 4', months: ['January','February','March'] }
-	};
-
-	const formatNumber = n => (n || 0).toLocaleString();
-
-	function sum(arr){ return (arr||[]).reduce((a,b)=>a+(b||0),0); }
-
-	function formatINR(value){
-		return new Intl.NumberFormat('en-US',{
-			style:'currency',
-			currency:'INR'
-		}).format(value||0);
-	}
-
-	/* =====================================================
-	   BUILD TABLE UI
-	===================================================== */
-
-	function buildUI(){
-		const container = $(`
-			<div id="tables-container">
-
-				<div id="controls-row">
-					<input id="global-search-box" type="text"
-						placeholder="Search Expense / Sub Head / Item / GL Code...">
-					<div id="checkbox-area">
-						<label><input type="checkbox" id="expand-quarters"> Expand Quarters</label>
-						<label><input type="checkbox" id="expand-items"> Expand Line Items</label>
+					<div class="scroll-wrapper">
+						<table class="university-table" id="phase-table"></table>
 					</div>
 				</div>
+			`);
 
-				<div class="scroll-wrapper">
-					<table class="university-table" id="phase-table"></table>
-				</div>
+			$("#annual-table-wrapper").empty().append(container);
+			bindControlEvents();
+		}
 
-			</div>
-		`);
+		/* =====================================================
+		CONTROL EVENTS
+		===================================================== */
 
-		$("#annual-table-wrapper").empty().append(container);
-	}
+		function bindControlEvents(){
 
+			$('#expand-quarters').on('change', function(){
+				expandedQuarters = this.checked ? ['q1','q2','q3','q4'] : [];
+				renderTable($('#global-search-box').val().toLowerCase());
+			});
 
+			$('#expand-items').on('change', function(){
 
-	/* =====================================================
-	   RENDER TABLE (YOUR FULL LOGIC)
-	===================================================== */
+				if(this.checked){
+					expandedHeads = expense_heads.map(h => h.name.trim());
+					expandedSubHeads = [];
 
-function renderTable(){
-
-	const $table = $('#phase-table');
-	$table.empty();
-
-	const $thead = $('<thead></thead>');
-	const $mainRow = $('<tr class="main-row"></tr>');
-	$mainRow.append('<th rowspan="2">Expense Head / Line Item</th>');
-	$mainRow.append('<th rowspan="2">GL Code</th>');
-
-	['q1','q2','q3','q4'].forEach(q=>{
-		const isExpanded = expandedQuarters.includes(q);
-		const arrow = isExpanded ? '▲' : '▼';
-		const colspan = 3;
-		const rowspan = isExpanded ? 1 : 2;
-
-		$mainRow.append(`
-			<th class="expandable" data-quarter="${q}"
-				colspan="${colspan}" rowspan="${rowspan}">
-				${quarters[q].label} ${arrow}
-			</th>
-		`);
-	});
-
-	$mainRow.append('<th rowspan="2">Total</th>');
-	$thead.append($mainRow);
-
-	if(expandedQuarters.length>0){
-		const $subRow = $('<tr class="sub-row"></tr>');
-		['q1','q2','q3','q4'].forEach(q=>{
-			if(expandedQuarters.includes(q)){
-				quarters[q].months.forEach(m=>{
-					$subRow.append(`<th>${m}</th>`);
-				});
-			}
-		});
-		$thead.append($subRow);
-	}
-
-	$table.append($thead);
-	const $tbody = $('<tbody></tbody>');
-
-	expense_heads.forEach(head=>{
-
-		const headTotal = ['q1','q2','q3','q4']
-			.reduce((sum,q)=>sum+sumArray(head[q]),0);
-
-		$tbody.append(`
-			<tr class="expense-head" data-head="${head.name}">
-				<td>${expandedHeads.includes(head.name)?'▼':'▶'} ${head.name}</td>
-				<td>-</td>
-				${renderQuarterCells(head)}
-				<td class="text-blue">${formatNumber(headTotal)}</td>
-			</tr>
-		`);
-
-		/* =========================
-		   SUB HEADS
-		========================= */
-
-		if(expandedHeads.includes(head.name) && head.sub_heads){
-
-			head.sub_heads.forEach(sub=>{
-
-				const key = head.name+"__"+sub.name;
-
-				const subTotal = ['q1','q2','q3','q4']
-					.reduce((sum,q)=>sum+sumArray(sub[q]),0);
-
-				$tbody.append(`
-					<tr class="sub-head" data-sub="${key}">
-						<td>${expandedSubHeads.includes(key)?'▼':'▶'} ${sub.name}</td>
-						<td>-</td>
-						${renderQuarterCells(sub)}
-						<td>${formatNumber(subTotal)}</td>
-					</tr>
-				`);
-
-				/* =========================
-				   ITEMS (THIS WAS MISSING)
-				========================= */
-
-				if(expandedSubHeads.includes(key) && sub.items){
-
-					sub.items.forEach(item=>{
-
-						const itemTotal = ['q1','q2','q3','q4']
-							.reduce((sum,q)=>sum+sumArray(item[q]),0);
-
-						$tbody.append(`
-							<tr class="line-item">
-								<td style="padding-left:35px;">
-									${item.name}
-								</td>
-								<td>${item.gl_code || '-'}</td>
-								${renderQuarterCells(item)}
-								<td>${formatNumber(itemTotal)}</td>
-							</tr>
-						`);
-
+					expense_heads.forEach(head=>{
+						(head.sub_heads || []).forEach(sub=>{
+							expandedSubHeads.push(head.name.trim()+"__"+sub.name.trim());
+						});
 					});
+
+				} else {
+					expandedHeads = [];
+					expandedSubHeads = [];
 				}
 
+				renderTable($('#global-search-box').val().toLowerCase());
+			});
+
+			$('#global-search-box').on('input', function(){
+				renderTable($(this).val().toLowerCase());
 			});
 		}
 
-	});
+		/* =====================================================
+		RENDER TABLE
+		===================================================== */
 
-	$table.append($tbody);
+		function renderTable(searchTerm = ''){
 
-	bindTableEvents();
-}
+			const $table = $('#phase-table');
+			$table.empty();
 
-	function sumArray(arr){ return (arr||[]).reduce((a,b)=>a+(b||0),0); }
+			expandedHeads = [...new Set(expandedHeads)];
+			expandedSubHeads = [...new Set(expandedSubHeads)];
 
-	function renderQuarterCells(obj){
-		return ['q1','q2','q3','q4'].map(q=>{
-			if(expandedQuarters.includes(q)){
-				return obj[q].map(v=>`<td>${formatNumber(v)}</td>`).join('');
-			}else{
-				return `<td colspan="3">${formatNumber(sumArray(obj[q]))}</td>`;
+			const $thead = $('<thead></thead>');
+			const $mainRow = $('<tr class="main-row"></tr>');
+
+			$mainRow.append('<th rowspan="2">Expense Head / Line Item</th>');
+			$mainRow.append('<th rowspan="2">GL Code</th>');
+
+			['q1','q2','q3','q4'].forEach(q=>{
+				const isExpanded = expandedQuarters.includes(q);
+				const rowspan = isExpanded ? 1 : 2;
+				const arrow = isExpanded ? '▲' : '▼';
+
+				$mainRow.append(`
+					<th class="expandable" data-quarter="${q}"
+						colspan="3" rowspan="${rowspan}">
+						${quarters[q].label} ${arrow}
+					</th>
+				`);
+			});
+
+			$mainRow.append('<th rowspan="2">Total</th>');
+			$thead.append($mainRow);
+
+			if(expandedQuarters.length){
+				const $subRow = $('<tr class="sub-row"></tr>');
+				['q1','q2','q3','q4'].forEach(q=>{
+					if(expandedQuarters.includes(q)){
+						quarters[q].months.forEach(m=>{
+							$subRow.append(`<th>${m}</th>`);
+						});
+					}
+				});
+				$thead.append($subRow);
 			}
-		}).join('');
-	}
 
-	function bindTableEvents(){
+			$table.append($thead);
+			const $tbody = $('<tbody></tbody>');
 
-		$('#phase-table').find('th.expandable').off().on('click',function(){
-			const q=$(this).data('quarter');
-			expandedQuarters=expandedQuarters.includes(q)?
-				expandedQuarters.filter(x=>x!==q):
-				[...expandedQuarters,q];
-			renderTable();
-		});
+			let grandTotals = {
+				q1:[0,0,0],
+				q2:[0,0,0],
+				q3:[0,0,0],
+				q4:[0,0,0]
+			};
 
-		$('#phase-table').find('.expense-head').off().on('click',function(){
-			const h=$(this).data('head');
-			expandedHeads=expandedHeads.includes(h)?
-				expandedHeads.filter(x=>x!==h):
-				[...expandedHeads,h];
-			renderTable();
-		});
+			expense_heads.forEach(head=>{
 
-		$('#phase-table').find('.sub-head').off().on('click',function(){
-			const s=$(this).data('sub');
-			expandedSubHeads=expandedSubHeads.includes(s)?
-				expandedSubHeads.filter(x=>x!==s):
-				[...expandedSubHeads,s];
-			renderTable();
-		});
-	}
+				const headName = head.name.trim();
+				const headLower = headName.toLowerCase();
 
-	/* =====================================================
-	   LOAD DATA (LAZY)
-	===================================================== */
+				let headMatches = headLower.includes(searchTerm);
+				let hasMatchingChild = false;
 
-	function loadData(){
+				(head.sub_heads || []).forEach(sub=>{
+					if(sub.name.toLowerCase().includes(searchTerm)){
+						hasMatchingChild = true;
+					}
 
-		buildUI();
+					(sub.items || []).forEach(item=>{
+						if(
+							item.name.toLowerCase().includes(searchTerm) ||
+							(item.gl_code && item.gl_code.toLowerCase().includes(searchTerm))
+						){
+							hasMatchingChild = true;
+						}
+					});
+				});
 
-		frappe.call({
-			method:"annual_budget.api.phase_sheet.get_consolidated_report",
-			args:{financial_year: "2025-26"},
-			callback:function(r){
-				expense_heads=r.message||[];
-				renderTable();
-			}
-		});
-	}
+				(head.items || []).forEach(item=>{
+					if(
+						item.name.toLowerCase().includes(searchTerm) ||
+						(item.gl_code && item.gl_code.toLowerCase().includes(searchTerm))
+					){
+						hasMatchingChild = true;
+					}
+				});
 
-	$(document).on("click","[data-tab='annual_budget']",function(){
-		if(!annualLoaded){
-			annualLoaded=true;
-			loadData();
+				if(searchTerm && !headMatches && !hasMatchingChild){
+					return;
+				}
+
+				if(searchTerm){
+					expandedHeads.push(headName);
+				}
+
+				['q1','q2','q3','q4'].forEach(q=>{
+					if(head[q]){
+						head[q].forEach((val,i)=>{
+							grandTotals[q][i] += (val || 0);
+						});
+					}
+				});
+
+				const headTotal = ['q1','q2','q3','q4']
+					.reduce((sum,q)=>sum+sumArray(head[q]),0);
+
+				$tbody.append(`
+					<tr class="expense-head" data-head="${headName}">
+						<td>${expandedHeads.includes(headName)?'▼':'▶'} ${headName}</td>
+						<td>-</td>
+						${renderQuarterCells(head)}
+						<td class="text-blue">${formatNumber(headTotal)}</td>
+					</tr>
+				`);
+
+				if(expandedHeads.includes(headName)){
+
+					(head.sub_heads || []).forEach(sub=>{
+
+						const subKey = headName+"__"+sub.name.trim();
+
+						if(searchTerm){
+							expandedSubHeads.push(subKey);
+						}
+
+						const subTotal = ['q1','q2','q3','q4']
+							.reduce((sum,q)=>sum+sumArray(sub[q]),0);
+
+						$tbody.append(`
+							<tr class="sub-head" data-sub="${subKey}">
+								<td>${expandedSubHeads.includes(subKey)?'▼':'▶'} ${sub.name}</td>
+								<td>-</td>
+								${renderQuarterCells(sub)}
+								<td>${formatNumber(subTotal)}</td>
+							</tr>
+						`);
+
+						if(expandedSubHeads.includes(subKey)){
+							(sub.items || []).forEach(item=>{
+								appendItemRow($tbody,item);
+							});
+						}
+					});
+
+					(head.items || []).forEach(item=>{
+						appendItemRow($tbody,item);
+					});
+				}
+			});
+
+			const grandTotalSum = ['q1','q2','q3','q4']
+				.reduce((sum,q)=>sum+sumArray(grandTotals[q]),0);
+
+			$tbody.append(`
+				<tr style="background:#e8f4fb;font-weight:700;">
+					<td>GRAND TOTAL</td>
+					<td>-</td>
+					${renderQuarterCells(grandTotals)}
+					<td class="text-blue">${formatNumber(grandTotalSum)}</td>
+				</tr>
+			`);
+
+			$table.append($tbody);
 		}
-	});
 
+		/* =====================================================
+		HELPERS
+		===================================================== */
+
+		function appendItemRow($tbody,item){
+
+			const itemTotal = ['q1','q2','q3','q4']
+				.reduce((sum,q)=>sum+sumArray(item[q]),0);
+
+			$tbody.append(`
+				<tr class="line-item">
+					<td>${item.name}</td>
+					<td>${item.gl_code || '-'}</td>
+					${renderQuarterCells(item)}
+					<td>${formatNumber(itemTotal)}</td>
+				</tr>
+			`);
+		}
+
+		function renderQuarterCells(obj){
+			return ['q1','q2','q3','q4'].map(q=>{
+				const data = obj[q] || [0,0,0];
+				if(expandedQuarters.includes(q)){
+					return data.map(v=>`<td>${formatNumber(v)}</td>`).join('');
+				} else {
+					return `<td colspan="3">${formatNumber(sumArray(data))}</td>`;
+				}
+			}).join('');
+		}
+
+		/* =====================================================
+		DELEGATED EVENTS
+		===================================================== */
+
+		$(document).on('click','.expandable',function(){
+			const q=$(this).data('quarter');
+			expandedQuarters = expandedQuarters.includes(q)
+				? expandedQuarters.filter(x=>x!==q)
+				: [...expandedQuarters,q];
+			renderTable($('#global-search-box').val().toLowerCase());
+		});
+
+		$(document).on('click','.expense-head',function(){
+			const h=$(this).data('head');
+			expandedHeads = expandedHeads.includes(h)
+				? expandedHeads.filter(x=>x!==h)
+				: [...expandedHeads,h];
+			renderTable($('#global-search-box').val().toLowerCase());
+		});
+
+		$(document).on('click','.sub-head',function(){
+			const s=$(this).data('sub');
+			expandedSubHeads = expandedSubHeads.includes(s)
+				? expandedSubHeads.filter(x=>x!==s)
+				: [...expandedSubHeads,s];
+			renderTable($('#global-search-box').val().toLowerCase());
+		});
+
+		/* =====================================================
+		LOAD DATA
+		===================================================== */
+
+		function loadData(){
+
+			buildUI();
+
+			frappe.call({
+				method:"annual_budget.api.phase_sheet.get_consolidated_report",
+				args:{financial_year: "2025-26"},
+				callback:function(r){
+					expense_heads = r.message || [];
+					renderTable();
+				}
+			});
+		}
+
+		$(document).on("click","[data-tab='annual_budget']",function(){
+			if(!annualLoaded){
+				annualLoaded=true;
+				loadData();
+			}
+		});
 };
+
+

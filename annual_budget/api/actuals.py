@@ -165,6 +165,8 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 #             "status": "failed",
 #             "error": "Unexpected server error"
 #         }
+
+
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_prod(fiscal_year):
     try:
@@ -235,6 +237,82 @@ def get_actuals_from_erp_prod(fiscal_year):
             "status": "failed",
             "error": "Unexpected server error"
         }
+# * ==============================================================  Actual API Prod with accounting period  =====================================================================================
+
+# @frappe.whitelist(allow_guest=True)
+# def get_actuals_from_erp_prod(fiscal_year):
+#     try:
+#         # Fetch credentials from ERP Credentials Doctype
+#         doc = frappe.get_single("ERP Credentials")
+#         username = "MISUSER"
+#         password = "[REDACTED-CREDENTIAL]"
+
+#         base_url = (
+#             "https://pserp.azimpremjifoundation.org:8053/"
+#             "PSIGW/RESTListeningConnector/"
+#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+#             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+#         )
+
+#         api_url = (
+#             f"{base_url}"
+#             f"?isconnectedquery=N"
+#             f"&maxrows=100000"
+#             f"&prompt_uniquepromptname=FISCAL_YEAR"
+#             f"&prompt_fieldvalue={fiscal_year}"
+#         )
+
+#         response = requests.get(
+#             api_url,
+#             headers={"Accept": "application/xml"},
+#             auth=(username, password),
+#             timeout=120
+#         )
+
+#         if response.status_code != 200:
+#             return {
+#                 "status": "failed",
+#                 "status_code": response.status_code,
+#                 "error": response.text
+#             }
+
+#         # Parse XML response
+#         root = ET.fromstring(response.content)
+#         rows = []
+
+#         for row in root.iter():
+#             if row.tag.lower().endswith("row"):
+#                 row_data = {}
+
+#                 for child in row:
+#                     tag = child.tag.split("}")[-1].lower()
+#                     row_data[tag] = child.text.strip() if child.text else None
+
+#                 rows.append(row_data)
+
+#         return {
+#             "status": "success",
+#             "query": "Z_MIS_ACTUALS_BY_PERIOD",
+#             "fiscal_year": fiscal_year,
+#             "count": len(rows),
+#             "data": rows
+#         }
+
+#     except requests.exceptions.Timeout:
+#         return {
+#             "status": "failed",
+#             "error": "Request timeout while connecting to ERP"
+#         }
+
+#     except Exception:
+#         frappe.log_error(
+#             title="PeopleSoft API Error - Z_MIS_ACTUALS_BY_PERIOD",
+#             message=frappe.get_traceback()
+#         )
+#         return {
+#             "status": "failed",
+#             "error": "Unexpected server error"
+#         }
 
 @frappe.whitelist(allow_guest=True)
 def get_erp_and_expenses(fiscal_year):

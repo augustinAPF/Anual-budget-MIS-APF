@@ -10,10 +10,13 @@
   "set_id",
   "entity__unit_decription",
   "cost_center",
+  "cost_center_erp",
   "cc_descr",
   "created_by",
+  "uploaded_by",
   "column_break_yvds",
   "location_code",
+  "location_code_erp",
   "description",
   "state",
   "financial_year",
@@ -125,12 +128,35 @@
    "fieldname": "supporting_document",
    "fieldtype": "Attach",
    "label": "Budget Supporting Document"
+  },
+  {
+   "fetch_from": "cost_center.cost_center",
+   "fieldname": "cost_center_erp",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Cost Center(Original)"
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Uploaded By",
+   "options": "User"
+  },
+  {
+   "fetch_from": "location_code.location_code",
+   "fieldname": "location_code_erp",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Location code(Original)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-19 10:37:56.974222",
+ "modified": "2026-02-26 15:32:06.608251",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Finance Budget",

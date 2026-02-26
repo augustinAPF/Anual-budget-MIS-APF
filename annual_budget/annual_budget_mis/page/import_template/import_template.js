@@ -81,33 +81,224 @@ function render_content(container, data) {
 		`);
 
 		container.append(section);
+/* =====================================================
+   PROFESSIONAL CONFIRM DOWNLOAD MODAL
+   (APPENDS ONLY ONCE)
+===================================================== */
 
-		/* ===============================
-		   FRAPPE STYLE BUTTON
-		=============================== */
+if (!$("#pro-confirm-overlay").length) {
 
-		let downloadBtn = $(`<button class="btn btn-primary btn-sm">
-			Download Budget Import Template
-		</button>`);
+	$("body").append(`
+	<div id="pro-confirm-overlay">
+		<div class="pro-confirm-box">
 
-		section.find(".button-container").append(downloadBtn);
+			<div class="pro-confirm-header">
+				<div class="pro-confirm-title">
+					⚠ Confirm Download
+				</div>
+				<span id="pro-confirm-close">&times;</span>
+			</div>
 
-		downloadBtn.on("click", function() {
+			<div class="pro-confirm-body">
+				<div class="pro-warning-text">
+					Before downloading the Budget Import Template,
+					please carefully cross-verify all allocated Units
+					and Cost Centers.
+				</div>
 
-			let btn = $(this);
-			btn.prop("disabled", true).text("Downloading...");
+				<div class="pro-warning-sub">
+					Do not proceed unless everything is reviewed and confirmed.
+				</div>
 
-			window.open(
-				`/api/method/annual_budget.api.export_reports.download_finance_budget_import_template?user=${encodeURIComponent(userData.email)}`
-			);
+				<div class="pro-checkbox-wrapper">
+					<label>
+						<input type="checkbox" id="pro-confirm-checkbox">
+						I confirm that I have verified all details carefully.
+					</label>
+				</div>
+			</div>
 
-			setTimeout(() => {
-				btn.prop("disabled", false)
-				   .text("Download Budget Import Template");
-			}, 3000);
-		});
+			<div class="pro-confirm-footer">
+				<button id="pro-confirm-no" class="btn btn-default btn-sm">
+					Cancel
+				</button>
+				<button id="pro-confirm-yes" 
+						class="btn btn-primary btn-sm" 
+						disabled>
+					Proceed to Download
+				</button>
+			</div>
 
-		let body = section.find(".user-body");
+		</div>
+	</div>
+
+	<style>
+
+	#pro-confirm-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,0.45);
+		display: none;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+		backdrop-filter: blur(3px);
+	}
+
+	.pro-confirm-box {
+		background: #ffffff;
+		width: 460px;
+		border-radius: 10px;
+		box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+		padding: 25px;
+		animation: scaleIn 0.2s ease;
+	}
+
+	@keyframes scaleIn {
+		from { transform: scale(0.95); opacity: 0; }
+		to { transform: scale(1); opacity: 1; }
+	}
+
+	.pro-confirm-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-weight: 600;
+		font-size: 16px;
+		margin-bottom: 15px;
+	}
+
+	#pro-confirm-close {
+		cursor: pointer;
+		font-size: 20px;
+		color: #888;
+	}
+
+	.pro-warning-text {
+		font-weight: 600;
+		color: #c0392b;
+		margin-bottom: 8px;
+	}
+
+	.pro-warning-sub {
+		font-size: 14px;
+		color: #555;
+		margin-bottom: 20px;
+	}
+
+	.pro-checkbox-wrapper {
+		background: #f8f9fa;
+		padding: 12px;
+		border-radius: 6px;
+		border: 1px solid #e0e0e0;
+		font-size: 13px;
+	}
+
+	.pro-checkbox-wrapper input {
+		margin-right: 8px;
+	}
+
+	.pro-confirm-footer {
+		text-align: right;
+		margin-top: 20px;
+	}
+
+	.pro-confirm-footer button {
+		margin-left: 10px;
+		min-width: 140px;
+	}
+
+	#pro-confirm-yes:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	</style>
+	`);
+}
+
+
+/* =====================================================
+   DOWNLOAD BUTTON
+===================================================== */
+
+let downloadBtn = $(`
+	<button class="btn btn-primary btn-sm">
+		Download Budget Import Template
+	</button>
+`);
+
+section.find(".button-container").append(downloadBtn);
+
+
+/* =====================================================
+   OPEN MODAL ON BUTTON CLICK
+===================================================== */
+
+downloadBtn.on("click", function () {
+
+	$("#pro-confirm-overlay")
+		.css("display", "flex")
+		.data("trigger-btn", $(this));
+
+	// reset checkbox
+	$("#pro-confirm-checkbox").prop("checked", false);
+	$("#pro-confirm-yes").prop("disabled", true);
+});
+
+
+/* =====================================================
+   ENABLE PROCEED BUTTON ONLY AFTER CHECKBOX
+===================================================== */
+
+$(document).on("change", "#pro-confirm-checkbox", function () {
+	$("#pro-confirm-yes").prop("disabled", !this.checked);
+});
+
+
+/* =====================================================
+   CLOSE MODAL
+===================================================== */
+
+$(document).on("click", "#pro-confirm-no, #pro-confirm-close", function () {
+	$("#pro-confirm-overlay").hide();
+});
+
+
+/* =====================================================
+   CONFIRM & DOWNLOAD
+===================================================== */
+
+$(document).on("click", "#pro-confirm-yes", function () {
+
+	let btn = $("#pro-confirm-overlay").data("trigger-btn");
+
+	$("#pro-confirm-overlay").hide();
+
+	if (!btn) return;
+
+	btn.prop("disabled", true)
+	   .html('<i class="fa fa-spinner fa-spin"></i> Downloading...');
+
+	window.open(
+		`/api/method/annual_budget.api.export_reports.download_finance_budget_import_template?user=${encodeURIComponent(userData.email)}`
+	);
+
+	setTimeout(() => {
+		btn.prop("disabled", false)
+		   .text("Download Budget Import Template");
+	}, 3000);
+});
+
+
+/* =====================================================
+   CONTINUE YOUR PAGE LOGIC
+===================================================== */
+
+let body = section.find(".user-body");
 
 		/* ===============================
 		   IMPORTANT NOTE + CONTACT CARDS
@@ -120,8 +311,9 @@ function render_content(container, data) {
 
 					<div class="note-header">
 						<span class="note-badge blinking-badge">IMPORTANT</span>
-						Kindly review the allocated Units and Cost Centers listed below.
-						If you notice any discrepancies, please contact the support team.
+						Before importing, please carefully cross-verify the allocated Units and Cost Centers listed below.
+						If you notice any discrepancies, contact the support team immediately.
+						Do not proceed with the import until all details are verified and confirmed.
 					</div>
 
 					<div class="contact-wrapper">
@@ -164,7 +356,6 @@ function render_content(container, data) {
 								+91 9047828687
 							</div>
 						</div>
-
 
 						<div class="contact-card">
 							<div class="contact-name">Mahaveer Ram P</div>
