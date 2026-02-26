@@ -2248,7 +2248,7 @@ def download_finance_budget_import_template(user):
         "Cost Center Description",
         "Location code",
         "Location code(Original)",
-        "Function / Sub Unit / Division",
+        "Function / Sub Unit / Divison",
         "State",
         "Financial year",
         "Uploaded By",
