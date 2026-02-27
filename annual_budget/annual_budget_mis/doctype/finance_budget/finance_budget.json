@@ -49,7 +49,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Function / Sub Unit / Divison",
+   "label": "Function / Sub Unit / Division",
    "read_only": 1
   },
   {
@@ -148,7 +148,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-26 21:59:28.896552",
+ "modified": "2026-02-27 14:43:32.861427",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Finance Budget",

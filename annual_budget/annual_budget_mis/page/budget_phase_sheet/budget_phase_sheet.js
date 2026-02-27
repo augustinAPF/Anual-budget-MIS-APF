@@ -1491,7 +1491,6 @@ let cards_container = $('<div class="card-row"></div>').appendTo(page.body);
             default: "2025-26",
             reqd: 1,
             change() {
-                loadData();
             }
         },
         render_input: true
