@@ -12,7 +12,6 @@
   "cost_center",
   "cost_center_erp",
   "cc_descr",
-  "created_by",
   "uploaded_by",
   "column_break_yvds",
   "location_code",
@@ -100,13 +99,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "created_by",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Created By",
-   "options": "Finance user access"
-  },
-  {
    "fetch_from": "set_id.unit_decription",
    "fieldname": "entity__unit_decription",
    "fieldtype": "Data",
@@ -156,7 +148,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-26 16:32:44.624928",
+ "modified": "2026-02-26 21:59:28.896552",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Finance Budget",

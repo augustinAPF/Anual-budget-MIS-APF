@@ -86,138 +86,348 @@ function render_content(container, data) {
    (APPENDS ONLY ONCE)
 ===================================================== */
 
+// if (!$("#pro-confirm-overlay").length) {
+
+// 	$("body").append(`
+// 	<div id="pro-confirm-overlay">
+// 		<div class="pro-confirm-box">
+
+// 			<div class="pro-confirm-header">
+// 				<div class="pro-confirm-title">
+// 					⚠ Confirm Download
+// 				</div>
+// 				<span id="pro-confirm-close">&times;</span>
+// 			</div>
+
+// 			<div class="pro-confirm-body">
+// 				<div class="pro-warning-text">
+// 					We request that you carefully review and validate all allocated Units, Cost Centers, and Location Codes before downloading the Budget Import Template.
+// 				</div>
+
+// 				<div class="pro-warning-sub">
+// 					Do not proceed unless everything is reviewed and confirmed.
+// 				</div>
+
+// 				<div class="pro-checkbox-wrapper">
+// 					<label>
+// 						<input type="checkbox" id="pro-confirm-checkbox">
+// 						I confirm that I have verified all details carefully.
+// 					</label>
+// 				</div>
+// 			</div>
+
+// 			<div class="pro-confirm-footer">
+// 				<button id="pro-confirm-no" class="btn btn-default btn-sm">
+// 					Cancel
+// 				</button>
+// 				<button id="pro-confirm-yes" 
+// 						class="btn btn-primary btn-sm" 
+// 						disabled>
+// 					Proceed to Download
+// 				</button>
+// 			</div>
+
+// 		</div>
+// 	</div>
+
+// 	<style>
+
+// 	#pro-confirm-overlay {
+// 		position: fixed;
+// 		top: 0;
+// 		left: 0;
+// 		width: 100%;
+// 		height: 100%;
+// 		background: rgba(0,0,0,0.45);
+// 		display: none;
+// 		align-items: center;
+// 		justify-content: center;
+// 		z-index: 9999;
+// 		backdrop-filter: blur(3px);
+// 	}
+
+// 	.pro-confirm-box {
+// 		background: #ffffff;
+// 		width: 460px;
+// 		border-radius: 10px;
+// 		box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+// 		padding: 25px;
+// 		animation: scaleIn 0.2s ease;
+// 	}
+
+// 	@keyframes scaleIn {
+// 		from { transform: scale(0.95); opacity: 0; }
+// 		to { transform: scale(1); opacity: 1; }
+// 	}
+
+// 	.pro-confirm-header {
+// 		display: flex;
+// 		justify-content: space-between;
+// 		align-items: center;
+// 		font-weight: 600;
+// 		font-size: 16px;
+// 		margin-bottom: 15px;
+// 	}
+
+// 	#pro-confirm-close {
+// 		cursor: pointer;
+// 		font-size: 20px;
+// 		color: #888;
+// 	}
+
+// 	.pro-warning-text {
+// 		font-weight: 600;
+// 		color: #c0392b;
+// 		margin-bottom: 8px;
+// 	}
+
+// 	.pro-warning-sub {
+// 		font-size: 14px;
+// 		color: #555;
+// 		margin-bottom: 20px;
+// 	}
+
+// 	.pro-checkbox-wrapper {
+// 		background: #f8f9fa;
+// 		padding: 12px;
+// 		border-radius: 6px;
+// 		border: 1px solid #e0e0e0;
+// 		font-size: 13px;
+// 	}
+
+// 	.pro-checkbox-wrapper input {
+// 		margin-right: 8px;
+// 	}
+
+// 	.pro-confirm-footer {
+// 		text-align: right;
+// 		margin-top: 20px;
+// 	}
+
+// 	.pro-confirm-footer button {
+// 		margin-left: 10px;
+// 		min-width: 140px;
+// 	}
+
+// 	#pro-confirm-yes:disabled {
+// 		opacity: 0.6;
+// 		cursor: not-allowed;
+// 	}
+
+// 	</style>
+// 	`);
+// }
+
 if (!$("#pro-confirm-overlay").length) {
 
-	$("body").append(`
-	<div id="pro-confirm-overlay">
-		<div class="pro-confirm-box">
+    $("body").append(`
+    <div id="pro-confirm-overlay">
+        <div class="pro-confirm-box">
 
-			<div class="pro-confirm-header">
-				<div class="pro-confirm-title">
-					⚠ Confirm Download
-				</div>
-				<span id="pro-confirm-close">&times;</span>
-			</div>
+            <div class="pro-confirm-header">
+                <div class="pro-confirm-title">
+                    <i class="fa fa-download"></i> Confirm Download
+                </div>
+                <span id="pro-confirm-close">&times;</span>
+            </div>
 
-			<div class="pro-confirm-body">
-				<div class="pro-warning-text">
-					Before downloading the Budget Import Template,
-					please carefully cross-verify all allocated Units
-					and Cost Centers.
-				</div>
+            <div class="pro-confirm-body">
 
-				<div class="pro-warning-sub">
-					Do not proceed unless everything is reviewed and confirmed.
-				</div>
+                <div class="pro-warning-icon">
+                    <i class="fa fa-exclamation-triangle"></i>
+                </div>
 
-				<div class="pro-checkbox-wrapper">
-					<label>
-						<input type="checkbox" id="pro-confirm-checkbox">
-						I confirm that I have verified all details carefully.
-					</label>
-				</div>
-			</div>
+                <div class="pro-warning-text">
+                   We request that you carefully review and validate all allocated Units, Cost Centers, and Location Codes before downloading the Budget Import Template.
+                </div>
 
-			<div class="pro-confirm-footer">
-				<button id="pro-confirm-no" class="btn btn-default btn-sm">
-					Cancel
-				</button>
-				<button id="pro-confirm-yes" 
-						class="btn btn-primary btn-sm" 
-						disabled>
-					Proceed to Download
-				</button>
-			</div>
+                <div class="pro-warning-sub">
+                    Do not proceed unless everything has been reviewed and confirmed.
+                </div>
 
-		</div>
-	</div>
+                <div class="pro-checkbox-wrapper">
+                    <label class="pro-checkbox-label">
+                        <input type="checkbox" id="pro-confirm-checkbox">
+                        <span>
+                            <i class="fa fa-check-circle"></i>
+                            I confirm that I have verified all details carefully.
+                        </span>
+                    </label>
+                </div>
 
-	<style>
+            </div>
 
-	#pro-confirm-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background: rgba(0,0,0,0.45);
-		display: none;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-		backdrop-filter: blur(3px);
-	}
+            <div class="pro-confirm-footer">
+                <button id="pro-confirm-no" class="btn btn-default btn-sm">
+                    <i class="fa fa-times"></i> Cancel
+                </button>
+                <button id="pro-confirm-yes" 
+                        class="btn btn-primary btn-sm" 
+                        disabled>
+                    <i class="fa fa-download"></i> Proceed to Download
+                </button>
+            </div>
 
-	.pro-confirm-box {
-		background: #ffffff;
-		width: 460px;
-		border-radius: 10px;
-		box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-		padding: 25px;
-		animation: scaleIn 0.2s ease;
-	}
+        </div>
+    </div>
 
-	@keyframes scaleIn {
-		from { transform: scale(0.95); opacity: 0; }
-		to { transform: scale(1); opacity: 1; }
-	}
+    <style>
 
-	.pro-confirm-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		font-weight: 600;
-		font-size: 16px;
-		margin-bottom: 15px;
-	}
+    #pro-confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+        padding: 15px;
+    }
 
-	#pro-confirm-close {
-		cursor: pointer;
-		font-size: 20px;
-		color: #888;
-	}
+    .pro-confirm-box {
+        background: #ffffff;
+        width: 640px;
+        max-width: 100%;
+        min-height: 360px;
+        border-radius: 12px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+        padding: 35px;
+        animation: scaleIn 0.25s ease;
+    }
 
-	.pro-warning-text {
-		font-weight: 600;
-		color: #c0392b;
-		margin-bottom: 8px;
-	}
+    @keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
 
-	.pro-warning-sub {
-		font-size: 14px;
-		color: #555;
-		margin-bottom: 20px;
-	}
+    .pro-confirm-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        font-size: 18px;
+        margin-bottom: 25px;
+    }
 
-	.pro-checkbox-wrapper {
-		background: #f8f9fa;
-		padding: 12px;
-		border-radius: 6px;
-		border: 1px solid #e0e0e0;
-		font-size: 13px;
-	}
+    .pro-confirm-title i {
+        margin-right: 8px;
+        color: #007bff;
+    }
 
-	.pro-checkbox-wrapper input {
-		margin-right: 8px;
-	}
+    #pro-confirm-close {
+        cursor: pointer;
+        font-size: 22px;
+        color: #888;
+        transition: 0.2s;
+    }
 
-	.pro-confirm-footer {
-		text-align: right;
-		margin-top: 20px;
-	}
+    #pro-confirm-close:hover {
+        color: #000;
+    }
 
-	.pro-confirm-footer button {
-		margin-left: 10px;
-		min-width: 140px;
-	}
+    .pro-confirm-body {
+        text-align: center;
+        margin-bottom: 25px;
+    }
 
-	#pro-confirm-yes:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
+    .pro-warning-icon {
+        font-size: 42px;
+        color: #e74c3c;
+        margin-bottom: 15px;
+    }
 
-	</style>
-	`);
+    .pro-warning-text {
+        font-weight: 600;
+        font-size: 16px;
+        color: #c0392b;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+
+    .pro-warning-sub {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+
+    .pro-checkbox-wrapper {
+        background: #f8f9fa;
+        padding: 18px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .pro-checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .pro-checkbox-label i {
+        color: #28a745;
+        margin-right: 6px;
+    }
+
+    .pro-checkbox-wrapper input {
+        margin-top: 4px;
+        transform: scale(1.1);
+    }
+
+    .pro-confirm-footer {
+        text-align: right;
+        margin-top: 20px;
+    }
+
+    .pro-confirm-footer button {
+        margin-left: 12px;
+        min-width: 170px;
+    }
+
+    #pro-confirm-yes:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* ===================== */
+    /* Mobile Responsive */
+    /* ===================== */
+
+    @media (max-width: 576px) {
+
+        .pro-confirm-box {
+            width: 100%;
+            min-height: auto;
+            padding: 25px;
+        }
+
+        .pro-confirm-header {
+            font-size: 16px;
+        }
+
+        .pro-warning-text {
+            font-size: 15px;
+        }
+
+        .pro-confirm-footer {
+            text-align: center;
+        }
+
+        .pro-confirm-footer button {
+            width: 100%;
+            margin: 8px 0;
+        }
+    }
+
+    </style>
+    `);
 }
 
 

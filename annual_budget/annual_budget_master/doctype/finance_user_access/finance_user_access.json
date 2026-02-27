@@ -7,10 +7,13 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
+  "import_template_id",
   "column_break_ydif",
-  "user_nmae",
+  "user_name",
+  "import_template_name",
   "section_break_bxeo",
-  "mapping"
+  "mapping",
+  "use_template_item_list"
  ],
  "fields": [
   {
@@ -28,27 +31,50 @@
    "options": "User mapping"
   },
   {
-   "fetch_from": "user.full_name",
-   "fieldname": "user_nmae",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User Nmae",
-   "options": "User"
-  },
-  {
    "fieldname": "column_break_ydif",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "section_break_bxeo",
    "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "import_template_id.template_name",
+   "fieldname": "import_template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Import Template Name",
+   "options": "Import Templates",
+   "read_only": 1
+  },
+  {
+   "fieldname": "use_template_item_list",
+   "fieldtype": "Table",
+   "label": "Import Template Item list",
+   "options": "Import Template Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_template_id",
+   "fieldtype": "Link",
+   "label": "Import Template ID",
+   "options": "Import Templates"
+  },
+  {
+   "fetch_from": "user.full_name",
+   "fieldname": "user_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User Name",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-24 09:45:07.262550",
+ "modified": "2026-02-26 21:54:43.685142",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Finance user access",

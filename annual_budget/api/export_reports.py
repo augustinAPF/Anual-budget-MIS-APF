@@ -2218,12 +2218,181 @@ def export_phase_sheet_excel(
 #     frappe.response["filecontent"] = output.getvalue()
 #     frappe.response["type"] = "download"
 
+# @frappe.whitelist()
+# def download_finance_budget_import_template(user):
+
+#     if not user:
+#         frappe.throw(_("User is required"))
+
+#     doc_name = frappe.db.get_value(
+#         "Finance user access",
+#         {"user": user},
+#         "name"
+#     )
+
+#     if not doc_name:
+#         frappe.throw(_("No Finance User Access found"))
+
+#     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+#     financial_year = frappe.db.get_single_value(
+#         "Master Settings",
+#         "current_financial_year"
+#     )
+
+#     headers = [
+#         "Entity / Unit",
+#         "Entity / Unit Description",
+#         "Cost Center",
+#         "Cost Center(Original)",
+#         "Cost Center Description",
+#         "Location code",
+#         "Location code(Original)",
+#         "Function / Sub Unit / Divison",
+#         "State",
+#         "Financial year",
+#         "Uploaded By",
+#         "Type of expense ID (Budget Amounts)",
+#         "Head of expense (Budget Amounts)",
+#         "Sub head of expense (Budget Amounts)",
+#         "Type of expense (Budget Amounts)",
+#         "April (Budget Amounts)",
+#         "May (Budget Amounts)",
+#         "June (Budget Amounts)",
+#         "July (Budget Amounts)",
+#         "August (Budget Amounts)",
+#         "September (Budget Amounts)",
+#         "October (Budget Amounts)",
+#         "November (Budget Amounts)",
+#         "December (Budget Amounts)",
+#         "January (Budget Amounts)",
+#         "February (Budget Amounts)",
+#         "March (Budget Amounts)",
+#         "Quarter 1 Total Amount (Budget Amounts)",
+#         "Quarter 2 Total Amount (Budget Amounts)",
+#         "Quarter 3 Total Amount (Budget Amounts)",
+#         "Quarter 4 Total Amount (Budget Amounts)",
+#         "Year Total Amount (Budget Amounts)"
+#     ]
+
+#     expenses = frappe.get_all(
+#         "Expenses",
+#         fields=[
+#             "name",
+#             "type_of_expense",
+#             "sub_head_of_expense",
+#             "head_of_expense"
+#         ],
+#         order_by="sequence_id asc"
+#     )
+
+#     from openpyxl import Workbook
+#     from openpyxl.styles import Font, Protection
+#     from io import BytesIO
+#     import datetime
+
+#     wb = Workbook()
+#     ws = wb.active
+#     ws.title = "Finance Budget Import"
+
+#     ws.append(headers)
+
+#     for cell in ws[1]:
+#         cell.font = Font(bold=True)
+
+#     ws.freeze_panes = "A2"
+
+#     row_index = 2
+
+#     for mapping in access_doc.mapping:
+
+#         first_row = True
+
+#         for exp in expenses:
+
+#             if first_row:
+#                 parent_values = [
+#                     mapping.unit,
+#                     mapping.unit_description,
+#                     mapping.cost_center,
+#                     mapping.cost_center_erp,
+#                     mapping.cost_center_description,
+#                     mapping.location_code,
+#                     mapping.location_code_erp,
+#                     mapping.location_description,
+#                     mapping.state,
+#                     financial_year,
+#                     user
+#                 ]
+#                 first_row = False
+#             else:
+#                 parent_values = [""] * 11
+
+#             ws.append(parent_values + [
+#                 exp.name,
+#                 exp.head_of_expense,
+#                 exp.sub_head_of_expense,
+#                 exp.type_of_expense,
+#                 0.00, 0.00, 0.00,
+#                 0.00, 0.00, 0.00,
+#                 0.00, 0.00, 0.00,
+#                 0.00, 0.00, 0.00,
+#                 0.00, 0.00, 0.00, 0.00, 0.00  # Quarters + Year initially 0
+#             ])
+
+#             # Quarter formulas
+#             ws[f"AB{row_index}"] = f"=SUM(P{row_index}:R{row_index})"
+#             ws[f"AC{row_index}"] = f"=SUM(S{row_index}:U{row_index})"
+#             ws[f"AD{row_index}"] = f"=SUM(V{row_index}:X{row_index})"
+#             ws[f"AE{row_index}"] = f"=SUM(Y{row_index}:AA{row_index})"
+
+#             # Year total formula (Sum of quarters)
+#             ws[f"AF{row_index}"] = f"=SUM(AB{row_index}:AE{row_index})"
+
+#             # Format numeric columns (April → Year Total)
+#             for col in range(16, 33):
+#                 ws.cell(row=row_index, column=col).number_format = '0.00'
+
+#             row_index += 1
+
+#     # Lock everything
+#     for row in ws.iter_rows(min_row=1, max_row=row_index - 1):
+#         for cell in row:
+#             cell.protection = Protection(locked=True)
+
+#     # Unlock ONLY April–March (P → AA)
+#     for row in ws.iter_rows(min_row=2, max_row=row_index - 1, min_col=16, max_col=27):
+#         for cell in row:
+#             cell.protection = Protection(locked=False)
+
+#     ws.protection.sheet = True
+#     ws.protection.password = "budget"
+
+#     # Auto column width
+#     for column in ws.columns:
+#         max_length = 0
+#         column_letter = column[0].column_letter
+#         for cell in column:
+#             if cell.value:
+#                 max_length = max(max_length, len(str(cell.value)))
+#         ws.column_dimensions[column_letter].width = max_length + 2
+
+#     output = BytesIO()
+#     wb.save(output)
+#     output.seek(0)
+
+#     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+#     frappe.response["filename"] = f"Budget_mis_Import_{current_date}.xlsx"
+#     frappe.response["filecontent"] = output.getvalue()
+#     frappe.response["type"] = "download"
+
 @frappe.whitelist()
 def download_finance_budget_import_template(user):
 
     if not user:
         frappe.throw(_("User is required"))
 
+    # Get Finance User Access
     doc_name = frappe.db.get_value(
         "Finance user access",
         {"user": user},
@@ -2234,6 +2403,20 @@ def download_finance_budget_import_template(user):
         frappe.throw(_("No Finance User Access found"))
 
     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+    # Get Import Template ID from Finance User Access
+    if not access_doc.import_template_id:
+        frappe.throw(_("Import Template not linked in Finance User Access"))
+
+    import_template = frappe.get_doc(
+        "Import Templates",
+        access_doc.import_template_id
+    )
+
+    template_items = import_template.import_template_item_list
+
+    if not template_items:
+        frappe.throw(_("No Import Template Items found"))
 
     financial_year = frappe.db.get_single_value(
         "Master Settings",
@@ -2248,7 +2431,7 @@ def download_finance_budget_import_template(user):
         "Cost Center Description",
         "Location code",
         "Location code(Original)",
-        "Function / Sub Unit / Divison",
+        "Function / Sub Unit / Division",
         "State",
         "Financial year",
         "Uploaded By",
@@ -2275,17 +2458,6 @@ def download_finance_budget_import_template(user):
         "Year Total Amount (Budget Amounts)"
     ]
 
-    expenses = frappe.get_all(
-        "Expenses",
-        fields=[
-            "name",
-            "type_of_expense",
-            "sub_head_of_expense",
-            "head_of_expense"
-        ],
-        order_by="sequence_id asc"
-    )
-
     from openpyxl import Workbook
     from openpyxl.styles import Font, Protection
     from io import BytesIO
@@ -2308,7 +2480,7 @@ def download_finance_budget_import_template(user):
 
         first_row = True
 
-        for exp in expenses:
+        for item in template_items:
 
             if first_row:
                 parent_values = [
@@ -2329,15 +2501,15 @@ def download_finance_budget_import_template(user):
                 parent_values = [""] * 11
 
             ws.append(parent_values + [
-                exp.name,
-                exp.head_of_expense,
-                exp.sub_head_of_expense,
-                exp.type_of_expense,
+                item.type_of_expense_id,
+                item.head_of_expense,
+                item.sub_head_of_expense,
+                item.type_of_expense,
                 0.00, 0.00, 0.00,
                 0.00, 0.00, 0.00,
                 0.00, 0.00, 0.00,
                 0.00, 0.00, 0.00,
-                0.00, 0.00, 0.00, 0.00, 0.00  # Quarters + Year initially 0
+                0.00, 0.00, 0.00, 0.00, 0.00
             ])
 
             # Quarter formulas
@@ -2346,10 +2518,10 @@ def download_finance_budget_import_template(user):
             ws[f"AD{row_index}"] = f"=SUM(V{row_index}:X{row_index})"
             ws[f"AE{row_index}"] = f"=SUM(Y{row_index}:AA{row_index})"
 
-            # Year total formula (Sum of quarters)
+            # Year total = Sum of quarters
             ws[f"AF{row_index}"] = f"=SUM(AB{row_index}:AE{row_index})"
 
-            # Format numeric columns (April → Year Total)
+            # Format numbers
             for col in range(16, 33):
                 ws.cell(row=row_index, column=col).number_format = '0.00'
 
@@ -2360,13 +2532,13 @@ def download_finance_budget_import_template(user):
         for cell in row:
             cell.protection = Protection(locked=True)
 
-    # Unlock ONLY April–March (P → AA)
+    # Unlock only monthly columns (April–March)
     for row in ws.iter_rows(min_row=2, max_row=row_index - 1, min_col=16, max_col=27):
         for cell in row:
             cell.protection = Protection(locked=False)
 
     ws.protection.sheet = True
-    ws.protection.password = "budget"
+    ws.protection.password = "[REDACTED-PASSWORD]"
 
     # Auto column width
     for column in ws.columns:

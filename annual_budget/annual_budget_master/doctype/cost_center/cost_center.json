@@ -38,7 +38,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 11:13:42.553165",
+ "modified": "2026-02-26 21:57:01.710543",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Cost Center",
@@ -59,7 +59,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "cc_descr",
+ "search_fields": "cc_descr,cost_center,set_id",
  "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
