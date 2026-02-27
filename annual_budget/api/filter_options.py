@@ -290,6 +290,15 @@ def get_location_codes_by_unit(unit=None):
     }
 
 
+@frappe.whitelist(allow_guest=True)
+def get_overview_number_cards():
+    cards = frappe.get_all(
+        "Overview number cards settings",
+        filters={"is_this_filter_value": 1},
+        fields=["name", "number_card_title"]
+    )
+    return cards
+
 @frappe.whitelist()
 def get_user_mappings():
 

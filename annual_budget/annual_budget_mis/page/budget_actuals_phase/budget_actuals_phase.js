@@ -5449,7 +5449,7 @@ function addSelectAllButton(control, fieldnameForDebug = '') {
             label: "Financial Year",
             fieldtype: "Select",
             fieldname: "financial_year",
-            options: ["2025-26", "2026-27"].join("\n"),
+            options: ["2025-26", "2026-27","2027-2028"].join("\n"),
             default: "2025-26",
             reqd: 1,
             change() { 
@@ -5481,6 +5481,42 @@ function addSelectAllButton(control, fieldnameForDebug = '') {
     });
     month_filter.set_value(currentMonth);
 
+
+    /* ── Theme ── */
+let theme_col = make_field();
+
+let theme_filter = frappe.ui.form.make_control({
+    parent: theme_col,
+    df: {
+        label: "Theme",
+        fieldtype: "MultiSelectList",
+        fieldname: "theme",
+        reqd: 1,
+
+        get_data() {
+            return frappe.call({
+                method: "annual_budget.api.filter_options.get_overview_number_cards"
+            }).then(r => {
+
+                return (r.message || []).map(d => ({
+                    label: d.number_card_title,  // what user sees
+                    value: d.name,               // actual value
+                    description: ""
+                }));
+
+            });
+        },
+
+        change() {
+            let selected_themes = theme_filter.get_value().map(String);
+            console.log("Selected:", selected_themes);
+
+            // Example usage
+            // You can reload cards here if needed
+        }
+    },
+    render_input: true
+});
     /* ── Unit ── */
     let unit_col = make_field();
     let unit_filter = frappe.ui.form.make_control({
@@ -5514,6 +5550,7 @@ function addSelectAllButton(control, fieldnameForDebug = '') {
         },
         render_input: true
     });
+
     addSelectAllButton(unit_filter, "Unit");
 
     /* ── Cost Center ── */
