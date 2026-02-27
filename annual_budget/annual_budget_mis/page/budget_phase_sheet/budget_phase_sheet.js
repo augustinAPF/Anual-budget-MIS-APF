@@ -1627,7 +1627,7 @@ let cards_container = $('<div class="card-row"></div>').appendTo(page.body);
     /* ------------------------------------------------
        EXPORT
     --------------------------------------------------*/
-    page.set_primary_action(__('Export CSV'), function () {
+    page.set_primary_action(__('Export XLS'), function () {
         export_phase_sheet();
     });
 
