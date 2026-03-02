@@ -38,8 +38,123 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 				<div id="annual-table-wrapper"></div>
 			</div>
 
-			<div class="tab-pane" id="estimate"><h4>Estimate Consolidated Content</h4></div>
-			<div class="tab-pane" id="budget_estimate"><h4>Budget & Estimate Content</h4></div>
+<div class="tab-pane" id="estimate">
+
+<style>
+
+#estimate-container {
+    margin-top: 10px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+/* Controls */
+#estimate-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background: #f7f9fb;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+#estimate-search {
+    max-width: 300px;
+    padding: 7px 12px;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* Table */
+.estimate-table-wrapper {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: auto;
+    max-height: 70vh;
+}
+
+.estimate-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.estimate-table th,
+.estimate-table td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.estimate-table th:first-child,
+.estimate-table td:first-child {
+    text-align: left;
+}
+
+/* Header */
+.estimate-header th {
+    background-color: #0076B6;
+    color: #fff;
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+}
+
+/* Parent row */
+.estimate-parent td {
+    background: #E9F4FB;
+    font-weight: 700;
+    color: #003B63;
+    cursor: pointer;
+}
+
+/* Child row */
+.estimate-child td:first-child {
+    padding-left: 30px;
+}
+
+.estimate-parent:hover td {
+    background: #dceef9;
+}
+
+</style>
+
+<div id="estimate-container">
+
+    <div id="estimate-controls">
+        <input type="text" id="estimate-search" placeholder="Search expense...">
+    </div>
+
+    <div class="estimate-table-wrapper">
+        <table class="estimate-table">
+            <thead>
+                <tr class="estimate-header">
+                    <th>Expense</th>
+                    <th>QTR-1</th>
+                    <th>QTR-2</th>
+                    <th>QTR-3</th>
+                    <th>QTR-4</th>
+                    <th>Year Total</th>
+                </tr>
+            </thead>
+            <tbody id="estimate-table-body"></tbody>
+        </table>
+    </div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="tab-pane" id="budget_estimate"><h4>Budget & Estimate Content</h4></div>
 
 		</div>
 	</div>
@@ -491,6 +606,110 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 				loadData();
 			}
 		});
+
+
+
+let estimateLoaded = false;
+
+$(document).on("click", "[data-tab='estimate']", function () {
+    if (!estimateLoaded) {
+        estimateLoaded = true;
+        loadEstimateData();
+    }
+});
+
+function loadEstimateData() {
+
+    frappe.call({
+        method: "annual_budget.api.actuals.get_grouped_actuals_detailed_gl_test",
+        args: {
+            fiscal_year: "2025",
+            accounting_period: "12"
+        },
+        freeze: true,
+        freeze_message: "Loading Estimate...",
+        callback: function (r) {
+
+            if (r.message && r.message.status === "success") {
+                renderEstimateTable(r.message.data);
+            } else {
+                frappe.msgprint("Failed to load Estimate data");
+            }
+
+        }
+    });
+}
+// 1️⃣ Formatter
+function formatEstimateNumber(value) {
+    return parseFloat(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+function renderEstimateTable(data) {
+
+    const tbody = $("#estimate-table-body");
+    tbody.empty();
+
+    data.forEach((expense, index) => {
+
+        tbody.append(`
+            <tr class="estimate-parent" data-index="${index}" style="cursor:pointer;font-weight:700;">
+                <td>▶ ${expense.sub_head_of_expense}</td>
+                <td>${formatEstimateNumber(expense.Q1)}</td>
+                <td>${formatEstimateNumber(expense.Q2)}</td>
+                <td>${formatEstimateNumber(expense.Q3)}</td>
+                <td>${formatEstimateNumber(expense.Q4)}</td>
+                <td>${formatEstimateNumber(expense.total_posted_amount)}</td>
+            </tr>
+        `);
+
+        expense.sub_gl.forEach(gl => {
+
+            tbody.append(`
+                <tr class="estimate-child estimate-child-${index}" style="display:none;">
+                    <td style="padding-left:30px;">${gl.gl_code_map}</td>
+                    <td>${formatEstimateNumber(gl.Q1)}</td>
+                    <td>${formatEstimateNumber(gl.Q2)}</td>
+                    <td>${formatEstimateNumber(gl.Q3)}</td>
+                    <td>${formatEstimateNumber(gl.Q4)}</td>
+                    <td>${formatEstimateNumber(gl.total_posted_amount)}</td>
+                </tr>
+            `);
+
+        });
+
+    });
+
+}
+
+
+$(document).on("click", ".estimate-parent", function() {
+
+    let index = $(this).data("index");
+    let rows = $(`.estimate-child-${index}`);
+
+    rows.toggle();
+
+    let icon = $(this).find("td:first");
+    if (rows.is(":visible")) {
+        icon.html("▼ " + estimate_data[index].title);
+    } else {
+        icon.html("▶ " + estimate_data[index].title);
+    }
+});
+
+$(document).on("keyup", "#estimate-search", function() {
+
+    let value = $(this).val().toLowerCase();
+
+    $("#estimate-table-body tr").filter(function() {
+        $(this).toggle(
+            $(this).text().toLowerCase().indexOf(value) > -1
+        );
+    });
+
+});
 };
 
 

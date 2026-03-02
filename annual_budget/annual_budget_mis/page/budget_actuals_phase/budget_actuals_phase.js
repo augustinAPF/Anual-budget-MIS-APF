@@ -5449,7 +5449,7 @@ function addSelectAllButton(control, fieldnameForDebug = '') {
             label: "Financial Year",
             fieldtype: "Select",
             fieldname: "financial_year",
-            options: ["2025-26", "2026-27","2027-2028"].join("\n"),
+            options: ["2025-26", "2026-27","2027-28"].join("\n"),
             default: "2025-26",
             reqd: 1,
             change() { 

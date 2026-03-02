@@ -1,7 +1,9 @@
 from collections import defaultdict
+from decimal import Decimal, InvalidOperation
+import json
 
 import frappe
-from annual_budget.api.actuals import get_actuals_from_erp
+from annual_budget.api.actuals import get_actuals_from_erp, get_actuals_from_erp_month_wise
 from annual_budget.api.actuals import get_grouped_actuals
 
 @frappe.whitelist(allow_guest=True)  
@@ -420,3 +422,123 @@ def sum_of_actuals_by_sequence(month, financial_year, unit=None, cost_center=Non
         "data": list(merged_data.values()),
         "filtered_record_count": len(merged_data)
     }
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
+    try:
+        response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
+
+        # Handle wrapped/unwrapped response
+        if "message" in response:
+            response = response["message"]
+
+        if response.get("status") != "success":
+            return {
+                "status": "error",
+                "message": response.get("message", "ERP returned error")
+            }
+
+        data = response.get("data", [])
+
+        grouped_data = defaultdict(float)
+
+        for row in data:
+            period = row.get("accounting_period")
+
+            # Skip period 0
+            if period == "0":
+                continue
+
+            period = int(period)
+
+            # Determine quarter
+            if 1 <= period <= 3:
+                quarter = "Q1"
+            elif 4 <= period <= 6:
+                quarter = "Q2"
+            elif 7 <= period <= 9:
+                quarter = "Q3"
+            elif 10 <= period <= 12:
+                quarter = "Q4"
+            else:
+                continue  # skip invalid periods
+
+            key = (row.get("account"), quarter)
+
+            grouped_data[key] += float(row.get("posted_total_amt", 0))
+
+        result = []
+        for (account, quarter), total in grouped_data.items():
+            result.append({
+                "account": account,
+                "quarter": quarter,
+                "posted_total_amt": round(total, 2)
+            })
+
+        return {
+            "status": "success",
+            "count": len(result),
+            "data": result
+        }
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Quarter Wise Grouping Error")
+        return {
+            "status": "error",
+            "message": "Unexpected server error"
+        }
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals_total(fiscal_year, accounting_period):
+    try:
+        response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
+
+        # Handle wrapped/unwrapped response
+        if "message" in response:
+            response = response["message"]
+
+        if response.get("status") != "success":
+            return {
+                "status": "error",
+                "message": response.get("message", "ERP returned error")
+            }
+
+        data = response.get("data", [])
+
+        grouped_data = defaultdict(float)
+
+        for row in data:
+            # Skip accounting_period = 0
+            if row.get("accounting_period") == "0":
+                continue
+
+            key = (
+                row.get("account"),
+                row.get("accounting_period")
+            )
+
+            grouped_data[key] += float(row.get("posted_total_amt", 0))
+
+        result = []
+        for (account, accounting_period), total in grouped_data.items():
+            result.append({
+                "account": account,
+                "accounting_period": accounting_period,
+                "posted_total_amt": round(total, 2)
+            })
+
+        return {
+            "status": "success",
+            "count": len(result),
+            "data": result
+        }
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Grouped Actuals Total Error")
+        return {
+            "status": "error",
+            "message": "Unexpected server error"
+        }

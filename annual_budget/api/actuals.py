@@ -307,7 +307,7 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 #             "status": "failed",
 #             "error": "Unexpected server error"
 #         }
-
+# * ==============================================================  Actual API Prod with accounting period without opening balance  =====================================================================================
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):
     try:
@@ -379,82 +379,114 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
             "error": "Unexpected server error"
         }
 
+# * ==============================================================  Actual API Prod With accounting period with openning balance=====================================================================================
+@frappe.whitelist(allow_guest=True)
+def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
+    try:
+        username ="MISUSER"
+        password = "[REDACTED-CREDENTIAL]"
+        if not username or not password:
+            frappe.throw("ERP credentials are not configured in site_config.json")
+        base_url = (
+            "https://pserp.azimpremjifoundation.org:8053/"
+            "PSIGW/RESTListeningConnector/"
+            "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+            "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+        )
+
+        # -----------------------------------------------------
+        # 3️⃣ Build URL With Parameters
+        # -----------------------------------------------------
+        api_url = (
+            f"{base_url}"
+            f"?isconnectedquery=N"
+            f"&maxrows=100000"
+            f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+            f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
+        )
+
+        # -----------------------------------------------------
+        # 4️⃣ Call ERP API
+        # -----------------------------------------------------
+        response = requests.get(
+            api_url,
+            headers={"Accept": "application/xml"},
+            auth=(username, password),
+            timeout=120
+        )
+
+        # -----------------------------------------------------
+        # 5️⃣ Handle HTTP Errors
+        # -----------------------------------------------------
+        if response.status_code != 200:
+            frappe.log_error(
+                title="PeopleSoft API HTTP Error",
+                message=response.text
+            )
+            return {
+                "status": "failed",
+                "status_code": response.status_code,
+                "error": response.text
+            }
+
+        # -----------------------------------------------------
+        # 6️⃣ Parse XML Response
+        # -----------------------------------------------------
+        try:
+            root = ET.fromstring(response.content)
+        except ET.ParseError:
+            frappe.log_error(
+                title="PeopleSoft XML Parse Error",
+                message=response.text
+            )
+            return {
+                "status": "failed",
+                "error": "Invalid XML response from ERP"
+            }
+
+        rows = []
+
+        for row_elem in root.iter():
+            if row_elem.tag.lower().endswith("row"):
+                row_data = {}
+
+                for child in row_elem:
+                    tag = child.tag.split("}")[-1].lower()
+                    row_data[tag] = child.text
+
+                rows.append(row_data)
+
+        # -----------------------------------------------------
+        # 7️⃣ Success Response
+        # -----------------------------------------------------
+        return {
+            "status": "success",
+            "fiscal_year": fiscal_year,
+            "accounting_period": accounting_period,
+            "count": len(rows),
+            "data": rows
+        }
+
+    except requests.exceptions.Timeout:
+        frappe.log_error(
+            title="PeopleSoft Timeout",
+            message="ERP request timed out"
+        )
+        return {
+            "status": "failed",
+            "error": "Request timeout while connecting to ERP"
+        }
+
+    except Exception:
+        frappe.log_error(
+            title="PeopleSoft API Unexpected Error",
+            message=frappe.get_traceback()
+        )
+        return {
+            "status": "failed",
+            "error": "Unexpected server error"
+        }
 # * ==============================================================  Actual API Prod with accounting period  =====================================================================================
-
-# @frappe.whitelist(allow_guest=True)
-# def get_actuals_from_erp_prod(fiscal_year):
-#     try:
-#         # Fetch credentials from ERP Credentials Doctype
-#         doc = frappe.get_single("ERP Credentials")
-#         username = "MISUSER"
-#         password = "[REDACTED-CREDENTIAL]"
-
-#         base_url = (
-#             "https://pserp.azimpremjifoundation.org:8053/"
-#             "PSIGW/RESTListeningConnector/"
-#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
-#             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
-#         )
-
-#         api_url = (
-#             f"{base_url}"
-#             f"?isconnectedquery=N"
-#             f"&maxrows=100000"
-#             f"&prompt_uniquepromptname=FISCAL_YEAR"
-#             f"&prompt_fieldvalue={fiscal_year}"
-#         )
-
-#         response = requests.get(
-#             api_url,
-#             headers={"Accept": "application/xml"},
-#             auth=(username, password),
-#             timeout=120
-#         )
-
-#         if response.status_code != 200:
-#             return {
-#                 "status": "failed",
-#                 "status_code": response.status_code,
-#                 "error": response.text
-#             }
-
-#         # Parse XML response
-#         root = ET.fromstring(response.content)
-#         rows = []
-
-#         for row in root.iter():
-#             if row.tag.lower().endswith("row"):
-#                 row_data = {}
-
-#                 for child in row:
-#                     tag = child.tag.split("}")[-1].lower()
-#                     row_data[tag] = child.text.strip() if child.text else None
-
-#                 rows.append(row_data)
-
-#         return {
-#             "status": "success",
-#             "query": "Z_MIS_ACTUALS_BY_PERIOD",
-#             "fiscal_year": fiscal_year,
-#             "count": len(rows),
-#             "data": rows
-#         }
-
-#     except requests.exceptions.Timeout:
-#         return {
-#             "status": "failed",
-#             "error": "Request timeout while connecting to ERP"
-#         }
-
-#     except Exception:
-#         frappe.log_error(
-#             title="PeopleSoft API Error - Z_MIS_ACTUALS_BY_PERIOD",
-#             message=frappe.get_traceback()
-#         )
-#         return {
-#             "status": "failed",
-#             "error": "Unexpected server error"
-#         }
 
 @frappe.whitelist(allow_guest=True)
 def get_erp_and_expenses(fiscal_year,accounting_period):
@@ -491,7 +523,6 @@ def get_erp_and_expenses(fiscal_year,accounting_period):
         "erp_data": erp_data,
         "expenses": expenses_with_children
     }
-
 
 # * ==============================================================  Actual API Prod Grouped Actuals Detailed Gl wise =====================================================================================
 @frappe.whitelist(allow_guest=True)
@@ -918,3 +949,228 @@ def get_grouped_actuals(fiscal_year,accounting_period):
         "fiscal_year": fiscal_year,
         "data": final_output
     }
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
+    try:
+        response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
+
+        # Handle wrapped/unwrapped response
+        if "message" in response:
+            response = response["message"]
+
+        if response.get("status") != "success":
+            return {
+                "status": "error",
+                "message": response.get("message", "ERP returned error")
+            }
+
+        data = response.get("data", [])
+
+        grouped_data = defaultdict(float)
+
+        for row in data:
+            period = row.get("accounting_period")
+
+            # Skip period 0
+            if period == "0":
+                continue
+
+            period = int(period)
+
+            # Determine quarter
+            if 1 <= period <= 3:
+                quarter = "Q1"
+            elif 4 <= period <= 6:
+                quarter = "Q2"
+            elif 7 <= period <= 9:
+                quarter = "Q3"
+            elif 10 <= period <= 12:
+                quarter = "Q4"
+            else:
+                continue  # skip invalid periods
+
+            key = (row.get("account"), quarter)
+
+            grouped_data[key] += float(row.get("posted_total_amt", 0))
+
+        result = []
+        for (account, quarter), total in grouped_data.items():
+            result.append({
+                "account": account,
+                "quarter": quarter,
+                "posted_total_amt": round(total, 2)
+            })
+
+        return {
+            "status": "success",
+            "count": len(result),
+            "data": result
+        }
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Quarter Wise Grouping Error")
+        return {
+            "status": "error",
+            "message": "Unexpected server error"
+        }
+
+
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals_detailed_gl_test(fiscal_year, accounting_period):
+
+    from collections import defaultdict
+
+    try:
+        response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
+
+        if "message" in response:
+            response = response["message"]
+
+        if response.get("status") != "success":
+            return {"status": "error", "message": "ERP Error"}
+
+        erp_data = response.get("data", [])
+
+        if not erp_data:
+            return {"status": "success", "data": []}
+
+        # --------------------------------------------------
+        # Expense + GL Mapping
+        # --------------------------------------------------
+        expenses = frappe.get_all(
+            "Expenses",
+            fields=["name", "head_of_expense",
+                    "sub_head_of_expense", "type_of_expense"]
+        )
+
+        expense_lookup = {str(e.name): e for e in expenses}
+
+        child_rows = frappe.get_all(
+            "GL code Mapping",
+            fields=["parent", "gl_code_map"]
+        )
+
+        gl_parent_map = {}
+        for row in child_rows:
+            gl_parent_map[str(row.gl_code_map).strip()] = str(row.parent)
+
+        # --------------------------------------------------
+        # Quarter Helper
+        # --------------------------------------------------
+        def get_quarter(period):
+            return f"Q{((period - 1) // 3) + 1}"
+
+        def two_dec(val):
+            return float(f"{val:.2f}")
+
+        # --------------------------------------------------
+        # Group Structure
+        # --------------------------------------------------
+        grouped = defaultdict(lambda: {
+            "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0,
+            "gl": defaultdict(lambda: {
+                "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0
+            })
+        })
+
+        # --------------------------------------------------
+        # Group ERP Data
+        # --------------------------------------------------
+        for row in erp_data:
+
+            period = row.get("accounting_period")
+            if not period or period == "0":
+                continue
+
+            try:
+                period = int(period)
+            except:
+                continue
+
+            quarter = get_quarter(period)
+
+            account = str(row.get("account")).strip()
+            amount = float(row.get("posted_total_amt") or 0)
+
+            if account not in gl_parent_map:
+                continue
+
+            parent = gl_parent_map[account]
+
+            grouped[parent][quarter] += amount
+            grouped[parent]["gl"][account][quarter] += amount
+
+        # --------------------------------------------------
+        # Build Final Output
+        # --------------------------------------------------
+        final_output = []
+        sequence_id = 1
+
+        for parent, values in grouped.items():
+
+            if parent not in expense_lookup:
+                continue
+
+            expense = expense_lookup[parent]
+
+            # Expense Total
+            expense_total = (
+                values["Q1"] + values["Q2"] +
+                values["Q3"] + values["Q4"]
+            )
+
+            sub_gl_list = []
+            gl_sequence = 1
+
+            for gl_code, gl_values in values["gl"].items():
+
+                gl_total = (
+                    gl_values["Q1"] + gl_values["Q2"] +
+                    gl_values["Q3"] + gl_values["Q4"]
+                )
+
+                sub_gl_list.append({
+                    "sequence_id": gl_sequence,
+                    "gl_code_map": gl_code,
+                    "Q1": two_dec(gl_values["Q1"]),
+                    "Q2": two_dec(gl_values["Q2"]),
+                    "Q3": two_dec(gl_values["Q3"]),
+                    "Q4": two_dec(gl_values["Q4"]),
+                    "total_posted_amount": two_dec(gl_total)
+                })
+
+                gl_sequence += 1
+
+            final_output.append({
+                "sequence_id": sequence_id,
+                "head_of_expense": expense.head_of_expense,
+                "sub_head_of_expense": expense.sub_head_of_expense,
+                "type_of_expense": expense.type_of_expense,
+                "Q1": two_dec(values["Q1"]),
+                "Q2": two_dec(values["Q2"]),
+                "Q3": two_dec(values["Q3"]),
+                "Q4": two_dec(values["Q4"]),
+                "total_posted_amount": two_dec(expense_total),
+                "sub_gl": sub_gl_list
+            })
+
+            sequence_id += 1
+
+        return {
+            "status": "success",
+            "fiscal_year": fiscal_year,
+            "data": final_output
+        }
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(),
+                         "Detailed GL Quarter Wise Error")
+        return {"status": "error", "message": "Server Error"}
