@@ -608,258 +608,258 @@ frappe.pages['consolidated-budget'].on_page_load = function(wrapper) {
 		});
 
 
+//!=============================================================== Estimate Consolidated ================================================================
+		let estimateLoaded = false;
 
-let estimateLoaded = false;
+		$(document).on("click", "[data-tab='estimate']", function () {
+			if (!estimateLoaded) {
+				estimateLoaded = true;
+				loadEstimateData();
+			}
+		});
 
-$(document).on("click", "[data-tab='estimate']", function () {
-    if (!estimateLoaded) {
-        estimateLoaded = true;
-        loadEstimateData();
-    }
-});
+		function loadEstimateData() {
 
-function loadEstimateData() {
+			frappe.call({
+				method: "annual_budget.api.actuals.get_grouped_actuals_detailed_gl_test",
+				args: {
+					fiscal_year: "2025",
+					accounting_period: "12"
+				},
+				freeze: true,
+				freeze_message: "Loading Estimate...",
+				callback: function (r) {
 
-    frappe.call({
-        method: "annual_budget.api.actuals.get_grouped_actuals_detailed_gl_test",
-        args: {
-            fiscal_year: "2025",
-            accounting_period: "12"
-        },
-        freeze: true,
-        freeze_message: "Loading Estimate...",
-        callback: function (r) {
+					if (r.message && r.message.status === "success") {
+						renderEstimateTable(r.message.data);
+					} else {
+						frappe.msgprint("Failed to load Estimate data");
+					}
+				},
+				error: function () {
+					frappe.msgprint("Server error occurred");
+				}
+			});
+		}
+		// 1️⃣ Formatter
+		// ===============================
+		// 1️⃣ Indian Currency Formatter
+		// ===============================
+		function formatEstimateNumber(value) {
 
-            if (r.message && r.message.status === "success") {
-                renderEstimateTable(r.message.data);
-            } else {
-                frappe.msgprint("Failed to load Estimate data");
-            }
-        },
-        error: function () {
-            frappe.msgprint("Server error occurred");
-        }
-    });
-}
-// 1️⃣ Formatter
-// ===============================
-// 1️⃣ Indian Currency Formatter
-// ===============================
-function formatEstimateNumber(value) {
+			const number = parseFloat(value || 0);
 
-    const number = parseFloat(value || 0);
-
-    return "₹ " + number.toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-
-// ===============================
-// 2️⃣ Render Table
-// ===============================
-function renderEstimateTable(data) {
-
-    const tbody = $("#estimate-table-body");
-    tbody.empty();
-
-    if (!Array.isArray(data) || data.length === 0) {
-
-        tbody.append(`
-            <tr>
-                <td colspan="6" style="text-align:center;font-weight:600;">
-                    No Data Available
-                </td>
-            </tr>
-        `);
-
-        return;
-    }
-
-    let grandQ1 = 0;
-    let grandQ2 = 0;
-    let grandQ3 = 0;
-    let grandQ4 = 0;
-
-    data.forEach((head, hIndex) => {
-
-        const headQ1 = parseFloat(head.Q1 || 0);
-        const headQ2 = parseFloat(head.Q2 || 0);
-        const headQ3 = parseFloat(head.Q3 || 0);
-        const headQ4 = parseFloat(head.Q4 || 0);
-
-        const headTotal = headQ1 + headQ2 + headQ3 + headQ4;
-
-        grandQ1 += headQ1;
-        grandQ2 += headQ2;
-        grandQ3 += headQ3;
-        grandQ4 += headQ4;
-
-        // 🔵 HEAD ROW
-        tbody.append(`
-            <tr class="estimate-head" data-head="${hIndex}" 
-                style="font-weight:700;background:#f2f2f2;cursor:pointer;">
-                <td class="toggle-icon">▶ ${head.name}</td>
-                <td>${formatEstimateNumber(headQ1)}</td>
-                <td>${formatEstimateNumber(headQ2)}</td>
-                <td>${formatEstimateNumber(headQ3)}</td>
-                <td>${formatEstimateNumber(headQ4)}</td>
-                <td>${formatEstimateNumber(headTotal)}</td>
-            </tr>
-        `);
-
-        // ================= CAPITAL =================
-        if (Array.isArray(head.items) && head.items.length) {
-
-            head.items.forEach(item => {
-
-                const itemQ1 = parseFloat(item.Q1 || 0);
-                const itemQ2 = parseFloat(item.Q2 || 0);
-                const itemQ3 = parseFloat(item.Q3 || 0);
-                const itemQ4 = parseFloat(item.Q4 || 0);
-
-                const itemTotal = itemQ1 + itemQ2 + itemQ3 + itemQ4;
-
-                tbody.append(`
-                    <tr class="head-child head-child-${hIndex}" style="display:none;">
-                        <td style="padding-left:30px;">
-                            ${item.name} (${item.gl_code || ""})
-                        </td>
-                        <td>${formatEstimateNumber(itemQ1)}</td>
-                        <td>${formatEstimateNumber(itemQ2)}</td>
-                        <td>${formatEstimateNumber(itemQ3)}</td>
-                        <td>${formatEstimateNumber(itemQ4)}</td>
-                        <td>${formatEstimateNumber(itemTotal)}</td>
-                    </tr>
-                `);
-            });
-        }
-
-        // ================= OPERATING =================
-        if (Array.isArray(head.sub_heads) && head.sub_heads.length) {
-
-            head.sub_heads.forEach((sub, sIndex) => {
-
-                const subKey = `${hIndex}-${sIndex}`;
-
-                const subQ1 = parseFloat(sub.Q1 || 0);
-                const subQ2 = parseFloat(sub.Q2 || 0);
-                const subQ3 = parseFloat(sub.Q3 || 0);
-                const subQ4 = parseFloat(sub.Q4 || 0);
-
-                const subTotal = subQ1 + subQ2 + subQ3 + subQ4;
-
-                tbody.append(`
-                    <tr class="estimate-sub head-child-${hIndex}" 
-                        data-sub="${subKey}"
-                        style="display:none;font-weight:600;cursor:pointer;">
-                        <td class="toggle-icon" style="padding-left:20px;">
-                            ▶ ${sub.name}
-                        </td>
-                        <td>${formatEstimateNumber(subQ1)}</td>
-                        <td>${formatEstimateNumber(subQ2)}</td>
-                        <td>${formatEstimateNumber(subQ3)}</td>
-                        <td>${formatEstimateNumber(subQ4)}</td>
-                        <td>${formatEstimateNumber(subTotal)}</td>
-                    </tr>
-                `);
-
-                if (Array.isArray(sub.items) && sub.items.length) {
-
-                    sub.items.forEach(item => {
-
-                        const itemQ1 = parseFloat(item.Q1 || 0);
-                        const itemQ2 = parseFloat(item.Q2 || 0);
-                        const itemQ3 = parseFloat(item.Q3 || 0);
-                        const itemQ4 = parseFloat(item.Q4 || 0);
-
-                        const itemTotal = itemQ1 + itemQ2 + itemQ3 + itemQ4;
-
-                        tbody.append(`
-                            <tr class="sub-child sub-child-${subKey}" style="display:none;">
-                                <td style="padding-left:40px;">
-                                    ${item.name} (${item.gl_code || ""})
-                                </td>
-                                <td>${formatEstimateNumber(itemQ1)}</td>
-                                <td>${formatEstimateNumber(itemQ2)}</td>
-                                <td>${formatEstimateNumber(itemQ3)}</td>
-                                <td>${formatEstimateNumber(itemQ4)}</td>
-                                <td>${formatEstimateNumber(itemTotal)}</td>
-                            </tr>
-                        `);
-                    });
-                }
-
-            });
-        }
-
-    });
-
-    // ================= GRAND TOTAL =================
-    const grandTotal = grandQ1 + grandQ2 + grandQ3 + grandQ4;
-
-    tbody.append(`
-        <tr style="font-weight:800;background:#0076B6;color:white;border-top:2px solid #000;">
-            <td>GRAND TOTAL</td>
-            <td>${formatEstimateNumber(grandQ1)}</td>
-            <td>${formatEstimateNumber(grandQ2)}</td>
-            <td>${formatEstimateNumber(grandQ3)}</td>
-            <td>${formatEstimateNumber(grandQ4)}</td>
-            <td>${formatEstimateNumber(grandTotal)}</td>
-        </tr>
-    `);
-}
-// ===============================
-// HEAD Expand / Collapse
-// ===============================
-$(document).on("click", ".estimate-head", function () {
-
-    const headIndex = $(this).data("head");
-    const children = $(`.head-child-${headIndex}`);
-    const iconCell = $(this).find(".toggle-icon");
-
-    children.slideToggle(150);
-
-    // Extract clean text safely
-    let text = iconCell.text().replace("▶ ", "").replace("▼ ", "");
-
-    if (children.is(":visible")) {
-        iconCell.text("▼ " + text);
-    } else {
-        iconCell.text("▶ " + text);
-
-        // Collapse all sub children
-        $(`.sub-child-${headIndex}`).hide();
-        $(this).siblings(".estimate-sub").find(".toggle-icon").each(function () {
-            let t = $(this).text().replace("▶ ", "").replace("▼ ", "");
-            $(this).text("▶ " + t);
-        });
-    }
-});
+			return "₹ " + number.toLocaleString("en-IN", {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2
+			});
+		}
 
 
-// ===============================
-// SUB Expand / Collapse
-// ===============================
-$(document).on("click", ".estimate-sub", function (e) {
+		// ===============================
+		// 2️⃣ Render Table
+		// ===============================
+		function renderEstimateTable(data) {
 
-    e.stopPropagation();
+			const tbody = $("#estimate-table-body");
+			tbody.empty();
 
-    const subKey = $(this).data("sub");
-    const children = $(`.sub-child-${subKey}`);
-    const iconCell = $(this).find(".toggle-icon");
+			if (!Array.isArray(data) || data.length === 0) {
 
-    children.slideToggle(150);
+				tbody.append(`
+					<tr>
+						<td colspan="6" style="text-align:center;font-weight:600;">
+							No Data Available
+						</td>
+					</tr>
+				`);
 
-    let text = iconCell.text().replace("▶ ", "").replace("▼ ", "");
+				return;
+			}
 
-    if (children.is(":visible")) {
-        iconCell.text("▼ " + text);
-    } else {
-        iconCell.text("▶ " + text);
-    }
-});
+			let grandQ1 = 0;
+			let grandQ2 = 0;
+			let grandQ3 = 0;
+			let grandQ4 = 0;
+
+			data.forEach((head, hIndex) => {
+
+				const headQ1 = parseFloat(head.Q1 || 0);
+				const headQ2 = parseFloat(head.Q2 || 0);
+				const headQ3 = parseFloat(head.Q3 || 0);
+				const headQ4 = parseFloat(head.Q4 || 0);
+
+				const headTotal = headQ1 + headQ2 + headQ3 + headQ4;
+
+				grandQ1 += headQ1;
+				grandQ2 += headQ2;
+				grandQ3 += headQ3;
+				grandQ4 += headQ4;
+
+				// 🔵 HEAD ROW
+				tbody.append(`
+					<tr class="estimate-head" data-head="${hIndex}" 
+						style="font-weight:700;background:#f2f2f2;cursor:pointer;">
+						<td class="toggle-icon">▶ ${head.name}</td>
+						<td>${formatEstimateNumber(headQ1)}</td>
+						<td>${formatEstimateNumber(headQ2)}</td>
+						<td>${formatEstimateNumber(headQ3)}</td>
+						<td>${formatEstimateNumber(headQ4)}</td>
+						<td>${formatEstimateNumber(headTotal)}</td>
+					</tr>
+				`);
+
+				// ================= CAPITAL =================
+				if (Array.isArray(head.items) && head.items.length) {
+
+					head.items.forEach(item => {
+
+						const itemQ1 = parseFloat(item.Q1 || 0);
+						const itemQ2 = parseFloat(item.Q2 || 0);
+						const itemQ3 = parseFloat(item.Q3 || 0);
+						const itemQ4 = parseFloat(item.Q4 || 0);
+
+						const itemTotal = itemQ1 + itemQ2 + itemQ3 + itemQ4;
+
+						tbody.append(`
+							<tr class="head-child head-child-${hIndex}" style="display:none;">
+								<td style="padding-left:30px;">
+									${item.name} (${item.gl_code || ""})
+								</td>
+								<td>${formatEstimateNumber(itemQ1)}</td>
+								<td>${formatEstimateNumber(itemQ2)}</td>
+								<td>${formatEstimateNumber(itemQ3)}</td>
+								<td>${formatEstimateNumber(itemQ4)}</td>
+								<td>${formatEstimateNumber(itemTotal)}</td>
+							</tr>
+						`);
+					});
+				}
+
+				// ================= OPERATING =================
+				if (Array.isArray(head.sub_heads) && head.sub_heads.length) {
+
+					head.sub_heads.forEach((sub, sIndex) => {
+
+						const subKey = `${hIndex}-${sIndex}`;
+
+						const subQ1 = parseFloat(sub.Q1 || 0);
+						const subQ2 = parseFloat(sub.Q2 || 0);
+						const subQ3 = parseFloat(sub.Q3 || 0);
+						const subQ4 = parseFloat(sub.Q4 || 0);
+
+						const subTotal = subQ1 + subQ2 + subQ3 + subQ4;
+
+						tbody.append(`
+							<tr class="estimate-sub head-child-${hIndex}" 
+								data-sub="${subKey}"
+								style="display:none;font-weight:600;cursor:pointer;">
+								<td class="toggle-icon" style="padding-left:20px;">
+									▶ ${sub.name}
+								</td>
+								<td>${formatEstimateNumber(subQ1)}</td>
+								<td>${formatEstimateNumber(subQ2)}</td>
+								<td>${formatEstimateNumber(subQ3)}</td>
+								<td>${formatEstimateNumber(subQ4)}</td>
+								<td>${formatEstimateNumber(subTotal)}</td>
+							</tr>
+						`);
+
+						if (Array.isArray(sub.items) && sub.items.length) {
+
+							sub.items.forEach(item => {
+
+								const itemQ1 = parseFloat(item.Q1 || 0);
+								const itemQ2 = parseFloat(item.Q2 || 0);
+								const itemQ3 = parseFloat(item.Q3 || 0);
+								const itemQ4 = parseFloat(item.Q4 || 0);
+
+								const itemTotal = itemQ1 + itemQ2 + itemQ3 + itemQ4;
+
+								tbody.append(`
+									<tr class="sub-child sub-child-${subKey}" style="display:none;">
+										<td style="padding-left:40px;">
+											${item.name} (${item.gl_code || ""})
+										</td>
+										<td>${formatEstimateNumber(itemQ1)}</td>
+										<td>${formatEstimateNumber(itemQ2)}</td>
+										<td>${formatEstimateNumber(itemQ3)}</td>
+										<td>${formatEstimateNumber(itemQ4)}</td>
+										<td>${formatEstimateNumber(itemTotal)}</td>
+									</tr>
+								`);
+							});
+						}
+
+					});
+				}
+
+			});
+
+			// ================= GRAND TOTAL =================
+			const grandTotal = grandQ1 + grandQ2 + grandQ3 + grandQ4;
+
+			tbody.append(`
+				<tr style="font-weight:800;background:#0076B6;color:white;border-top:2px solid #000;">
+					<td>GRAND TOTAL</td>
+					<td>${formatEstimateNumber(grandQ1)}</td>
+					<td>${formatEstimateNumber(grandQ2)}</td>
+					<td>${formatEstimateNumber(grandQ3)}</td>
+					<td>${formatEstimateNumber(grandQ4)}</td>
+					<td>${formatEstimateNumber(grandTotal)}</td>
+				</tr>
+			`);
+		}
+		// ===============================
+		// HEAD Expand / Collapse
+		// ===============================
+		$(document).on("click", ".estimate-head", function () {
+
+			const headIndex = $(this).data("head");
+			const children = $(`.head-child-${headIndex}`);
+			const iconCell = $(this).find(".toggle-icon");
+
+			children.slideToggle(150);
+
+			// Extract clean text safely
+			let text = iconCell.text().replace("▶ ", "").replace("▼ ", "");
+
+			if (children.is(":visible")) {
+				iconCell.text("▼ " + text);
+			} else {
+				iconCell.text("▶ " + text);
+
+				// Collapse all sub children
+				$(`.sub-child-${headIndex}`).hide();
+				$(this).siblings(".estimate-sub").find(".toggle-icon").each(function () {
+					let t = $(this).text().replace("▶ ", "").replace("▼ ", "");
+					$(this).text("▶ " + t);
+				});
+			}
+		});
+
+
+		// ===============================
+		// SUB Expand / Collapse
+		// ===============================
+		$(document).on("click", ".estimate-sub", function (e) {
+
+			e.stopPropagation();
+
+			const subKey = $(this).data("sub");
+			const children = $(`.sub-child-${subKey}`);
+			const iconCell = $(this).find(".toggle-icon");
+
+			children.slideToggle(150);
+
+			let text = iconCell.text().replace("▶ ", "").replace("▼ ", "");
+
+			if (children.is(":visible")) {
+				iconCell.text("▼ " + text);
+			} else {
+				iconCell.text("▶ " + text);
+			}
+		});
 };
 
 
