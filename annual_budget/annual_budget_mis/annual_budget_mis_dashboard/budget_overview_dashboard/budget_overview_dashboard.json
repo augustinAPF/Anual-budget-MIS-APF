@@ -1,71 +1,9 @@
 {
  "cards": [
-  {
-   "card": "Budget Total - April"
-  },
-  {
-   "card": "Budget Total - May"
-  },
-  {
-   "card": "Budget Total -June"
-  },
-  {
-   "card": "Budget Total - July"
-  },
-  {
-   "card": "Budget Total - August"
-  },
-  {
-   "card": "Budget Total - September"
-  },
-  {
-   "card": "Budget Total - October"
-  },
-  {
-   "card": "Budget Total - November"
-  },
-  {
-   "card": "Budget Total - December"
-  },
-  {
-   "card": "Budget Total - January"
-  },
-  {
-   "card": "Budget Total - February"
-  },
-  {
-   "card": "Budget Total - March"
-  },
-  {
-   "card": "Quarter 1 Budget Total"
-  },
-  {
-   "card": "Quarter 2 Budget Total"
-  },
-  {
-   "card": "Quarter 4 Budget Total"
-  },
-  {
-   "card": "Quarter 3 Budget Total"
-  }
+ 
  ],
  "charts": [
-  {
-   "chart": "Quarter 1 Budget Total",
-   "width": "Half"
-  },
-  {
-   "chart": "Quarter 2 Budget Total",
-   "width": "Half"
-  },
-  {
-   "chart": "Quarter 3 Budget Total",
-   "width": "Half"
-  },
-  {
-   "chart": "Quarter 4 Budget Total",
-   "width": "Half"
-  }
+ 
  ],
  "creation": "2025-10-14 10:51:37.159189",
  "dashboard_name": "Budget Overview Dashboard",
