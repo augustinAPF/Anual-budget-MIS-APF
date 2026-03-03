@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "NC-.#####",
+ "autoname": "autoincrement",
  "creation": "2026-02-04 13:02:17.420331",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -50,11 +50,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-27 15:36:25.222231",
+ "modified": "2026-03-03 15:57:03.954200",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Overview number cards settings",
- "naming_rule": "Expression",
+ "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [
   {
