@@ -1480,22 +1480,88 @@ let cards_container = $('<div class="card-row"></div>').appendTo(page.body);
     /* ------------------------------------------------
        FINANCIAL YEAR
     --------------------------------------------------*/
+    // let fy_col = make_field();
+    // let fiscal_year_filter = frappe.ui.form.make_control({
+    //     parent: fy_col,
+    //     df: {
+    //         label: "Financial Year",
+    //         fieldtype: "Select",
+    //         fieldname: "financial_year",
+    //         options: ["2025-26", "2026-27"].join("\n"),
+    //         default: "2025-26",
+    //         reqd: 1,
+    //         change() {
+    //         }
+    //     },
+    //     render_input: true
+    // });
     let fy_col = make_field();
+
     let fiscal_year_filter = frappe.ui.form.make_control({
         parent: fy_col,
         df: {
             label: "Financial Year",
             fieldtype: "Select",
             fieldname: "financial_year",
-            options: ["2025-26", "2026-27"].join("\n"),
-            default: "2025-26",
             reqd: 1,
             change() {
+                let y = this.get_value();
+                if (!y) return;
+
+                updatePageTitle(y);
+                TabLoader.resetAll();
+
+                let activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
+                if (activeTab) {
+                    TabLoader.trigger(activeTab);
+                }
             }
         },
         render_input: true
     });
 
+    fiscal_year_filter.refresh();
+
+
+    // ---------- Fetch FY from API ----------
+    frappe.call({
+        method: "annual_budget.api.filter_options.get_financial_year_list",
+        callback: function (r) {
+
+            if (r.message && r.message.length) {
+
+                let years = r.message.map(d => d.financial_year);
+
+                // set dropdown options
+                fiscal_year_filter.df.options = years.join("\n");
+                fiscal_year_filter.refresh();
+
+
+                // ---------- Calculate Current FY ----------
+                let today = new Date();
+                let year = today.getFullYear();
+                let month = today.getMonth() + 1;
+
+                let currentFY;
+
+                if (month >= 4) {
+                    currentFY = year + "-" + String(year + 1).slice(-2);
+                } else {
+                    currentFY = (year - 1) + "-" + String(year).slice(-2);
+                }
+
+
+                // ---------- Set Default ----------
+                if (years.includes(currentFY)) {
+                    fiscal_year_filter.set_value(currentFY);
+                    updatePageTitle(currentFY);
+                } else {
+                    fiscal_year_filter.set_value(years[0]);
+                    updatePageTitle(years[0]);
+                }
+            }
+        }
+    });
     /* ------------------------------------------------
        UNIT (MULTI SELECT)
     --------------------------------------------------*/

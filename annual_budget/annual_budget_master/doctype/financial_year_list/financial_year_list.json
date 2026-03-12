@@ -2,6 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
+ "autoname": "prompt",
  "creation": "2025-09-26 10:47:13.470257",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -17,10 +18,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-08 11:13:09.042303",
+ "modified": "2026-03-12 15:36:29.932928",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Financial Year List",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {

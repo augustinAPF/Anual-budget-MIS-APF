@@ -2820,21 +2820,26 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		'.cb-row-grand td{color:#fff;}' +
 		'.cb-text-accent{color:#0076B6;font-weight:600;}' +
 
-		/* ── PPT TAB ── */
-		'#ppt-table td:first-child{position:sticky;left:0;z-index:10;background:inherit;}' +
-		'#ppt-table .cb-thead-main th:first-child{position:sticky;left:0;z-index:30;background:#003B63;}' +
-		'#ppt-table .cb-thead-sub th:first-child{position:sticky;left:0;z-index:29;background:#0076B6;}' +
-		'#ppt-table .cb-row-head td:first-child{background:#E9F4FB;}' +
-		'#ppt-table .cb-row-sub  td:first-child{background:#FFF3E6;}' +
-		'#ppt-table .cb-row-grand td:first-child{background:#0076B6;}' +
-		'#ppt-table .ppt-item-row td:first-child{background:#fff;}' +
-		'#ppt-table .ppt-total-col{background:#E8F0FA !important;color:#003B63;font-weight:700;border-left:2px solid #0076B6;}' +
-		'#ppt-table .cb-row-grand .ppt-total-col{background:#003B63 !important;color:#fff;}' +
-		'#ppt-table .ppt-est-group th,.ppt-est-group td{background:#FFF8F0;}' +
-		'.ppt-dash{color:#aaa;}' +
-		'.ppt-title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:4px 2px;}' +
-		'.ppt-main-title{font-size:13px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;}' +
-		'.ppt-currency-label{font-size:11px;font-style:italic;color:#555;}' +
+		/* ── PPT TAB – clean report table ── */
+		'.ppt-title-bar{margin-bottom:2px;}' +
+		'.ppt-main-title{font-size:12px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;margin-bottom:4px;}' +
+		'.ppt-currency-label{font-size:11px;font-style:italic;color:#111;text-align:right;margin-bottom:2px;}' +
+		'#ppt-table{border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif;border:1px solid #999;}' +
+		'#ppt-table thead tr.ppt-hdr1 th{background:#fff;text-align:center;font-weight:700;padding:6px 10px 4px;border:1px solid #999;color:#111;}' +
+		'#ppt-table thead tr.ppt-hdr2 th{background:#fff;text-align:center;font-weight:700;padding:4px 10px;border-left:1px dotted #aaa;border-right:1px dotted #aaa;border-bottom:1px dotted #aaa;border-top:none;color:#111;min-width:90px;}' +
+		'#ppt-table thead tr.ppt-hdr2 th.ppt-unit-sub{border-left:1px solid #999;border-right:1px solid #999;}' +
+		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-first{border-left:1px solid #999 !important;}' +
+		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-last{border-right:1px solid #999 !important;}' +
+		'#ppt-table thead tr.ppt-hdr2 th.ppt-bgt-last{border-right:1px solid #999 !important;}' +
+		'#ppt-table tbody td{padding:5px 10px;border-bottom:1px dotted #aaa;text-align:right;white-space:nowrap;color:#111;border-left:none;border-right:none;}' +
+		'#ppt-table tbody td:first-child{text-align:left;border-left:1px solid #999;min-width:160px;}' +
+		'#ppt-table tbody td:last-child{border-right:1px solid #999;}' +
+		'#ppt-table tbody td.ppt-sep-left{border-left:1px solid #999 !important;}' +
+		'#ppt-table tbody td.ppt-grp-sep{border-left:1px solid #999 !important;}' +
+		'#ppt-table tbody tr.ppt-total-row td{font-weight:700;border-bottom:1px solid #999 !important;}' +
+		'#ppt-table tbody tr.ppt-total-row td:first-child{border-left:1px solid #999;}' +
+		'#ppt-table tbody tr.ppt-total-row td:last-child{border-right:1px solid #999;}' +
+		'.ppt-dash{color:#555;text-align:center;display:block;}' +
 
 		/* BE sticky first column */
 		'#be-table td:first-child{position:sticky;left:0;z-index:10;background:inherit;}' +
@@ -2898,19 +2903,44 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 				'<div class="cb-tab-pane active" id="tab-ppt">' +
 					'<div class="ppt-title-bar">' +
 						'<div class="ppt-main-title" id="ppt-main-title">Overall Foundation Numbers – Budget vs. Est</div>' +
-						'<div class="ppt-currency-label">₹ Cr.</div>' +
 					'</div>' +
+
+					'<div class="ppt-currency-label">₹ Cr.</div>' +
+
 					'<div class="cb-controls">' +
-						'<input type="text" id="ppt-search" class="cb-search-input" placeholder="Search unit / expense head...">' +
-						'<div class="cb-checkbox-area">' +
-							'<label><input type="checkbox" id="ppt-expand-all"> Expand All</label>' +
-						'</div>' +
+						'<input type="text" id="ppt-search" class="cb-search-input" placeholder="Search unit...">' +
 						'<button class="cb-export-btn" id="ppt-export-btn">↓ Export to Excel</button>' +
 					'</div>' +
+
 					'<div class="cb-scroll-wrapper">' +
-						'<table class="cb-table" id="ppt-table"><thead></thead><tbody id="ppt-tbody"></tbody></table>' +
+
+						'<table id="ppt-table" class="cb-table">' +
+
+							'<thead>' +
+
+								'<tr class="cb-thead-main">' +
+									'<th rowspan="2" style="min-width:180px;text-align:center;">Unit</th>' +
+									'<th colspan="3">Budget</th>' +
+									'<th colspan="3">Estimate</th>' +
+								'</tr>' +
+
+								'<tr class="cb-thead-sub">' +
+									'<th>Opex</th>' +
+									'<th>Capex</th>' +
+									'<th>Total</th>' +
+									'<th>Opex</th>' +
+									'<th>Capex</th>' +
+									'<th>Total</th>' +
+								'</tr>' +
+
+							'</thead>' +
+
+							'<tbody id="ppt-tbody"></tbody>' +
+
+						'</table>' +
+
 					'</div>' +
-				'</div>' +
+				'</div>'+
 
 				'<div class="cb-tab-pane" id="tab-summary_inr"></div>' +
 				'<div class="cb-tab-pane" id="tab-headcount"></div>' +
@@ -2966,36 +2996,104 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var $fyColumn = $('<div class="col-md-3 col-sm-12"></div>').appendTo('#cb-filter-row');
 
+	// var fyControl = frappe.ui.form.make_control({
+	// 	parent: $fyColumn,
+	// 	df: {
+	// 		label    : 'Financial Year',
+	// 		fieldtype: 'Select',
+	// 		fieldname: 'financial_year',
+	// 		reqd     : 1,
+	// 		change   : function () {
+	// 			var y = this.get_value();
+	// 			if (!y) { return; }
+	// 			updatePageTitle(y);
+	// 			TabLoader.resetAll();
+	// 			var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
+	// 			if (activeTab) { TabLoader.trigger(activeTab); }
+	// 		}
+	// 	},
+	// 	render_input: true
+	// });
+	// fyControl.refresh();
+
+	// frappe.call({
+	// 	method  : 'frappe.client.get_list',
+	// 	args    : { doctype: 'Financial Year List', fields: ['name'], order_by: 'name desc', limit_page_length: 100 },
+	// 	callback: function (r) {
+	// 		if (r.message && r.message.length) {
+	// 			var names = r.message.map(function (x) { return x.name; });
+	// 			fyControl.df.options = names.join('\n');
+	// 			fyControl.refresh();
+	// 			fyControl.set_value(names[0]);
+	// 			updatePageTitle(names[0]);
+	// 		}
+	// 	}
+	// });
+			// ---------- Financial Year Filter ----------
 	var fyControl = frappe.ui.form.make_control({
 		parent: $fyColumn,
 		df: {
-			label    : 'Financial Year',
+			label: 'Financial Year',
 			fieldtype: 'Select',
 			fieldname: 'financial_year',
-			reqd     : 1,
-			change   : function () {
+			reqd: 1,
+			change: function () {
+
 				var y = this.get_value();
-				if (!y) { return; }
+				if (!y) return;
+
 				updatePageTitle(y);
 				TabLoader.resetAll();
+
 				var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
-				if (activeTab) { TabLoader.trigger(activeTab); }
+				if (activeTab) {
+					TabLoader.trigger(activeTab);
+				}
 			}
 		},
 		render_input: true
 	});
+
 	fyControl.refresh();
 
+
+	// ---------- Fetch Financial Years ----------
 	frappe.call({
-		method  : 'frappe.client.get_list',
-		args    : { doctype: 'Financial Year List', fields: ['name'], order_by: 'name desc', limit_page_length: 100 },
+		method: "annual_budget.api.filter_options.get_financial_year_list",
 		callback: function (r) {
+
 			if (r.message && r.message.length) {
-				var names = r.message.map(function (x) { return x.name; });
-				fyControl.df.options = names.join('\n');
+
+				let years = r.message.map(d => d.financial_year);
+
+				// set dropdown options
+				fyControl.df.options = years.join("\n");
 				fyControl.refresh();
-				fyControl.set_value(names[0]);
-				updatePageTitle(names[0]);
+
+
+				// ---------- Detect Current Financial Year ----------
+				let today = new Date();
+				let year = today.getFullYear();
+				let month = today.getMonth() + 1;
+
+				let currentFY;
+
+				if (month >= 4) {
+					currentFY = year + "-" + String(year + 1).slice(-2);
+				} else {
+					currentFY = (year - 1) + "-" + String(year).slice(-2);
+				}
+
+
+				// ---------- Set Default Value ----------
+				if (years.includes(currentFY)) {
+					fyControl.set_value(currentFY);
+					updatePageTitle(currentFY);
+				} else {
+					// fallback to latest FY
+					fyControl.set_value(years[0]);
+					updatePageTitle(years[0]);
+				}
 			}
 		}
 	});
@@ -3044,352 +3142,164 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var PPT = (function () {
 
-		var rawData    = [];   // array of entity objects from format_api
-		var currentFY  = '';
-		var openRows   = {};   // secName -> bool (expanded)
-		var openSubs   = {};   // secName::subName -> bool
-		var expandAll  = false;
-		var bound      = false;
+		var currentFY = '';
+		var bound     = false;
 
-		/* ─── helpers ─────────────────────────────────────────────────────── */
-
-		function pl() { return getFYLabels(currentFY).plan; }
-		function el() { return getFYLabels(currentFY).est;  }
-		function fy()  { return currentFY; }
-		function prevFY() {
-			var p = (currentFY || '2025-26').split('-');
-			return (parseInt(p[0]) - 1) + '-' + (parseInt(p[1]) - 1);
+		// ── FY label helpers ────────────────────────────────────────────────────
+		function budgetLabel(fy) {
+			var parts = (fy || '2026-27').split('-');
+			return (parts[0] || '2026') + '-' + (parts[1] ? parts[1].slice(-2) : '27') + '  Budget';
+		}
+		function estLabel(fy) {
+			var parts = (fy || '2026-27').split('-');
+			var sy = parseInt(parts[0] || '2026', 10) - 1;
+			var ey = parseInt(parts[1] || '27',   10) - 1;
+			return sy + '-' + String(ey).padStart(2,'0') + ' Est';
 		}
 
-		// Grand-total plan/est per entity  (sums all sections)
-		function entityPlan(entry) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) { v += parseFloat(s.ytd || 0); });
-			return v;
-		}
-		function entityEst(entry) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) { v += parseFloat(s.total_posted_amt_ytd || 0); });
-			return v;
+		// ── Test data ────────────────────────────────────────────────────────────
+		// TODO: replace with API – format_api returns this structure per entity.
+		// For the flat PPT view, data shape is:
+		//   [ { name, isTotal, isGrand, bOpex, bCapex, eOpex, eCapex } ]
+		// where bTotal = bOpex + bCapex, eTotal = eOpex + eCapex
+		var TEST_ROWS = [
+			{ name: 'Education',       bOpex: 45.20, bCapex:  8.50, eOpex: 42.10, eCapex:  7.80 },
+			{ name: 'Health',          bOpex: 32.15, bCapex:  5.25, eOpex: 30.20, eCapex:  4.90 },
+			{ name: 'Livelihoods',     bOpex: 28.60, bCapex:  3.40, eOpex: 27.30, eCapex:  3.10 },
+			{ name: 'University',      bOpex: 18.75, bCapex: 12.60, eOpex: 17.50, eCapex: 11.20 },
+			{ name: 'Philanthropy',    bOpex: 15.40, bCapex:  0.80, eOpex: 14.90, eCapex:  0.70 },
+			{ name: 'New Initiatives', bOpex:  8.20, bCapex:  2.10, eOpex:  6.50, eCapex:  1.80 },
+			{ name: 'Enablers',        bOpex: 22.30, bCapex:  4.50, eOpex: 21.10, eCapex:  4.20 },
+			{ name: '__SUB__',   isTotal: true,  label: 'Total' },
+			{ name: 'Covid-19',        bOpex:  2.50, bCapex:  0.00, eOpex:  3.10, eCapex:  0.00 },
+			{ name: '__GRAND__', isGrand: true,  label: 'Total' }
+		];
+
+		// ── Number formatter ────────────────────────────────────────────────────
+		function fmt(v) {
+			if (!v || v === 0) { return '<span class="ppt-dash">-</span>'; }
+			return parseFloat(v).toFixed(2);
 		}
 
-		// Per-section plan/est for one entity
-		function secPlan(entry, sn) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) {
-				if (s.name === sn) { v += parseFloat(s.ytd || 0); }
+		// ── Compute subtotals ────────────────────────────────────────────────────
+		function calcTotals(rows) {
+			var mainRows  = rows.filter(function (r) { return !r.isTotal && !r.isGrand && r.name !== 'Covid-19'; });
+			var covidRow  = rows.find(function (r) { return r.name === 'Covid-19'; }) || {};
+			var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+			mainRows.forEach(function (r) {
+				sub.bOpex  += r.bOpex  || 0;
+				sub.bCapex += r.bCapex || 0;
+				sub.eOpex  += r.eOpex  || 0;
+				sub.eCapex += r.eCapex || 0;
 			});
-			return v;
-		}
-		function secEst(entry, sn) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) {
-				if (s.name === sn) { v += parseFloat(s.total_posted_amt_ytd || 0); }
-			});
-			return v;
-		}
-
-		// Per-sub-head plan/est for one entity
-		function subPlan(entry, sn, subn) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) {
-				if (s.name !== sn) { return; }
-				(s.sub_heads || []).forEach(function (sub) {
-					if (sub.name === subn) { v += parseFloat(sub.ytd || 0); }
-				});
-			});
-			return v;
-		}
-		function subEst(entry, sn, subn) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (s) {
-				if (s.name !== sn) { return; }
-				(s.sub_heads || []).forEach(function (sub) {
-					if (sub.name === subn) { v += parseFloat(sub.total_posted_amt_ytd || 0); }
-				});
-			});
-			return v;
+			var grand = {
+				bOpex : sub.bOpex  + (covidRow.bOpex  || 0),
+				bCapex: sub.bCapex + (covidRow.bCapex || 0),
+				eOpex : sub.eOpex  + (covidRow.eOpex  || 0),
+				eCapex: sub.eCapex + (covidRow.eCapex || 0)
+			};
+			return { sub: sub, grand: grand };
 		}
 
-		// Cross-entity sums
-		function allPlan(sn) {
-			var v = 0; rawData.forEach(function (e) { v += sn ? secPlan(e, sn) : entityPlan(e); }); return v;
-		}
-		function allEst(sn) {
-			var v = 0; rawData.forEach(function (e) { v += sn ? secEst(e, sn) : entityEst(e); }); return v;
-		}
-		function allSubPlan(sn, subn) {
-			var v = 0; rawData.forEach(function (e) { v += subPlan(e, sn, subn); }); return v;
-		}
-		function allSubEst(sn, subn) {
-			var v = 0; rawData.forEach(function (e) { v += subEst(e, sn, subn); }); return v;
-		}
-
-		// Unique entity label
-		function entityLabel(e) { return (e.label || '').trim(); }
-
-		/* ─── build struct (unique sections/subs from first entity) ─────── */
-		function buildStruct() {
-			if (!rawData.length) { return []; }
-			return (rawData[0].actuals || []).map(function (s) {
-				return {
-					name     : s.name,
-					sub_heads: (s.sub_heads || []).map(function (sub) { return { name: sub.name }; })
-				};
-			});
-		}
-
-		/* ─── header ─────────────────────────────────────────────────────── */
-		function buildHeader() {
-			var $t  = $('#ppt-table thead').empty();
-			var $r1 = $('<tr class="cb-thead-main"></tr>');
-			var $r2 = $('<tr class="cb-thead-sub"></tr>');
-
-			// Sticky first col
-			$r1.append(
-				'<th rowspan="2" style="text-align:left;min-width:220px;' +
-				'position:sticky;left:0;z-index:30;background:#003B63;">' +
-				'Expense Head</th>'
+		// ── renderTable ──────────────────────────────────────────────────────────
+		function renderTable(rows) {
+			// Update FY labels in header
+			$('#ppt-budget-hdr').text(budgetLabel(currentFY));
+			$('#ppt-est-hdr').text(estLabel(currentFY));
+			$('#ppt-main-title').text(
+				'Overall Foundation Numbers \u2013 ' +
+				budgetLabel(currentFY).replace('Budget','Budget vs.') + ' ' + estLabel(currentFY)
 			);
 
-			// Per-entity columns (Plan | Est)
-			rawData.forEach(function (e) {
-				$r1.append('<th colspan="2" style="text-align:center;">' + entityLabel(e) + '</th>');
-				$r2.append('<th style="min-width:130px;text-align:center;">' + pl() + '</th>');
-				$r2.append('<th style="min-width:130px;text-align:center;">' + el() + '</th>');
-			});
+			var term   = ($('#ppt-search').val() || '').trim().toLowerCase();
+			var totals = calcTotals(rows);
+			var $tb    = $('#ppt-tbody').empty();
 
-			// Grand Total cols
-			$r1.append('<th colspan="2" style="text-align:center;background:#003B63;">Grand Total</th>');
-			$r2.append('<th style="min-width:130px;text-align:center;background:#004F8B;">' + pl() + '</th>');
-			$r2.append('<th style="min-width:130px;text-align:center;background:#004F8B;">' + el() + '</th>');
+			rows.forEach(function (row) {
+				var bO, bC, eO, eC, label, cls = '', bT, eT;
 
-			$t.append($r1).append($r2);
-		}
-
-		/* ─── cell builders ─────────────────────────────────────────────── */
-		function secRowCells(sn) {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td style="font-weight:700;">' + fmtDash(secPlan(e, sn)) + '</td>';
-				h += '<td style="font-weight:700;">' + fmtDash(secEst(e,  sn)) + '</td>';
-			});
-			h += '<td class="ppt-total-col">' + fmtDash(allPlan(sn)) + '</td>';
-			h += '<td class="ppt-total-col">' + fmtDash(allEst(sn))  + '</td>';
-			return h;
-		}
-
-		function subRowCells(sn, subn) {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td class="cb-text-accent">' + fmtDash(subPlan(e, sn, subn)) + '</td>';
-				h += '<td class="cb-text-accent">' + fmtDash(subEst(e,  sn, subn)) + '</td>';
-			});
-			h += '<td class="ppt-total-col">' + fmtDash(allSubPlan(sn, subn)) + '</td>';
-			h += '<td class="ppt-total-col">' + fmtDash(allSubEst(sn,  subn)) + '</td>';
-			return h;
-		}
-
-		function grandRowCells() {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td>' + fmtDash(entityPlan(e)) + '</td>';
-				h += '<td>' + fmtDash(entityEst(e))  + '</td>';
-			});
-			h += '<td class="ppt-total-col">' + fmtDash(allPlan(null)) + '</td>';
-			h += '<td class="ppt-total-col">' + fmtDash(allEst(null))  + '</td>';
-			return h;
-		}
-
-		/* ─── search ─────────────────────────────────────────────────────── */
-		function matchSearch(sn, term) {
-			if (!term) { return true; }
-			if (sn.toLowerCase().indexOf(term) !== -1) { return true; }
-			var struct = buildStruct();
-			for (var i = 0; i < struct.length; i++) {
-				if (struct[i].name !== sn) { continue; }
-				for (var j = 0; j < struct[i].sub_heads.length; j++) {
-					if (struct[i].sub_heads[j].name.toLowerCase().indexOf(term) !== -1) { return true; }
+				if (row.isTotal || row.isGrand) {
+					var t = row.isGrand ? totals.grand : totals.sub;
+					bO = t.bOpex; bC = t.bCapex; eO = t.eOpex; eC = t.eCapex;
+					label = row.label || 'Total';
+					cls = 'ppt-total-row';
+				} else {
+					if (term && row.name.toLowerCase().indexOf(term) === -1) { return; }
+					bO = row.bOpex || 0; bC = row.bCapex || 0;
+					eO = row.eOpex || 0; eC = row.eCapex || 0;
+					label = row.name;
 				}
-			}
-			return false;
-		}
-
-		/* ─── render ─────────────────────────────────────────────────────── */
-		function renderTable() {
-			buildHeader();
-			var $tb  = $('#ppt-tbody').empty();
-			var term = $('#ppt-search').val().trim().toLowerCase();
-			var cols = 1 + rawData.length * 2 + 2;
-
-			if (!rawData.length) {
-				$tb.append('<tr><td colspan="' + cols + '" style="text-align:center;padding:40px;color:#aaa;">No data – select a Financial Year and load.</td></tr>');
-				return;
-			}
-
-			// Update title
-			$('#ppt-main-title').text('Overall Foundation Numbers – ' + fy() + ' Budget vs. ' + prevFY() + ' Est');
-
-			var struct = buildStruct();
-
-			struct.forEach(function (sec) {
-				if (!matchSearch(sec.name, term)) { return; }
-
-				var isOpen  = expandAll || (openRows[sec.name] === true);
-				var hasSubs = sec.sub_heads && sec.sub_heads.length > 0;
-				var arrow   = hasSubs ? (isOpen ? '▼' : '▶') : ' ';
+				bT = bO + bC; eT = eO + eC;
 
 				$tb.append(
-					'<tr class="cb-row-head ppt-sec-row" data-sec="' + sec.name + '">' +
-						'<td><span class="cb-arrow">' + arrow + '</span> ' + sec.name + '</td>' +
-						secRowCells(sec.name) +
+					'<tr class="' + cls + '">' +
+						'<td>' + label + '</td>' +
+						'<td class="ppt-sep-left">' + fmt(bO) + '</td>' +
+						'<td>' + fmt(bC) + '</td>' +
+						'<td>' + fmt(bT) + '</td>' +
+						'<td class="ppt-grp-sep">' + fmt(eO) + '</td>' +
+						'<td>' + fmt(eC) + '</td>' +
+						'<td>' + fmt(eT) + '</td>' +
 					'</tr>'
 				);
-
-				if (!hasSubs) { return; }
-
-				sec.sub_heads.forEach(function (sub) {
-					var subOpen  = expandAll || (openSubs[sec.name + '::' + sub.name] === true);
-					var subVis   = isOpen   ? '' : 'display:none;';
-					var subArrow = '▶';
-					$tb.append(
-						'<tr class="cb-row-sub ppt-sub-row ppt-sec-child" ' +
-						'data-sec="' + sec.name + '" data-sub="' + sec.name + '::' + sub.name + '" ' +
-						'style="' + subVis + '">' +
-							'<td style="padding-left:22px;"><span class="cb-arrow">' + subArrow + '</span> ' + sub.name + '</td>' +
-							subRowCells(sec.name, sub.name) +
-						'</tr>'
-					);
-				});
 			});
-
-			// Grand Total row
-			$tb.append(
-				'<tr class="cb-row-grand">' +
-					'<td style="text-align:left;">GRAND TOTAL</td>' +
-					grandRowCells() +
-				'</tr>'
-			);
-
-			// Sync expand-all checkbox
-			var allKeys = struct.map(function (s) { return s.name; });
-			var allOpen = allKeys.length > 0 && allKeys.every(function (k) { return openRows[k] === true; });
-			$('#ppt-expand-all').prop('checked', expandAll || allOpen);
 		}
 
-		/* ─── toggles ────────────────────────────────────────────────────── */
-		function toggleSec(sn) {
-			var o = !(openRows[sn] === true);
-			openRows[sn] = o;
-			$('#ppt-tbody .ppt-sec-row[data-sec="' + sn + '"] .cb-arrow').text(o ? '▼' : '▶');
-			var $ch = $('#ppt-tbody .ppt-sec-child[data-sec="' + sn + '"]');
-			o ? $ch.show() : $ch.hide();
-		}
-
-		/* ─── events ─────────────────────────────────────────────────────── */
-		function bindEvents() {
-			$(document).on('change.ppt', '#ppt-expand-all', function () {
-				expandAll = this.checked;
-				var struct = buildStruct();
-				struct.forEach(function (s) {
-					openRows[s.name] = expandAll;
-					s.sub_heads.forEach(function (sub) { openSubs[s.name + '::' + sub.name] = expandAll; });
-				});
-				renderTable();
-			});
-			$('#tab-ppt').on('click.ppt', '.ppt-sec-row', function (e) {
-				e.stopPropagation();
-				if (!expandAll) { toggleSec($(this).attr('data-sec')); }
-			});
-			$(document).on('input.ppt', '#ppt-search', function () { renderTable(); });
-			$(document).on('click.ppt', '#ppt-export-btn', function () { exportToExcel(); });
-		}
-
-		/* ─── Excel export ───────────────────────────────────────────────── */
-		function exportToExcel() {
+		// ── Excel export ─────────────────────────────────────────────────────────
+		function exportToExcel(rows) {
 			if (typeof XLSX === 'undefined') {
-				frappe.msgprint('XLSX library not loaded. Please wait a moment and try again.');
+				frappe.msgprint('XLSX library not loaded yet. Please try again in a moment.');
 				return;
 			}
-			var struct = buildStruct();
-			var headers = ['Expense Head'];
-			rawData.forEach(function (e) {
-				headers.push(entityLabel(e) + ' ' + pl());
-				headers.push(entityLabel(e) + ' ' + el());
+			var bl = budgetLabel(currentFY), el = estLabel(currentFY);
+			var totals = calcTotals(rows);
+			var exRows = [
+				['Unit', bl + ' Opex', bl + ' Capex', bl + ' Total', el + ' Opex', el + ' Capex', el + ' Total']
+			];
+			rows.forEach(function (row) {
+				var bO, bC, eO, eC, label;
+				if (row.isTotal || row.isGrand) {
+					var t = row.isGrand ? totals.grand : totals.sub;
+					bO=t.bOpex; bC=t.bCapex; eO=t.eOpex; eC=t.eCapex;
+					label = row.label || 'Total';
+				} else {
+					bO=row.bOpex||0; bC=row.bCapex||0; eO=row.eOpex||0; eC=row.eCapex||0;
+					label = row.name;
+				}
+				exRows.push([label, bO, bC, bO+bC, eO, eC, eO+eC]);
 			});
-			headers.push('Grand Total ' + pl());
-			headers.push('Grand Total ' + el());
-
-			var rows = [headers];
-			struct.forEach(function (sec) {
-				var row = [sec.name];
-				rawData.forEach(function (e) { row.push(secPlan(e, sec.name)); row.push(secEst(e, sec.name)); });
-				row.push(allPlan(sec.name)); row.push(allEst(sec.name));
-				rows.push(row);
-				sec.sub_heads.forEach(function (sub) {
-					var sr = ['  ' + sub.name];
-					rawData.forEach(function (e) { sr.push(subPlan(e, sec.name, sub.name)); sr.push(subEst(e, sec.name, sub.name)); });
-					sr.push(allSubPlan(sec.name, sub.name)); sr.push(allSubEst(sec.name, sub.name));
-					rows.push(sr);
-				});
-			});
-			var gr = ['GRAND TOTAL'];
-			rawData.forEach(function (e) { gr.push(entityPlan(e)); gr.push(entityEst(e)); });
-			gr.push(allPlan(null)); gr.push(allEst(null));
-			rows.push(gr);
-
-			var ws = XLSX.utils.aoa_to_sheet(rows);
-			var colW = [{ wch: 38 }];
-			rawData.forEach(function () { colW.push({ wch: 16 }); colW.push({ wch: 16 }); });
-			colW.push({ wch: 16 }); colW.push({ wch: 16 });
-			ws['!cols'] = colW;
+			var ws = XLSX.utils.aoa_to_sheet(exRows);
+			ws['!cols'] = [{wch:24},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
 			var wb = XLSX.utils.book_new();
 			XLSX.utils.book_append_sheet(wb, ws, 'PPT');
 			XLSX.writeFile(wb, 'Foundation_PPT_' + currentFY + '.xlsx');
 		}
 
-		/* ─── fetch & render ─────────────────────────────────────────────── */
-		function fetchAndRender(fy_val) {
-			currentFY   = fy_val;
-			rawData     = [];
-			openRows    = {};
-			openSubs    = {};
-			expandAll   = false;
-			$('#ppt-expand-all').prop('checked', false);
-			$('#ppt-search').val('');
-
-			Loader.show('Loading PPT data...');
-
-			frappe.require(
-				'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-				function () {}
-			);
-
-			frappe.call({
-				method  : 'annual_budget.api.foundation_consolidated_report.format_api',
-				args    : { financial_year: fy_val, month: 'March' },
-				callback: function (r) {
-					if (r.message && Array.isArray(r.message)) {
-						rawData = r.message;
-					} else {
-						frappe.msgprint('Failed to load PPT data.');
-					}
-					renderTable();
-					Loader.hide();
-				},
-				error: function () {
-					Loader.hide();
-					frappe.msgprint('Server error loading PPT data.');
-				}
+		// ── bindEvents ───────────────────────────────────────────────────────────
+		function bindEvents() {
+			$(document).on('input.ppt', '#ppt-search', function () { renderTable(TEST_ROWS); });
+			$(document).on('click.ppt', '#ppt-export-btn', function () {
+				exportToExcel(TEST_ROWS);
 			});
 		}
 
+		// ── load ─────────────────────────────────────────────────────────────────
 		function load(fy_val) {
-			if (!bound) { bindEvents(); bound = true; }
-			fetchAndRender(fy_val);
+			currentFY = fy_val || '2026-27';
+			if (!bound) {
+				frappe.require('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () {});
+				bindEvents();
+				bound = true;
+			}
+			// TODO: swap TEST_ROWS with API response when ready:
+			// frappe.call({ method: 'annual_budget.api.foundation_consolidated_report.format_api',
+			//   args: { financial_year: fy_val, month: 'March' },
+			//   callback: function(r) { renderTable(transformApiResponse(r.message)); }
+			// });
+			renderTable(TEST_ROWS);
 		}
 
-		return { load: load };
+	return { load: load };
 	})();
 
 	// =============================================================================
@@ -3598,7 +3508,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			data=[]; openH={}; openS={}; expandedQ=[];
 			$('#annual-expand-quarters,#annual-expand-items').prop('checked', false);
 			$('#annual-search').val('');
-			Loader.show('Loading Annual Budget...');
+			Loader.show('Loading Annual Budget');
 			frappe.call({
 				method  : 'annual_budget.api.phase_sheet.get_consolidated_report',
 				args    : { financial_year: fy },
@@ -3785,7 +3695,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			data=[]; openH={}; openS={}; expandedQ=[];
 			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked', false);
 			var year = (fy||'2025-26').split('-')[0];
-			Loader.show('Loading Estimate...');
+			Loader.show('Loading Estimate');
 			frappe.call({
 				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
 				args    : { fiscal_year: year, accounting_period: '12' },
@@ -4091,7 +4001,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			expandItems = false;
 			$('#be-expand-items').prop('checked', false);
 
-			Loader.show('Loading Budget & Estimate...');
+			Loader.show('Loading Budget & Estimate');
 			frappe.call({
 				method  : 'annual_budget.api.foundation_consolidated_report.format_api',
 				args    : { financial_year: fy, month: 'March' },
@@ -4126,4 +4036,4 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	var initialFY = fyControl.get_value();
 	if (initialFY) { TabLoader.trigger('ppt'); }
 
-};
+}; 

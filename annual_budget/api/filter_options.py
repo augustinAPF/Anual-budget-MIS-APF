@@ -341,3 +341,19 @@ def get_user_mappings():
 
     return results
 
+@frappe.whitelist(allow_guest=True)
+def get_financial_year_list():
+
+    fy_docs = frappe.get_all(
+        "Financial Year List",
+        fields=["name"]
+    )
+
+    # sort by first year
+    fy_docs = sorted(
+        fy_docs,
+        key=lambda x: int(x.name.split("-")[0]),
+        reverse=True
+    )
+
+    return [{"financial_year": d.name} for d in fy_docs]
