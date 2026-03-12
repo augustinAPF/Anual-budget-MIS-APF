@@ -1,7 +1,7 @@
 {
  "app": "annual_budget",
  "charts": [],
- "content": "[{\"id\":\"WcAhHuv7zD\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Budget Master</span>\",\"col\":12}},{\"id\":\"yt2p7f_FF_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Financial year list\",\"col\":3}},{\"id\":\"7MR8P9Vyjf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Expenses\",\"col\":3}},{\"id\":\"bW8gGqSASH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"GL code\",\"col\":3}},{\"id\":\"IJC8Ov83Wi\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Unit\",\"col\":3}},{\"id\":\"FuymfUtal7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Location Code\",\"col\":3}},{\"id\":\"nwfveurDe2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cost Center\",\"col\":3}},{\"id\":\"RytaFwqMic\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Months List\",\"col\":3}},{\"id\":\"4oBT5NJyPd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"State\",\"col\":3}},{\"id\":\"I3XEWUFKE-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company Name Unit Link\",\"col\":3}},{\"id\":\"clCbxrSnwa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Location List\",\"col\":3}},{\"id\":\"oiDb17A_JX\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Settings</b></span>\",\"col\":12}},{\"id\":\"7YBjhSApyH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Master Settings\",\"col\":3}},{\"id\":\"TjOHRK3Bg1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Finance user access list \",\"col\":4}},{\"id\":\"cTGrM0z6fX\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Import Templates\",\"col\":3}},{\"id\":\"buYjgIhfvj\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"ERP Credentials\",\"col\":3}},{\"id\":\"rrXALwjDTA\",\"type\":\"paragraph\",\"data\":{\"text\":\"Flow settings\",\"col\":12}},{\"id\":\"mVu57ZvA6z\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overview number cards settings\",\"col\":5}}]",
+ "content": "[{\"id\":\"WcAhHuv7zD\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Budget Master</span>\",\"col\":12}},{\"id\":\"yt2p7f_FF_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Financial year list\",\"col\":3}},{\"id\":\"7MR8P9Vyjf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Expenses\",\"col\":3}},{\"id\":\"bW8gGqSASH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"GL code\",\"col\":3}},{\"id\":\"IJC8Ov83Wi\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Unit\",\"col\":3}},{\"id\":\"FuymfUtal7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Location Code\",\"col\":3}},{\"id\":\"nwfveurDe2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cost Center\",\"col\":3}},{\"id\":\"RytaFwqMic\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Months List\",\"col\":3}},{\"id\":\"4oBT5NJyPd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"State\",\"col\":3}},{\"id\":\"I3XEWUFKE-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company Name Unit Link\",\"col\":3}},{\"id\":\"clCbxrSnwa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Location List\",\"col\":3}},{\"id\":\"oiDb17A_JX\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Settings</b></span>\",\"col\":12}},{\"id\":\"7YBjhSApyH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Master Settings\",\"col\":3}},{\"id\":\"TjOHRK3Bg1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Finance user access list \",\"col\":4}},{\"id\":\"cTGrM0z6fX\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Import Templates\",\"col\":3}},{\"id\":\"buYjgIhfvj\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"ERP Credentials\",\"col\":3}},{\"id\":\"rrXALwjDTA\",\"type\":\"paragraph\",\"data\":{\"text\":\"Flow settings\",\"col\":12}},{\"id\":\"mVu57ZvA6z\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overview number cards settings\",\"col\":5}},{\"id\":\"8V5aQjppun\",\"type\":\"header\",\"data\":{\"text\":\"Headcount &amp; Adjustment<span class=\\\"h4\\\"><b></b></span>\",\"col\":12}},{\"id\":\"5qbkPtNVl0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Adjustment\",\"col\":4}},{\"id\":\"5Na9cj_bek\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Headcount\",\"col\":3}}]",
  "creation": "2025-09-29 14:49:51.762325",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,13 +9,13 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "setting-gear",
- "idx": 1,
+ "idx": 3,
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Budget Master",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-02-26 22:13:25.918719",
+ "modified": "2026-03-06 15:42:29.413022",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Budget Master",
@@ -30,6 +30,14 @@
   {
    "color": "Grey",
    "doc_view": "List",
+   "label": "Monthly Adjustment",
+   "link_to": "Monthly Adjustment",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
    "label": "Finance user access list ",
    "link_to": "Finance user access",
    "stats_filter": "[]",
@@ -40,6 +48,14 @@
    "doc_view": "List",
    "label": "Import Templates",
    "link_to": "Import Templates",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Headcount",
+   "link_to": "Headcount",
    "stats_filter": "[]",
    "type": "DocType"
   },
@@ -79,7 +95,7 @@
    "color": "Grey",
    "doc_view": "List",
    "label": "Financial year list",
-   "link_to": "Financial year list",
+   "link_to": "Financial Year List",
    "stats_filter": "[]",
    "type": "DocType"
   },

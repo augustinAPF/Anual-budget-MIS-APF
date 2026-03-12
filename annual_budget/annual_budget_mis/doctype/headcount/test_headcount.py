@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Augustin Moses and Contributors
+# Copyright (c) 2026, Augustin Moses and Contributors
 # See license.txt
 
 # import frappe
@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestFinancialYearList(IntegrationTestCase):
+class IntegrationTestHeadcount(IntegrationTestCase):
 	"""
-	Integration tests for FinancialYearList.
+	Integration tests for Headcount.
 	Use this class for testing interactions between multiple components.
 	"""
 

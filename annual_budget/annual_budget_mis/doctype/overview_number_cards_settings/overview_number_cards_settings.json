@@ -8,6 +8,7 @@
  "field_order": [
   "number_card_title",
   "is_this_filter_value",
+  "set_group_id",
   "select_units",
   "select_cost_centers",
   "select_location_codes"
@@ -45,12 +46,20 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Is This Filter Value ?"
+  },
+  {
+   "default": "0",
+   "fieldname": "set_group_id",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Set Group ID"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 15:57:03.954200",
+ "modified": "2026-03-12 10:55:16.583033",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Overview number cards settings",

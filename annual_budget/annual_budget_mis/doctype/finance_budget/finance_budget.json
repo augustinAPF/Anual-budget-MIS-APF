@@ -70,7 +70,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Financial year",
-   "options": "Financial year list"
+   "options": "Financial Year List"
   },
   {
    "fieldname": "section_break_gcjw",
@@ -148,7 +148,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-27 14:43:32.861427",
+ "modified": "2026-03-04 03:27:06.060915",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Finance Budget",

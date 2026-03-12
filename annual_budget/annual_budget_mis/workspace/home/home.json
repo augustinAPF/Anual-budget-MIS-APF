@@ -1,7 +1,7 @@
 {
  "app": "annual_budget",
  "charts": [],
- "content": "[{\"id\":\"FAytx_193h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Home</span>\",\"col\":12}},{\"id\":\"SJGRECD3lH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget List\",\"col\":3}},{\"id\":\"X7DBNJUVbg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Face Sheet\",\"col\":3}},{\"id\":\"2xdK9DCEAs\",\"type\":\"paragraph\",\"data\":{\"text\":\"Budget Import\",\"col\":12}},{\"id\":\"W2f35NYM8m\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Import Template\",\"col\":4}},{\"id\":\"rJBJloRenc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Data Import\",\"col\":4}},{\"id\":\"XesUALzJys\",\"type\":\"paragraph\",\"data\":{\"text\":\"User Guide - SOP\",\"col\":12}},{\"id\":\"vYP0hiv84D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User SOP\",\"col\":3}}]",
+ "content": "[{\"id\":\"FAytx_193h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Home</span>\",\"col\":12}},{\"id\":\"SJGRECD3lH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget List\",\"col\":3}},{\"id\":\"X7DBNJUVbg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Face Sheet\",\"col\":3}},{\"id\":\"2xdK9DCEAs\",\"type\":\"paragraph\",\"data\":{\"text\":\"Budget Import\",\"col\":12}},{\"id\":\"W2f35NYM8m\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Import Template\",\"col\":4}},{\"id\":\"rJBJloRenc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Data Import\",\"col\":4}},{\"id\":\"OpX2Mkp0h8\",\"type\":\"paragraph\",\"data\":{\"text\":\"Headcount &amp; Adjustment\",\"col\":12}},{\"id\":\"G3wB1Jug5r\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Headcount\",\"col\":3}},{\"id\":\"NDeKG4yELY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Adjustment\",\"col\":4}},{\"id\":\"XesUALzJys\",\"type\":\"paragraph\",\"data\":{\"text\":\"User Guide - SOP\",\"col\":12}},{\"id\":\"vYP0hiv84D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User SOP\",\"col\":3}}]",
  "creation": "2026-02-09 10:47:37.145579",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,13 +9,13 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "retail",
- "idx": 1,
+ "idx": 2,
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Home",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-03-01 23:37:44.634901",
+ "modified": "2026-03-06 15:36:41.374852",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Home",
@@ -27,6 +27,22 @@
  "roles": [],
  "sequence_id": 28.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Headcount",
+   "link_to": "Headcount",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Monthly Adjustment",
+   "link_to": "Monthly Adjustment",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
   {
    "color": "Grey",
    "doc_view": "List",

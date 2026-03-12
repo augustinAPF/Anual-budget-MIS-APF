@@ -1,7 +1,7 @@
 {
  "app": "annual_budget",
  "charts": [],
- "content": "[{\"id\":\"og9RujeBaH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Face sheet\",\"col\":3}},{\"id\":\"_M0XN2MTvh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget vs Actuals Face Sheet\",\"col\":4}},{\"id\":\"dkdFfCTrN-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Consolidated Budget Sheet\",\"col\":3}},{\"id\":\"QT5P027yqy\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budgets Overview\",\"col\":3}},{\"id\":\"akPmQNW4g0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget consolidated Report\",\"col\":4}}]",
+ "content": "[{\"id\":\"og9RujeBaH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Face sheet\",\"col\":3}},{\"id\":\"_M0XN2MTvh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget vs Actuals Face Sheet\",\"col\":4}},{\"id\":\"dkdFfCTrN-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Consolidated Budget Sheet\",\"col\":4}},{\"id\":\"akPmQNW4g0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget consolidated Report\",\"col\":4}}]",
  "creation": "2026-01-16 09:51:33.563610",
  "custom_blocks": [],
  "docstatus": 0,
@@ -15,7 +15,7 @@
  "label": "Budget Reports",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-02-24 20:03:54.474156",
+ "modified": "2026-03-08 12:28:27.199191",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Budget Reports",
@@ -39,13 +39,6 @@
    "doc_view": "List",
    "label": "Consolidated Budget Sheet",
    "link_to": "consolidated-budget",
-   "type": "Page"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Budgets Overview",
-   "link_to": "number-cards",
    "type": "Page"
   },
   {

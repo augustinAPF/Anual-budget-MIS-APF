@@ -7,7 +7,7 @@ from openpyxl.utils import get_column_letter
 from frappe.desk.page.setup_wizard.install_fixtures import _
 from openpyxl.utils import get_column_letter
 
-
+# * ==============================================================   Budget Export  =====================================================================================
 # @frappe.whitelist()
 # def export_phase_sheet_excel(
 #     financial_year=None,
@@ -45,249 +45,7 @@ from openpyxl.utils import get_column_letter
 #     thin = Side(style="thin")
 #     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
-#     # ================= STYLE FUNCTION =================
-#     def style_row(row, fill=None, font=None, is_header=False):
-#         for col in range(1, 21):
-#             cell = ws.cell(row=row, column=col)
-#             cell.border = border
-
-#             if is_header:
-#                 cell.alignment = center
-#             else:
-#                 if col <= 3:
-#                     cell.alignment = left_align
-#                 else:
-#                     cell.alignment = right_align
-
-#             if fill:
-#                 cell.fill = fill
-#             if font:
-#                 cell.font = font
-
-#     def format_numeric_row(row):
-#         for col in range(4, 21):
-#             ws.cell(row=row, column=col).number_format = "#,##0.00"
-
-#     def build_formula(col, rows):
-#         if not rows:
-#             return 0
-#         return "=" + "+".join([f"{col}{r}" for r in rows])
-
-#     # ================= TITLE =================
-#     ws.append([f"Unit : {units or ''}"])
-#     ws.merge_cells("A1:T1")
-#     ws["A1"].alignment = left_align
-#     ws["A1"].font = Font(size=12, bold=True)
-
-#     ws.append([f"Financial Year : {financial_year or ''}"])
-#     ws.merge_cells("A2:T2")
-#     ws["A2"].alignment = left_align
-#     ws["A2"].font = Font(size=12, bold=True)
-
-#     ws.append([])
-
-#     # ================= HEADER =================
-#     ws.append([
-#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "QUARTER I", "", "",
-#         "QUARTER II", "", "",
-#         "QUARTER III", "", "",
-#         "QUARTER IV", "", "",
-#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         "YEAR TOTAL"
-#     ])
-#     r1 = ws.max_row
-
-#     ws.merge_cells(start_row=r1, start_column=4, end_row=r1, end_column=6)
-#     ws.merge_cells(start_row=r1, start_column=7, end_row=r1, end_column=9)
-#     ws.merge_cells(start_row=r1, start_column=10, end_row=r1, end_column=12)
-#     ws.merge_cells(start_row=r1, start_column=13, end_row=r1, end_column=15)
-
-#     ws.append([
-#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "Apr", "May", "Jun",
-#         "Jul", "Aug", "Sep",
-#         "Oct", "Nov", "Dec",
-#         "Jan", "Feb", "Mar",
-#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         "YEAR TOTAL"
-#     ])
-#     r2 = ws.max_row
-
-#     ws.merge_cells(start_row=r1, start_column=1, end_row=r2, end_column=1)
-#     ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
-#     ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
-#     ws.merge_cells(start_row=r1, start_column=16, end_row=r2, end_column=16)
-#     ws.merge_cells(start_row=r1, start_column=17, end_row=r2, end_column=17)
-#     ws.merge_cells(start_row=r1, start_column=18, end_row=r2, end_column=18)
-#     ws.merge_cells(start_row=r1, start_column=19, end_row=r2, end_column=19)
-#     ws.merge_cells(start_row=r1, start_column=20, end_row=r2, end_column=20)
-
-#     style_row(r1, header_fill, white_bold, True)
-#     style_row(r2, header_fill, white_bold, True)
-
-#     ws.freeze_panes = "A6"
-
-#     # ================= DATA =================
-#     sl = 1
-#     head_total_rows = []
-
-#     for head in data:
-
-#         ws.append(["", head["name"].upper()])
-#         head_row = ws.max_row
-#         ws.merge_cells(start_row=head_row, start_column=2, end_row=head_row, end_column=20)
-#         style_row(head_row, head_fill, bold)
-
-#         sub_total_rows = []
-#         direct_item_rows = []
-
-#         # Direct Items
-#         for item in head.get("items", []):
-#             row_idx = ws.max_row + 1
-#             head_display = item.get("sub_head_of_expense") or head["name"]
-
-#             ws.append([
-#                 sl, head_display, item["name"],
-#                 *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                 f"=SUM(D{row_idx}:F{row_idx})",
-#                 f"=SUM(G{row_idx}:I{row_idx})",
-#                 f"=SUM(J{row_idx}:L{row_idx})",
-#                 f"=SUM(M{row_idx}:O{row_idx})",
-#                 f"=SUM(D{row_idx}:O{row_idx})"
-#             ])
-
-#             style_row(ws.max_row)
-#             format_numeric_row(ws.max_row)
-#             direct_item_rows.append(ws.max_row)
-#             sl += 1
-
-#         # Subheads
-#         for sub in head.get("sub_heads", []):
-#             ws.append(["", sub["name"].upper()])
-#             sub_row = ws.max_row
-#             ws.merge_cells(start_row=sub_row, start_column=2, end_row=sub_row, end_column=20)
-#             style_row(sub_row, subhead_fill, bold)
-
-#             sub_item_rows = []
-
-#             for item in sub.get("items", []):
-#                 row_idx = ws.max_row + 1
-
-#                 item_sub = (item.get("sub_head_of_expense") or "").strip()
-#                 current_sub = sub["name"].strip()
-
-#                 if item_sub == current_sub:
-#                     head_display = ""
-#                 elif item_sub:
-#                     head_display = item_sub
-#                 else:
-#                     head_display = head["name"]
-
-#                 ws.append([
-#                     sl, head_display, item["name"],
-#                     *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                     f"=SUM(D{row_idx}:F{row_idx})",
-#                     f"=SUM(G{row_idx}:I{row_idx})",
-#                     f"=SUM(J{row_idx}:L{row_idx})",
-#                     f"=SUM(M{row_idx}:O{row_idx})",
-#                     f"=SUM(D{row_idx}:O{row_idx})"
-#                 ])
-
-#                 style_row(ws.max_row)
-#                 format_numeric_row(ws.max_row)
-#                 sub_item_rows.append(ws.max_row)
-#                 sl += 1
-
-#             if sub_item_rows:
-#                 ws.append([
-#                     "", f"TOTAL - {sub['name']}", "",
-#                     *[build_formula(col, sub_item_rows) for col in list("DEFGHIJKLMNOPQRST")]
-#                 ])
-#                 style_row(ws.max_row, subtotal_fill, bold)
-#                 format_numeric_row(ws.max_row)
-#                 sub_total_rows.append(ws.max_row)
-
-#         total_rows = sub_total_rows if sub_total_rows else direct_item_rows
-
-#         if total_rows:
-#             ws.append([
-#                 "", f"TOTAL - {head['name']}", "",
-#                 *[build_formula(col, total_rows) for col in list("DEFGHIJKLMNOPQRST")]
-#             ])
-#             style_row(ws.max_row, head_total_fill, bold)
-#             format_numeric_row(ws.max_row)
-#             head_total_rows.append(ws.max_row)
-
-#     if head_total_rows:
-#         ws.append([
-#             "", "GRAND TOTAL", "",
-#             *[build_formula(col, head_total_rows) for col in list("DEFGHIJKLMNOPQRST")]
-#         ])
-#         style_row(ws.max_row, grand_fill, bold)
-#         format_numeric_row(ws.max_row)
-
-#     # ================= AUTO COLUMN WIDTH =================
-#     for col in ws.columns:
-#         max_length = 0
-#         column_letter = get_column_letter(col[0].column)
-
-#         for cell in col:
-#             if cell.value:
-#                 value = str(cell.value)
-#                 if value.startswith("="):
-#                     value = "1234567.00"
-#                 max_length = max(max_length, len(value))
-
-#         ws.column_dimensions[column_letter].width = min(max_length + 3, 60)
-
-#     stream = io.BytesIO()
-#     wb.save(stream)
-#     stream.seek(0)
-
-#     frappe.response["filename"] = f"Phase_Sheet_{financial_year}.xlsx"
-#     frappe.response["filecontent"] = stream.getvalue()
-#     frappe.response["type"] = "binary"
-
-# * ============================================================== Budget Face Sheet Export  =====================================================================================
-# @frappe.whitelist()
-# def export_phase_sheet_excel(
-#     financial_year=None,
-#     units=None,
-#     cost_center=None,
-#     location_code=None
-# ):
-#     data = get_consolidated_report(
-#         financial_year=financial_year,
-#         units=units,
-#         cost_center=cost_center,
-#         location_code=location_code
-#     )
-
-#     wb = Workbook()
-#     ws = wb.active
-#     ws.title = "Phase Sheet"
-
-#     # ================= ALIGNMENTS =================
-#     center = Alignment(horizontal="center", vertical="center")
-#     left_align = Alignment(horizontal="left", vertical="center")
-#     right_align = Alignment(horizontal="right", vertical="center")
-
-#     # ================= COLORS =================
-#     header_fill = PatternFill("solid", fgColor="5D6D7E")
-#     head_fill = PatternFill("solid", fgColor="D6DBDF")
-#     subhead_fill = PatternFill("solid", fgColor="F2F3F4")
-#     subtotal_fill = PatternFill("solid", fgColor="EBF5FB")
-#     head_total_fill = PatternFill("solid", fgColor="D4E6F1")
-#     grand_fill = PatternFill("solid", fgColor="A9CCE3")
-
-#     white_bold = Font(bold=True, color="FFFFFF")
-#     bold = Font(bold=True)
-
-#     thin = Side(style="thin")
-#     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-#     # ================= ROMAN FUNCTION =================
+#     # ================= ROMAN =================
 #     def to_roman(num):
 #         val = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
 #         syb = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
@@ -300,16 +58,18 @@ from openpyxl.utils import get_column_letter
 #             i += 1
 #         return roman_num
 
-#     # ================= STYLE FUNCTION =================
+#     # ================= STYLE =================
 #     def style_row(row, fill=None, font=None, is_header=False):
-#         for col in range(1, 21):
+#         for col in range(2, 22):
 #             cell = ws.cell(row=row, column=col)
 #             cell.border = border
 
 #             if is_header:
 #                 cell.alignment = center
 #             else:
-#                 if col <= 3:
+#                 if col == 2:
+#                     cell.alignment = center
+#                 elif col in (3, 4):
 #                     cell.alignment = left_align
 #                 else:
 #                     cell.alignment = right_align
@@ -320,113 +80,110 @@ from openpyxl.utils import get_column_letter
 #                 cell.font = font
 
 #     def format_numeric_row(row):
-#         for col in range(4, 21):
+#         for col in range(5, 22):
 #             ws.cell(row=row, column=col).number_format = "#,##0.00"
 
 #     def build_formula(col, rows):
-#         if not rows:
-#             return 0
-#         return "=" + "+".join([f"{col}{r}" for r in rows])
+#         return "=" + "+".join([f"{col}{r}" for r in rows]) if rows else 0
 
 #     # ================= TITLE =================
-#     ws.append([f"Unit : {units or ''}"])
-#     ws.merge_cells("A1:T1")
-#     ws["A1"].alignment = left_align
-#     ws["A1"].font = Font(size=12, bold=True)
+#     ws.append(["", "Azim Premji Foundation"])
+#     ws.merge_cells("B1:U1")
+#     ws["B1"].font = Font(size=14, bold=True)
+#     ws["B1"].alignment = left_align
 
-#     ws.append([f"Financial Year : {financial_year or ''}"])
-#     ws.merge_cells("A2:T2")
-#     ws["A2"].alignment = left_align
-#     ws["A2"].font = Font(size=12, bold=True)
+#     ws.append(["", f"Budget for the Financial Year {financial_year or ''}"])
+#     ws.merge_cells("B2:U2")
+#     ws["B2"].font = Font(size=12, bold=True)
+#     ws["B2"].alignment = left_align
 
 #     ws.append([])
 
 #     # ================= HEADER =================
 #     ws.append([
-#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
+#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
 #         "QUARTER I", "", "",
 #         "QUARTER II", "", "",
 #         "QUARTER III", "", "",
 #         "QUARTER IV", "", "",
 #         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         "YEAR TOTAL"
+#         f"YEAR {financial_year or ''}"
 #     ])
 #     r1 = ws.max_row
 
-#     ws.merge_cells(start_row=r1, start_column=4, end_row=r1, end_column=6)
-#     ws.merge_cells(start_row=r1, start_column=7, end_row=r1, end_column=9)
-#     ws.merge_cells(start_row=r1, start_column=10, end_row=r1, end_column=12)
-#     ws.merge_cells(start_row=r1, start_column=13, end_row=r1, end_column=15)
+#     ws.merge_cells(start_row=r1, start_column=5, end_row=r1, end_column=7)
+#     ws.merge_cells(start_row=r1, start_column=8, end_row=r1, end_column=10)
+#     ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
+#     ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
 
 #     ws.append([
-#         "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
+#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
 #         "Apr", "May", "Jun",
 #         "Jul", "Aug", "Sep",
 #         "Oct", "Nov", "Dec",
 #         "Jan", "Feb", "Mar",
 #         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         "YEAR TOTAL"
+#         f"YEAR {financial_year or ''}"
 #     ])
 #     r2 = ws.max_row
 
-#     ws.merge_cells(start_row=r1, start_column=1, end_row=r2, end_column=1)
 #     ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
 #     ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
-#     ws.merge_cells(start_row=r1, start_column=16, end_row=r2, end_column=16)
-#     ws.merge_cells(start_row=r1, start_column=17, end_row=r2, end_column=17)
-#     ws.merge_cells(start_row=r1, start_column=18, end_row=r2, end_column=18)
-#     ws.merge_cells(start_row=r1, start_column=19, end_row=r2, end_column=19)
-#     ws.merge_cells(start_row=r1, start_column=20, end_row=r2, end_column=20)
+#     ws.merge_cells(start_row=r1, start_column=4, end_row=r2, end_column=4)
+
+#     for col in range(17, 22):
+#         ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
 
 #     style_row(r1, header_fill, white_bold, True)
 #     style_row(r2, header_fill, white_bold, True)
 
-#     # ================= FREEZE PANES =================
-#     # Freeze first 3 columns + top 5 rows
-#     ws.freeze_panes = "D6"
+#     ws.freeze_panes = "E6"
 
 #     # ================= DATA =================
-#     sl = 1
 #     head_total_rows = []
+#     head_counter = 0
 
 #     for head in data:
+#         head_counter += 1
+#         alpha_index = chr(64 + head_counter)
 
-#         ws.append(["", head["name"].upper()])
+#         ws.append(["", alpha_index, head["name"]])
 #         head_row = ws.max_row
-#         ws.merge_cells(start_row=head_row, start_column=2, end_row=head_row, end_column=20)
+#         ws.merge_cells(start_row=head_row, start_column=3, end_row=head_row, end_column=21)
 #         style_row(head_row, head_fill, bold)
 
 #         sub_total_rows = []
 #         direct_item_rows = []
 
-#         # Direct Items
+#         # -------- Direct Items --------
 #         for item in head.get("items", []):
 #             row_idx = ws.max_row + 1
-#             head_display = item.get("sub_head_of_expense") or head["name"]
+
+#             sub_val = item.get("sub_head_of_expense")
+#             head_display = sub_val.strip() if sub_val and sub_val.strip() else ""
 
 #             ws.append([
-#                 sl, head_display, item["name"],
+#                 "", "", head_display,
+#                 item["name"],
 #                 *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                 f"=SUM(D{row_idx}:F{row_idx})",
-#                 f"=SUM(G{row_idx}:I{row_idx})",
-#                 f"=SUM(J{row_idx}:L{row_idx})",
-#                 f"=SUM(M{row_idx}:O{row_idx})",
-#                 f"=SUM(D{row_idx}:O{row_idx})"
+#                 f"=SUM(E{row_idx}:G{row_idx})",
+#                 f"=SUM(H{row_idx}:J{row_idx})",
+#                 f"=SUM(K{row_idx}:M{row_idx})",
+#                 f"=SUM(N{row_idx}:P{row_idx})",
+#                 f"=SUM(Q{row_idx}:T{row_idx})"
 #             ])
-
 #             style_row(ws.max_row)
 #             format_numeric_row(ws.max_row)
 #             direct_item_rows.append(ws.max_row)
-#             sl += 1
 
-#         # Subheads with Roman numbering
+#         # -------- Sub Heads --------
 #         sub_counter = 1
 #         for sub in head.get("sub_heads", []):
 #             roman_index = to_roman(sub_counter)
 
-#             ws.append(["", f"{roman_index}. {sub['name'].upper()}"])
+#             ws.append(["", roman_index, sub["name"]])
 #             sub_row = ws.max_row
-#             ws.merge_cells(start_row=sub_row, start_column=2, end_row=sub_row, end_column=20)
+#             ws.merge_cells(start_row=sub_row, start_column=3, end_row=sub_row, end_column=21)
 #             style_row(sub_row, subhead_fill, bold)
 
 #             sub_item_rows = []
@@ -434,35 +191,41 @@ from openpyxl.utils import get_column_letter
 #             for item in sub.get("items", []):
 #                 row_idx = ws.max_row + 1
 
-#                 item_sub = (item.get("sub_head_of_expense") or "").strip()
-#                 current_sub = sub["name"].strip()
+#                 item_sub = item.get("sub_head_of_expense")
+#                 main_head_name = head.get("name")
+#                 sub_head_name = sub.get("name")
 
-#                 if item_sub == current_sub:
-#                     head_display = ""
-#                 elif item_sub:
-#                     head_display = item_sub
-#                 else:
-#                     head_display = head["name"]
+#                 head_display = ""
+
+#                 if item_sub and str(item_sub).strip():
+#                     cleaned_sub = str(item_sub).strip()
+
+#                     if cleaned_sub.lower() == str(sub_head_name).strip().lower():
+#                         head_display = ""
+#                     elif cleaned_sub.lower() == str(main_head_name).strip().lower():
+#                         head_display = ""
+#                     else:
+#                         head_display = cleaned_sub
 
 #                 ws.append([
-#                     sl, head_display, item["name"],
+#                     "", "", head_display,
+#                     item["name"],
 #                     *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                     f"=SUM(D{row_idx}:F{row_idx})",
-#                     f"=SUM(G{row_idx}:I{row_idx})",
-#                     f"=SUM(J{row_idx}:L{row_idx})",
-#                     f"=SUM(M{row_idx}:O{row_idx})",
-#                     f"=SUM(D{row_idx}:O{row_idx})"
+#                     f"=SUM(E{row_idx}:G{row_idx})",
+#                     f"=SUM(H{row_idx}:J{row_idx})",
+#                     f"=SUM(K{row_idx}:M{row_idx})",
+#                     f"=SUM(N{row_idx}:P{row_idx})",
+#                     f"=SUM(Q{row_idx}:T{row_idx})"
 #                 ])
-
 #                 style_row(ws.max_row)
 #                 format_numeric_row(ws.max_row)
 #                 sub_item_rows.append(ws.max_row)
-#                 sl += 1
 
 #             if sub_item_rows:
 #                 ws.append([
-#                     "", f"TOTAL - {sub['name']}", "",
-#                     *[build_formula(col, sub_item_rows) for col in list("DEFGHIJKLMNOPQRST")]
+#                     "", "", "",
+#                     f"TOTAL - {sub['name']}",
+#                     *[build_formula(col, sub_item_rows) for col in list("EFGHIJKLMNOPQRSTU")]
 #                 ])
 #                 style_row(ws.max_row, subtotal_fill, bold)
 #                 format_numeric_row(ws.max_row)
@@ -474,48 +237,48 @@ from openpyxl.utils import get_column_letter
 
 #         if total_rows:
 #             ws.append([
-#                 "", f"TOTAL - {head['name']}", "",
-#                 *[build_formula(col, total_rows) for col in list("DEFGHIJKLMNOPQRST")]
+#                 "", "", "",
+#                 f"TOTAL - {head['name']}",
+#                 *[build_formula(col, total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
 #             ])
 #             style_row(ws.max_row, head_total_fill, bold)
 #             format_numeric_row(ws.max_row)
 #             head_total_rows.append(ws.max_row)
 
+#         ws.append([])
+
 #     if head_total_rows:
 #         ws.append([
-#             "", "GRAND TOTAL", "",
-#             *[build_formula(col, head_total_rows) for col in list("DEFGHIJKLMNOPQRST")]
+#             "", "", "",
+#             "GRAND TOTAL",
+#             *[build_formula(col, head_total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
 #         ])
 #         style_row(ws.max_row, grand_fill, bold)
 #         format_numeric_row(ws.max_row)
 
 #     # ================= AUTO COLUMN WIDTH =================
-#     for column_cells in ws.columns:
+#     for col in range(1, ws.max_column + 1):
+#         column_letter = get_column_letter(col)
 #         max_length = 0
-#         column_letter = get_column_letter(column_cells[0].column)
 
-#         for cell in column_cells:
-#             try:
-#                 if cell.value is None:
-#                     continue
+#         for row in range(1, ws.max_row + 1):
+#             cell = ws.cell(row=row, column=col)
+#             if cell.value is not None:
+#                 value = str(cell.value)
+#                 if value.startswith("="):
+#                     value = "999,999,999.00"
+#                 max_length = max(max_length, len(value))
 
-#                 if isinstance(cell.value, (int, float)):
-#                     display_value = f"{cell.value:,.2f}"
-#                 elif isinstance(cell.value, str) and cell.value.startswith("="):
-#                     display_value = "99,99,99,99,999.00"
-#                 else:
-#                     display_value = str(cell.value)
+#         adjusted_width = max_length + 3
 
-#                 max_length = max(max_length, len(display_value))
+#         if col == 1:
+#             ws.column_dimensions[column_letter].width = 4
+#         elif col == 2:
+#             ws.column_dimensions[column_letter].width = 6
+#         else:
+#             ws.column_dimensions[column_letter].width = min(max(adjusted_width, 10), 50)
 
-#             except:
-#                 pass
-
-#         ws.column_dimensions[column_letter].width = min(max_length + 3, 60)
-
-#     # Keep Sl # small
-#     ws.column_dimensions["A"].width = 6
-
+#     # ================= SAVE =================
 #     stream = io.BytesIO()
 #     wb.save(stream)
 #     stream.seek(0)
@@ -525,6 +288,340 @@ from openpyxl.utils import get_column_letter
 #     frappe.response["type"] = "binary"
 
 
+# @frappe.whitelist()
+# def export_phase_sheet_excel(
+#     financial_year=None,
+#     units=None,
+#     cost_center=None,
+#     location_code=None
+# ):
+
+#     import io
+#     import frappe
+#     from openpyxl import Workbook
+#     from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
+#     from openpyxl.utils import get_column_letter
+
+#     data = get_consolidated_report(
+#         financial_year=financial_year,
+#         units=units,
+#         cost_center=cost_center,
+#         location_code=location_code
+#     )
+
+#     wb = Workbook()
+#     ws = wb.active
+#     ws.title = "Phase Sheet"
+
+#     center = Alignment(horizontal="center", vertical="center")
+#     left_align = Alignment(horizontal="left", vertical="center")
+#     right_align = Alignment(horizontal="right", vertical="center")
+
+#     header_fill = PatternFill("solid", fgColor="5D6D7E")
+#     head_fill = PatternFill("solid", fgColor="D6DBDF")
+#     subhead_fill = PatternFill("solid", fgColor="F2F3F4")
+#     subtotal_fill = PatternFill("solid", fgColor="EBF5FB")
+#     head_total_fill = PatternFill("solid", fgColor="D4E6F1")
+#     grand_fill = PatternFill("solid", fgColor="A9CCE3")
+
+#     white_bold = Font(bold=True, color="FFFFFF")
+#     bold = Font(bold=True)
+
+#     thin = Side(style="thin")
+#     border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+#     def style_row(row, fill=None, font=None, is_header=False):
+
+#         for col in range(2,22):
+
+#             cell = ws.cell(row=row,column=col)
+#             cell.border = border
+
+#             if is_header:
+#                 cell.alignment = center
+#             else:
+#                 if col == 2:
+#                     cell.alignment = center
+#                 elif col in (3,4):
+#                     cell.alignment = left_align
+#                 else:
+#                     cell.alignment = right_align
+
+#             if fill:
+#                 cell.fill = fill
+
+#             if font:
+#                 cell.font = font
+
+
+#     def format_numeric_row(row):
+
+#         for col in range(5,22):
+#             ws.cell(row=row,column=col).number_format = "#,##0.00"
+
+
+#     def build_formula(col, rows):
+
+#         return "=" + "+".join([f"{col}{r}" for r in rows]) if rows else 0
+
+
+#     def to_roman(num):
+
+#         val=[1000,900,500,400,100,90,50,40,10,9,5,4,1]
+#         syb=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
+
+#         roman=""
+#         i=0
+
+#         while num>0:
+#             for _ in range(num//val[i]):
+#                 roman+=syb[i]
+#                 num-=val[i]
+#             i+=1
+
+#         return roman
+
+
+#     # TITLE
+#     ws.append(["","Azim Premji Foundation"])
+#     ws.merge_cells("B1:U1")
+#     ws["B1"].font=Font(size=14,bold=True)
+#     ws["B1"].alignment=left_align
+
+#     ws.append(["",f"Budget for the Financial Year {financial_year or ''}"])
+#     ws.merge_cells("B2:U2")
+#     ws["B2"].font=Font(size=12,bold=True)
+#     ws["B2"].alignment=left_align
+
+#     ws.append([])
+
+
+#     # HEADER
+#     ws.append([
+#         "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
+#         "QUARTER I","","",
+#         "QUARTER II","","",
+#         "QUARTER III","","",
+#         "QUARTER IV","","",
+#         "QTR-1","QTR-2","QTR-3","QTR-4",
+#         f"YEAR {financial_year}"
+#     ])
+
+#     r1=ws.max_row
+
+#     ws.merge_cells(start_row=r1,start_column=5,end_row=r1,end_column=7)
+#     ws.merge_cells(start_row=r1,start_column=8,end_row=r1,end_column=10)
+#     ws.merge_cells(start_row=r1,start_column=11,end_row=r1,end_column=13)
+#     ws.merge_cells(start_row=r1,start_column=14,end_row=r1,end_column=16)
+
+
+#     ws.append([
+#         "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
+#         "Apr","May","Jun",
+#         "Jul","Aug","Sep",
+#         "Oct","Nov","Dec",
+#         "Jan","Feb","Mar",
+#         "QTR-1","QTR-2","QTR-3","QTR-4",
+#         f"YEAR {financial_year}"
+#     ])
+
+#     r2=ws.max_row
+
+#     ws.merge_cells(start_row=r1,start_column=2,end_row=r2,end_column=2)
+#     ws.merge_cells(start_row=r1,start_column=3,end_row=r2,end_column=3)
+#     ws.merge_cells(start_row=r1,start_column=4,end_row=r2,end_column=4)
+
+#     for col in range(17,22):
+#         ws.merge_cells(start_row=r1,start_column=col,end_row=r2,end_column=col)
+
+#     style_row(r1,header_fill,white_bold,True)
+#     style_row(r2,header_fill,white_bold,True)
+
+#     ws.freeze_panes="E6"
+
+
+#     head_total_rows=[]
+#     head_counter=0
+
+
+#     for head in data:
+
+#         head_counter+=1
+#         alpha_index=chr(64+head_counter)
+#         head_name=(head.get("name") or "").strip().upper()
+
+#         # SPECIAL CASE FOR COVID SUPPORT
+#         if head_name=="COVID SUPPORT":
+
+#             item=head["items"][0]
+#             row_idx=ws.max_row+1
+
+#             ws.append([
+#                 "",alpha_index,
+#                 head["name"],
+#                 item["name"],
+#                 *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+#                 f"=SUM(E{row_idx}:G{row_idx})",
+#                 f"=SUM(H{row_idx}:J{row_idx})",
+#                 f"=SUM(K{row_idx}:M{row_idx})",
+#                 f"=SUM(N{row_idx}:P{row_idx})",
+#                 f"=SUM(Q{row_idx}:T{row_idx})"
+#             ])
+
+#             style_row(ws.max_row)
+#             format_numeric_row(ws.max_row)
+#             ws.cell(row=ws.max_row,column=3).font=bold
+
+#             continue
+
+
+#         ws.append(["",alpha_index,head["name"]])
+#         head_row=ws.max_row
+
+#         ws.merge_cells(start_row=head_row,start_column=3,end_row=head_row,end_column=21)
+#         style_row(head_row,head_fill,bold)
+
+
+#         if head_name=="OPERATING EXPENSES":
+#             ws.append([])
+
+
+#         sub_total_rows=[]
+#         direct_item_rows=[]
+
+
+#         # DIRECT ITEMS
+#         for item in head.get("items",[]):
+
+#             row_idx=ws.max_row+1
+
+#             sub_val=item.get("sub_head_of_expense")
+#             head_display=sub_val.strip() if sub_val and sub_val.strip() else ""
+
+#             ws.append([
+#                 "", "", head_display,
+#                 item["name"],
+#                 *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+#                 f"=SUM(E{row_idx}:G{row_idx})",
+#                 f"=SUM(H{row_idx}:J{row_idx})",
+#                 f"=SUM(K{row_idx}:M{row_idx})",
+#                 f"=SUM(N{row_idx}:P{row_idx})",
+#                 f"=SUM(Q{row_idx}:T{row_idx})"
+#             ])
+
+#             style_row(ws.max_row)
+#             format_numeric_row(ws.max_row)
+#             direct_item_rows.append(ws.max_row)
+
+
+#         # SUBHEADS
+#         sub_counter=1
+
+#         for sub in head.get("sub_heads",[]):
+
+#             roman_index=to_roman(sub_counter)
+
+#             ws.append(["",roman_index,sub["name"]])
+#             sub_row=ws.max_row
+
+#             ws.merge_cells(start_row=sub_row,start_column=3,end_row=sub_row,end_column=21)
+#             style_row(sub_row,subhead_fill,bold)
+
+#             sub_item_rows=[]
+
+#             for item in sub.get("items",[]):
+
+#                 row_idx=ws.max_row+1
+
+#                 ws.append([
+#                     "", "", "",
+#                     item["name"],
+#                     *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+#                     f"=SUM(E{row_idx}:G{row_idx})",
+#                     f"=SUM(H{row_idx}:J{row_idx})",
+#                     f"=SUM(K{row_idx}:M{row_idx})",
+#                     f"=SUM(N{row_idx}:P{row_idx})",
+#                     f"=SUM(Q{row_idx}:T{row_idx})"
+#                 ])
+
+#                 style_row(ws.max_row)
+#                 format_numeric_row(ws.max_row)
+#                 sub_item_rows.append(ws.max_row)
+
+
+#             if sub_item_rows:
+
+#                 ws.append([
+#                     "", "", "",
+#                     f"TOTAL - {sub['name']}",
+#                     *[build_formula(col,sub_item_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+#                 ])
+
+#                 style_row(ws.max_row,subtotal_fill,bold)
+#                 format_numeric_row(ws.max_row)
+#                 sub_total_rows.append(ws.max_row)
+
+#             sub_counter+=1
+
+
+#         total_rows=sub_total_rows if sub_total_rows else direct_item_rows
+
+
+#         if total_rows:
+
+#             ws.append([
+#                 "", "", "",
+#                 f"TOTAL - {head['name']}",
+#                 *[build_formula(col,total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+#             ])
+
+#             style_row(ws.max_row,head_total_fill,bold)
+#             format_numeric_row(ws.max_row)
+#             head_total_rows.append(ws.max_row)
+
+#             if head_name=="OPERATING EXPENSES":
+#                 ws.append([])
+
+
+#     # GRAND TOTAL
+#     if head_total_rows:
+
+#         ws.append([
+#             "", "", "",
+#             "GRAND TOTAL",
+#             *[build_formula(col,head_total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+#         ])
+
+#         style_row(ws.max_row,grand_fill,bold)
+#         format_numeric_row(ws.max_row)
+
+
+#     # AUTO WIDTH
+#     for col in range(1,ws.max_column+1):
+
+#         column_letter=get_column_letter(col)
+#         max_length=0
+
+#         for row in range(1,ws.max_row+1):
+
+#             value=ws.cell(row=row,column=col).value
+
+#             if value:
+#                 value=str(value)
+#                 if value.startswith("="):
+#                     value="999,999,999.00"
+#                 max_length=max(max_length,len(value))
+
+#         ws.column_dimensions[column_letter].width=min(max(max_length+3,10),50)
+
+
+#     stream=io.BytesIO()
+#     wb.save(stream)
+#     stream.seek(0)
+
+#     frappe.response["filename"]=f"Phase_Sheet_{financial_year}.xlsx"
+#     frappe.response["filecontent"]=stream.getvalue()
+#     frappe.response["type"]="binary"
 
 
 @frappe.whitelist()
@@ -534,9 +631,11 @@ def export_phase_sheet_excel(
     cost_center=None,
     location_code=None
 ):
+
     import io
+    import frappe
     from openpyxl import Workbook
-    from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
+    from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
     from openpyxl.utils import get_column_letter
 
     data = get_consolidated_report(
@@ -550,12 +649,13 @@ def export_phase_sheet_excel(
     ws = wb.active
     ws.title = "Phase Sheet"
 
-    # ================= ALIGNMENTS =================
     center = Alignment(horizontal="center", vertical="center")
     left_align = Alignment(horizontal="left", vertical="center")
     right_align = Alignment(horizontal="right", vertical="center")
 
-    # ================= COLORS =================
+    bold = Font(bold=True)
+    white_bold = Font(bold=True, color="FFFFFF")
+
     header_fill = PatternFill("solid", fgColor="5D6D7E")
     head_fill = PatternFill("solid", fgColor="D6DBDF")
     subhead_fill = PatternFill("solid", fgColor="F2F3F4")
@@ -563,254 +663,321 @@ def export_phase_sheet_excel(
     head_total_fill = PatternFill("solid", fgColor="D4E6F1")
     grand_fill = PatternFill("solid", fgColor="A9CCE3")
 
-    white_bold = Font(bold=True, color="FFFFFF")
-    bold = Font(bold=True)
-
     thin = Side(style="thin")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
-    # ================= ROMAN =================
-    def to_roman(num):
-        val = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
-        syb = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
-        roman_num = ""
-        i = 0
-        while num > 0:
-            for _ in range(num // val[i]):
-                roman_num += syb[i]
-                num -= val[i]
-            i += 1
-        return roman_num
 
-    # ================= STYLE =================
-    def style_row(row, fill=None, font=None, is_header=False):
-        for col in range(2, 22):
-            cell = ws.cell(row=row, column=col)
+    def style_row(row, fill=None, font=None, header=False):
+
+        for col in range(2,22):
+
+            cell = ws.cell(row=row,column=col)
             cell.border = border
 
-            if is_header:
+            if header:
                 cell.alignment = center
             else:
                 if col == 2:
                     cell.alignment = center
-                elif col in (3, 4):
+                elif col in (3,4):
                     cell.alignment = left_align
                 else:
                     cell.alignment = right_align
 
             if fill:
                 cell.fill = fill
+
             if font:
                 cell.font = font
 
-    def format_numeric_row(row):
-        for col in range(5, 22):
-            ws.cell(row=row, column=col).number_format = "#,##0.00"
+
+    def format_numeric(row):
+        for col in range(5,22):
+            ws.cell(row=row,column=col).number_format = "#,##0.00"
+
 
     def build_formula(col, rows):
         return "=" + "+".join([f"{col}{r}" for r in rows]) if rows else 0
 
-    # ================= TITLE =================
-    ws.append(["", "Azim Premji Foundation"])
-    ws.merge_cells("B1:U1")
-    ws["B1"].font = Font(size=14, bold=True)
-    ws["B1"].alignment = left_align
 
-    ws.append(["", f"Budget for the Financial Year {financial_year or ''}"])
+    def to_roman(num):
+
+        val=[1000,900,500,400,100,90,50,40,10,9,5,4,1]
+        syb=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
+
+        roman=""
+        i=0
+
+        while num>0:
+            for _ in range(num//val[i]):
+                roman+=syb[i]
+                num-=val[i]
+            i+=1
+
+        return roman
+
+
+    # TITLE
+    ws.append(["","Azim Premji Foundation"])
+    ws.merge_cells("B1:U1")
+    ws["B1"].font=Font(size=14,bold=True)
+    ws["B1"].alignment=left_align
+
+    ws.append(["",f"Budget for the Financial Year {financial_year or ''}"])
     ws.merge_cells("B2:U2")
-    ws["B2"].font = Font(size=12, bold=True)
-    ws["B2"].alignment = left_align
+    ws["B2"].font=Font(size=12,bold=True)
 
     ws.append([])
 
-    # ================= HEADER =================
+
+    # HEADER
     ws.append([
-        "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "QUARTER I", "", "",
-        "QUARTER II", "", "",
-        "QUARTER III", "", "",
-        "QUARTER IV", "", "",
-        "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-        f"YEAR {financial_year or ''}"
+        "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
+        "QUARTER I","","",
+        "QUARTER II","","",
+        "QUARTER III","","",
+        "QUARTER IV","","",
+        "QTR-1","QTR-2","QTR-3","QTR-4",
+        f"YEAR {financial_year}"
     ])
-    r1 = ws.max_row
 
-    ws.merge_cells(start_row=r1, start_column=5, end_row=r1, end_column=7)
-    ws.merge_cells(start_row=r1, start_column=8, end_row=r1, end_column=10)
-    ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
-    ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
+    r1=ws.max_row
+
+    ws.merge_cells(start_row=r1,start_column=5,end_row=r1,end_column=7)
+    ws.merge_cells(start_row=r1,start_column=8,end_row=r1,end_column=10)
+    ws.merge_cells(start_row=r1,start_column=11,end_row=r1,end_column=13)
+    ws.merge_cells(start_row=r1,start_column=14,end_row=r1,end_column=16)
 
     ws.append([
-        "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep",
-        "Oct", "Nov", "Dec",
-        "Jan", "Feb", "Mar",
-        "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-        f"YEAR {financial_year or ''}"
+        "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
+        "Apr","May","Jun",
+        "Jul","Aug","Sep",
+        "Oct","Nov","Dec",
+        "Jan","Feb","Mar",
+        "QTR-1","QTR-2","QTR-3","QTR-4",
+        f"YEAR {financial_year}"
     ])
-    r2 = ws.max_row
 
-    ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
-    ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
-    ws.merge_cells(start_row=r1, start_column=4, end_row=r2, end_column=4)
+    r2=ws.max_row
 
-    for col in range(17, 22):
-        ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
+    ws.merge_cells(start_row=r1,start_column=2,end_row=r2,end_column=2)
+    ws.merge_cells(start_row=r1,start_column=3,end_row=r2,end_column=3)
+    ws.merge_cells(start_row=r1,start_column=4,end_row=r2,end_column=4)
 
-    style_row(r1, header_fill, white_bold, True)
-    style_row(r2, header_fill, white_bold, True)
+    for col in range(17,22):
+        ws.merge_cells(start_row=r1,start_column=col,end_row=r2,end_column=col)
 
-    ws.freeze_panes = "E6"
+    style_row(r1,header_fill,white_bold,True)
+    style_row(r2,header_fill,white_bold,True)
 
-    # ================= DATA =================
-    head_total_rows = []
-    head_counter = 0
+    ws.freeze_panes="E6"
+
+
+    head_total_rows=[]
+    head_counter=0
+
 
     for head in data:
-        head_counter += 1
-        alpha_index = chr(64 + head_counter)
 
-        ws.append(["", alpha_index, head["name"]])
-        head_row = ws.max_row
-        ws.merge_cells(start_row=head_row, start_column=3, end_row=head_row, end_column=21)
-        style_row(head_row, head_fill, bold)
+        head_counter+=1
+        alpha_index=chr(64+head_counter)
+        head_name=(head.get("name") or "").strip().upper()
 
-        sub_total_rows = []
-        direct_item_rows = []
 
-        # -------- Direct Items --------
-        for item in head.get("items", []):
-            row_idx = ws.max_row + 1
+        # COVID SUPPORT
+        if head_name=="COVID SUPPORT":
 
-            sub_val = item.get("sub_head_of_expense")
-            head_display = sub_val.strip() if sub_val and sub_val.strip() else ""
+            ws.append([])
+
+            item=head["items"][0]
+            r=ws.max_row+1
+
+            ws.append([
+                "",alpha_index,
+                head["name"],
+                item["name"],
+                *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+                f"=SUM(E{r}:G{r})",
+                f"=SUM(H{r}:J{r})",
+                f"=SUM(K{r}:M{r})",
+                f"=SUM(N{r}:P{r})",
+                f"=SUM(Q{r}:T{r})"
+            ])
+
+            style_row(ws.max_row)
+            format_numeric(ws.max_row)
+            ws.cell(row=ws.max_row,column=3).font=bold
+
+            continue
+
+
+        ws.append(["",alpha_index,head["name"]])
+        r=ws.max_row
+
+        ws.merge_cells(start_row=r,start_column=3,end_row=r,end_column=21)
+        style_row(r,head_fill,bold)
+
+        if head_name=="OPERATING EXPENSES":
+            ws.append([])
+
+        sub_total_rows=[]
+        direct_item_rows=[]
+
+
+        for item in head.get("items",[]):
+
+            r=ws.max_row+1
+            sub_val=item.get("sub_head_of_expense")
+            head_display=sub_val.strip() if sub_val else ""
 
             ws.append([
                 "", "", head_display,
                 item["name"],
-                *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-                f"=SUM(E{row_idx}:G{row_idx})",
-                f"=SUM(H{row_idx}:J{row_idx})",
-                f"=SUM(K{row_idx}:M{row_idx})",
-                f"=SUM(N{row_idx}:P{row_idx})",
-                f"=SUM(Q{row_idx}:T{row_idx})"
+                *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+                f"=SUM(E{r}:G{r})",
+                f"=SUM(H{r}:J{r})",
+                f"=SUM(K{r}:M{r})",
+                f"=SUM(N{r}:P{r})",
+                f"=SUM(Q{r}:T{r})"
             ])
+
             style_row(ws.max_row)
-            format_numeric_row(ws.max_row)
+            format_numeric(ws.max_row)
             direct_item_rows.append(ws.max_row)
 
-        # -------- Sub Heads --------
-        sub_counter = 1
-        for sub in head.get("sub_heads", []):
-            roman_index = to_roman(sub_counter)
 
-            ws.append(["", roman_index, sub["name"]])
-            sub_row = ws.max_row
-            ws.merge_cells(start_row=sub_row, start_column=3, end_row=sub_row, end_column=21)
-            style_row(sub_row, subhead_fill, bold)
+        sub_counter=1
 
-            sub_item_rows = []
+        for sub in head.get("sub_heads",[]):
 
-            for item in sub.get("items", []):
-                row_idx = ws.max_row + 1
+            roman_index=to_roman(sub_counter)
 
-                item_sub = item.get("sub_head_of_expense")
-                main_head_name = head.get("name")
-                sub_head_name = sub.get("name")
+            ws.append(["",roman_index,sub["name"]])
+            r=ws.max_row
 
-                head_display = ""
+            ws.merge_cells(start_row=r,start_column=3,end_row=r,end_column=21)
+            style_row(r,subhead_fill,bold)
+
+            sub_item_rows=[]
+
+            for item in sub.get("items",[]):
+
+                r=ws.max_row+1
+                item_sub=item.get("sub_head_of_expense")
+                sub_name=sub.get("name")
+
+                head_display=""
 
                 if item_sub and str(item_sub).strip():
-                    cleaned_sub = str(item_sub).strip()
 
-                    if cleaned_sub.lower() == str(sub_head_name).strip().lower():
-                        head_display = ""
-                    elif cleaned_sub.lower() == str(main_head_name).strip().lower():
-                        head_display = ""
-                    else:
-                        head_display = cleaned_sub
+                    cleaned=str(item_sub).strip()
+
+                    if cleaned.lower()!=str(sub_name).strip().lower():
+                        head_display=cleaned
 
                 ws.append([
                     "", "", head_display,
                     item["name"],
-                    *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-                    f"=SUM(E{row_idx}:G{row_idx})",
-                    f"=SUM(H{row_idx}:J{row_idx})",
-                    f"=SUM(K{row_idx}:M{row_idx})",
-                    f"=SUM(N{row_idx}:P{row_idx})",
-                    f"=SUM(Q{row_idx}:T{row_idx})"
+                    *item["q1"],*item["q2"],*item["q3"],*item["q4"],
+                    f"=SUM(E{r}:G{r})",
+                    f"=SUM(H{r}:J{r})",
+                    f"=SUM(K{r}:M{r})",
+                    f"=SUM(N{r}:P{r})",
+                    f"=SUM(Q{r}:T{r})"
                 ])
+
                 style_row(ws.max_row)
-                format_numeric_row(ws.max_row)
+                format_numeric(ws.max_row)
                 sub_item_rows.append(ws.max_row)
 
+
             if sub_item_rows:
+
                 ws.append([
                     "", "", "",
                     f"TOTAL - {sub['name']}",
-                    *[build_formula(col, sub_item_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+                    *[build_formula(c,sub_item_rows) for c in list("EFGHIJKLMNOPQRSTU")]
                 ])
-                style_row(ws.max_row, subtotal_fill, bold)
-                format_numeric_row(ws.max_row)
+
+                style_row(ws.max_row,subtotal_fill,bold)
+                format_numeric(ws.max_row)
                 sub_total_rows.append(ws.max_row)
 
-            sub_counter += 1
+            sub_counter+=1
 
-        total_rows = sub_total_rows if sub_total_rows else direct_item_rows
+
+        total_rows=sub_total_rows if sub_total_rows else direct_item_rows
 
         if total_rows:
+
             ws.append([
                 "", "", "",
                 f"TOTAL - {head['name']}",
-                *[build_formula(col, total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+                *[build_formula(c,total_rows) for c in list("EFGHIJKLMNOPQRSTU")]
             ])
-            style_row(ws.max_row, head_total_fill, bold)
-            format_numeric_row(ws.max_row)
+
+            style_row(ws.max_row,head_total_fill,bold)
+            format_numeric(ws.max_row)
             head_total_rows.append(ws.max_row)
 
-        ws.append([])
+            if head_name=="OPERATING EXPENSES":
+                ws.append([])
 
+
+    # CLEANUP EXTRA BLANK ROW
+    for r in range(ws.max_row,1,-1):
+
+        head_val=ws.cell(r,3).value
+        prev_val=ws.cell(r-1,3).value
+
+        if head_val=="COVID SUPPORT" and prev_val is None:
+            ws.delete_rows(r-1)
+            break
+
+
+    # GRAND TOTAL
     if head_total_rows:
+
         ws.append([
             "", "", "",
             "GRAND TOTAL",
-            *[build_formula(col, head_total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
+            *[build_formula(c,head_total_rows) for c in list("EFGHIJKLMNOPQRSTU")]
         ])
-        style_row(ws.max_row, grand_fill, bold)
-        format_numeric_row(ws.max_row)
 
-    # ================= AUTO COLUMN WIDTH =================
-    for col in range(1, ws.max_column + 1):
-        column_letter = get_column_letter(col)
-        max_length = 0
+        style_row(ws.max_row,grand_fill,bold)
+        format_numeric(ws.max_row)
 
-        for row in range(1, ws.max_row + 1):
-            cell = ws.cell(row=row, column=col)
-            if cell.value is not None:
-                value = str(cell.value)
-                if value.startswith("="):
-                    value = "999,999,999.00"
-                max_length = max(max_length, len(value))
 
-        adjusted_width = max_length + 3
+    # COLUMN WIDTH
+    for col in range(1,ws.max_column+1):
 
-        if col == 1:
-            ws.column_dimensions[column_letter].width = 4
-        elif col == 2:
-            ws.column_dimensions[column_letter].width = 6
-        else:
-            ws.column_dimensions[column_letter].width = min(max(adjusted_width, 10), 50)
+        letter=get_column_letter(col)
+        max_len=0
 
-    # ================= SAVE =================
-    stream = io.BytesIO()
+        for row in range(1,ws.max_row+1):
+
+            val=ws.cell(row=row,column=col).value
+
+            if val:
+                val=str(val)
+
+                if val.startswith("="):
+                    val="999,999,999.00"
+
+                max_len=max(max_len,len(val))
+
+        ws.column_dimensions[letter].width=min(max(max_len+3,10),50)
+
+
+    stream=io.BytesIO()
     wb.save(stream)
     stream.seek(0)
 
-    frappe.response["filename"] = f"Phase_Sheet_{financial_year}.xlsx"
-    frappe.response["filecontent"] = stream.getvalue()
-    frappe.response["type"] = "binary"
-# * ==============================================================  Import template Export  =====================================================================================
+    frappe.response["filename"]=f"Phase_Sheet_{financial_year}.xlsx"
+    frappe.response["filecontent"]=stream.getvalue()
+    frappe.response["type"]="binary"
+
+# * ==============================================================  Import Template Export  =====================================================================================
 @frappe.whitelist()
 def download_finance_budget_import_template(user):
 

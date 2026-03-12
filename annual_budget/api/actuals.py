@@ -486,6 +486,196 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             "status": "failed",
             "error": "Unexpected server error"
         }
+
+
+
+        import frappe
+import requests
+import xml.etree.ElementTree as ET
+
+@frappe.whitelist(allow_guest=True)
+def get_erp_actuals_grouped_by_dimensions(fiscal_year, accounting_period):
+    try:
+        username = "MISUSER"
+        password = "[REDACTED-CREDENTIAL]"
+
+        base_url = (
+            "https://pserp.azimpremjifoundation.org:8053/"
+            "PSIGW/RESTListeningConnector/"
+            "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+            "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+        )
+
+        api_url = (
+            f"{base_url}"
+            f"?isconnectedquery=N"
+            f"&maxrows=100000"
+            f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+            f"&prompt_fieldvalue={fiscal_year},{12}"
+        )
+
+        response = requests.get(
+            api_url,
+            headers={"Accept": "application/xml"},
+            auth=(username, password),
+            timeout=120
+        )
+
+        if response.status_code != 200:
+            frappe.log_error("PeopleSoft API HTTP Error", response.text)
+            return {
+                "status": "failed",
+                "status_code": response.status_code,
+                "error": response.text
+            }
+
+        try:
+            root = ET.fromstring(response.content)
+        except ET.ParseError:
+            frappe.log_error("PeopleSoft XML Parse Error", response.text)
+            return {"status": "failed", "error": "Invalid XML response from ERP"}
+
+        # -----------------------------------------
+        # Aggregation Dictionary (Optimized)
+        # -----------------------------------------
+        grouped = {}
+
+        for row_elem in root.iter():
+            if not row_elem.tag.lower().endswith("row"):
+                continue
+
+            row_data = {}
+            for child in row_elem:
+                tag = child.tag.split("}")[-1].lower()
+                row_data[tag] = child.text
+
+            key = (
+                row_data.get("business_unit"),
+                row_data.get("account"),
+                row_data.get("deptid"),
+                row_data.get("operating_unit"),
+                row_data.get("accounting_period")
+            )
+
+            amt = float(row_data.get("posted_total_amt") or 0)
+
+            if key not in grouped:
+                grouped[key] = {
+                    "business_unit": key[0],
+                    "account": key[1],
+                    "deptid": key[2],
+                    "operating_unit": key[3],
+                    "accounting_period": key[4],
+                    "posted_total_amt": amt
+                }
+            else:
+                grouped[key]["posted_total_amt"] += amt
+
+        result = list(grouped.values())
+
+        return {
+            "status": "success",
+            "fiscal_year": fiscal_year,
+            "accounting_period": accounting_period,
+            "count": len(result),
+            "data": result
+        }
+
+    except requests.exceptions.Timeout:
+        frappe.log_error("PeopleSoft Timeout", "ERP request timed out")
+        return {"status": "failed", "error": "Request timeout while connecting to ERP"}
+
+    except Exception:
+        frappe.log_error("PeopleSoft API Unexpected Error", frappe.get_traceback())
+        return {"status": "failed", "error": "Unexpected server error"}
+
+#         import frappe
+# import requests
+# import xml.etree.ElementTree as ET
+
+
+# @frappe.whitelist(allow_guest=True)
+# def fetch_erp_actuals_by_period(fiscal_year, accounting_period):
+#     try:
+#         username = "MISUSER"
+#         password = "[REDACTED-CREDENTIAL]"
+
+#         base_url = (
+#             "https://pserp.azimpremjifoundation.org:8053/"
+#             "PSIGW/RESTListeningConnector/"
+#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+#             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+#         )
+
+#         api_url = (
+#             f"{base_url}"
+#             f"?isconnectedquery=N"
+#             f"&maxrows=100000"
+#             f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+#             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
+#         )
+
+#         response = requests.get(
+#             api_url,
+#             headers={"Accept": "application/xml"},
+#             auth=(username, password),
+#             timeout=120
+#         )
+
+#         if response.status_code != 200:
+#             frappe.log_error("PeopleSoft API HTTP Error", response.text)
+#             return {
+#                 "status": "failed",
+#                 "status_code": response.status_code,
+#                 "error": response.text
+#             }
+
+#         try:
+#             root = ET.fromstring(response.content)
+#         except ET.ParseError:
+#             frappe.log_error("PeopleSoft XML Parse Error", response.text)
+#             return {"status": "failed", "error": "Invalid XML response from ERP"}
+
+#         rows = []
+
+#         # Parse XML rows
+#         for row_elem in root.iter():
+#             if not row_elem.tag.lower().endswith("row"):
+#                 continue
+
+#             row_data = {}
+
+#             for child in row_elem:
+#                 tag = child.tag.split("}")[-1].lower()
+#                 row_data[tag] = child.text
+
+#             rows.append(row_data)
+
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "accounting_period": accounting_period,
+#             "count": len(rows),
+#             "data": rows
+#         }
+
+#     except requests.exceptions.Timeout:
+#         frappe.log_error("PeopleSoft Timeout", "ERP request timed out")
+#         return {
+#             "status": "failed",
+#             "error": "Request timeout while connecting to ERP"
+#         }
+
+#     except Exception:
+#         frappe.log_error("PeopleSoft API Unexpected Error", frappe.get_traceback())
+#         return {
+#             "status": "failed",
+#             "error": "Unexpected server error"
+#         }
+    
+
+
+
 # * ==============================================================  Actual API Prod with accounting period  =====================================================================================
 
 @frappe.whitelist(allow_guest=True)
@@ -950,6 +1140,132 @@ def get_grouped_actuals(fiscal_year,accounting_period):
         "data": final_output
     }
 
+
+@frappe.whitelist(allow_guest=True)
+def get_grouped_actuals_month_wise(fiscal_year, accounting_period):
+
+    # ----------------------------
+    # 1️⃣ Fetch ERP Data
+    # ----------------------------
+    erp_response = get_erp_actuals_grouped_by_dimensions(fiscal_year, accounting_period)
+
+    if "message" in erp_response:
+        erp_data = erp_response.get("message", {}).get("data", [])
+    else:
+        erp_data = erp_response.get("data", [])
+
+    if not erp_data:
+        return {
+            "status": "success",
+            "fiscal_year": fiscal_year,
+            "accounting_period": accounting_period,
+            "data": [],
+            "count": 0
+        }
+
+    # ----------------------------
+    # 2️⃣ Fetch Expenses
+    # ----------------------------
+    expenses = frappe.get_all(
+        "Expenses",
+        fields=[
+            "name",
+            "head_of_expense",
+            "sub_head_of_expense",
+            "type_of_expense",
+            "sequence_id"
+        ]
+    )
+
+    expense_lookup = {str(e.name): e for e in expenses}
+
+    # ----------------------------
+    # 3️⃣ Fetch GL Code Mapping
+    # ----------------------------
+    child_rows = frappe.get_all(
+        "GL code Mapping",
+        fields=["parent", "gl_code_map"]
+    )
+
+    gl_parent_map = {str(row.gl_code_map).strip(): str(row.parent) for row in child_rows}
+
+    # ----------------------------
+    # 4️⃣ Group Data
+    # ----------------------------
+    from collections import defaultdict
+    grouped = defaultdict(float)
+
+    for record in erp_data:
+
+        account = str(record.get("account", "")).strip()
+        period = record.get("accounting_period")   # 👈 get actual ERP period
+        amount = float(record.get("posted_total_amt", 0) or 0)
+
+        parent = gl_parent_map.get(account)
+        if not parent:
+            continue
+
+        expense = expense_lookup.get(parent)
+        if not expense:
+            continue
+
+        key = (
+            period,   # 👈 important
+            record.get("business_unit"),
+            record.get("deptid"),
+            record.get("operating_unit"),
+            account,
+            expense.head_of_expense,
+            expense.sub_head_of_expense,
+            expense.type_of_expense,
+            expense.sequence_id
+        )
+
+        grouped[key] += amount
+
+    # ----------------------------
+    # 5️⃣ Prepare Output
+    # ----------------------------
+    final_output = []
+
+    for (
+        period,
+        business_unit,
+        deptid,
+        operating_unit,
+        account,
+        head_of_expense,
+        sub_head_of_expense,
+        type_of_expense,
+        sequence_id
+    ), total_sum in grouped.items():
+
+        final_output.append({
+            "sequence_id": sequence_id,
+            "accounting_period": period,  # 👈 actual period
+            "account": account,
+            "business_unit": business_unit,
+            "deptid": deptid,
+            "operating_unit": operating_unit,
+            "head_of_expense": head_of_expense,
+            "sub_head_of_expense": sub_head_of_expense,
+            "type_of_expense": type_of_expense,
+            "actuals_type_of_expenses": type_of_expense,
+            "total_posted_amt": round(total_sum, 2)
+        })
+
+    # ----------------------------
+    # 6️⃣ Sort by sequence_id
+    # ----------------------------
+    final_output.sort(key=lambda x: (x.get("sequence_id") or 0))
+
+    return {
+        "status": "success",
+        "fiscal_year": fiscal_year,
+        "accounting_period": accounting_period,
+        "data": final_output,
+        "count": len(final_output)
+    }
 
 
 
@@ -1429,233 +1745,819 @@ def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
         
 
 
-@frappe.whitelist(allow_guest=True)
-def get_grouped_actuals_detailed_gl_test(fiscal_year, accounting_period):
 
-    from decimal import Decimal
-    import re
-    import traceback
 
-    try:
 
-        # ============================================================
-        # Helpers
-        # ============================================================
-        def _num(x):
-            try:
-                return float(Decimal(str(x or 0)))
-            except:
-                return 0.0
 
-        def normalize(text):
-            return re.sub(r"\s+", " ", str(text or "")).strip().upper()
 
-        def get_quarter(period):
-            return f"Q{((int(period) - 1) // 3) + 1}"
 
-        # ============================================================
-        # 1️⃣ FETCH ALL EXPENSES
-        # ============================================================
-        expense_rows = frappe.get_all(
-            "Expenses",
-            fields=[
-                "name",
-                "head_of_expense",
-                "sub_head_of_expense",
-                "type_of_expense",
-                "sequence_id"
-            ],
-            order_by="sequence_id asc"
-        ) or []
 
-        # Build lookup by name
-        expense_lookup = {e["name"]: e for e in expense_rows}
 
-        # ============================================================
-        # 2️⃣ FETCH GL MAPPING
-        # ============================================================
-        gl_rows = frappe.get_all(
-            "GL code Mapping",
-            fields=["parent", "gl_code_map"]
-        ) or []
 
-        gl_parent_map = {}
-        for row in gl_rows:
-            gl = str(row.get("gl_code_map") or "").strip()
-            parent = str(row.get("parent") or "").strip()
-            if gl and parent:
-                gl_parent_map[gl] = parent
 
-        # ============================================================
-        # 3️⃣ BUILD COMPLETE STRUCTURE FROM EXPENSES (ALL ROWS)
-        # ============================================================
-        heads = {}
-        TOP_HEADS = ["CAPITAL EXPENSES", "OPERATING EXPENSES"]
 
-        for e in expense_rows:
 
-            raw_head = normalize(e.get("head_of_expense"))
-            sub_head = normalize(e.get("sub_head_of_expense"))
-            item_name = str(e.get("type_of_expense") or "UNKNOWN ITEM").strip()
-            seq = int(e.get("sequence_id")) if e.get("sequence_id") else 9999
 
-            # Determine parent head correctly
-            if raw_head in TOP_HEADS:
-                parent_head = raw_head
-            else:
-                parent_head = "OPERATING EXPENSES"
-                sub_head = raw_head
 
-            # Initialize parent head
-            if parent_head not in heads:
-                heads[parent_head] = {
-                    "name": parent_head,
-                    "sequence_id": seq,
-                    "Q1": 0.0,
-                    "Q2": 0.0,
-                    "Q3": 0.0,
-                    "Q4": 0.0,
-                    "items": {},
-                    "sub_heads": {}
-                }
 
-            # CAPITAL EXPENSES
-            if parent_head == "CAPITAL EXPENSES":
 
-                heads[parent_head]["items"][item_name] = {
-                    "name": item_name,
-                    "sequence_id": seq,
-                    "gl_code": None,
-                    "Q1": 0.0,
-                    "Q2": 0.0,
-                    "Q3": 0.0,
-                    "Q4": 0.0
-                }
 
-            # OPERATING EXPENSES
-            else:
 
-                if sub_head not in heads[parent_head]["sub_heads"]:
-                    heads[parent_head]["sub_heads"][sub_head] = {
-                        "name": sub_head,
-                        "sequence_id": seq,
-                        "Q1": 0.0,
-                        "Q2": 0.0,
-                        "Q3": 0.0,
-                        "Q4": 0.0,
-                        "items": {}
-                    }
 
-                heads[parent_head]["sub_heads"][sub_head]["items"][item_name] = {
-                    "name": item_name,
-                    "sequence_id": seq,
-                    "gl_code": None,
-                    "Q1": 0.0,
-                    "Q2": 0.0,
-                    "Q3": 0.0,
-                    "Q4": 0.0
-                }
 
-        # ============================================================
-        # 4️⃣ FETCH ERP ACTUALS
-        # ============================================================
-        response = get_actuals_from_erp_month_wise(
-            fiscal_year,
-            accounting_period
-        )
 
-        if "message" in response:
-            response = response["message"]
 
-        erp_data = response.get("data") if response.get("status") == "success" else []
 
-        # ============================================================
-        # 5️⃣ MAP ACTUALS INTO STRUCTURE
-        # ============================================================
-        for row in erp_data:
 
-            try:
-                period = row.get("accounting_period")
-                account = str(row.get("account") or "").strip()
-                amount = _num(row.get("posted_total_amt"))
 
-                if not period or account not in gl_parent_map:
-                    continue
 
-                quarter = get_quarter(period)
 
-                parent_expense_name = gl_parent_map.get(account)
-                expense = expense_lookup.get(parent_expense_name)
 
-                if not expense:
-                    continue
+# @frappe.whitelist(allow_guest=True)
+# def get_grouped_actuals_detailed_gl_test(fiscal_year, accounting_period):
 
-                raw_head = normalize(expense.get("head_of_expense"))
-                sub_head = normalize(expense.get("sub_head_of_expense"))
-                item_name = str(expense.get("type_of_expense") or "").strip()
+#     from decimal import Decimal
+#     import re
+#     import traceback
 
-                if raw_head in TOP_HEADS:
-                    parent_head = raw_head
-                else:
-                    parent_head = "OPERATING EXPENSES"
-                    sub_head = raw_head
+#     try:
 
-                # Add to head total
-                heads[parent_head][quarter] += amount
+#         # ============================================================
+#         # Helpers
+#         # ============================================================
+#         def _num(x):
+#             try:
+#                 return float(Decimal(str(x or 0)))
+#             except:
+#                 return 0.0
 
-                # CAPITAL
-                if parent_head == "CAPITAL EXPENSES":
-                    if item_name in heads[parent_head]["items"]:
-                        heads[parent_head]["items"][item_name][quarter] += amount
-                        heads[parent_head]["items"][item_name]["gl_code"] = account
+#         def normalize(text):
+#             return re.sub(r"\s+", " ", str(text or "")).strip().upper()
 
-                # OPERATING
-                else:
-                    if sub_head in heads[parent_head]["sub_heads"]:
-                        heads[parent_head]["sub_heads"][sub_head][quarter] += amount
-                        if item_name in heads[parent_head]["sub_heads"][sub_head]["items"]:
-                            heads[parent_head]["sub_heads"][sub_head]["items"][item_name][quarter] += amount
-                            heads[parent_head]["sub_heads"][sub_head]["items"][item_name]["gl_code"] = account
+#         def get_quarter(period):
+#             return f"Q{((int(period) - 1) // 3) + 1}"
 
-            except:
-                continue
+#         # ============================================================
+#         # 1️⃣ FETCH ALL EXPENSES
+#         # ============================================================
+#         expense_rows = frappe.get_all(
+#             "Expenses",
+#             fields=[
+#                 "name",
+#                 "head_of_expense",
+#                 "sub_head_of_expense",
+#                 "type_of_expense",
+#                 "sequence_id"
+#             ],
+#             order_by="sequence_id asc"
+#         ) or []
 
-        # ============================================================
-        # 6️⃣ FINAL SORTING
-        # ============================================================
-        final = []
+#         # Build lookup by name
+#         expense_lookup = {e["name"]: e for e in expense_rows}
 
-        for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+#         # ============================================================
+#         # 2️⃣ FETCH GL MAPPING
+#         # ============================================================
+#         gl_rows = frappe.get_all(
+#             "GL code Mapping",
+#             fields=["parent", "gl_code_map"]
+#         ) or []
 
-            head["items"] = sorted(
-                head["items"].values(),
-                key=lambda x: x["sequence_id"]
-            )
+#         gl_parent_map = {}
+#         for row in gl_rows:
+#             gl = str(row.get("gl_code_map") or "").strip()
+#             parent = str(row.get("parent") or "").strip()
+#             if gl and parent:
+#                 gl_parent_map[gl] = parent
 
-            sorted_subs = []
-            for sub in head["sub_heads"].values():
-                sub["items"] = sorted(
-                    sub["items"].values(),
-                    key=lambda x: x["sequence_id"]
-                )
-                sorted_subs.append(sub)
+#         # ============================================================
+#         # 3️⃣ BUILD COMPLETE STRUCTURE FROM EXPENSES (ALL ROWS)
+#         # ============================================================
+#         heads = {}
+#         TOP_HEADS = ["CAPITAL EXPENSES", "OPERATING EXPENSES"]
 
-            head["sub_heads"] = sorted(
-                sorted_subs,
-                key=lambda x: x["sequence_id"]
-            )
+#         for e in expense_rows:
 
-            final.append(head)
+#             raw_head = normalize(e.get("head_of_expense"))
+#             sub_head = normalize(e.get("sub_head_of_expense"))
+#             item_name = str(e.get("type_of_expense") or "UNKNOWN ITEM").strip()
+#             seq = int(e.get("sequence_id")) if e.get("sequence_id") else 9999
 
-        return {
-            "status": "success",
-            "fiscal_year": fiscal_year,
-            "data": final
-        }
+#             # Determine parent head correctly
+#             if raw_head in TOP_HEADS:
+#                 parent_head = raw_head
+#             else:
+#                 parent_head = "OPERATING EXPENSES"
+#                 sub_head = raw_head
 
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "trace": traceback.format_exc()
-        }
+#             # Initialize parent head
+#             if parent_head not in heads:
+#                 heads[parent_head] = {
+#                     "name": parent_head,
+#                     "sequence_id": seq,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0,
+#                     "items": {},
+#                     "sub_heads": {}
+#                 }
+
+#             # CAPITAL EXPENSES
+#             if parent_head == "CAPITAL EXPENSES":
+
+#                 heads[parent_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0
+#                 }
+
+#             # OPERATING EXPENSES
+#             else:
+
+#                 if sub_head not in heads[parent_head]["sub_heads"]:
+#                     heads[parent_head]["sub_heads"][sub_head] = {
+#                         "name": sub_head,
+#                         "sequence_id": seq,
+#                         "Q1": 0.0,
+#                         "Q2": 0.0,
+#                         "Q3": 0.0,
+#                         "Q4": 0.0,
+#                         "items": {}
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0
+#                 }
+
+#         # ============================================================
+#         # 4️⃣ FETCH ERP ACTUALS
+#         # ============================================================
+#         response = get_actuals_from_erp_month_wise(
+#             fiscal_year,
+#             accounting_period
+#         )
+
+#         if "message" in response:
+#             response = response["message"]
+
+#         erp_data = response.get("data") if response.get("status") == "success" else []
+
+#         # ============================================================
+#         # 5️⃣ MAP ACTUALS INTO STRUCTURE
+#         # ============================================================
+#         for row in erp_data:
+
+#             try:
+#                 period = row.get("accounting_period")
+#                 account = str(row.get("account") or "").strip()
+#                 amount = _num(row.get("posted_total_amt"))
+
+#                 if not period or account not in gl_parent_map:
+#                     continue
+
+#                 quarter = get_quarter(period)
+
+#                 parent_expense_name = gl_parent_map.get(account)
+#                 expense = expense_lookup.get(parent_expense_name)
+
+#                 if not expense:
+#                     continue
+
+#                 raw_head = normalize(expense.get("head_of_expense"))
+#                 sub_head = normalize(expense.get("sub_head_of_expense"))
+#                 item_name = str(expense.get("type_of_expense") or "").strip()
+
+#                 if raw_head in TOP_HEADS:
+#                     parent_head = raw_head
+#                 else:
+#                     parent_head = "OPERATING EXPENSES"
+#                     sub_head = raw_head
+
+#                 # Add to head total
+#                 heads[parent_head][quarter] += amount
+
+#                 # CAPITAL
+#                 if parent_head == "CAPITAL EXPENSES":
+#                     if item_name in heads[parent_head]["items"]:
+#                         heads[parent_head]["items"][item_name][quarter] += amount
+#                         heads[parent_head]["items"][item_name]["gl_code"] = account
+
+#                 # OPERATING
+#                 else:
+#                     if sub_head in heads[parent_head]["sub_heads"]:
+#                         heads[parent_head]["sub_heads"][sub_head][quarter] += amount
+#                         if item_name in heads[parent_head]["sub_heads"][sub_head]["items"]:
+#                             heads[parent_head]["sub_heads"][sub_head]["items"][item_name][quarter] += amount
+#                             heads[parent_head]["sub_heads"][sub_head]["items"][item_name]["gl_code"] = account
+
+#             except:
+#                 continue
+
+#         # ============================================================
+#         # 6️⃣ FINAL SORTING
+#         # ============================================================
+#         final = []
+
+#         for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+
+#             head["items"] = sorted(
+#                 head["items"].values(),
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             sorted_subs = []
+#             for sub in head["sub_heads"].values():
+#                 sub["items"] = sorted(
+#                     sub["items"].values(),
+#                     key=lambda x: x["sequence_id"]
+#                 )
+#                 sorted_subs.append(sub)
+
+#             head["sub_heads"] = sorted(
+#                 sorted_subs,
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             final.append(head)
+
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "data": final
+#         }
+
+#     except Exception as e:
+#         return {
+#             "status": "error",
+#             "message": str(e),
+#             "trace": traceback.format_exc()
+#         }
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_grouped_actuals_detailed_gl_test(fiscal_year, accounting_period):
+
+#     from decimal import Decimal
+#     import re
+#     import traceback
+
+#     try:
+
+#         # -----------------------------
+#         # Helpers
+#         # -----------------------------
+#         def _num(x):
+#             try:
+#                 return float(Decimal(str(x or 0)))
+#             except:
+#                 return 0.0
+
+#         def normalize(text):
+#             return re.sub(r"\s+", " ", str(text or "")).strip().upper()
+
+#         def get_quarter(period):
+#             return f"Q{((int(period) - 1) // 3) + 1}"
+
+#         def empty_months():
+#             return {
+#                 "1": 0.0, "2": 0.0, "3": 0.0,
+#                 "4": 0.0, "5": 0.0, "6": 0.0,
+#                 "7": 0.0, "8": 0.0, "9": 0.0,
+#                 "10": 0.0, "11": 0.0, "12": 0.0
+#             }
+
+#         # -----------------------------
+#         # 1️⃣ FETCH EXPENSE MASTER
+#         # -----------------------------
+#         expense_rows = frappe.get_all(
+#             "Expenses",
+#             fields=[
+#                 "name",
+#                 "head_of_expense",
+#                 "sub_head_of_expense",
+#                 "type_of_expense",
+#                 "sequence_id"
+#             ],
+#             order_by="sequence_id asc"
+#         ) or []
+
+#         expense_lookup = {e["name"]: e for e in expense_rows}
+
+#         # -----------------------------
+#         # 2️⃣ FETCH GL MAPPING
+#         # -----------------------------
+#         gl_rows = frappe.get_all(
+#             "GL code Mapping",
+#             fields=["parent", "gl_code_map"]
+#         ) or []
+
+#         gl_parent_map = {}
+
+#         for row in gl_rows:
+#             gl = str(row.get("gl_code_map") or "").strip()
+#             parent = str(row.get("parent") or "").strip()
+#             if gl and parent:
+#                 gl_parent_map[gl] = parent
+
+#         # -----------------------------
+#         # 3️⃣ BUILD STRUCTURE
+#         # -----------------------------
+#         heads = {}
+#         TOP_HEADS = ["CAPITAL EXPENSES", "OPERATING EXPENSES"]
+
+#         for e in expense_rows:
+
+#             raw_head = normalize(e.get("head_of_expense"))
+#             sub_head = normalize(e.get("sub_head_of_expense"))
+#             item_name = str(e.get("type_of_expense") or "UNKNOWN ITEM").strip()
+#             seq = int(e.get("sequence_id")) if e.get("sequence_id") else 9999
+
+#             if raw_head in TOP_HEADS:
+#                 parent_head = raw_head
+#             else:
+#                 parent_head = "OPERATING EXPENSES"
+#                 sub_head = raw_head
+
+#             if parent_head not in heads:
+
+#                 heads[parent_head] = {
+#                     "name": parent_head,
+#                     "sequence_id": seq,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0,
+#                     "months": empty_months(),
+#                     "items": {},
+#                     "sub_heads": {}
+#                 }
+
+#             # ---------------------
+#             # CAPITAL EXPENSES
+#             # ---------------------
+#             if parent_head == "CAPITAL EXPENSES":
+
+#                 heads[parent_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0,
+#                     "months": empty_months()
+#                 }
+
+#             # ---------------------
+#             # OPERATING EXPENSES
+#             # ---------------------
+#             else:
+
+#                 if sub_head not in heads[parent_head]["sub_heads"]:
+
+#                     heads[parent_head]["sub_heads"][sub_head] = {
+#                         "name": sub_head,
+#                         "sequence_id": seq,
+#                         "Q1": 0.0,
+#                         "Q2": 0.0,
+#                         "Q3": 0.0,
+#                         "Q4": 0.0,
+#                         "months": empty_months(),
+#                         "items": {}
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0,
+#                     "Q2": 0.0,
+#                     "Q3": 0.0,
+#                     "Q4": 0.0,
+#                     "months": empty_months()
+#                 }
+
+#         # -----------------------------
+#         # 4️⃣ FETCH ERP DATA
+#         # -----------------------------
+#         response = get_actuals_from_erp_month_wise(
+#             fiscal_year,
+#             accounting_period
+#         )
+
+#         if "message" in response:
+#             response = response["message"]
+
+#         erp_data = response.get("data") if response.get("status") == "success" else []
+
+#         # -----------------------------
+#         # 5️⃣ MAP ERP DATA
+#         # -----------------------------
+#         for row in erp_data:
+
+#             try:
+
+#                 period = row.get("accounting_period")
+#                 account = str(row.get("account") or "").strip()
+#                 amount = _num(row.get("posted_total_amt"))
+
+#                 if not period or account not in gl_parent_map:
+#                     continue
+
+#                 quarter = get_quarter(period)
+#                 month = str(period)
+
+#                 parent_expense_name = gl_parent_map.get(account)
+#                 expense = expense_lookup.get(parent_expense_name)
+
+#                 if not expense:
+#                     continue
+
+#                 raw_head = normalize(expense.get("head_of_expense"))
+#                 sub_head = normalize(expense.get("sub_head_of_expense"))
+#                 item_name = str(expense.get("type_of_expense") or "").strip()
+
+#                 if raw_head in TOP_HEADS:
+#                     parent_head = raw_head
+#                 else:
+#                     parent_head = "OPERATING EXPENSES"
+#                     sub_head = raw_head
+
+#                 # HEAD TOTAL
+#                 heads[parent_head][quarter] += amount
+#                 heads[parent_head]["months"][month] += amount
+
+#                 # -----------------
+#                 # CAPITAL EXPENSE
+#                 # -----------------
+#                 if parent_head == "CAPITAL EXPENSES":
+
+#                     if item_name in heads[parent_head]["items"]:
+
+#                         heads[parent_head]["items"][item_name][quarter] += amount
+#                         heads[parent_head]["items"][item_name]["months"][month] += amount
+#                         heads[parent_head]["items"][item_name]["gl_code"] = account
+
+#                 # -----------------
+#                 # OPERATING EXPENSE
+#                 # -----------------
+#                 else:
+
+#                     if sub_head in heads[parent_head]["sub_heads"]:
+
+#                         sub = heads[parent_head]["sub_heads"][sub_head]
+
+#                         sub[quarter] += amount
+#                         sub["months"][month] += amount
+
+#                         if item_name in sub["items"]:
+
+#                             item = sub["items"][item_name]
+
+#                             item[quarter] += amount
+#                             item["months"][month] += amount
+#                             item["gl_code"] = account
+
+#             except:
+#                 continue
+
+#         # -----------------------------
+#         # 6️⃣ FINAL SORTING
+#         # -----------------------------
+#         final = []
+
+#         for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+
+#             head["items"] = sorted(
+#                 head["items"].values(),
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             sorted_subs = []
+
+#             for sub in head["sub_heads"].values():
+
+#                 sub["items"] = sorted(
+#                     sub["items"].values(),
+#                     key=lambda x: x["sequence_id"]
+#                 )
+
+#                 sorted_subs.append(sub)
+
+#             head["sub_heads"] = sorted(
+#                 sorted_subs,
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             final.append(head)
+
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "data": final
+#         }
+
+#     except Exception as e:
+
+#         return {
+#             "status": "error",
+#             "message": str(e),
+#             "trace": traceback.format_exc()
+#         }
+
+
+
+import frappe
+from decimal import Decimal
+import re
+import traceback
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_grouped_actuals_detailed_gl_test(fiscal_year, accounting_period):
+
+#     try:
+#         def _num(x):
+#             try:
+#                 return float(Decimal(str(x or 0)))
+#             except:
+#                 return 0.0
+
+#         def normalize(text):
+#             return re.sub(r"\s+", " ", str(text or "")).strip().upper()
+
+#         def empty_months():
+#             return {
+#                 "1":0.0,"2":0.0,"3":0.0,
+#                 "4":0.0,"5":0.0,"6":0.0,
+#                 "7":0.0,"8":0.0,"9":0.0,
+#                 "10":0.0,"11":0.0,"12":0.0
+#             }
+
+#         def calculate_quarters(obj):
+
+#             m = obj["months"]
+
+#             obj["Q1"] = m["4"] + m["5"] + m["6"]
+#             obj["Q2"] = m["7"] + m["8"] + m["9"]
+#             obj["Q3"] = m["10"] + m["11"] + m["12"]
+#             obj["Q4"] = m["1"] + m["2"] + m["3"]
+
+#         # ============================================================
+#         # 1️⃣ FETCH EXPENSE MASTER
+#         # ============================================================
+
+#         expense_rows = frappe.get_all(
+#             "Expenses",
+#             fields=[
+#                 "name",
+#                 "head_of_expense",
+#                 "sub_head_of_expense",
+#                 "type_of_expense",
+#                 "sequence_id"
+#             ],
+#             order_by="sequence_id asc"
+#         ) or []
+
+#         expense_lookup = {e["name"]: e for e in expense_rows}
+
+#         # ============================================================
+#         # 2️⃣ FETCH GL MAPPING
+#         # ============================================================
+
+#         gl_rows = frappe.get_all(
+#             "GL code Mapping",
+#             fields=["parent","gl_code_map"]
+#         ) or []
+
+#         gl_parent_map = {}
+
+#         for row in gl_rows:
+#             gl = str(row.get("gl_code_map") or "").strip()
+#             parent = str(row.get("parent") or "").strip()
+
+#             if gl and parent:
+#                 gl_parent_map[gl] = parent
+
+#         # ============================================================
+#         # 3️⃣ BUILD STRUCTURE
+#         # ============================================================
+
+#         heads = {}
+
+#         TOP_HEADS = ["CAPITAL EXPENSES","OPERATING EXPENSES"]
+
+#         for e in expense_rows:
+
+#             raw_head = normalize(e.get("head_of_expense"))
+#             sub_head = normalize(e.get("sub_head_of_expense"))
+
+#             item_name = str(e.get("type_of_expense") or "UNKNOWN ITEM").strip()
+
+#             seq = int(e.get("sequence_id")) if e.get("sequence_id") else 9999
+
+#             if raw_head in TOP_HEADS:
+#                 parent_head = raw_head
+#             else:
+#                 parent_head = "OPERATING EXPENSES"
+#                 sub_head = raw_head
+
+#             if parent_head not in heads:
+
+#                 heads[parent_head] = {
+#                     "name":parent_head,
+#                     "sequence_id":seq,
+#                     "Q1":0.0,"Q2":0.0,"Q3":0.0,"Q4":0.0,
+#                     "months":empty_months(),
+#                     "items":{},
+#                     "sub_heads":{}
+#                 }
+
+#             # CAPITAL EXPENSES
+#             if parent_head == "CAPITAL EXPENSES":
+
+#                 heads[parent_head]["items"][item_name] = {
+#                     "name":item_name,
+#                     "sequence_id":seq,
+#                     "gl_code":None,
+#                     "Q1":0.0,"Q2":0.0,"Q3":0.0,"Q4":0.0,
+#                     "months":empty_months()
+#                 }
+
+#             # OPERATING EXPENSES
+#             else:
+
+#                 if sub_head not in heads[parent_head]["sub_heads"]:
+
+#                     heads[parent_head]["sub_heads"][sub_head] = {
+#                         "name":sub_head,
+#                         "sequence_id":seq,
+#                         "Q1":0.0,"Q2":0.0,"Q3":0.0,"Q4":0.0,
+#                         "months":empty_months(),
+#                         "items":{}
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub_head]["items"][item_name] = {
+#                     "name":item_name,
+#                     "sequence_id":seq,
+#                     "gl_code":None,
+#                     "Q1":0.0,"Q2":0.0,"Q3":0.0,"Q4":0.0,
+#                     "months":empty_months()
+#                 }
+
+#         # ============================================================
+#         # 4️⃣ FETCH ERP DATA
+#         # ============================================================
+
+#         response = get_actuals_from_erp_month_wise(
+#             fiscal_year,
+#             accounting_period
+#         )
+
+#         if "message" in response:
+#             response = response["message"]
+
+#         erp_data = response.get("data") if response.get("status") == "success" else []
+#         for row in erp_data:
+
+#             try:
+
+#                 period = row.get("accounting_period")
+#                 account = str(row.get("account") or "").strip()
+
+#                 amount = _num(row.get("posted_total_amt"))
+
+#                 if not period or account not in gl_parent_map:
+#                     continue
+
+#                 month = str(period)
+
+#                 parent_expense_name = gl_parent_map.get(account)
+
+#                 expense = expense_lookup.get(parent_expense_name)
+
+#                 if not expense:
+#                     continue
+
+#                 raw_head = normalize(expense.get("head_of_expense"))
+#                 sub_head = normalize(expense.get("sub_head_of_expense"))
+
+#                 item_name = str(expense.get("type_of_expense") or "").strip()
+
+#                 if raw_head in TOP_HEADS:
+#                     parent_head = raw_head
+#                 else:
+#                     parent_head = "OPERATING EXPENSES"
+#                     sub_head = raw_head
+
+#                 # HEAD TOTAL
+#                 heads[parent_head]["months"][month] += amount
+
+#                 if parent_head == "CAPITAL EXPENSES":
+
+#                     if item_name in heads[parent_head]["items"]:
+
+#                         item = heads[parent_head]["items"][item_name]
+
+#                         item["months"][month] += amount
+#                         item["gl_code"] = account
+
+#                 else:
+
+#                     if sub_head in heads[parent_head]["sub_heads"]:
+
+#                         sub = heads[parent_head]["sub_heads"][sub_head]
+
+#                         sub["months"][month] += amount
+
+#                         if item_name in sub["items"]:
+
+#                             item = sub["items"][item_name]
+
+#                             item["months"][month] += amount
+#                             item["gl_code"] = account
+
+#             except:
+#                 continue
+
+#         # ============================================================
+#         # 6️⃣ CALCULATE QUARTERS FROM MONTHS
+#         # ============================================================
+
+#         for head in heads.values():
+
+#             calculate_quarters(head)
+
+#             for sub in head["sub_heads"].values():
+
+#                 calculate_quarters(sub)
+
+#                 for item in sub["items"].values():
+#                     calculate_quarters(item)
+
+#             for item in head["items"].values():
+#                 calculate_quarters(item)
+
+#         # ============================================================
+#         # 7️⃣ FINAL SORTING
+#         # ============================================================
+
+#         final = []
+
+#         for head in sorted(heads.values(),key=lambda x:x["sequence_id"]):
+
+#             head["items"] = sorted(
+#                 head["items"].values(),
+#                 key=lambda x:x["sequence_id"]
+#             )
+
+#             sorted_subs = []
+
+#             for sub in head["sub_heads"].values():
+
+#                 sub["items"] = sorted(
+#                     sub["items"].values(),
+#                     key=lambda x:x["sequence_id"]
+#                 )
+
+#                 sorted_subs.append(sub)
+
+#             head["sub_heads"] = sorted(
+#                 sorted_subs,
+#                 key=lambda x:x["sequence_id"]
+#             )
+
+#             final.append(head)
+
+#         # ============================================================
+#         # RESPONSE
+#         # ============================================================
+
+#         return {
+#             "status":"success",
+#             "fiscal_year":fiscal_year,
+#             "data":final
+#         }
+
+#     except Exception as e:
+
+#         frappe.log_error(frappe.get_traceback(),"Actuals API Error")
+
+#         return {
+#             "status":"error",
+#             "message":str(e),
+#             "trace":traceback.format_exc()
+#         }
+
+
