@@ -2818,82 +2818,156 @@ function _hide_modal() {
 /* ── _start_download()
    Downloads the file in the SAME TAB using a hidden <a> tag + fetch.
    Shows the APF loader with animated progress percentage. */
+// function _start_download($btn, userEmail) {
+
+// 	// Disable button and show spinner
+// 	$btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Downloading…');
+
+// 	// Show loader at 0%
+// 	Loader.show("Preparing your download…");
+
+// 	const url =
+// 		`/api/method/annual_budget.api.export_reports.download_finance_budget_import_template` +
+// 		`?user=${encodeURIComponent(userEmail)}`;
+
+// 	// ── Simulated progress (0 → 85%) while fetch is in-flight ──
+// 	let pct = 0;
+// 	const progressInterval = setInterval(function () {
+// 		// Increment quickly at first, then slow down near 85%
+// 		const step = pct < 40 ? 6 : pct < 70 ? 3 : 1;
+// 		pct = Math.min(pct + step, 85);
+// 		_set_progress(pct);
+// 	}, 200);
+
+// 	fetch(url)
+// 		.then(function (response) {
+// 			if (!response.ok) throw new Error("Server returned " + response.status);
+
+// 			// Try to extract filename from Content-Disposition header
+// 			const disposition = response.headers.get("Content-Disposition") || "";
+// 			const match       = disposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
+// 			const filename    = match ? decodeURIComponent(match[1].trim()) : "budget_import_template.xlsx";
+
+// 			return response.blob().then(function (blob) {
+// 				return { blob, filename };
+// 			});
+// 		})
+// 		.then(function ({ blob, filename }) {
+
+// 			// ── Jump progress to 100% ──
+// 			clearInterval(progressInterval);
+// 			_set_progress(100);
+// 			$("#global-loader .loader-text").text("Download ready!");
+
+// 			// ── Trigger same-tab download via hidden <a> ──
+// 			const blobUrl = URL.createObjectURL(blob);
+// 			const $a      = $("<a>")
+// 				.attr("href",     blobUrl)
+// 				.attr("download", filename)
+// 				.appendTo("body");
+
+// 			$a[0].click();
+// 			$a.remove();
+
+// 			// Release the object URL after a short delay
+// 			setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 2000);
+
+// 			// Hide loader after a brief moment so user sees 100%
+// 			$("#loader-text-msg").text("Download ready!");
+// 			setTimeout(function () { Loader.hide(); }, 800);
+
+// 		})
+// 		.catch(function (err) {
+// 			clearInterval(progressInterval);
+// 			Loader.hide();
+// 			frappe.msgprint({
+// 				title   : "Download Failed",
+// 				message : "Could not download the template. Please try again.<br><small>" + err.message + "</small>",
+// 				indicator: "red"
+// 			});
+// 		})
+// 		.finally(function () {
+// 			// Re-enable button regardless of outcome (no timer — waits for API to fully complete)
+// 			$btn
+// 				.prop("disabled", false)
+// 				.html('<i class="fa fa-download"></i> Download Budget Import Template');
+// 		});
+// }
+
 function _start_download($btn, userEmail) {
 
-	// Disable button and show spinner
-	$btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Downloading…');
+	$btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Preparing…');
 
-	// Show loader at 0%
 	Loader.show("Preparing your download…");
 
-	const url =
-		`/api/method/annual_budget.api.export_reports.download_finance_budget_import_template` +
-		`?user=${encodeURIComponent(userEmail)}`;
-
-	// ── Simulated progress (0 → 85%) while fetch is in-flight ──
 	let pct = 0;
+
 	const progressInterval = setInterval(function () {
-		// Increment quickly at first, then slow down near 85%
 		const step = pct < 40 ? 6 : pct < 70 ? 3 : 1;
 		pct = Math.min(pct + step, 85);
 		_set_progress(pct);
 	}, 200);
 
-	fetch(url)
-		.then(function (response) {
-			if (!response.ok) throw new Error("Server returned " + response.status);
+	// Start background generation
+	frappe.call({
+		method: "annual_budget.api.export_reports.start_budget_template_generation",
+		args: { user: userEmail },
+		callback: function () {
 
-			// Try to extract filename from Content-Disposition header
-			const disposition = response.headers.get("Content-Disposition") || "";
-			const match       = disposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
-			const filename    = match ? decodeURIComponent(match[1].trim()) : "budget_import_template.xlsx";
+			// Poll every 3 seconds
+			const poll = setInterval(function () {
 
-			return response.blob().then(function (blob) {
-				return { blob, filename };
-			});
-		})
-		.then(function ({ blob, filename }) {
+				const url =
+					"/api/method/annual_budget.api.export_reports.download_generated_template?user=" +
+					encodeURIComponent(userEmail);
 
-			// ── Jump progress to 100% ──
-			clearInterval(progressInterval);
-			_set_progress(100);
-			$("#global-loader .loader-text").text("Download ready!");
+				fetch(url)
+					.then(response => {
 
-			// ── Trigger same-tab download via hidden <a> ──
-			const blobUrl = URL.createObjectURL(blob);
-			const $a      = $("<a>")
-				.attr("href",     blobUrl)
-				.attr("download", filename)
-				.appendTo("body");
+						// If still generating
+						if (!response.ok) {
+							throw new Error("not ready");
+						}
 
-			$a[0].click();
-			$a.remove();
+						return response.blob();
 
-			// Release the object URL after a short delay
-			setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 2000);
+					})
+					.then(blob => {
 
-			// Hide loader after a brief moment so user sees 100%
-			$("#loader-text-msg").text("Download ready!");
-			setTimeout(function () { Loader.hide(); }, 800);
+						clearInterval(poll);
+						clearInterval(progressInterval);
 
-		})
-		.catch(function (err) {
-			clearInterval(progressInterval);
-			Loader.hide();
-			frappe.msgprint({
-				title   : "Download Failed",
-				message : "Could not download the template. Please try again.<br><small>" + err.message + "</small>",
-				indicator: "red"
-			});
-		})
-		.finally(function () {
-			// Re-enable button regardless of outcome (no timer — waits for API to fully complete)
-			$btn
-				.prop("disabled", false)
-				.html('<i class="fa fa-download"></i> Download Budget Import Template');
-		});
+						_set_progress(100);
+
+						const blobUrl = URL.createObjectURL(blob);
+
+						const a = document.createElement("a");
+						a.href = blobUrl;
+						a.download = "budget_import_template.xlsx";
+						document.body.appendChild(a);
+						a.click();
+						a.remove();
+
+						setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+
+						setTimeout(() => Loader.hide(), 800);
+
+					})
+					.catch(() => {
+						// File not ready yet → keep polling
+					});
+
+			}, 3000);
+
+		}
+	})
+	.finally(() => {
+
+		$btn.prop("disabled", false)
+			.html('<i class="fa fa-download"></i> Download Budget Import Template');
+
+	});
 }
-
 
 function _build_note_html() {
 

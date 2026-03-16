@@ -1150,19 +1150,209 @@ def export_phase_sheet_excel(
 #     frappe.response["filecontent"] = output.getvalue()
 #     frappe.response["type"] = "download"
 
-@frappe.whitelist()
-def download_finance_budget_import_template(user):
+# @frappe.whitelist()
+# def download_finance_budget_import_template(user):
 
-    import frappe
-    from frappe import _
-    import datetime
-    from io import BytesIO
-    import xlsxwriter
+#     import frappe
+#     from frappe import _
+#     import datetime
+#     from io import BytesIO
+#     import xlsxwriter
+
+#     if not user:
+#         frappe.throw(_("User is required"))
+
+#     # Get Finance User Access
+#     doc_name = frappe.db.get_value(
+#         "Finance user access",
+#         {"user": user},
+#         "name"
+#     )
+
+#     if not doc_name:
+#         frappe.throw(_("No Finance User Access found"))
+
+#     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+#     if not access_doc.import_template_id:
+#         frappe.throw(_("Import Template not linked in Finance User Access"))
+
+#     import_template = frappe.get_doc(
+#         "Import Templates",
+#         access_doc.import_template_id
+#     )
+
+#     template_items = import_template.import_template_item_list
+
+#     if not template_items:
+#         frappe.throw(_("No Import Template Items found"))
+
+#     financial_year = frappe.db.get_single_value(
+#         "Master Settings",
+#         "current_financial_year"
+#     )
+
+#     headers = [
+#         "Entity / Unit",
+#         "Entity / Unit Description",
+#         "Cost Center",
+#         "Cost Center(Original)",
+#         "Cost Center Description",
+#         "Location code",
+#         "Location code(Original)",
+#         "Function / Sub Unit / Division",
+#         "State",
+#         "Financial year",
+#         "Uploaded By",
+#         "Type of expense ID (Budget Amounts)",
+#         "Head of expense (Budget Amounts)",
+#         "Sub head of expense (Budget Amounts)",
+#         "Type of expense (Budget Amounts)",
+#         "April (Budget Amounts)",
+#         "May (Budget Amounts)",
+#         "June (Budget Amounts)",
+#         "July (Budget Amounts)",
+#         "August (Budget Amounts)",
+#         "September (Budget Amounts)",
+#         "October (Budget Amounts)",
+#         "November (Budget Amounts)",
+#         "December (Budget Amounts)",
+#         "January (Budget Amounts)",
+#         "February (Budget Amounts)",
+#         "March (Budget Amounts)",
+#         "Quarter 1 Total Amount (Budget Amounts)",
+#         "Quarter 2 Total Amount (Budget Amounts)",
+#         "Quarter 3 Total Amount (Budget Amounts)",
+#         "Quarter 4 Total Amount (Budget Amounts)",
+#         "Year Total Amount (Budget Amounts)"
+#     ]
+
+#     output = BytesIO()
+
+#     workbook = xlsxwriter.Workbook(output)
+#     worksheet = workbook.add_worksheet("Finance Budget Import")
+
+#     # Formats
+#     header_format = workbook.add_format({
+#         "bold": True,
+#         "locked": True
+#     })
+
+#     locked_text = workbook.add_format({
+#         "locked": True
+#     })
+
+#     locked_number = workbook.add_format({
+#         "locked": True,
+#         "num_format": "0.00"
+#     })
+
+#     unlocked_number = workbook.add_format({
+#         "locked": False,
+#         "num_format": "0.00"
+#     })
+
+#     # Write headers
+#     for col, header in enumerate(headers):
+#         worksheet.write(0, col, header, header_format)
+#         worksheet.set_column(col, col, 22)
+
+#     worksheet.freeze_panes(1, 0)
+
+#     row_index = 1
+
+#     for mapping in access_doc.mapping:
+
+#         first_row = True
+
+#         for item in template_items:
+
+#             if first_row:
+#                 parent_values = [
+#                     mapping.unit,
+#                     mapping.unit_description,
+#                     mapping.cost_center,
+#                     mapping.cost_center_erp,
+#                     mapping.cost_center_description,
+#                     mapping.location_code,
+#                     mapping.location_code_erp,
+#                     mapping.location_description,
+#                     mapping.state,
+#                     financial_year,
+#                     user
+#                 ]
+#                 first_row = False
+#             else:
+#                 parent_values = [""] * 11
+
+#             row_data = parent_values + [
+#                 item.type_of_expense_id,
+#                 item.head_of_expense,
+#                 item.sub_head_of_expense,
+#                 item.type_of_expense
+#             ]
+
+#             # Write locked columns
+#             for col, value in enumerate(row_data):
+#                 worksheet.write(row_index, col, value, locked_text)
+
+#             # Write editable month columns (April–March)
+#             for col in range(15, 27):
+#                 worksheet.write(row_index, col, 0.00, unlocked_number)
+
+#             # Quarter formulas
+#             r = row_index + 1
+
+#             worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})", locked_number)
+#             worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})", locked_number)
+#             worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})", locked_number)
+#             worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})", locked_number)
+
+#             # Year total
+#             worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})", locked_number)
+
+#             row_index += 1
+
+#     # Enable sheet protection
+#     worksheet.protect("[REDACTED-PASSWORD]")
+
+#     workbook.close()
+
+#     output.seek(0)
+
+#     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+#     frappe.response["filename"] = f"Budget_mis_Import_{current_date}.xlsx"
+#     frappe.response["filecontent"] = output.getvalue()
+#     frappe.response["type"] = "download"
+
+import frappe
+import tempfile
+import xlsxwriter
+from frappe.utils import nowdate
+
+
+@frappe.whitelist()
+def start_budget_template_generation(user):
 
     if not user:
-        frappe.throw(_("User is required"))
+        frappe.throw("User required")
 
-    # Get Finance User Access
+    frappe.enqueue(
+        "annual_budget.api.export_reports.generate_budget_template",
+        queue="long",
+        timeout=1800,
+        user=user
+    )
+
+    return {
+        "status": "started",
+        "message": "Template generation started"
+    }
+
+
+def generate_budget_template(user):
+
     doc_name = frappe.db.get_value(
         "Finance user access",
         {"user": user},
@@ -1170,12 +1360,9 @@ def download_finance_budget_import_template(user):
     )
 
     if not doc_name:
-        frappe.throw(_("No Finance User Access found"))
+        return
 
     access_doc = frappe.get_doc("Finance user access", doc_name)
-
-    if not access_doc.import_template_id:
-        frappe.throw(_("Import Template not linked in Finance User Access"))
 
     import_template = frappe.get_doc(
         "Import Templates",
@@ -1184,13 +1371,19 @@ def download_finance_budget_import_template(user):
 
     template_items = import_template.import_template_item_list
 
-    if not template_items:
-        frappe.throw(_("No Import Template Items found"))
-
     financial_year = frappe.db.get_single_value(
         "Master Settings",
         "current_financial_year"
     )
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+    workbook = xlsxwriter.Workbook(tmp.name)
+    worksheet = workbook.add_worksheet("Finance Budget Import")
+
+    header = workbook.add_format({"bold": True, "locked": True})
+    locked = workbook.add_format({"locked": True})
+    unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
 
     headers = [
         "Entity / Unit",
@@ -1227,35 +1420,8 @@ def download_finance_budget_import_template(user):
         "Year Total Amount (Budget Amounts)"
     ]
 
-    output = BytesIO()
-
-    workbook = xlsxwriter.Workbook(output)
-    worksheet = workbook.add_worksheet("Finance Budget Import")
-
-    # Formats
-    header_format = workbook.add_format({
-        "bold": True,
-        "locked": True
-    })
-
-    locked_text = workbook.add_format({
-        "locked": True
-    })
-
-    locked_number = workbook.add_format({
-        "locked": True,
-        "num_format": "0.00"
-    })
-
-    unlocked_number = workbook.add_format({
-        "locked": False,
-        "num_format": "0.00"
-    })
-
-    # Write headers
-    for col, header in enumerate(headers):
-        worksheet.write(0, col, header, header_format)
-        worksheet.set_column(col, col, 22)
+    for col, h in enumerate(headers):
+        worksheet.write(0, col, h, header)
 
     worksheet.freeze_panes(1, 0)
 
@@ -1285,43 +1451,50 @@ def download_finance_budget_import_template(user):
             else:
                 parent_values = [""] * 11
 
-            row_data = parent_values + [
+            row = parent_values + [
                 item.type_of_expense_id,
                 item.head_of_expense,
                 item.sub_head_of_expense,
                 item.type_of_expense
             ]
 
-            # Write locked columns
-            for col, value in enumerate(row_data):
-                worksheet.write(row_index, col, value, locked_text)
+            for col, val in enumerate(row):
+                worksheet.write(row_index, col, val, locked)
 
-            # Write editable month columns (April–March)
             for col in range(15, 27):
-                worksheet.write(row_index, col, 0.00, unlocked_number)
+                worksheet.write(row_index, col, 0, unlocked)
 
-            # Quarter formulas
             r = row_index + 1
 
-            worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})", locked_number)
-            worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})", locked_number)
-            worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})", locked_number)
-            worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})", locked_number)
-
-            # Year total
-            worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})", locked_number)
+            worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
+            worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
+            worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
+            worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})")
+            worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})")
 
             row_index += 1
 
-    # Enable sheet protection
     worksheet.protect("[REDACTED-PASSWORD]")
 
     workbook.close()
 
-    output.seek(0)
+    frappe.cache().set_value(
+        f"budget_template_{user}",
+        tmp.name,
+        expires_in_sec=3600
+    )
 
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    frappe.response["filename"] = f"Budget_mis_Import_{current_date}.xlsx"
-    frappe.response["filecontent"] = output.getvalue()
-    frappe.response["type"] = "download"
+@frappe.whitelist()
+def download_generated_template(user):
+
+    path = frappe.cache().get_value(f"budget_template_{user}")
+
+    if not path:
+        frappe.throw("Template not ready yet. Please try again in a few seconds.")
+
+    with open(path, "rb") as f:
+
+        frappe.response["filename"] = f"Budget_mis_Import_{nowdate()}.xlsx"
+        frappe.response["filecontent"] = f.read()
+        frappe.response["type"] = "download"
