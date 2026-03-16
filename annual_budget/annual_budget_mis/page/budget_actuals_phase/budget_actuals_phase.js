@@ -6763,7 +6763,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             fieldname: "theme",
             get_data: function () {
                 return frappe.call({
-                    method: "annual_budget.api.filter_options.get_overview_number_cards"
+                    method: "annual_budget.api.filter_options.get_theme"
                 }).then(function (r) {
                     return (r.message || []).map(function (d) {
                         return {
