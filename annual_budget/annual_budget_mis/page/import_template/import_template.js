@@ -2532,7 +2532,7 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 
 	frappe.call({
 		method  : "annual_budget.api.filter_options.get_user_mappings",
-		callback : function (r) {
+		callback: function (r) {
 			if (!r.message || !r.message.length) {
 				$container.html(`<div class="empty-state">No Data Found</div>`);
 				return;
@@ -2553,6 +2553,7 @@ function _init_loader() {
 	$("body").append(`
 		<div id="global-loader" class="loader-overlay">
 			<div class="loader-box">
+
 				<div class="loader-ring-wrap">
 					<svg class="loader-ring" viewBox="0 0 100 100">
 						<defs>
@@ -2568,7 +2569,6 @@ function _init_loader() {
 					<div class="loader-pct-inside" id="loader-pct">0%</div>
 				</div>
 
-				<!-- Download animation -->
 				<div class="dl-anim-wrap">
 					<div class="dl-arrow-track">
 						<div class="dl-arrow">
@@ -2583,6 +2583,7 @@ function _init_loader() {
 				</div>
 
 				<div class="loader-text" id="loader-text-msg">Preparing download…</div>
+
 			</div>
 		</div>
 	`);
@@ -2595,17 +2596,19 @@ const Loader = {
 		_set_progress(0);
 		$("#global-loader").addClass("active");
 	},
+	setText(message) {
+		$("#loader-text-msg").text(message);
+	},
 	hide() {
 		$("#global-loader").removeClass("active");
 	}
 };
 
+/* SVG ring progress — circumference for r=44 is 2π×44 ≈ 276.46 */
 function _set_progress(pct) {
-	// SVG circle circumference for r=44: 2 * PI * 44 ≈ 276.46
-	const circumference = 2 * Math.PI * 44;
-	const offset = circumference - (pct / 100) * circumference;
+	const offset = 276.46 - (pct / 100) * 276.46;
 	$("#loader-ring-fill").css("stroke-dashoffset", offset);
-	$("#loader-pct").text(pct + "%");
+	$("#loader-pct").text(Math.round(pct) + "%");
 }
 
 
@@ -2637,11 +2640,11 @@ function render_content(container, data) {
 			<div class="global-search-inner">
 				<i class="fa fa-search global-search-icon"></i>
 				<input
-					type        = "text"
-					id          = "global-table-search"
-					class       = "global-search-input"
-					placeholder = "Search across all units, cost centers, locations…"
-					autocomplete= "off"
+					type         = "text"
+					id           = "global-table-search"
+					class        = "global-search-input"
+					placeholder  = "Search across all units, cost centers, locations…"
+					autocomplete = "off"
 				/>
 				<span id="global-search-clear" class="global-search-clear" title="Clear">&times;</span>
 			</div>
@@ -2814,160 +2817,144 @@ function _hide_modal() {
 	$("#pro-confirm-yes").prop("disabled", true);
 }
 
+function _reset_btn($btn) {
+	$btn
+		.prop("disabled", false)
+		.html('<i class="fa fa-download"></i> Download Budget Import Template');
+}
+
 
 /* ── _start_download()
-   Downloads the file in the SAME TAB using a hidden <a> tag + fetch.
-   Shows the APF loader with animated progress percentage. */
-// function _start_download($btn, userEmail) {
-
-// 	// Disable button and show spinner
-// 	$btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Downloading…');
-
-// 	// Show loader at 0%
-// 	Loader.show("Preparing your download…");
-
-// 	const url =
-// 		`/api/method/annual_budget.api.export_reports.download_finance_budget_import_template` +
-// 		`?user=${encodeURIComponent(userEmail)}`;
-
-// 	// ── Simulated progress (0 → 85%) while fetch is in-flight ──
-// 	let pct = 0;
-// 	const progressInterval = setInterval(function () {
-// 		// Increment quickly at first, then slow down near 85%
-// 		const step = pct < 40 ? 6 : pct < 70 ? 3 : 1;
-// 		pct = Math.min(pct + step, 85);
-// 		_set_progress(pct);
-// 	}, 200);
-
-// 	fetch(url)
-// 		.then(function (response) {
-// 			if (!response.ok) throw new Error("Server returned " + response.status);
-
-// 			// Try to extract filename from Content-Disposition header
-// 			const disposition = response.headers.get("Content-Disposition") || "";
-// 			const match       = disposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
-// 			const filename    = match ? decodeURIComponent(match[1].trim()) : "budget_import_template.xlsx";
-
-// 			return response.blob().then(function (blob) {
-// 				return { blob, filename };
-// 			});
-// 		})
-// 		.then(function ({ blob, filename }) {
-
-// 			// ── Jump progress to 100% ──
-// 			clearInterval(progressInterval);
-// 			_set_progress(100);
-// 			$("#global-loader .loader-text").text("Download ready!");
-
-// 			// ── Trigger same-tab download via hidden <a> ──
-// 			const blobUrl = URL.createObjectURL(blob);
-// 			const $a      = $("<a>")
-// 				.attr("href",     blobUrl)
-// 				.attr("download", filename)
-// 				.appendTo("body");
-
-// 			$a[0].click();
-// 			$a.remove();
-
-// 			// Release the object URL after a short delay
-// 			setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 2000);
-
-// 			// Hide loader after a brief moment so user sees 100%
-// 			$("#loader-text-msg").text("Download ready!");
-// 			setTimeout(function () { Loader.hide(); }, 800);
-
-// 		})
-// 		.catch(function (err) {
-// 			clearInterval(progressInterval);
-// 			Loader.hide();
-// 			frappe.msgprint({
-// 				title   : "Download Failed",
-// 				message : "Could not download the template. Please try again.<br><small>" + err.message + "</small>",
-// 				indicator: "red"
-// 			});
-// 		})
-// 		.finally(function () {
-// 			// Re-enable button regardless of outcome (no timer — waits for API to fully complete)
-// 			$btn
-// 				.prop("disabled", false)
-// 				.html('<i class="fa fa-download"></i> Download Budget Import Template');
-// 		});
-// }
-
+   Step 1 — trigger generation via frappe.call
+   Step 2 — poll every 3s; simulate progress 5→85% while waiting
+   Step 3 — when file is ready, download it in the same tab via blob URL
+   No timeout is set — waits as long as the API needs. */
 function _start_download($btn, userEmail) {
 
-	$btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Preparing…');
+	$btn.prop("disabled", true)
+		.html('<i class="fa fa-spinner fa-spin"></i> Preparing…');
 
-	Loader.show("Preparing your download…");
+	Loader.show("Generating your template…");
 
-	let pct = 0;
+	// Simulated progress: climbs 5→85% while generation is in progress
+	let pct          = 5;
+	let pollInterval = null;
 
 	const progressInterval = setInterval(function () {
-		const step = pct < 40 ? 6 : pct < 70 ? 3 : 1;
+		const step = pct < 40 ? 4 : pct < 65 ? 2 : 0.5;
 		pct = Math.min(pct + step, 85);
 		_set_progress(pct);
-	}, 200);
+	}, 300);
 
-	// Start background generation
+	// ── Helper: clean up and reset everything ──────────────
+	function _cleanup(isSuccess) {
+		clearInterval(progressInterval);
+		if (pollInterval) clearInterval(pollInterval);
+
+		if (isSuccess) {
+			_set_progress(100);
+			Loader.setText("Download ready!");
+			setTimeout(function () {
+				Loader.hide();
+				_reset_btn($btn);
+			}, 900);
+		} else {
+			Loader.hide();
+			_reset_btn($btn);
+		}
+	}
+
+	// ── Step 1: Kick off generation ────────────────────────
 	frappe.call({
-		method: "annual_budget.api.export_reports.start_budget_template_generation",
-		args: { user: userEmail },
-		callback: function () {
+		method  : "annual_budget.api.export_reports.start_budget_template_generation",
+		args    : { user: userEmail },
 
-			// Poll every 3 seconds
-			const poll = setInterval(function () {
+		callback: function (r) {
+
+			Loader.setText("Fetching your template…");
+
+			// ── Step 2: Poll for the file ──────────────────
+			pollInterval = setInterval(function () {
 
 				const url =
-					"/api/method/annual_budget.api.export_reports.download_generated_template?user=" +
-					encodeURIComponent(userEmail);
+					"/api/method/annual_budget.api.export_reports.download_generated_template" +
+					"?user=" + encodeURIComponent(userEmail);
 
 				fetch(url)
-					.then(response => {
+					.then(function (response) {
 
-						// If still generating
 						if (!response.ok) {
-							throw new Error("not ready");
+							// HTTP error — stop polling and report
+							throw new Error("Server returned " + response.status);
 						}
 
-						return response.blob();
+						const contentType = response.headers.get("content-type") || "";
+
+						// Still processing — server returned JSON status
+						if (contentType.includes("application/json")) {
+							return response.json().then(function (data) {
+								// Only update text if server gives a status message
+								if (data.message && data.message.status === "processing") {
+									Loader.setText("Still generating, please wait…");
+								}
+								// Do nothing else — keep polling
+							});
+						}
+
+						// ── Step 3: File is ready — download it ───────
+						// Stop the poll immediately so we don't double-download
+						clearInterval(pollInterval);
+						pollInterval = null;
+
+						// Try to get the filename from Content-Disposition
+						const disposition = response.headers.get("Content-Disposition") || "";
+						const match       = disposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
+						const filename    = match
+							? decodeURIComponent(match[1].trim())
+							: "budget_import_template.xlsx";
+
+						return response.blob().then(function (blob) {
+
+							// Same-tab download via hidden <a>
+							const blobUrl = URL.createObjectURL(blob);
+							const a       = document.createElement("a");
+							a.href        = blobUrl;
+							a.download    = filename;
+							document.body.appendChild(a);
+							a.click();
+							a.remove();
+							setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 2000);
+
+							_cleanup(true);
+						});
 
 					})
-					.then(blob => {
-
-						clearInterval(poll);
-						clearInterval(progressInterval);
-
-						_set_progress(100);
-
-						const blobUrl = URL.createObjectURL(blob);
-
-						const a = document.createElement("a");
-						a.href = blobUrl;
-						a.download = "budget_import_template.xlsx";
-						document.body.appendChild(a);
-						a.click();
-						a.remove();
-
-						setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-
-						setTimeout(() => Loader.hide(), 800);
-
-					})
-					.catch(() => {
-						// File not ready yet → keep polling
+					.catch(function (err) {
+						_cleanup(false);
+						frappe.msgprint({
+							title    : "Download Failed",
+							message  : "Could not download the template. Please try again.<br><small>" + err.message + "</small>",
+							indicator: "red"
+						});
 					});
 
-			}, 3000);
+			}, 3000); // poll every 3 seconds
 
+		},
+
+		// frappe.call itself failed (network/auth error)
+		error: function (err) {
+			_cleanup(false);
+			frappe.msgprint({
+				title    : "Request Failed",
+				message  : "Could not start template generation. Please try again.",
+				indicator: "red"
+			});
 		}
-	})
-	.finally(() => {
-
-		$btn.prop("disabled", false)
-			.html('<i class="fa fa-download"></i> Download Budget Import Template');
-
 	});
+
 }
+
 
 function _build_note_html() {
 
@@ -3006,19 +2993,19 @@ function _build_note_html() {
 function _build_table_html(rows) {
 
 	const COLUMNS = [
-		["unit",                     "Unit"                    ],
-		["unit_description",         "Unit Description"        ],
-		["cost_center",              "Cost Center"             ],
-		["cost_center_description",  "Cost Center Description" ],
-		["location_code",            "Location Code"           ],
-		["location_description",     "Location Description"    ],
+		["unit",                    "Unit"                    ],
+		["unit_description",        "Unit Description"        ],
+		["cost_center",             "Cost Center"             ],
+		["cost_center_description", "Cost Center Description" ],
+		["location_code",           "Location Code"           ],
+		["location_description",    "Location Description"    ],
 	];
 
 	const headerCells = COLUMNS.map(col => `<th>${col[1]}</th>`).join("");
 
-	const dataRows = rows.map(function (row, index) {
+	const dataRows = rows.map(function (row, idx) {
 		const cells = COLUMNS.map(col => `<td>${_esc(row[col[0]] || "")}</td>`).join("");
-		return `<tr><td>${index + 1}</td>${cells}</tr>`;
+		return `<tr><td>${idx + 1}</td>${cells}</tr>`;
 	}).join("");
 
 	return `
@@ -3180,7 +3167,7 @@ function inject_styles() {
 	.contact-detail { font-size: 13px; color: #555555; }
 
 	/* ── Allocation Table ─────────────────────── */
-	.table-title  { font-size: 15px; font-weight: 600; color: #003B63; margin-bottom: 12px; }
+	.table-title   { font-size: 15px; font-weight: 600; color: #003B63; margin-bottom: 12px; }
 	.table-wrapper { overflow-x: auto; }
 
 	.mis-table { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid #dcdcdc; }
@@ -3274,9 +3261,7 @@ function inject_styles() {
 		justify-content : center;
 	}
 
-	#global-loader.loader-overlay.active {
-		display : flex;
-	}
+	#global-loader.loader-overlay.active { display: flex; }
 
 	.loader-box {
 		display         : flex;
@@ -3286,38 +3271,37 @@ function inject_styles() {
 		gap             : 16px;
 	}
 
-	/* Ring + logo stacked */
 	.loader-ring-wrap {
-		position : relative;
-		width    : 120px;
-		height   : 120px;
-		display  : flex;
+		position        : relative;
+		width           : 120px;
+		height          : 120px;
+		display         : flex;
 		align-items     : center;
 		justify-content : center;
 	}
 
 	.loader-ring {
-		position : absolute;
-		inset    : 0;
-		width    : 100%;
-		height   : 100%;
-		transform: rotate(-90deg);
+		position  : absolute;
+		inset     : 0;
+		width     : 100%;
+		height    : 100%;
+		transform : rotate(-90deg);
 	}
 
 	.loader-ring-bg {
-		fill           : none;
-		stroke         : rgba(255,255,255,0.12);
-		stroke-width   : 6;
+		fill         : none;
+		stroke       : rgba(255,255,255,0.12);
+		stroke-width : 6;
 	}
 
 	.loader-ring-fill {
-		fill             : none;
-		stroke           : url(#ringGrad);
-		stroke-width     : 6;
-		stroke-linecap   : round;
-		stroke-dasharray : 276.46;
-		stroke-dashoffset: 276.46;
-		transition       : stroke-dashoffset 0.25s ease;
+		fill              : none;
+		stroke            : url(#ringGrad);
+		stroke-width      : 6;
+		stroke-linecap    : round;
+		stroke-dasharray  : 276.46;
+		stroke-dashoffset : 276.46;
+		transition        : stroke-dashoffset 0.35s ease;
 	}
 
 	.loader-logo {
@@ -3334,18 +3318,18 @@ function inject_styles() {
 	}
 
 	.loader-pct-inside {
-		position    : absolute;
-		bottom      : -4px;
-		left        : 50%;
-		transform   : translateX(-50%);
-		font-size   : 11px;
-		font-weight : 700;
-		color       : #ffffff;
-		background  : rgba(0,118,182,0.85);
-		padding     : 1px 7px;
-		border-radius: 99px;
-		z-index     : 2;
-		white-space : nowrap;
+		position      : absolute;
+		bottom        : -4px;
+		left          : 50%;
+		transform     : translateX(-50%);
+		font-size     : 11px;
+		font-weight   : 700;
+		color         : #ffffff;
+		background    : rgba(0,118,182,0.85);
+		padding       : 1px 7px;
+		border-radius : 99px;
+		z-index       : 2;
+		white-space   : nowrap;
 	}
 
 	.loader-text {
@@ -3371,7 +3355,6 @@ function inject_styles() {
 		width          : 60px;
 	}
 
-	/* Arrow track — clips the arrow so it disappears at bottom */
 	.dl-arrow-track {
 		width    : 24px;
 		height   : 28px;
@@ -3391,10 +3374,10 @@ function inject_styles() {
 	}
 
 	.dl-arrow-stem {
-		width        : 3px;
-		height       : 14px;
-		background   : linear-gradient(180deg, #00c6ff, #0076B6);
-		border-radius: 2px;
+		width         : 3px;
+		height        : 14px;
+		background    : linear-gradient(180deg, #00c6ff, #0076B6);
+		border-radius : 2px;
 	}
 
 	.dl-arrow-head {
@@ -3406,13 +3389,12 @@ function inject_styles() {
 	}
 
 	@keyframes dl-drop {
-		0%   { top: -28px; opacity: 0;   }
+		0%   { top: -28px; opacity: 0; }
 		30%  { opacity: 1; }
 		70%  { opacity: 1; }
-		100% { top: 28px;  opacity: 0;   }
+		100% { top: 28px;  opacity: 0; }
 	}
 
-	/* Landing bar */
 	.dl-bar {
 		width         : 44px;
 		height        : 4px;
@@ -3426,11 +3408,7 @@ function inject_styles() {
 		50%      { opacity: 1;   transform: scaleX(1);   }
 	}
 
-	/* Bouncing dots */
-	.dl-dots {
-		display : flex;
-		gap     : 5px;
-	}
+	.dl-dots { display: flex; gap: 5px; }
 
 	.dl-dots span {
 		width         : 5px;
@@ -3440,13 +3418,13 @@ function inject_styles() {
 		animation     : dl-bounce 1.2s ease-in-out infinite;
 	}
 
-	.dl-dots span:nth-child(1) { animation-delay: 0s;    }
-	.dl-dots span:nth-child(2) { animation-delay: 0.2s;  }
-	.dl-dots span:nth-child(3) { animation-delay: 0.4s;  }
+	.dl-dots span:nth-child(1) { animation-delay: 0s;   }
+	.dl-dots span:nth-child(2) { animation-delay: 0.2s; }
+	.dl-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 	@keyframes dl-bounce {
-		0%, 80%, 100% { transform: scale(1);    opacity: 0.5; }
-		40%           { transform: scale(1.5);  opacity: 1;   }
+		0%, 80%, 100% { transform: scale(1);   opacity: 0.5; }
+		40%           { transform: scale(1.5); opacity: 1;   }
 	}
 
 	/* ── Responsive ───────────────────────────── */

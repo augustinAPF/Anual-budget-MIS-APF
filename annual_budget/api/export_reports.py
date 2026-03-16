@@ -1345,10 +1345,7 @@ def start_budget_template_generation(user):
         user=user
     )
 
-    return {
-        "status": "started",
-        "message": "Template generation started"
-    }
+    return {"status": "started"}
 
 
 def generate_budget_template(user):
@@ -1381,7 +1378,7 @@ def generate_budget_template(user):
     workbook = xlsxwriter.Workbook(tmp.name)
     worksheet = workbook.add_worksheet("Finance Budget Import")
 
-    header = workbook.add_format({"bold": True, "locked": True})
+    header_format = workbook.add_format({"bold": True, "locked": True})
     locked = workbook.add_format({"locked": True})
     unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
 
@@ -1420,8 +1417,11 @@ def generate_budget_template(user):
         "Year Total Amount (Budget Amounts)"
     ]
 
-    for col, h in enumerate(headers):
-        worksheet.write(0, col, h, header)
+    # Track column width
+    col_widths = [len(h) for h in headers]
+
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header, header_format)
 
     worksheet.freeze_panes(1, 0)
 
@@ -1459,8 +1459,13 @@ def generate_budget_template(user):
             ]
 
             for col, val in enumerate(row):
+
                 worksheet.write(row_index, col, val, locked)
 
+                if val:
+                    col_widths[col] = max(col_widths[col], len(str(val)))
+
+            # Editable months
             for col in range(15, 27):
                 worksheet.write(row_index, col, 0, unlocked)
 
@@ -1475,6 +1480,10 @@ def generate_budget_template(user):
             row_index += 1
 
     worksheet.protect("[REDACTED-PASSWORD]")
+
+    # Apply calculated widths
+    for i, width in enumerate(col_widths):
+        worksheet.set_column(i, i, width + 3)
 
     workbook.close()
 
@@ -1491,7 +1500,7 @@ def download_generated_template(user):
     path = frappe.cache().get_value(f"budget_template_{user}")
 
     if not path:
-        frappe.throw("Template not ready yet. Please try again in a few seconds.")
+        return {"status": "processing"}
 
     with open(path, "rb") as f:
 
