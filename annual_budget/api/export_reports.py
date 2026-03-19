@@ -1,629 +1,12 @@
 from annual_budget.api.phase_sheet import get_consolidated_report
 import frappe,io
 from frappe import _
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side,Protection
-from openpyxl.utils import get_column_letter
-from frappe.desk.page.setup_wizard.install_fixtures import _
-from openpyxl.utils import get_column_letter
-
-# * ==============================================================   Budget Export  =====================================================================================
-# @frappe.whitelist()
-# def export_phase_sheet_excel(
-#     financial_year=None,
-#     units=None,
-#     cost_center=None,
-#     location_code=None
-# ):
-#     data = get_consolidated_report(
-#         financial_year=financial_year,
-#         units=units,
-#         cost_center=cost_center,
-#         location_code=location_code
-#     )
-
-#     wb = Workbook()
-#     ws = wb.active
-#     ws.title = "Phase Sheet"
-
-#     # ================= ALIGNMENTS =================
-#     center = Alignment(horizontal="center", vertical="center")
-#     left_align = Alignment(horizontal="left", vertical="center")
-#     right_align = Alignment(horizontal="right", vertical="center")
-
-#     # ================= COLORS =================
-#     header_fill = PatternFill("solid", fgColor="5D6D7E")
-#     head_fill = PatternFill("solid", fgColor="D6DBDF")
-#     subhead_fill = PatternFill("solid", fgColor="F2F3F4")
-#     subtotal_fill = PatternFill("solid", fgColor="EBF5FB")
-#     head_total_fill = PatternFill("solid", fgColor="D4E6F1")
-#     grand_fill = PatternFill("solid", fgColor="A9CCE3")
-
-#     white_bold = Font(bold=True, color="FFFFFF")
-#     bold = Font(bold=True)
-
-#     thin = Side(style="thin")
-#     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-#     # ================= ROMAN =================
-#     def to_roman(num):
-#         val = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
-#         syb = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
-#         roman_num = ""
-#         i = 0
-#         while num > 0:
-#             for _ in range(num // val[i]):
-#                 roman_num += syb[i]
-#                 num -= val[i]
-#             i += 1
-#         return roman_num
-
-#     # ================= STYLE =================
-#     def style_row(row, fill=None, font=None, is_header=False):
-#         for col in range(2, 22):
-#             cell = ws.cell(row=row, column=col)
-#             cell.border = border
-
-#             if is_header:
-#                 cell.alignment = center
-#             else:
-#                 if col == 2:
-#                     cell.alignment = center
-#                 elif col in (3, 4):
-#                     cell.alignment = left_align
-#                 else:
-#                     cell.alignment = right_align
-
-#             if fill:
-#                 cell.fill = fill
-#             if font:
-#                 cell.font = font
-
-#     def format_numeric_row(row):
-#         for col in range(5, 22):
-#             ws.cell(row=row, column=col).number_format = "#,##0.00"
-
-#     def build_formula(col, rows):
-#         return "=" + "+".join([f"{col}{r}" for r in rows]) if rows else 0
-
-#     # ================= TITLE =================
-#     ws.append(["", "Azim Premji Foundation"])
-#     ws.merge_cells("B1:U1")
-#     ws["B1"].font = Font(size=14, bold=True)
-#     ws["B1"].alignment = left_align
-
-#     ws.append(["", f"Budget for the Financial Year {financial_year or ''}"])
-#     ws.merge_cells("B2:U2")
-#     ws["B2"].font = Font(size=12, bold=True)
-#     ws["B2"].alignment = left_align
-
-#     ws.append([])
-
-#     # ================= HEADER =================
-#     ws.append([
-#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "QUARTER I", "", "",
-#         "QUARTER II", "", "",
-#         "QUARTER III", "", "",
-#         "QUARTER IV", "", "",
-#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         f"YEAR {financial_year or ''}"
-#     ])
-#     r1 = ws.max_row
-
-#     ws.merge_cells(start_row=r1, start_column=5, end_row=r1, end_column=7)
-#     ws.merge_cells(start_row=r1, start_column=8, end_row=r1, end_column=10)
-#     ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
-#     ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
-
-#     ws.append([
-#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "Apr", "May", "Jun",
-#         "Jul", "Aug", "Sep",
-#         "Oct", "Nov", "Dec",
-#         "Jan", "Feb", "Mar",
-#         "QTR-1", "QTR-2", "QTR-3", "QTR-4",
-#         f"YEAR {financial_year or ''}"
-#     ])
-#     r2 = ws.max_row
-
-#     ws.merge_cells(start_row=r1, start_column=2, end_row=r2, end_column=2)
-#     ws.merge_cells(start_row=r1, start_column=3, end_row=r2, end_column=3)
-#     ws.merge_cells(start_row=r1, start_column=4, end_row=r2, end_column=4)
-
-#     for col in range(17, 22):
-#         ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
-
-#     style_row(r1, header_fill, white_bold, True)
-#     style_row(r2, header_fill, white_bold, True)
-
-#     ws.freeze_panes = "E6"
-
-#     # ================= DATA =================
-#     head_total_rows = []
-#     head_counter = 0
-
-#     for head in data:
-#         head_counter += 1
-#         alpha_index = chr(64 + head_counter)
-
-#         ws.append(["", alpha_index, head["name"]])
-#         head_row = ws.max_row
-#         ws.merge_cells(start_row=head_row, start_column=3, end_row=head_row, end_column=21)
-#         style_row(head_row, head_fill, bold)
-
-#         sub_total_rows = []
-#         direct_item_rows = []
-
-#         # -------- Direct Items --------
-#         for item in head.get("items", []):
-#             row_idx = ws.max_row + 1
-
-#             sub_val = item.get("sub_head_of_expense")
-#             head_display = sub_val.strip() if sub_val and sub_val.strip() else ""
-
-#             ws.append([
-#                 "", "", head_display,
-#                 item["name"],
-#                 *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                 f"=SUM(E{row_idx}:G{row_idx})",
-#                 f"=SUM(H{row_idx}:J{row_idx})",
-#                 f"=SUM(K{row_idx}:M{row_idx})",
-#                 f"=SUM(N{row_idx}:P{row_idx})",
-#                 f"=SUM(Q{row_idx}:T{row_idx})"
-#             ])
-#             style_row(ws.max_row)
-#             format_numeric_row(ws.max_row)
-#             direct_item_rows.append(ws.max_row)
-
-#         # -------- Sub Heads --------
-#         sub_counter = 1
-#         for sub in head.get("sub_heads", []):
-#             roman_index = to_roman(sub_counter)
-
-#             ws.append(["", roman_index, sub["name"]])
-#             sub_row = ws.max_row
-#             ws.merge_cells(start_row=sub_row, start_column=3, end_row=sub_row, end_column=21)
-#             style_row(sub_row, subhead_fill, bold)
-
-#             sub_item_rows = []
-
-#             for item in sub.get("items", []):
-#                 row_idx = ws.max_row + 1
-
-#                 item_sub = item.get("sub_head_of_expense")
-#                 main_head_name = head.get("name")
-#                 sub_head_name = sub.get("name")
-
-#                 head_display = ""
-
-#                 if item_sub and str(item_sub).strip():
-#                     cleaned_sub = str(item_sub).strip()
-
-#                     if cleaned_sub.lower() == str(sub_head_name).strip().lower():
-#                         head_display = ""
-#                     elif cleaned_sub.lower() == str(main_head_name).strip().lower():
-#                         head_display = ""
-#                     else:
-#                         head_display = cleaned_sub
-
-#                 ws.append([
-#                     "", "", head_display,
-#                     item["name"],
-#                     *item["q1"], *item["q2"], *item["q3"], *item["q4"],
-#                     f"=SUM(E{row_idx}:G{row_idx})",
-#                     f"=SUM(H{row_idx}:J{row_idx})",
-#                     f"=SUM(K{row_idx}:M{row_idx})",
-#                     f"=SUM(N{row_idx}:P{row_idx})",
-#                     f"=SUM(Q{row_idx}:T{row_idx})"
-#                 ])
-#                 style_row(ws.max_row)
-#                 format_numeric_row(ws.max_row)
-#                 sub_item_rows.append(ws.max_row)
-
-#             if sub_item_rows:
-#                 ws.append([
-#                     "", "", "",
-#                     f"TOTAL - {sub['name']}",
-#                     *[build_formula(col, sub_item_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#                 ])
-#                 style_row(ws.max_row, subtotal_fill, bold)
-#                 format_numeric_row(ws.max_row)
-#                 sub_total_rows.append(ws.max_row)
-
-#             sub_counter += 1
-
-#         total_rows = sub_total_rows if sub_total_rows else direct_item_rows
-
-#         if total_rows:
-#             ws.append([
-#                 "", "", "",
-#                 f"TOTAL - {head['name']}",
-#                 *[build_formula(col, total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#             ])
-#             style_row(ws.max_row, head_total_fill, bold)
-#             format_numeric_row(ws.max_row)
-#             head_total_rows.append(ws.max_row)
-
-#         ws.append([])
-
-#     if head_total_rows:
-#         ws.append([
-#             "", "", "",
-#             "GRAND TOTAL",
-#             *[build_formula(col, head_total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#         ])
-#         style_row(ws.max_row, grand_fill, bold)
-#         format_numeric_row(ws.max_row)
-
-#     # ================= AUTO COLUMN WIDTH =================
-#     for col in range(1, ws.max_column + 1):
-#         column_letter = get_column_letter(col)
-#         max_length = 0
-
-#         for row in range(1, ws.max_row + 1):
-#             cell = ws.cell(row=row, column=col)
-#             if cell.value is not None:
-#                 value = str(cell.value)
-#                 if value.startswith("="):
-#                     value = "999,999,999.00"
-#                 max_length = max(max_length, len(value))
-
-#         adjusted_width = max_length + 3
-
-#         if col == 1:
-#             ws.column_dimensions[column_letter].width = 4
-#         elif col == 2:
-#             ws.column_dimensions[column_letter].width = 6
-#         else:
-#             ws.column_dimensions[column_letter].width = min(max(adjusted_width, 10), 50)
-
-#     # ================= SAVE =================
-#     stream = io.BytesIO()
-#     wb.save(stream)
-#     stream.seek(0)
-
-#     frappe.response["filename"] = f"Phase_Sheet_{financial_year}.xlsx"
-#     frappe.response["filecontent"] = stream.getvalue()
-#     frappe.response["type"] = "binary"
-
-
-# @frappe.whitelist()
-# def export_phase_sheet_excel(
-#     financial_year=None,
-#     units=None,
-#     cost_center=None,
-#     location_code=None
-# ):
-
-#     import io
-#     import frappe
-#     from openpyxl import Workbook
-#     from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
-#     from openpyxl.utils import get_column_letter
-
-#     data = get_consolidated_report(
-#         financial_year=financial_year,
-#         units=units,
-#         cost_center=cost_center,
-#         location_code=location_code
-#     )
-
-#     wb = Workbook()
-#     ws = wb.active
-#     ws.title = "Phase Sheet"
-
-#     center = Alignment(horizontal="center", vertical="center")
-#     left_align = Alignment(horizontal="left", vertical="center")
-#     right_align = Alignment(horizontal="right", vertical="center")
-
-#     header_fill = PatternFill("solid", fgColor="5D6D7E")
-#     head_fill = PatternFill("solid", fgColor="D6DBDF")
-#     subhead_fill = PatternFill("solid", fgColor="F2F3F4")
-#     subtotal_fill = PatternFill("solid", fgColor="EBF5FB")
-#     head_total_fill = PatternFill("solid", fgColor="D4E6F1")
-#     grand_fill = PatternFill("solid", fgColor="A9CCE3")
-
-#     white_bold = Font(bold=True, color="FFFFFF")
-#     bold = Font(bold=True)
-
-#     thin = Side(style="thin")
-#     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-#     def style_row(row, fill=None, font=None, is_header=False):
-
-#         for col in range(2,22):
-
-#             cell = ws.cell(row=row,column=col)
-#             cell.border = border
-
-#             if is_header:
-#                 cell.alignment = center
-#             else:
-#                 if col == 2:
-#                     cell.alignment = center
-#                 elif col in (3,4):
-#                     cell.alignment = left_align
-#                 else:
-#                     cell.alignment = right_align
-
-#             if fill:
-#                 cell.fill = fill
-
-#             if font:
-#                 cell.font = font
-
-
-#     def format_numeric_row(row):
-
-#         for col in range(5,22):
-#             ws.cell(row=row,column=col).number_format = "#,##0.00"
-
-
-#     def build_formula(col, rows):
-
-#         return "=" + "+".join([f"{col}{r}" for r in rows]) if rows else 0
-
-
-#     def to_roman(num):
-
-#         val=[1000,900,500,400,100,90,50,40,10,9,5,4,1]
-#         syb=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
-
-#         roman=""
-#         i=0
-
-#         while num>0:
-#             for _ in range(num//val[i]):
-#                 roman+=syb[i]
-#                 num-=val[i]
-#             i+=1
-
-#         return roman
-
-
-#     # TITLE
-#     ws.append(["","Azim Premji Foundation"])
-#     ws.merge_cells("B1:U1")
-#     ws["B1"].font=Font(size=14,bold=True)
-#     ws["B1"].alignment=left_align
-
-#     ws.append(["",f"Budget for the Financial Year {financial_year or ''}"])
-#     ws.merge_cells("B2:U2")
-#     ws["B2"].font=Font(size=12,bold=True)
-#     ws["B2"].alignment=left_align
-
-#     ws.append([])
-
-
-#     # HEADER
-#     ws.append([
-#         "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
-#         "QUARTER I","","",
-#         "QUARTER II","","",
-#         "QUARTER III","","",
-#         "QUARTER IV","","",
-#         "QTR-1","QTR-2","QTR-3","QTR-4",
-#         f"YEAR {financial_year}"
-#     ])
-
-#     r1=ws.max_row
-
-#     ws.merge_cells(start_row=r1,start_column=5,end_row=r1,end_column=7)
-#     ws.merge_cells(start_row=r1,start_column=8,end_row=r1,end_column=10)
-#     ws.merge_cells(start_row=r1,start_column=11,end_row=r1,end_column=13)
-#     ws.merge_cells(start_row=r1,start_column=14,end_row=r1,end_column=16)
-
-
-#     ws.append([
-#         "", "Sl #","HEAD OF EXPENSE","TYPE OF EXPENSE",
-#         "Apr","May","Jun",
-#         "Jul","Aug","Sep",
-#         "Oct","Nov","Dec",
-#         "Jan","Feb","Mar",
-#         "QTR-1","QTR-2","QTR-3","QTR-4",
-#         f"YEAR {financial_year}"
-#     ])
-
-#     r2=ws.max_row
-
-#     ws.merge_cells(start_row=r1,start_column=2,end_row=r2,end_column=2)
-#     ws.merge_cells(start_row=r1,start_column=3,end_row=r2,end_column=3)
-#     ws.merge_cells(start_row=r1,start_column=4,end_row=r2,end_column=4)
-
-#     for col in range(17,22):
-#         ws.merge_cells(start_row=r1,start_column=col,end_row=r2,end_column=col)
-
-#     style_row(r1,header_fill,white_bold,True)
-#     style_row(r2,header_fill,white_bold,True)
-
-#     ws.freeze_panes="E6"
-
-
-#     head_total_rows=[]
-#     head_counter=0
-
-
-#     for head in data:
-
-#         head_counter+=1
-#         alpha_index=chr(64+head_counter)
-#         head_name=(head.get("name") or "").strip().upper()
-
-#         # SPECIAL CASE FOR COVID SUPPORT
-#         if head_name=="COVID SUPPORT":
-
-#             item=head["items"][0]
-#             row_idx=ws.max_row+1
-
-#             ws.append([
-#                 "",alpha_index,
-#                 head["name"],
-#                 item["name"],
-#                 *item["q1"],*item["q2"],*item["q3"],*item["q4"],
-#                 f"=SUM(E{row_idx}:G{row_idx})",
-#                 f"=SUM(H{row_idx}:J{row_idx})",
-#                 f"=SUM(K{row_idx}:M{row_idx})",
-#                 f"=SUM(N{row_idx}:P{row_idx})",
-#                 f"=SUM(Q{row_idx}:T{row_idx})"
-#             ])
-
-#             style_row(ws.max_row)
-#             format_numeric_row(ws.max_row)
-#             ws.cell(row=ws.max_row,column=3).font=bold
-
-#             continue
-
-
-#         ws.append(["",alpha_index,head["name"]])
-#         head_row=ws.max_row
-
-#         ws.merge_cells(start_row=head_row,start_column=3,end_row=head_row,end_column=21)
-#         style_row(head_row,head_fill,bold)
-
-
-#         if head_name=="OPERATING EXPENSES":
-#             ws.append([])
-
-
-#         sub_total_rows=[]
-#         direct_item_rows=[]
-
-
-#         # DIRECT ITEMS
-#         for item in head.get("items",[]):
-
-#             row_idx=ws.max_row+1
-
-#             sub_val=item.get("sub_head_of_expense")
-#             head_display=sub_val.strip() if sub_val and sub_val.strip() else ""
-
-#             ws.append([
-#                 "", "", head_display,
-#                 item["name"],
-#                 *item["q1"],*item["q2"],*item["q3"],*item["q4"],
-#                 f"=SUM(E{row_idx}:G{row_idx})",
-#                 f"=SUM(H{row_idx}:J{row_idx})",
-#                 f"=SUM(K{row_idx}:M{row_idx})",
-#                 f"=SUM(N{row_idx}:P{row_idx})",
-#                 f"=SUM(Q{row_idx}:T{row_idx})"
-#             ])
-
-#             style_row(ws.max_row)
-#             format_numeric_row(ws.max_row)
-#             direct_item_rows.append(ws.max_row)
-
-
-#         # SUBHEADS
-#         sub_counter=1
-
-#         for sub in head.get("sub_heads",[]):
-
-#             roman_index=to_roman(sub_counter)
-
-#             ws.append(["",roman_index,sub["name"]])
-#             sub_row=ws.max_row
-
-#             ws.merge_cells(start_row=sub_row,start_column=3,end_row=sub_row,end_column=21)
-#             style_row(sub_row,subhead_fill,bold)
-
-#             sub_item_rows=[]
-
-#             for item in sub.get("items",[]):
-
-#                 row_idx=ws.max_row+1
-
-#                 ws.append([
-#                     "", "", "",
-#                     item["name"],
-#                     *item["q1"],*item["q2"],*item["q3"],*item["q4"],
-#                     f"=SUM(E{row_idx}:G{row_idx})",
-#                     f"=SUM(H{row_idx}:J{row_idx})",
-#                     f"=SUM(K{row_idx}:M{row_idx})",
-#                     f"=SUM(N{row_idx}:P{row_idx})",
-#                     f"=SUM(Q{row_idx}:T{row_idx})"
-#                 ])
-
-#                 style_row(ws.max_row)
-#                 format_numeric_row(ws.max_row)
-#                 sub_item_rows.append(ws.max_row)
-
-
-#             if sub_item_rows:
-
-#                 ws.append([
-#                     "", "", "",
-#                     f"TOTAL - {sub['name']}",
-#                     *[build_formula(col,sub_item_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#                 ])
-
-#                 style_row(ws.max_row,subtotal_fill,bold)
-#                 format_numeric_row(ws.max_row)
-#                 sub_total_rows.append(ws.max_row)
-
-#             sub_counter+=1
-
-
-#         total_rows=sub_total_rows if sub_total_rows else direct_item_rows
-
-
-#         if total_rows:
-
-#             ws.append([
-#                 "", "", "",
-#                 f"TOTAL - {head['name']}",
-#                 *[build_formula(col,total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#             ])
-
-#             style_row(ws.max_row,head_total_fill,bold)
-#             format_numeric_row(ws.max_row)
-#             head_total_rows.append(ws.max_row)
-
-#             if head_name=="OPERATING EXPENSES":
-#                 ws.append([])
-
-
-#     # GRAND TOTAL
-#     if head_total_rows:
-
-#         ws.append([
-#             "", "", "",
-#             "GRAND TOTAL",
-#             *[build_formula(col,head_total_rows) for col in list("EFGHIJKLMNOPQRSTU")]
-#         ])
-
-#         style_row(ws.max_row,grand_fill,bold)
-#         format_numeric_row(ws.max_row)
-
-
-#     # AUTO WIDTH
-#     for col in range(1,ws.max_column+1):
-
-#         column_letter=get_column_letter(col)
-#         max_length=0
-
-#         for row in range(1,ws.max_row+1):
-
-#             value=ws.cell(row=row,column=col).value
-
-#             if value:
-#                 value=str(value)
-#                 if value.startswith("="):
-#                     value="999,999,999.00"
-#                 max_length=max(max_length,len(value))
-
-#         ws.column_dimensions[column_letter].width=min(max(max_length+3,10),50)
-
-
-#     stream=io.BytesIO()
-#     wb.save(stream)
-#     stream.seek(0)
-
-#     frappe.response["filename"]=f"Phase_Sheet_{financial_year}.xlsx"
-#     frappe.response["filecontent"]=stream.getvalue()
-#     frappe.response["type"]="binary"
-
-
+import frappe
+import tempfile
+import xlsxwriter
+from frappe.utils import nowdate
+
+# * ==============================================================   Budget Export Face Sheet =====================================================================================
 @frappe.whitelist()
 def export_phase_sheet_excel(
     financial_year=None,
@@ -1326,29 +709,198 @@ def export_phase_sheet_excel(
 #     frappe.response["filecontent"] = output.getvalue()
 #     frappe.response["type"] = "download"
 
-import frappe
+
+# @frappe.whitelist()
+# def start_budget_template_generation(user):
+
+#     if not user:
+#         frappe.throw("User required")
+
+#     frappe.enqueue(
+#         "annual_budget.api.export_reports.generate_budget_template",
+#         queue="long",
+#         timeout=1800,
+#         user=user
+#     )
+
+#     return {"status": "started"}
+
+
+# def generate_budget_template(user):
+
+#     doc_name = frappe.db.get_value(
+#         "Finance user access",
+#         {"user": user},
+#         "name"
+#     )
+
+#     if not doc_name:
+#         return
+
+#     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+#     import_template = frappe.get_doc(
+#         "Import Templates",
+#         access_doc.import_template_id
+#     )
+
+#     template_items = import_template.import_template_item_list
+
+#     financial_year = frappe.db.get_single_value(
+#         "Master Settings",
+#         "current_financial_year"
+#     )
+
+#     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+#     workbook = xlsxwriter.Workbook(tmp.name)
+#     worksheet = workbook.add_worksheet("Finance Budget Import")
+
+#     header_format = workbook.add_format({"bold": True, "locked": True})
+#     locked = workbook.add_format({"locked": True})
+#     unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
+
+#     headers = [
+#         "Entity / Unit",
+#         "Entity / Unit Description",
+#         "Cost Center",
+#         "Cost Center(Original)",
+#         "Cost Center Description",
+#         "Location code",
+#         "Location code(Original)",
+#         "Function / Sub Unit / Division",
+#         "State",
+#         "Financial year",
+#         "Uploaded By",
+#         "Type of expense ID (Budget Amounts)",
+#         "Head of expense (Budget Amounts)",
+#         "Sub head of expense (Budget Amounts)",
+#         "Type of expense (Budget Amounts)",
+#         "April (Budget Amounts)",
+#         "May (Budget Amounts)",
+#         "June (Budget Amounts)",
+#         "July (Budget Amounts)",
+#         "August (Budget Amounts)",
+#         "September (Budget Amounts)",
+#         "October (Budget Amounts)",
+#         "November (Budget Amounts)",
+#         "December (Budget Amounts)",
+#         "January (Budget Amounts)",
+#         "February (Budget Amounts)",
+#         "March (Budget Amounts)",
+#         "Quarter 1 Total Amount (Budget Amounts)",
+#         "Quarter 2 Total Amount (Budget Amounts)",
+#         "Quarter 3 Total Amount (Budget Amounts)",
+#         "Quarter 4 Total Amount (Budget Amounts)",
+#         "Year Total Amount (Budget Amounts)"
+#     ]
+
+#     # Track column width
+#     col_widths = [len(h) for h in headers]
+
+#     for col, header in enumerate(headers):
+#         worksheet.write(0, col, header, header_format)
+
+#     worksheet.freeze_panes(1, 0)
+
+#     row_index = 1
+
+#     for mapping in access_doc.mapping:
+
+#         first_row = True
+
+#         for item in template_items:
+
+#             if first_row:
+#                 parent_values = [
+#                     mapping.unit,
+#                     mapping.unit_description,
+#                     mapping.cost_center,
+#                     mapping.cost_center_erp,
+#                     mapping.cost_center_description,
+#                     mapping.location_code,
+#                     mapping.location_code_erp,
+#                     mapping.location_description,
+#                     mapping.state,
+#                     financial_year,
+#                     user
+#                 ]
+#                 first_row = False
+#             else:
+#                 parent_values = [""] * 11
+
+#             row = parent_values + [
+#                 item.type_of_expense_id,
+#                 item.head_of_expense,
+#                 item.sub_head_of_expense,
+#                 item.type_of_expense
+#             ]
+
+#             for col, val in enumerate(row):
+
+#                 worksheet.write(row_index, col, val, locked)
+
+#                 if val:
+#                     col_widths[col] = max(col_widths[col], len(str(val)))
+
+#             # Editable months
+#             for col in range(15, 27):
+#                 worksheet.write(row_index, col, 0, unlocked)
+
+#             r = row_index + 1
+
+#             worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
+#             worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
+#             worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
+#             worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})")
+#             worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})")
+
+#             row_index += 1
+
+#     worksheet.protect("[REDACTED-PASSWORD]")
+
+#     # Apply calculated widths
+#     for i, width in enumerate(col_widths):
+#         worksheet.set_column(i, i, width + 3)
+
+#     workbook.close()
+
+#     frappe.cache().set_value(
+#         f"budget_template_{user}",
+#         tmp.name,
+#         expires_in_sec=3600
+#     )
+
+
+# @frappe.whitelist()
+# def download_generated_template(user):
+
+#     path = frappe.cache().get_value(f"budget_template_{user}")
+
+#     if not path:
+#         return {"status": "processing"}
+
+#     with open(path, "rb") as f:
+
+#         frappe.response["filename"] = f"Budget_mis_Import_{nowdate()}.xlsx"
+#         frappe.response["filecontent"] = f.read()
+#         frappe.response["type"] = "download"
+
+
+
+
+
 import tempfile
 import xlsxwriter
 from frappe.utils import nowdate
+import frappe
 
 
 @frappe.whitelist()
-def start_budget_template_generation(user):
+def download_finance_budget_import_template(user):
 
     if not user:
         frappe.throw("User required")
-
-    frappe.enqueue(
-        "annual_budget.api.export_reports.generate_budget_template",
-        queue="long",
-        timeout=1800,
-        user=user
-    )
-
-    return {"status": "started"}
-
-
-def generate_budget_template(user):
 
     doc_name = frappe.db.get_value(
         "Finance user access",
@@ -1357,9 +909,14 @@ def generate_budget_template(user):
     )
 
     if not doc_name:
-        return
+        frappe.throw("No Finance User Access record found for this user.")
 
     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+    # ── allow_edit_template checkbox ──────────────────────
+    # Checked (1)   → skip sheet protection → entire sheet is editable
+    # Unchecked (0) → protect sheet         → only month columns are editable
+    is_editable = access_doc.allow_edit_template == 1
 
     import_template = frappe.get_doc(
         "Import Templates",
@@ -1375,11 +932,15 @@ def generate_budget_template(user):
 
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
 
-    workbook = xlsxwriter.Workbook(tmp.name)
+    workbook  = xlsxwriter.Workbook(tmp.name)
     worksheet = workbook.add_worksheet("Finance Budget Import")
 
     header_format = workbook.add_format({"bold": True, "locked": True})
-    locked = workbook.add_format({"locked": True})
+    locked        = workbook.add_format({"locked": True})
+
+    # Month columns are always written with locked=False.
+    # When is_editable=False → sheet is protected → only these cells are editable.
+    # When is_editable=True  → sheet is not protected → all cells are editable anyway.
     unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
 
     headers = [
@@ -1417,7 +978,6 @@ def generate_budget_template(user):
         "Year Total Amount (Budget Amounts)"
     ]
 
-    # Track column width
     col_widths = [len(h) for h in headers]
 
     for col, header in enumerate(headers):
@@ -1459,13 +1019,11 @@ def generate_budget_template(user):
             ]
 
             for col, val in enumerate(row):
-
                 worksheet.write(row_index, col, val, locked)
-
                 if val:
                     col_widths[col] = max(col_widths[col], len(str(val)))
 
-            # Editable months
+            # Month columns (April–March)
             for col in range(15, 27):
                 worksheet.write(row_index, col, 0, unlocked)
 
@@ -1479,31 +1037,233 @@ def generate_budget_template(user):
 
             row_index += 1
 
-    worksheet.protect("[REDACTED-PASSWORD]")
+    # Protect only when allow_edit_template is unchecked
+    if not is_editable:
+        worksheet.protect("[REDACTED-PASSWORD]")
 
-    # Apply calculated widths
     for i, width in enumerate(col_widths):
         worksheet.set_column(i, i, width + 3)
 
     workbook.close()
 
-    frappe.cache().set_value(
-        f"budget_template_{user}",
-        tmp.name,
-        expires_in_sec=3600
-    )
-
-
-@frappe.whitelist()
-def download_generated_template(user):
-
-    path = frappe.cache().get_value(f"budget_template_{user}")
-
-    if not path:
-        return {"status": "processing"}
-
-    with open(path, "rb") as f:
-
-        frappe.response["filename"] = f"Budget_mis_Import_{nowdate()}.xlsx"
+    with open(tmp.name, "rb") as f:
+        frappe.response["filename"]    = f"Budget_Import_{nowdate()}.xlsx"
         frappe.response["filecontent"] = f.read()
-        frappe.response["type"] = "download"
+        frappe.response["type"]        = "download"
+
+
+
+
+
+
+# import frappe
+# import tempfile
+# import xlsxwriter
+# from frappe.utils import nowdate, cint
+
+
+# # ✅ START JOB (with lock)
+# @frappe.whitelist()
+# def start_budget_template_generation(user):
+
+#     if not user:
+#         frappe.throw("User required")
+
+#     job_key = f"budget_template_job_{user}"
+
+#     # Prevent duplicate jobs
+#     if frappe.cache().get_value(job_key):
+#         return {"status": "already_running"}
+
+#     frappe.cache().set_value(job_key, True, expires_in_sec=600)
+
+#     frappe.enqueue(
+#         "annual_budget.api.export_reports.generate_budget_template",
+#         queue="long",
+#         timeout=1800,
+#         user=user
+#     )
+
+#     return {"status": "started"}
+
+
+# # ✅ BACKGROUND JOB
+# def generate_budget_template(user):
+
+#     try:
+#         frappe.cache().delete_value(f"budget_template_{user}")
+
+#         doc_name = frappe.db.get_value(
+#             "Finance user access",
+#             {"user": user},
+#             "name"
+#         )
+
+#         if not doc_name:
+#             return
+
+#         access_doc = frappe.get_doc("Finance user access", doc_name)
+
+#         # ✅ FIX checkbox inconsistency
+#         is_editable = cint(access_doc.allow_edit_template) == 1
+
+#         import_template = frappe.get_doc(
+#             "Import Templates",
+#             access_doc.import_template_id
+#         )
+
+#         template_items = import_template.import_template_item_list
+
+#         financial_year = frappe.db.get_single_value(
+#             "Master Settings",
+#             "current_financial_year"
+#         )
+
+#         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+#         # ✅ Faster workbook
+#         workbook = xlsxwriter.Workbook(tmp.name, {'constant_memory': True})
+#         worksheet = workbook.add_worksheet("Finance Budget Import")
+
+#         # Formats
+#         unlocked_format = workbook.add_format({
+#             "locked": False,
+#             "num_format": "0.00"
+#         })
+
+#         locked_format = workbook.add_format({"locked": True})
+
+#         header_format = workbook.add_format({
+#             "bold": True,
+#             "locked": not is_editable
+#         })
+
+#         headers = [
+#             "Entity / Unit", "Entity / Unit Description", "Cost Center",
+#             "Cost Center(Original)", "Cost Center Description",
+#             "Location code", "Location code(Original)",
+#             "Function / Sub Unit / Division", "State",
+#             "Financial year", "Uploaded By",
+#             "Type of expense ID (Budget Amounts)",
+#             "Head of expense (Budget Amounts)",
+#             "Sub head of expense (Budget Amounts)",
+#             "Type of expense (Budget Amounts)",
+#             "April (Budget Amounts)", "May (Budget Amounts)",
+#             "June (Budget Amounts)", "July (Budget Amounts)",
+#             "August (Budget Amounts)", "September (Budget Amounts)",
+#             "October (Budget Amounts)", "November (Budget Amounts)",
+#             "December (Budget Amounts)", "January (Budget Amounts)",
+#             "February (Budget Amounts)", "March (Budget Amounts)",
+#             "Quarter 1 Total Amount (Budget Amounts)",
+#             "Quarter 2 Total Amount (Budget Amounts)",
+#             "Quarter 3 Total Amount (Budget Amounts)",
+#             "Quarter 4 Total Amount (Budget Amounts)",
+#             "Year Total Amount (Budget Amounts)"
+#         ]
+
+#         # Write headers
+#         for col, header in enumerate(headers):
+#             worksheet.write(0, col, header, header_format)
+
+#         worksheet.freeze_panes(1, 0)
+
+#         row_index = 1
+
+#         base_format = unlocked_format if is_editable else locked_format
+
+#         for mapping in access_doc.mapping:
+
+#             first_row = True
+
+#             for item in template_items:
+
+#                 if first_row:
+#                     parent_values = [
+#                         mapping.unit,
+#                         mapping.unit_description,
+#                         mapping.cost_center,
+#                         mapping.cost_center_erp,
+#                         mapping.cost_center_description,
+#                         mapping.location_code,
+#                         mapping.location_code_erp,
+#                         mapping.location_description,
+#                         mapping.state,
+#                         financial_year,
+#                         user
+#                     ]
+#                     first_row = False
+#                 else:
+#                     parent_values = [""] * 11
+
+#                 row = parent_values + [
+#                     item.type_of_expense_id,
+#                     item.head_of_expense,
+#                     item.sub_head_of_expense,
+#                     item.type_of_expense
+#                 ]
+
+#                 # 🚀 Fast row write
+#                 worksheet.write_row(row_index, 0, row, base_format)
+
+#                 # Month columns always editable
+#                 for col in range(15, 27):
+#                     worksheet.write(row_index, col, 0, unlocked_format)
+
+#                 r = row_index + 1
+
+#                 worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
+#                 worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
+#                 worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
+#                 worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})")
+#                 worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})")
+
+#                 row_index += 1
+
+#         # ✅ Apply filter ONLY when editable
+#         if is_editable and row_index > 1:
+#             worksheet.autofilter(0, 0, row_index - 1, len(headers) - 1)
+
+#         # Protect if needed
+#         if not is_editable:
+#             worksheet.protect("[REDACTED-PASSWORD]")
+
+#         worksheet.set_column(0, len(headers) - 1, 22)
+
+#         workbook.close()
+
+#         frappe.cache().set_value(
+#             f"budget_template_{user}",
+#             tmp.name,
+#             expires_in_sec=3600
+#         )
+
+#     finally:
+#         # Always release lock
+#         frappe.cache().delete_value(f"budget_template_job_{user}")
+
+
+# # ✅ STATUS API
+# @frappe.whitelist()
+# def check_template_status(user):
+
+#     path = frappe.cache().get_value(f"budget_template_{user}")
+
+#     if path:
+#         return {"status": "ready"}
+
+#     return {"status": "processing"}
+
+
+# # ✅ DOWNLOAD API
+# @frappe.whitelist()
+# def download_generated_template(user):
+
+#     path = frappe.cache().get_value(f"budget_template_{user}")
+
+#     if not path:
+#         return {"status": "processing"}
+
+#     with open(path, "rb") as f:
+#         frappe.response["filename"] = f"Budget_mis_Import_{nowdate()}.xlsx"
+#         frappe.response["filecontent"] = f.read()
+#         frappe.response["type"] = "download"

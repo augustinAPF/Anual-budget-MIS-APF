@@ -8,6 +8,7 @@
  "field_order": [
   "user",
   "import_template_id",
+  "allow_edit_template",
   "column_break_ydif",
   "user_name",
   "import_template_name",
@@ -69,12 +70,18 @@
    "in_standard_filter": 1,
    "label": "User Name",
    "options": "User"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_edit_template",
+   "fieldtype": "Check",
+   "label": "Allow Edit Template "
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-26 21:54:43.685142",
+ "modified": "2026-03-18 16:36:52.323488",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Finance user access",
