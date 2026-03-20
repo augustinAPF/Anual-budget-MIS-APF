@@ -1598,14 +1598,58 @@ def get_consolidated_report_ytd(
 
 
 
+# @frappe.whitelist(allow_guest=True)
+# def get_number_card_settings():
+
+#     results = []
+
+#     settings_docs = frappe.get_all(
+#         "Overview number cards settings",
+#         filters=[["set_group_id", "like", "%1%"]],
+#         fields=["name", "number_card_title"],
+#         order_by="creation desc"
+#     )
+
+#     for setting in settings_docs:
+
+#         doc = frappe.get_doc(
+#             "Overview number cards settings",
+#             setting.name
+#         )
+
+#         units = [d.unit for d in doc.select_units]
+#         cost_centers = [d.cost_center for d in doc.select_cost_centers]
+#         cost_centers_erp = [d.cost_center_erp for d in doc.select_cost_centers]
+#         locations = [d.location_code for d in doc.select_location_codes]
+#         locations_erp = [d.location_code_erp for d in doc.select_location_codes]
+
+#         results.append({
+#             "settings_doc": doc.name,
+#             "label": doc.number_card_title,
+#             "units": units,
+#             "cost_centers": cost_centers,
+#             "cost_centers_erp": cost_centers_erp,
+#             "locations": locations,
+#             "locations_erp": locations_erp
+
+#         })
+
+#     return results
+
+
 @frappe.whitelist(allow_guest=True)
-def get_number_card_settings():
+def get_number_card_settings(set_group_id=None):
 
     results = []
 
+    # ✅ Dynamic filter
+    filters = []
+    if set_group_id:
+        filters.append(["set_group_id", "like", f"%{set_group_id}%"])
+
     settings_docs = frappe.get_all(
         "Overview number cards settings",
-        filters=[["set_group_id", "like", "%1%"]],
+        filters=filters,
         fields=["name", "number_card_title"],
         order_by="creation desc"
     )
@@ -1631,10 +1675,12 @@ def get_number_card_settings():
             "cost_centers_erp": cost_centers_erp,
             "locations": locations,
             "locations_erp": locations_erp
-
         })
 
     return results
+
+
+
 
 
 @frappe.whitelist(allow_guest=True)

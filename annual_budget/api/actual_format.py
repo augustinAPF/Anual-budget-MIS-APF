@@ -326,7 +326,15 @@ def get_accounting_period_from_month(month, financial_year=None):
         "accounting_period": accounting_period,
         "fiscal_year": fiscal_year_start
     }
- 
+
+@frappe.whitelist(allow_guest=True)
+def get_previous_financial_year(financial_year):
+
+    start_year = int(financial_year.split("-")[0])
+    prev_start = start_year - 1
+    prev_end = str(prev_start + 1)[-2:]
+
+    return f"{prev_start}-{prev_end}"
 # @frappe.whitelist(allow_guest=True)
 # def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,location_code=None):
 

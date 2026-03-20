@@ -90,7 +90,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Location Code ERP",
-   "options": "Location Code"
+   "options": "Location Code",
+   "read_only": 1
   },
   {
    "fetch_from": "location_code.state",
@@ -106,7 +107,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-24 11:50:14.831201",
+ "modified": "2026-03-19 21:51:01.053772",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "User mapping",

@@ -1645,6 +1645,7 @@
 
 
 
+
 // frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 // 	// =============================================================================
@@ -1669,7 +1670,6 @@
 
 // 	// =============================================================================
 // 	// FY LABEL HELPER
-// 	// e.g. '2026-27' => { plan:'FY26-27 Plan', est:'FY25-26 Est' }
 // 	// =============================================================================
 
 // 	function getFYLabels(fy) {
@@ -1679,7 +1679,7 @@
 // 		var prevStart = String(parseInt(startYY, 10) - 1).padStart(2, '0');
 // 		var prevEnd   = String(parseInt(endYY,   10) - 1).padStart(2, '0');
 // 		return {
-// 			plan : 'FY' + startYY + '-' + endYY   + ' Plan',
+// 			plan : 'FY' + startYY + '-' + endYY    + ' Plan',
 // 			est  : 'FY' + prevStart + '-' + prevEnd + ' Est'
 // 		};
 // 	}
@@ -1724,7 +1724,7 @@
 // 		'--orange:#F26B21;--orange-light:#FFF3E6;--border-color:#ddd;}' +
 
 // 		'.cb-wrapper{padding:15px;background:#fff;}' +
-// 		'#cb-tab-nav{border-bottom:1px solid #ddd;list-style:none;padding:0;margin:0 0 16px;display:flex;align-items:flex-end;}' +
+// 		'#cb-tab-nav{border-bottom:1px solid #ddd;list-style:none;padding:0;margin:0 0 16px;display:flex;align-items:flex-end;flex-wrap:wrap;}' +
 // 		'#cb-tab-nav li{display:inline-block;}' +
 // 		'#cb-tab-nav .cb-tab-link{cursor:pointer;display:inline-block;padding:8px 20px;color:#555;font-size:13px;font-weight:400;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;}' +
 // 		'#cb-tab-nav .cb-tab-link.active{color:#000;font-weight:700;border-bottom:3px solid #000;}' +
@@ -1738,6 +1738,8 @@
 // 		'.cb-search-input{padding:7px 12px;border:1px solid #aaa;border-radius:6px;font-size:13px;width:280px;}' +
 // 		'.cb-checkbox-area{display:flex;gap:18px;font-size:13px;font-weight:500;color:#444;}' +
 // 		'.cb-checkbox-area label{display:flex;align-items:center;gap:5px;cursor:pointer;}' +
+// 		'.cb-export-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:13px;font-weight:600;color:#fff;background:#0076B6;border:1px solid #0076B6;border-radius:6px;cursor:pointer;white-space:nowrap;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.12);}' +
+// 		'.cb-export-btn:hover{background:#005f94;border-color:#005f94;}' +
 
 // 		'.cb-scroll-wrapper{border:1px solid #ddd;border-radius:6px;overflow:auto;max-height:70vh;background:#fff;}' +
 
@@ -1759,6 +1761,27 @@
 // 		'.cb-row-grand td{color:#fff;}' +
 // 		'.cb-text-accent{color:#0076B6;font-weight:600;}' +
 
+// 		/* ── PPT TAB – clean report table ── */
+// 		'.ppt-title-bar{margin-bottom:2px;}' +
+// 		'.ppt-main-title{font-size:12px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;margin-bottom:4px;}' +
+// 		'.ppt-currency-label{font-size:11px;font-style:italic;color:#111;text-align:right;margin-bottom:2px;}' +
+// 		'#ppt-table{border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif;border:1px solid #999;}' +
+// 		'#ppt-table thead tr.ppt-hdr1 th{background:#fff;text-align:center;font-weight:700;padding:6px 10px 4px;border:1px solid #999;color:#111;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th{background:#fff;text-align:center;font-weight:700;padding:4px 10px;border-left:1px dotted #aaa;border-right:1px dotted #aaa;border-bottom:1px dotted #aaa;border-top:none;color:#111;min-width:90px;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-unit-sub{border-left:1px solid #999;border-right:1px solid #999;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-first{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-last{border-right:1px solid #999 !important;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-bgt-last{border-right:1px solid #999 !important;}' +
+// 		'#ppt-table tbody td{padding:5px 10px;border-bottom:1px dotted #aaa;text-align:right;white-space:nowrap;color:#111;border-left:none;border-right:none;}' +
+// 		'#ppt-table tbody td:first-child{text-align:left;border-left:1px solid #999;min-width:160px;}' +
+// 		'#ppt-table tbody td:last-child{border-right:1px solid #999;}' +
+// 		'#ppt-table tbody td.ppt-sep-left{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table tbody td.ppt-grp-sep{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td{font-weight:700;border-bottom:1px solid #999 !important;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td:first-child{border-left:1px solid #999;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td:last-child{border-right:1px solid #999;}' +
+// 		'.ppt-dash{color:#555;text-align:center;display:block;}' +
+
 // 		/* BE sticky first column */
 // 		'#be-table td:first-child{position:sticky;left:0;z-index:10;background:inherit;}' +
 // 		'#be-table .cb-thead-main th:first-child{position:sticky;left:0;z-index:20;background:#0076B6;}' +
@@ -1766,7 +1789,7 @@
 // 		'#be-table .cb-row-head td:first-child{background:#E9F4FB;}' +
 // 		'#be-table .cb-row-sub  td:first-child{background:#FFF3E6;}' +
 // 		'#be-table .cb-row-grand td:first-child{background:#0076B6;}' +
-// 				'#be-table .be-item-row td:first-child{background:#fff;}' +
+// 		'#be-table .be-item-row td:first-child{background:#fff;}' +
 // 		'#be-table .be-grand-col{background:#E8F0FA;color:#003B63;border-left:2px solid #0076B6;}' +
 // 		'#be-table .cb-row-grand .be-grand-col{background:#003B63;color:#fff;}' +
 // 		'#be-table .cb-row-head .be-grand-col{background:#003B63 !important;color:#fff;}' +
@@ -1793,6 +1816,13 @@
 // 		return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 // 	}
 
+// 	function fmtDash(v) {
+// 		var n = parseFloat(v) || 0;
+// 		return n === 0
+// 			? '<span class="ppt-dash">-</span>'
+// 			: n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// 	}
+
 // 	// =============================================================================
 // 	// HTML SKELETON
 // 	// =============================================================================
@@ -1810,7 +1840,49 @@
 // 			'</ul>' +
 // 			'<div id="cb-tab-content">' +
 
-// 				'<div class="cb-tab-pane active" id="tab-ppt"></div>' +
+// 				/* ── PPT TAB ── */
+// 				'<div class="cb-tab-pane active" id="tab-ppt">' +
+// 					'<div class="ppt-title-bar">' +
+// 						'<div class="ppt-main-title" id="ppt-main-title">Overall Foundation Numbers – Budget vs. Est</div>' +
+// 					'</div>' +
+
+// 					'<div class="ppt-currency-label">₹ Cr.</div>' +
+
+// 					'<div class="cb-controls">' +
+// 						'<input type="text" id="ppt-search" class="cb-search-input" placeholder="Search unit...">' +
+// 						'<button class="cb-export-btn" id="ppt-export-btn">↓ Export to Excel</button>' +
+// 					'</div>' +
+
+// 					'<div class="cb-scroll-wrapper">' +
+
+// 						'<table id="ppt-table" class="cb-table">' +
+
+// 							'<thead>' +
+
+// 								'<tr class="cb-thead-main">' +
+// 									'<th rowspan="2" style="min-width:180px;text-align:center;">Unit</th>' +
+// 									'<th colspan="3">Budget</th>' +
+// 									'<th colspan="3">Estimate</th>' +
+// 								'</tr>' +
+
+// 								'<tr class="cb-thead-sub">' +
+// 									'<th>Opex</th>' +
+// 									'<th>Capex</th>' +
+// 									'<th>Total</th>' +
+// 									'<th>Opex</th>' +
+// 									'<th>Capex</th>' +
+// 									'<th>Total</th>' +
+// 								'</tr>' +
+
+// 							'</thead>' +
+
+// 							'<tbody id="ppt-tbody"></tbody>' +
+
+// 						'</table>' +
+
+// 					'</div>' +
+// 				'</div>'+
+
 // 				'<div class="cb-tab-pane" id="tab-summary_inr"></div>' +
 // 				'<div class="cb-tab-pane" id="tab-headcount"></div>' +
 
@@ -1828,10 +1900,14 @@
 // 					'</div>' +
 // 				'</div>' +
 
-// 				/* ESTIMATE */
+// 				/* ESTIMATE — added Expand Quarters + Expand Line Items checkboxes */
 // 				'<div class="cb-tab-pane" id="tab-estimate">' +
 // 					'<div class="cb-controls">' +
 // 						'<input type="text" id="estimate-search" class="cb-search-input" placeholder="Search Expense / Item / GL Code...">' +
+// 						'<div class="cb-checkbox-area">' +
+// 							'<label><input type="checkbox" id="estimate-expand-quarters"> Expand Quarters</label>' +
+// 							'<label><input type="checkbox" id="estimate-expand-items"> Expand Line Items</label>' +
+// 						'</div>' +
 // 					'</div>' +
 // 					'<div class="cb-scroll-wrapper">' +
 // 						'<table class="cb-table" id="estimate-table"><thead></thead><tbody id="estimate-tbody"></tbody></table>' +
@@ -1861,36 +1937,104 @@
 
 // 	var $fyColumn = $('<div class="col-md-3 col-sm-12"></div>').appendTo('#cb-filter-row');
 
+// 	// var fyControl = frappe.ui.form.make_control({
+// 	// 	parent: $fyColumn,
+// 	// 	df: {
+// 	// 		label    : 'Financial Year',
+// 	// 		fieldtype: 'Select',
+// 	// 		fieldname: 'financial_year',
+// 	// 		reqd     : 1,
+// 	// 		change   : function () {
+// 	// 			var y = this.get_value();
+// 	// 			if (!y) { return; }
+// 	// 			updatePageTitle(y);
+// 	// 			TabLoader.resetAll();
+// 	// 			var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
+// 	// 			if (activeTab) { TabLoader.trigger(activeTab); }
+// 	// 		}
+// 	// 	},
+// 	// 	render_input: true
+// 	// });
+// 	// fyControl.refresh();
+
+// 	// frappe.call({
+// 	// 	method  : 'frappe.client.get_list',
+// 	// 	args    : { doctype: 'Financial Year List', fields: ['name'], order_by: 'name desc', limit_page_length: 100 },
+// 	// 	callback: function (r) {
+// 	// 		if (r.message && r.message.length) {
+// 	// 			var names = r.message.map(function (x) { return x.name; });
+// 	// 			fyControl.df.options = names.join('\n');
+// 	// 			fyControl.refresh();
+// 	// 			fyControl.set_value(names[0]);
+// 	// 			updatePageTitle(names[0]);
+// 	// 		}
+// 	// 	}
+// 	// });
+// 			// ---------- Financial Year Filter ----------
 // 	var fyControl = frappe.ui.form.make_control({
 // 		parent: $fyColumn,
 // 		df: {
-// 			label    : 'Financial Year',
+// 			label: 'Financial Year',
 // 			fieldtype: 'Select',
 // 			fieldname: 'financial_year',
-// 			reqd     : 1,
-// 			change   : function () {
+// 			reqd: 1,
+// 			change: function () {
+
 // 				var y = this.get_value();
-// 				if (!y) { return; }
+// 				if (!y) return;
+
 // 				updatePageTitle(y);
 // 				TabLoader.resetAll();
+
 // 				var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
-// 				if (activeTab) { TabLoader.trigger(activeTab); }
+// 				if (activeTab) {
+// 					TabLoader.trigger(activeTab);
+// 				}
 // 			}
 // 		},
 // 		render_input: true
 // 	});
+
 // 	fyControl.refresh();
 
+
+// 	// ---------- Fetch Financial Years ----------
 // 	frappe.call({
-// 		method  : 'frappe.client.get_list',
-// 		args    : { doctype: 'Financial Year List', fields: ['name'], order_by: 'name desc', limit_page_length: 100 },
+// 		method: "annual_budget.api.filter_options.get_financial_year_list",
 // 		callback: function (r) {
+
 // 			if (r.message && r.message.length) {
-// 				var names = r.message.map(function (x) { return x.name; });
-// 				fyControl.df.options = names.join('\n');
+
+// 				let years = r.message.map(d => d.financial_year);
+
+// 				// set dropdown options
+// 				fyControl.df.options = years.join("\n");
 // 				fyControl.refresh();
-// 				fyControl.set_value(names[0]);
-// 				updatePageTitle(names[0]);
+
+
+// 				// ---------- Detect Current Financial Year ----------
+// 				let today = new Date();
+// 				let year = today.getFullYear();
+// 				let month = today.getMonth() + 1;
+
+// 				let currentFY;
+
+// 				if (month >= 4) {
+// 					currentFY = year + "-" + String(year + 1).slice(-2);
+// 				} else {
+// 					currentFY = (year - 1) + "-" + String(year).slice(-2);
+// 				}
+
+
+// 				// ---------- Set Default Value ----------
+// 				if (years.includes(currentFY)) {
+// 					fyControl.set_value(currentFY);
+// 					updatePageTitle(currentFY);
+// 				} else {
+// 					// fallback to latest FY
+// 					fyControl.set_value(years[0]);
+// 					updatePageTitle(years[0]);
+// 				}
 // 			}
 // 		}
 // 	});
@@ -1915,6 +2059,7 @@
 // 	var TabLoader = (function () {
 // 		var loadedFY = {}, initDone = {};
 // 		var handlers = {
+// 			ppt            : function (fy) { PPT.load(fy);            },
 // 			annual_budget  : function (fy) { Annual.load(fy);         },
 // 			estimate       : function (fy) { Estimate.load(fy);       },
 // 			budget_estimate: function (fy) { BudgetEstimate.load(fy); }
@@ -1933,6 +2078,172 @@
 // 	})();
 
 // 	// =============================================================================
+// 	// PPT MODULE
+// 	// =============================================================================
+
+// 	var PPT = (function () {
+
+// 		var currentFY = '';
+// 		var bound     = false;
+
+// 		// ── FY label helpers ────────────────────────────────────────────────────
+// 		function budgetLabel(fy) {
+// 			var parts = (fy || '2026-27').split('-');
+// 			return (parts[0] || '2026') + '-' + (parts[1] ? parts[1].slice(-2) : '27') + '  Budget';
+// 		}
+// 		function estLabel(fy) {
+// 			var parts = (fy || '2026-27').split('-');
+// 			var sy = parseInt(parts[0] || '2026', 10) - 1;
+// 			var ey = parseInt(parts[1] || '27',   10) - 1;
+// 			return sy + '-' + String(ey).padStart(2,'0') + ' Est';
+// 		}
+
+// 		// ── Test data ────────────────────────────────────────────────────────────
+// 		// TODO: replace with API – format_api returns this structure per entity.
+// 		// For the flat PPT view, data shape is:
+// 		//   [ { name, isTotal, isGrand, bOpex, bCapex, eOpex, eCapex } ]
+// 		// where bTotal = bOpex + bCapex, eTotal = eOpex + eCapex
+// 		var TEST_ROWS = [
+// 			{ name: 'Education',       bOpex: 45.20, bCapex:  8.50, eOpex: 42.10, eCapex:  7.80 },
+// 			{ name: 'Health',          bOpex: 32.15, bCapex:  5.25, eOpex: 30.20, eCapex:  4.90 },
+// 			{ name: 'Livelihoods',     bOpex: 28.60, bCapex:  3.40, eOpex: 27.30, eCapex:  3.10 },
+// 			{ name: 'University',      bOpex: 18.75, bCapex: 12.60, eOpex: 17.50, eCapex: 11.20 },
+// 			{ name: 'Philanthropy',    bOpex: 15.40, bCapex:  0.80, eOpex: 14.90, eCapex:  0.70 },
+// 			{ name: 'New Initiatives', bOpex:  8.20, bCapex:  2.10, eOpex:  6.50, eCapex:  1.80 },
+// 			{ name: 'Enablers',        bOpex: 22.30, bCapex:  4.50, eOpex: 21.10, eCapex:  4.20 },
+// 			{ name: '__SUB__',   isTotal: true,  label: 'Total' },
+// 			{ name: 'Covid-19',        bOpex:  2.50, bCapex:  0.00, eOpex:  3.10, eCapex:  0.00 },
+// 			{ name: '__GRAND__', isGrand: true,  label: 'Total' }
+// 		];
+
+// 		// ── Number formatter ────────────────────────────────────────────────────
+// 		function fmt(v) {
+// 			if (!v || v === 0) { return '<span class="ppt-dash">-</span>'; }
+// 			return parseFloat(v).toFixed(2);
+// 		}
+
+// 		// ── Compute subtotals ────────────────────────────────────────────────────
+// 		function calcTotals(rows) {
+// 			var mainRows  = rows.filter(function (r) { return !r.isTotal && !r.isGrand && r.name !== 'Covid-19'; });
+// 			var covidRow  = rows.find(function (r) { return r.name === 'Covid-19'; }) || {};
+// 			var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+// 			mainRows.forEach(function (r) {
+// 				sub.bOpex  += r.bOpex  || 0;
+// 				sub.bCapex += r.bCapex || 0;
+// 				sub.eOpex  += r.eOpex  || 0;
+// 				sub.eCapex += r.eCapex || 0;
+// 			});
+// 			var grand = {
+// 				bOpex : sub.bOpex  + (covidRow.bOpex  || 0),
+// 				bCapex: sub.bCapex + (covidRow.bCapex || 0),
+// 				eOpex : sub.eOpex  + (covidRow.eOpex  || 0),
+// 				eCapex: sub.eCapex + (covidRow.eCapex || 0)
+// 			};
+// 			return { sub: sub, grand: grand };
+// 		}
+
+// 		// ── renderTable ──────────────────────────────────────────────────────────
+// 		function renderTable(rows) {
+// 			// Update FY labels in header
+// 			$('#ppt-budget-hdr').text(budgetLabel(currentFY));
+// 			$('#ppt-est-hdr').text(estLabel(currentFY));
+// 			$('#ppt-main-title').text(
+// 				'Overall Foundation Numbers \u2013 ' +
+// 				budgetLabel(currentFY).replace('Budget','Budget vs.') + ' ' + estLabel(currentFY)
+// 			);
+
+// 			var term   = ($('#ppt-search').val() || '').trim().toLowerCase();
+// 			var totals = calcTotals(rows);
+// 			var $tb    = $('#ppt-tbody').empty();
+
+// 			rows.forEach(function (row) {
+// 				var bO, bC, eO, eC, label, cls = '', bT, eT;
+
+// 				if (row.isTotal || row.isGrand) {
+// 					var t = row.isGrand ? totals.grand : totals.sub;
+// 					bO = t.bOpex; bC = t.bCapex; eO = t.eOpex; eC = t.eCapex;
+// 					label = row.label || 'Total';
+// 					cls = 'ppt-total-row';
+// 				} else {
+// 					if (term && row.name.toLowerCase().indexOf(term) === -1) { return; }
+// 					bO = row.bOpex || 0; bC = row.bCapex || 0;
+// 					eO = row.eOpex || 0; eC = row.eCapex || 0;
+// 					label = row.name;
+// 				}
+// 				bT = bO + bC; eT = eO + eC;
+
+// 				$tb.append(
+// 					'<tr class="' + cls + '">' +
+// 						'<td>' + label + '</td>' +
+// 						'<td class="ppt-sep-left">' + fmt(bO) + '</td>' +
+// 						'<td>' + fmt(bC) + '</td>' +
+// 						'<td>' + fmt(bT) + '</td>' +
+// 						'<td class="ppt-grp-sep">' + fmt(eO) + '</td>' +
+// 						'<td>' + fmt(eC) + '</td>' +
+// 						'<td>' + fmt(eT) + '</td>' +
+// 					'</tr>'
+// 				);
+// 			});
+// 		}
+
+// 		// ── Excel export ─────────────────────────────────────────────────────────
+// 		function exportToExcel(rows) {
+// 			if (typeof XLSX === 'undefined') {
+// 				frappe.msgprint('XLSX library not loaded yet. Please try again in a moment.');
+// 				return;
+// 			}
+// 			var bl = budgetLabel(currentFY), el = estLabel(currentFY);
+// 			var totals = calcTotals(rows);
+// 			var exRows = [
+// 				['Unit', bl + ' Opex', bl + ' Capex', bl + ' Total', el + ' Opex', el + ' Capex', el + ' Total']
+// 			];
+// 			rows.forEach(function (row) {
+// 				var bO, bC, eO, eC, label;
+// 				if (row.isTotal || row.isGrand) {
+// 					var t = row.isGrand ? totals.grand : totals.sub;
+// 					bO=t.bOpex; bC=t.bCapex; eO=t.eOpex; eC=t.eCapex;
+// 					label = row.label || 'Total';
+// 				} else {
+// 					bO=row.bOpex||0; bC=row.bCapex||0; eO=row.eOpex||0; eC=row.eCapex||0;
+// 					label = row.name;
+// 				}
+// 				exRows.push([label, bO, bC, bO+bC, eO, eC, eO+eC]);
+// 			});
+// 			var ws = XLSX.utils.aoa_to_sheet(exRows);
+// 			ws['!cols'] = [{wch:24},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
+// 			var wb = XLSX.utils.book_new();
+// 			XLSX.utils.book_append_sheet(wb, ws, 'PPT');
+// 			XLSX.writeFile(wb, 'Foundation_PPT_' + currentFY + '.xlsx');
+// 		}
+
+// 		// ── bindEvents ───────────────────────────────────────────────────────────
+// 		function bindEvents() {
+// 			$(document).on('input.ppt', '#ppt-search', function () { renderTable(TEST_ROWS); });
+// 			$(document).on('click.ppt', '#ppt-export-btn', function () {
+// 				exportToExcel(TEST_ROWS);
+// 			});
+// 		}
+
+// 		// ── load ─────────────────────────────────────────────────────────────────
+// 		function load(fy_val) {
+// 			currentFY = fy_val || '2026-27';
+// 			if (!bound) {
+// 				frappe.require('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () {});
+// 				bindEvents();
+// 				bound = true;
+// 			}
+// 			// TODO: swap TEST_ROWS with API response when ready:
+// 			// frappe.call({ method: 'annual_budget.api.foundation_consolidated_report.format_api',
+// 			//   args: { financial_year: fy_val, month: 'March' },
+// 			//   callback: function(r) { renderTable(transformApiResponse(r.message)); }
+// 			// });
+// 			renderTable(TEST_ROWS);
+// 		}
+
+// 	return { load: load };
+// 	})();
+
+// 	// =============================================================================
 // 	// ANNUAL BUDGET MODULE
 // 	// =============================================================================
 
@@ -1945,7 +2256,8 @@
 // 			q4: { label: 'Quarter 4', months: ['January', 'February', 'March']     }
 // 		};
 // 		var Q_KEYS = ['q1','q2','q3','q4'];
-// 		var data = [], expandedQ = [], openH = {}, openS = {};
+// 		// ── bound is a closure variable — never reset by TabLoader ──
+// 		var data = [], expandedQ = [], openH = {}, openS = {}, bound = false;
 
 // 		function sumArr(a) { var t=0; (a||[]).forEach(function(v){t+=(v||0);}); return t; }
 // 		function objTotal(o) { var t=0; Q_KEYS.forEach(function(k){t+=sumArr(o[k]);}); return t; }
@@ -1983,6 +2295,8 @@
 // 			}
 // 		}
 
+// 		// ── renderTable reads openH / openS to decide visibility ──
+// 		// ── Initial render: openH={} so everything starts collapsed ──
 // 		function renderTable() {
 // 			buildHeader();
 // 			var $tb   = $('#annual-table tbody').empty();
@@ -1991,23 +2305,51 @@
 
 // 			data.forEach(function (head, hi) {
 // 				if (term && !matchSearch(head, term)) { return; }
-// 				var hs = String(hi), ho = openH[hs] === true;
+// 				var hs = String(hi);
+// 				var ho = openH[hs] === true;   // false = collapsed by default
 // 				Q_KEYS.forEach(function (k) { (head[k]||[0,0,0]).forEach(function (v,mi) { grand[k][mi]+=(v||0); }); });
 
-// 				$tb.append('<tr class="cb-row-head cb-annual-head" data-hi="' + hs + '"><td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name.trim() + '</td><td>-</td>' + qCells(head) + '<td class="cb-text-accent">' + formatINR(objTotal(head)) + '</td></tr>');
+// 				// Head row — always visible
+// 				$tb.append(
+// 					'<tr class="cb-row-head cb-annual-head" data-hi="' + hs + '" style="cursor:pointer;">' +
+// 						'<td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name.trim() + '</td>' +
+// 						'<td>-</td>' + qCells(head) +
+// 						'<td class="cb-text-accent">' + formatINR(objTotal(head)) + '</td>' +
+// 					'</tr>'
+// 				);
 
+// 				// Sub-heads — hidden when head collapsed
 // 				(head.sub_heads||[]).forEach(function (sub, si) {
-// 					var sk = hs+'-'+si, so = openS[sk] === true;
-// 					$tb.append('<tr class="cb-row-sub cb-annual-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td><td>-</td>' + qCells(sub) + '<td>' + formatINR(objTotal(sub)) + '</td></tr>');
-// 					var iv = (ho&&so) ? '' : 'display:none;';
+// 					var sk = hs+'-'+si;
+// 					var so = openS[sk] === true;   // false = collapsed by default
+// 					$tb.append(
+// 						'<tr class="cb-row-sub cb-annual-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + 'cursor:pointer;">' +
+// 							'<td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' +
+// 							'<td>-</td>' + qCells(sub) +
+// 							'<td>' + formatINR(objTotal(sub)) + '</td>' +
+// 						'</tr>'
+// 					);
+// 					// Sub-items — hidden unless both head & sub are open
 // 					(sub.items||[]).forEach(function (item) {
-// 						$tb.append('<tr class="cb-annual-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + iv + '"><td style="padding-left:40px;">' + item.name + '</td><td>' + (item.gl_code||'-') + '</td>' + qCells(item) + '<td>' + formatINR(objTotal(item)) + '</td></tr>');
+// 						$tb.append(
+// 							'<tr class="cb-annual-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + ((ho&&so)?'':'display:none;') + '">' +
+// 								'<td style="padding-left:40px;">' + item.name + '</td>' +
+// 								'<td>' + (item.gl_code||'-') + '</td>' + qCells(item) +
+// 								'<td>' + formatINR(objTotal(item)) + '</td>' +
+// 							'</tr>'
+// 						);
 // 					});
 // 				});
 
-// 				var dv = ho ? '' : 'display:none;';
+// 				// Direct items under head — hidden when head collapsed
 // 				(head.items||[]).forEach(function (d) {
-// 					$tb.append('<tr class="cb-annual-head-item" data-hi="' + hs + '" style="' + dv + '"><td style="padding-left:35px;">' + d.name + '</td><td>' + (d.gl_code||'-') + '</td>' + qCells(d) + '<td>' + formatINR(objTotal(d)) + '</td></tr>');
+// 					$tb.append(
+// 						'<tr class="cb-annual-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '">' +
+// 							'<td style="padding-left:35px;">' + d.name + '</td>' +
+// 							'<td>' + (d.gl_code||'-') + '</td>' + qCells(d) +
+// 							'<td>' + formatINR(objTotal(d)) + '</td>' +
+// 						'</tr>'
+// 					);
 // 				});
 // 			});
 
@@ -2015,27 +2357,26 @@
 // 			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td><td>-</td>' + qCells(grand) + '<td>' + formatINR(gt) + '</td></tr>');
 // 		}
 
+// 		// ── Toggle helpers: update state then re-render ──
+// 		// (re-render is the safest approach — no stale DOM state possible)
 // 		function toggleHead(hs) {
-// 			var o = !openH[hs]; openH[hs] = o;
-// 			$('#annual-table tbody .cb-annual-head[data-hi="' + hs + '"]').find('.cb-arrow').text(o?'▼':'▶');
-// 			if (o) {
-// 				$('#annual-table tbody .cb-annual-sub[data-hi="' + hs + '"]').show();
-// 				$('#annual-table tbody .cb-annual-head-item[data-hi="' + hs + '"]').show();
-// 				$('#annual-table tbody .cb-annual-sub[data-hi="' + hs + '"]').each(function () {
-// 					var si = $(this).attr('data-si');
-// 					if (openS[hs+'-'+si]) { $('#annual-table tbody .cb-annual-sub-item[data-hi="' + hs + '"][data-si="' + si + '"]').show(); }
+// 			openH[hs] = !(openH[hs] === true);
+// 			// When collapsing a head, also collapse all its sub-heads
+// 			if (!openH[hs]) {
+// 				data.forEach(function (h, hi) {
+// 					if (String(hi) !== hs) { return; }
+// 					(h.sub_heads||[]).forEach(function (_, si) { openS[hs+'-'+si] = false; });
 // 				});
-// 			} else {
-// 				$('#annual-table tbody .cb-annual-sub[data-hi="' + hs + '"]').each(function () { var si=$(this).attr('data-si'); openS[hs+'-'+si]=false; $(this).find('.cb-arrow').text('▶'); });
-// 				$('#annual-table tbody .cb-annual-sub[data-hi="' + hs + '"],.cb-annual-sub-item[data-hi="' + hs + '"],.cb-annual-head-item[data-hi="' + hs + '"]').hide();
 // 			}
+// 			renderTable();
 // 		}
+
 // 		function toggleSub(hs, ss) {
-// 			var sk = hs+'-'+ss, o = !openS[sk]; openS[sk] = o;
-// 			$('#annual-table tbody .cb-annual-sub[data-hi="' + hs + '"][data-si="' + ss + '"]').find('.cb-arrow').text(o?'▼':'▶');
-// 			var $i = $('#annual-table tbody .cb-annual-sub-item[data-hi="' + hs + '"][data-si="' + ss + '"]');
-// 			o ? $i.show() : $i.hide();
+// 			var sk = hs+'-'+ss;
+// 			openS[sk] = !(openS[sk] === true);
+// 			renderTable();
 // 		}
+
 // 		function matchSearch(head, term) {
 // 			if (!term) { return true; }
 // 			if (head.name.toLowerCase().indexOf(term) !== -1) { return true; }
@@ -2054,33 +2395,61 @@
 // 			return false;
 // 		}
 
+// 		// ── bindEvents uses namespaced events + bound flag ──
+// 		// ── so it fires exactly once, even across FY changes  ──
 // 		function bindEvents() {
-// 			$(document).on('input', '#annual-search', function () { renderTable(); });
-// 			$(document).on('change', '#annual-expand-quarters', function () {
-// 				expandedQ = this.checked ? Q_KEYS.slice() : []; renderTable();
+// 			// Search
+// 			$(document).on('input.annual', '#annual-search', function () { renderTable(); });
+
+// 			// Expand Quarters checkbox
+// 			$(document).on('change.annual', '#annual-expand-quarters', function () {
+// 				expandedQ = this.checked ? Q_KEYS.slice() : [];
+// 				renderTable();
 // 			});
-// 			$(document).on('change', '#annual-expand-items', function () {
+
+// 			// Expand Line Items checkbox
+// 			$(document).on('change.annual', '#annual-expand-items', function () {
 // 				if (this.checked) {
 // 					data.forEach(function (h, hi) {
 // 						openH[String(hi)] = true;
 // 						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
 // 					});
-// 				} else { openH = {}; openS = {}; }
+// 				} else {
+// 					// Collapse everything
+// 					openH = {}; openS = {};
+// 				}
 // 				renderTable();
 // 			});
-// 			$(document).on('click', '#annual-table .cb-q-header', function () {
-// 				var k = String($(this).attr('data-quarter')), idx = expandedQ.indexOf(k);
+
+// 			// Quarter column header click (expand single quarter)
+// 			$(document).on('click.annual', '#annual-table .cb-q-header', function () {
+// 				var k = String($(this).attr('data-quarter'));
+// 				var idx = expandedQ.indexOf(k);
 // 				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
+// 				// Sync checkbox
+// 				$('#annual-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
 // 				renderTable();
 // 			});
-// 			$('#tab-annual_budget').on('click', '.cb-annual-head', function (e) { e.stopPropagation(); toggleHead(String($(this).attr('data-hi'))); });
-// 			$('#tab-annual_budget').on('click', '.cb-annual-sub',  function (e) { e.stopPropagation(); toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si'))); });
+
+// 			// ── Head row click — delegated on the tab container ──
+// 			$('#tab-annual_budget').on('click.annual', '.cb-annual-head', function (e) {
+// 				e.stopPropagation();
+// 				toggleHead(String($(this).attr('data-hi')));
+// 			});
+
+// 			// ── Sub-head row click ──
+// 			$('#tab-annual_budget').on('click.annual', '.cb-annual-sub', function (e) {
+// 				e.stopPropagation();
+// 				toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si')));
+// 			});
 // 		}
 
 // 		function fetchAndRender(fy) {
+// 			// Reset state — always start collapsed
 // 			data=[]; openH={}; openS={}; expandedQ=[];
 // 			$('#annual-expand-quarters,#annual-expand-items').prop('checked', false);
-// 			Loader.show('Loading Annual Budget...');
+// 			$('#annual-search').val('');
+// 			Loader.show('Loading Annual Budget');
 // 			frappe.call({
 // 				method  : 'annual_budget.api.phase_sheet.get_consolidated_report',
 // 				args    : { financial_year: fy },
@@ -2090,14 +2459,15 @@
 // 		}
 
 // 		function load(fy) {
-// 			if (!TabLoader.isInit('annual_budget')) { bindEvents(); TabLoader.markInit('annual_budget'); }
+// 			// bound is a closure variable — never reset externally
+// 			if (!bound) { bindEvents(); bound = true; }
 // 			fetchAndRender(fy);
 // 		}
 // 		return { load: load };
 // 	})();
 
 // 	// =============================================================================
-// 	// ESTIMATE MODULE
+// 	// ESTIMATE MODULE  — with Expand Quarters + Expand Line Items checkboxes
 // 	// =============================================================================
 
 // 	var Estimate = (function () {
@@ -2171,15 +2541,12 @@
 // 				qTot(head).forEach(function  (v,i) { gQ[i]+=v; });
 // 				var hs=String(hi), ho=openH[hs];
 
-// 				/* HEAD row */
 // 				$tb.append('<tr class="cb-row-head cb-est-head" data-hi="' + hs + '"><td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name + '</td>' + qCells(head) + '<td class="cb-text-accent">' + formatINR(yTot(head)) + '</td></tr>');
 
-// 				/* direct items (e.g. CAPITAL direct items) */
 // 				(head.items||[]).forEach(function (item) {
 // 					$tb.append('<tr class="cb-est-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:30px;">' + item.name + (item.gl_code?' ('+item.gl_code+')':'') + '</td>' + qCells(item) + '<td>' + formatINR(yTot(item)) + '</td></tr>');
 // 				});
 
-// 				/* sub-heads */
 // 				(head.sub_heads||[]).forEach(function (sub, si) {
 // 					var sk=hs+'-'+si, so=openS[sk];
 // 					$tb.append('<tr class="cb-row-sub cb-est-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' + qCells(sub) + '<td>' + formatINR(yTot(sub)) + '</td></tr>');
@@ -2232,20 +2599,44 @@
 // 		}
 
 // 		function bindEvents() {
-// 			$(document).on('click', '#estimate-table .est-q-toggle', function () {
+// 			// Column header click (toggle single quarter)
+// 			$(document).on('click.estimate', '#estimate-table .est-q-toggle', function () {
 // 				var k=String($(this).attr('data-q')), idx=expandedQ.indexOf(k);
 // 				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
+// 				$('#estimate-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
 // 				renderTable();
 // 			});
-// 			$('#tab-estimate').on('click', '.cb-est-head', function (e) { e.stopPropagation(); toggleHead(String($(this).attr('data-hi'))); });
-// 			$('#tab-estimate').on('click', '.cb-est-sub',  function (e) { e.stopPropagation(); toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si'))); });
-// 			$(document).on('input', '#estimate-search', function () { renderTable(); });
+
+// 			// Expand Quarters checkbox
+// 			$(document).on('change.estimate', '#estimate-expand-quarters', function () {
+// 				expandedQ = this.checked ? Q_KEYS.slice() : [];
+// 				renderTable();
+// 			});
+
+// 			// Expand Line Items checkbox
+// 			$(document).on('change.estimate', '#estimate-expand-items', function () {
+// 				if (this.checked) {
+// 					data.forEach(function (h, hi) {
+// 						openH[String(hi)] = true;
+// 						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
+// 					});
+// 				} else {
+// 					openH = {}; openS = {};
+// 				}
+// 				renderTable();
+// 			});
+
+// 			// Row clicks — delegated on tab container (safe, no duplicates)
+// 			$('#tab-estimate').on('click.estimate', '.cb-est-head', function (e) { e.stopPropagation(); toggleHead(String($(this).attr('data-hi'))); });
+// 			$('#tab-estimate').on('click.estimate', '.cb-est-sub',  function (e) { e.stopPropagation(); toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si'))); });
+// 			$(document).on('input.estimate', '#estimate-search', function () { renderTable(); });
 // 		}
 
 // 		function fetchAndRender(fy) {
 // 			data=[]; openH={}; openS={}; expandedQ=[];
+// 			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked', false);
 // 			var year = (fy||'2025-26').split('-')[0];
-// 			Loader.show('Loading Estimate...');
+// 			Loader.show('Loading Estimate');
 // 			frappe.call({
 // 				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
 // 				args    : { fiscal_year: year, accounting_period: '12' },
@@ -2271,17 +2662,15 @@
 
 // 		var rawData     = [];
 // 		var currentFY   = '';
-// 		var openSec     = {};   // section open/close  (default: true = open)
-// 		var openSub     = {};   // sub-head open/close (default: false = collapsed)
+// 		var openSec     = {};
+// 		var openSub     = {};
 // 		var expandItems = false;
 // 		var bound       = false;
 
-// 		/* ── FY label helpers ───────────────────────────────────────────────── */
 // 		function pl() { return getFYLabels(currentFY).plan; }
 // 		function el() { return getFYLabels(currentFY).est;  }
 // 		function entityLabel(entry) { return (entry.label || '').trim(); }
 
-// 		/* ── Unified row structure from first entity ────────────────────────── */
 // 		function buildStruct() {
 // 			if (!rawData.length) { return []; }
 // 			return (rawData[0].actuals || []).map(function (sec) {
@@ -2302,9 +2691,6 @@
 // 			});
 // 		}
 
-// 		/* ── Value lookups ──────────────────────────────────────────────────── */
-
-// 		// Line item  (plan = ytd, est = total_posted_amt)
 // 		function itemVal(entry, itemName, field) {
 // 			var v = 0;
 // 			(entry.actuals || []).forEach(function (sec) {
@@ -2319,8 +2705,6 @@
 // 			});
 // 			return v;
 // 		}
-
-// 		// Sub-head total (plan = ytd, est = total_posted_amt_ytd)
 // 		function subVal(entry, secName, subName, field) {
 // 			var v = 0;
 // 			(entry.actuals || []).forEach(function (sec) {
@@ -2332,8 +2716,6 @@
 // 			});
 // 			return v;
 // 		}
-
-// 		// Section total (plan = ytd, est = total_posted_amt_ytd)
 // 		function secVal(entry, secName, field) {
 // 			var v = 0;
 // 			(entry.actuals || []).forEach(function (sec) {
@@ -2342,8 +2724,6 @@
 // 			});
 // 			return v;
 // 		}
-
-// 		// Grand total
 // 		function grandVal(entry, field) {
 // 			var v = 0;
 // 			(entry.actuals || []).forEach(function (sec) {
@@ -2351,8 +2731,6 @@
 // 			});
 // 			return v;
 // 		}
-
-// 		/* ── Cell HTML generators ───────────────────────────────────────────── */
 
 // 		function itemCells(name) {
 // 			var h = '';
@@ -2362,7 +2740,6 @@
 // 			});
 // 			return h;
 // 		}
-
 // 		function subCells(sn, subn) {
 // 			var h = '';
 // 			rawData.forEach(function (e) {
@@ -2371,8 +2748,6 @@
 // 			});
 // 			return h;
 // 		}
-
-// 		// Section header cells — shown inline in the section header row itself
 // 		function secCells(sn) {
 // 			var h = '';
 // 			rawData.forEach(function (e) {
@@ -2381,7 +2756,6 @@
 // 			});
 // 			return h;
 // 		}
-
 // 		function grandCells() {
 // 			var h = '';
 // 			rawData.forEach(function (e) {
@@ -2390,129 +2764,60 @@
 // 			});
 // 			return h;
 // 		}
+// 		function itemTotalPlan(name)       { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'ytd');}); return v; }
+// 		function itemTotalEst(name)        { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'total_posted_amt');}); return v; }
+// 		function subTotalPlan(sn,subn)     { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'plan');}); return v; }
+// 		function subTotalEst(sn,subn)      { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'est');}); return v; }
+// 		function secTotalPlan(sn)          { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'plan');}); return v; }
+// 		function secTotalEst(sn)           { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'est');}); return v; }
+// 		function allGrandPlan()            { var v=0; rawData.forEach(function(e){v+=grandVal(e,'plan');}); return v; }
+// 		function allGrandEst()             { var v=0; rawData.forEach(function(e){v+=grandVal(e,'est');}); return v; }
 
-// 		// ── Cross-entity total helpers (sum Plan & Est across ALL entities) ───
-
-// 		// Sum of itemVal(plan/est) across all entities for one item
-// 		function itemTotalPlan(name) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += itemVal(e, name, 'ytd'); });
-// 			return v;
-// 		}
-// 		function itemTotalEst(name) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += itemVal(e, name, 'total_posted_amt'); });
-// 			return v;
-// 		}
-
-// 		// Sum of subVal across all entities for one sub-head
-// 		function subTotalPlan(sn, subn) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += subVal(e, sn, subn, 'plan'); });
-// 			return v;
-// 		}
-// 		function subTotalEst(sn, subn) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += subVal(e, sn, subn, 'est'); });
-// 			return v;
-// 		}
-
-// 		// Sum of secVal across all entities for one section
-// 		function secTotalPlan(sn) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += secVal(e, sn, 'plan'); });
-// 			return v;
-// 		}
-// 		function secTotalEst(sn) {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += secVal(e, sn, 'est'); });
-// 			return v;
-// 		}
-
-// 		// Overall grand total across all entities
-// 		function allGrandPlan() {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += grandVal(e, 'plan'); });
-// 			return v;
-// 		}
-// 		function allGrandEst() {
-// 			var v = 0;
-// 			rawData.forEach(function (e) { v += grandVal(e, 'est'); });
-// 			return v;
-// 		}
-
-// 		// HTML for the two Grand Total cells (Plan + Est) appended at end of each row
 // 		function totalCell2(plan, est, cls) {
 // 			cls = cls || '';
 // 			return '<td class="be-total-plan ' + cls + '" style="font-weight:700;">' + formatINR(plan) + '</td>' +
 // 			       '<td class="be-total-est '  + cls + '" style="font-weight:700;">' + formatINR(est)  + '</td>';
 // 		}
 
-// 		/* ── Header ─────────────────────────────────────────────────────────── */
-// 		// Fix for white-space in first Plan column:
-// 		// The sticky "Expense Head / Line Item" th uses rowspan="2".
-// 		// In the orange sub-row we must NOT add any cell for that column —
-// 		// browsers handle the gap correctly. The blank first cell was appearing
-// 		// because some browsers mis-render rowspan with sticky. We solve this
-// 		// by using a SINGLE header row with entity name + Plan/Est stacked via
-// 		// line breaks, eliminating the two-row approach entirely.
-
 // 		function buildHeader() {
 // 			var $t = $('#be-table thead').empty();
-
 // 			var $r1 = $('<tr class="cb-thead-main"></tr>');
 // 			var $r2 = $('<tr class="cb-thead-sub"></tr>');
-
-// 			// Row 1: label col with rowspan="2" (spans both header rows visually)
-// 			// + entity group headers (each colspan="2")
 // 			$r1.append(
 // 				'<th rowspan="2" style="text-align:left;min-width:280px;' +
 // 				'position:sticky;left:0;z-index:40;background:#0076B6;">' +
 // 				'Expense Head / Line Item</th>'
 // 			);
 // 			rawData.forEach(function (e) {
-// 				$r1.append(
-// 					'<th colspan="2" style="text-align:center;">' +
-// 					entityLabel(e) + '</th>'
-// 				);
+// 				$r1.append('<th colspan="2" style="text-align:center;">' + entityLabel(e) + '</th>');
 // 			});
-// 			// Grand Total group header
 // 			$r1.append('<th colspan="2" style="text-align:center;background:#003B63;">Grand Total</th>');
-
-// 			// Row 2: Plan | Est per entity, then Grand Total Plan | Est
 // 			rawData.forEach(function () {
 // 				$r2.append('<th style="text-align:center;min-width:140px;">' + pl() + '</th>');
 // 				$r2.append('<th style="text-align:center;min-width:140px;">' + el() + '</th>');
 // 			});
 // 			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + pl() + '</th>');
 // 			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + el() + '</th>');
-
 // 			$t.append($r1).append($r2);
 // 		}
-// 		/* ── Full render ────────────────────────────────────────────────────── */
+
 // 		function renderTable() {
 // 			buildHeader();
-
 // 			var $tb    = $('#be-tbody').empty();
 // 			var term   = $('#be-search').val().trim().toLowerCase();
 // 			var struct = buildStruct();
-// 			var cols   = 1 + rawData.length * 2 + 2; // +2 for Grand Total Plan|Est
+// 			var cols   = 1 + rawData.length * 2 + 2;
 
 // 			if (!rawData.length || !struct.length) {
-// 				$tb.append(
-// 					'<tr><td colspan="' + cols + '" style="text-align:center;padding:40px;color:#aaa;">' +
-// 					'No data available.</td></tr>'
-// 				);
+// 				$tb.append('<tr><td colspan="' + cols + '" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
 // 				return;
 // 			}
 
 // 			struct.forEach(function (sec) {
 // 				var sn      = sec.name;
-// 				var secOpen = openSec[sn] !== false;   // default open
+// 				var secOpen = openSec[sn] !== false;
 // 				var secVis  = secOpen ? '' : 'display:none;';
 
-// 				// ── Section header row — shows section totals inline (like Estimate Consolidated) ──
-// 				// When collapsed: shows totals. When expanded: children show, totals still visible.
 // 				$tb.append(
 // 					'<tr class="cb-row-head be-sec-row" data-sec="' + sn + '">' +
 // 						'<td style="text-align:left;">' +
@@ -2523,14 +2828,12 @@
 // 					'</tr>'
 // 				);
 
-// 				// ── Sub-heads ─────────────────────────────────────────────────
 // 				sec.sub_heads.forEach(function (sub) {
 // 					var sk      = sn + '::' + sub.name;
 // 					var subOpen = expandItems || (openSub[sk] === true);
 // 					var subVis  = secOpen ? '' : 'display:none;';
 // 					var itmVis  = (secOpen && subOpen) ? '' : 'display:none;';
 
-// 					// Sub-head row (orange) — totals always visible when section open
 // 					$tb.append(
 // 						'<tr class="cb-row-sub be-sec-child be-sub-row" ' +
 // 						'data-sec="' + sn + '" data-sub="' + sk + '" style="' + subVis + '">' +
@@ -2542,20 +2845,16 @@
 // 						'</tr>'
 // 					);
 
-// 					// Line items under sub-head
 // 					sub.items.forEach(function (item) {
 // 						if (term &&
 // 							item.name.toLowerCase().indexOf(term) === -1 &&
 // 							item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
-
 // 						$tb.append(
 // 							'<tr class="be-item-row be-sec-child be-sub-child" ' +
 // 							'data-sec="' + sn + '" data-sub="' + sk + '" style="' + itmVis + '">' +
 // 								'<td style="padding-left:42px;text-align:left;">' +
 // 									item.name +
-// 									(item.gl_code
-// 										? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>'
-// 										: '') +
+// 									(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
 // 								'</td>' +
 // 								itemCells(item.name) +
 // 								totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
@@ -2564,31 +2863,24 @@
 // 					});
 // 				});
 
-// 				// ── Direct items (e.g. CAPITAL EXPENSES line items) ───────────
 // 				sec.items.forEach(function (item) {
 // 					if (term &&
 // 						item.name.toLowerCase().indexOf(term) === -1 &&
 // 						item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
-
 // 					$tb.append(
 // 						'<tr class="be-item-row be-sec-child be-direct-item" ' +
 // 						'data-sec="' + sn + '" style="' + secVis + '">' +
 // 							'<td style="padding-left:30px;text-align:left;">' +
 // 								item.name +
-// 								(item.gl_code
-// 									? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>'
-// 									: '') +
+// 								(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
 // 							'</td>' +
 // 							itemCells(item.name) +
 // 							totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
 // 						'</tr>'
 // 					);
 // 				});
-
-// 				// ── NO separate section total row — totals are on the section header itself ──
 // 			});
 
-// 			// ── Grand total ───────────────────────────────────────────────────
 // 			$tb.append(
 // 				'<tr class="cb-row-grand">' +
 // 					'<td style="text-align:left;">GRAND TOTAL</td>' +
@@ -2598,15 +2890,10 @@
 // 			);
 // 		}
 
-// 		/* ── Toggle helpers ─────────────────────────────────────────────────── */
-
 // 		function toggleSec(sn) {
 // 			var o = !(openSec[sn] !== false);
 // 			openSec[sn] = o;
-
-// 			$('#be-table tbody .be-sec-row[data-sec="' + sn + '"]')
-// 				.find('.cb-arrow').text(o ? '▼' : '▶');
-
+// 			$('#be-table tbody .be-sec-row[data-sec="' + sn + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
 // 			var $ch = $('#be-table tbody .be-sec-child[data-sec="' + sn + '"]');
 // 			if (o) {
 // 				$ch.filter('.be-sub-row,.be-direct-item').show();
@@ -2614,55 +2901,38 @@
 // 					var sk = $(this).attr('data-sub');
 // 					if (expandItems || openSub[sk] === true) { $(this).show(); }
 // 				});
-// 			} else {
-// 				$ch.hide();
-// 			}
+// 			} else { $ch.hide(); }
 // 		}
 
 // 		function toggleSubRow(sk) {
 // 			var o = !(openSub[sk] === true);
 // 			openSub[sk] = o;
-// 			$('#be-table tbody .be-sub-row[data-sub="' + sk + '"]')
-// 				.find('.cb-arrow').text(o ? '▼' : '▶');
+// 			$('#be-table tbody .be-sub-row[data-sub="' + sk + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
 // 			var $it = $('#be-table tbody .be-sub-child[data-sub="' + sk + '"]');
 // 			o ? $it.show() : $it.hide();
 // 		}
 
-// 		/* ── Events ─────────────────────────────────────────────────────────── */
-
 // 		function bindEvents() {
-
-// 			// Section header click
-// 			$('#tab-budget_estimate').on('click', '.be-sec-row', function (e) {
+// 			$('#tab-budget_estimate').on('click.be', '.be-sec-row', function (e) {
 // 				e.stopPropagation();
 // 				toggleSec($(this).attr('data-sec'));
 // 			});
-
-// 			// Sub-head row click
-// 			$('#tab-budget_estimate').on('click', '.be-sub-row', function (e) {
+// 			$('#tab-budget_estimate').on('click.be', '.be-sub-row', function (e) {
 // 				e.stopPropagation();
 // 				if (!expandItems) { toggleSubRow($(this).attr('data-sub')); }
 // 			});
-
-// 			// Expand Line Items checkbox — expands sections, sub-heads, AND items
-// 			$(document).on('change', '#be-expand-items', function () {
+// 			$(document).on('change.be', '#be-expand-items', function () {
 // 				expandItems = this.checked;
 // 				buildStruct().forEach(function (sec) {
-// 					// open/close sections
 // 					openSec[sec.name] = expandItems ? true : false;
-// 					// open/close sub-heads
 // 					sec.sub_heads.forEach(function (sub) {
 // 						openSub[sec.name + '::' + sub.name] = expandItems;
 // 					});
 // 				});
 // 				renderTable();
 // 			});
-
-// 			// Search
-// 			$(document).on('input', '#be-search', function () { renderTable(); });
+// 			$(document).on('input.be', '#be-search', function () { renderTable(); });
 // 		}
-
-// 		/* ── Fetch & render ─────────────────────────────────────────────────── */
 
 // 		function fetchAndRender(fy) {
 // 			currentFY   = fy;
@@ -2672,10 +2942,10 @@
 // 			expandItems = false;
 // 			$('#be-expand-items').prop('checked', false);
 
-// 			Loader.show('Loading Budget & Estimate...');
+// 			Loader.show('Loading Budget & Estimate');
 // 			frappe.call({
 // 				method  : 'annual_budget.api.foundation_consolidated_report.format_api',
-// 				args    : { financial_year: fy,month:"March" },
+// 				args    : { financial_year: fy, month: 'March',set_group_id:1 },
 // 				callback: function (r) {
 // 					if (r.message && Array.isArray(r.message)) {
 // 						rawData = r.message;
@@ -2700,8 +2970,1381 @@
 // 		return { load: load };
 // 	})();
 
-// };
+// 	// =============================================================================
+// 	// AUTO-LOAD ACTIVE TAB ON PAGE OPEN
+// 	// =============================================================================
 
+// 	var initialFY = fyControl.get_value();
+// 	if (initialFY) { TabLoader.trigger('ppt'); }
+
+// }; 
+
+
+
+
+// frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
+
+// 	// =============================================================================
+// 	// PAGE SETUP
+// 	// =============================================================================
+
+// 	var page = frappe.ui.make_app_page({
+// 		parent       : wrapper,
+// 		title        : 'Foundation - Consolidated Budget - 2025-26',
+// 		single_column: true
+// 	});
+
+// 	function updatePageTitle(financialYear) {
+// 		var titleText = 'Foundation - Consolidated Budget - ' + financialYear;
+// 		page.set_title(titleText);
+// 		setTimeout(function () {
+// 			$(wrapper).find('.page-head h3').hide();
+// 			$(wrapper).find('.page-head .title-text')
+// 				.css({ 'font-size': '18px', 'font-weight': '700', 'color': '#1a1a1a' });
+// 		}, 100);
+// 	}
+
+// 	// =============================================================================
+// 	// FY LABEL HELPER
+// 	// =============================================================================
+
+// 	function getFYLabels(fy) {
+// 		var parts     = (fy || '2025-26').split('-');
+// 		var startYY   = parts[0] ? parts[0].slice(-2) : '25';
+// 		var endYY     = parts[1] ? parts[1].slice(-2) : '26';
+// 		var prevStart = String(parseInt(startYY, 10) - 1).padStart(2, '0');
+// 		var prevEnd   = String(parseInt(endYY,   10) - 1).padStart(2, '0');
+// 		return {
+// 			plan : 'FY' + startYY + '-' + endYY    + ' Plan',
+// 			est  : 'FY' + prevStart + '-' + prevEnd + ' Est'
+// 		};
+// 	}
+
+// 	// =============================================================================
+// 	// GLOBAL LOADER
+// 	// =============================================================================
+
+// 	if ($("#global-loader").length === 0) {
+// 		$("body").append(
+// 			'<div id="global-loader" class="loader-overlay">' +
+// 				'<div class="loader-box">' +
+// 					'<img src="/files/APF logo.png" class="loader-logo" alt="Loading">' +
+// 					'<div class="loader-text">Loading, please wait</div>' +
+// 				'</div>' +
+// 			'</div>'
+// 		);
+// 	}
+// 	$("#global-loader").hide();
+
+// 	var Loader = {
+// 		show: function (msg) {
+// 			var m  = (typeof msg === 'string' && msg.length) ? msg : 'Loading, please wait';
+// 			var $l = $("#global-loader");
+// 			if (!$l.length) { return; }
+// 			$l.find(".loader-text").text(m);
+// 			$l.css("display", "flex").hide().fadeIn(200);
+// 		},
+// 		hide: function () {
+// 			var $l = $("#global-loader");
+// 			if ($l.length) { $l.fadeOut(200); }
+// 		}
+// 	};
+
+// 	// =============================================================================
+// 	// GLOBAL STYLES
+// 	// =============================================================================
+
+// 	$(page.body).append(
+// 		'<style>' +
+// 		':root{--blue-dark:#003B63;--blue-mid:#0076B6;--blue-light:#E9F4FB;' +
+// 		'--orange:#F26B21;--orange-light:#FFF3E6;--border-color:#ddd;}' +
+
+// 		'.cb-wrapper{padding:15px;background:#fff;}' +
+// 		'#cb-tab-nav{border-bottom:1px solid #ddd;list-style:none;padding:0;margin:0 0 16px;display:flex;align-items:flex-end;flex-wrap:wrap;}' +
+// 		'#cb-tab-nav li{display:inline-block;}' +
+// 		'#cb-tab-nav .cb-tab-link{cursor:pointer;display:inline-block;padding:8px 20px;color:#555;font-size:13px;font-weight:400;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;}' +
+// 		'#cb-tab-nav .cb-tab-link.active{color:#000;font-weight:700;border-bottom:3px solid #000;}' +
+// 		'.cb-tab-pane{display:none;}.cb-tab-pane.active{display:block;}' +
+
+// 		'.cb-filter-row{padding:10px 0;background:#fff;margin-bottom:10px;}' +
+// 		'.cb-filter-row .col-md-3,.cb-filter-row .col-sm-12{padding-left:8px;padding-right:8px;}' +
+// 		'@media(max-width:768px){.cb-filter-row{padding:10px;}.cb-filter-row .col-md-3{width:100%;margin-bottom:8px;}}' +
+
+// 		'.cb-controls{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:#f7f9fb;border:1px solid #ddd;border-radius:6px;flex-wrap:wrap;gap:8px;}' +
+// 		'.cb-search-input{padding:7px 12px;border:1px solid #aaa;border-radius:6px;font-size:13px;width:280px;}' +
+// 		'.cb-checkbox-area{display:flex;gap:18px;font-size:13px;font-weight:500;color:#444;}' +
+// 		'.cb-checkbox-area label{display:flex;align-items:center;gap:5px;cursor:pointer;}' +
+// 		'.cb-export-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:13px;font-weight:600;color:#fff;background:#0076B6;border:1px solid #0076B6;border-radius:6px;cursor:pointer;white-space:nowrap;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.12);}' +
+// 		'.cb-export-btn:hover{background:#005f94;border-color:#005f94;}' +
+
+// 		'.cb-scroll-wrapper{border:1px solid #ddd;border-radius:6px;overflow:auto;max-height:70vh;background:#fff;}' +
+
+// 		'.cb-table{min-width:900px;width:100%;border-collapse:collapse;font-size:13px;}' +
+// 		'.cb-table th,.cb-table td{border:1px solid #ddd;padding:8px 10px;white-space:nowrap;text-align:right;}' +
+// 		'.cb-table th:first-child,.cb-table td:first-child{text-align:left;}' +
+// 		'.cb-table th:nth-child(2),.cb-table td:nth-child(2){text-align:center;}' +
+
+// 		'.cb-thead-main th{background:#0076B6;color:#fff;font-weight:700;position:sticky;top:0;z-index:25;text-align:center;}' +
+// 		'.cb-thead-sub th{background:#F26B21;color:#fff;font-weight:600;position:sticky;top:34px;z-index:24;text-align:center;}' +
+
+// 		'.cb-row-head{font-weight:700;cursor:pointer;background:#E9F4FB;color:#003B63;}' +
+// 		'.cb-row-head:hover td{background:#dceef9;}' +
+// 		'.cb-row-sub{background:#FFF3E6;font-weight:600;cursor:pointer;}' +
+// 		'.cb-row-sub:hover td{background:#ffe8d4;}' +
+// 		'.cb-row-item td:first-child{padding-left:35px;}' +
+// 		'.cb-row-sub-item td:first-child{padding-left:50px;}' +
+// 		'.cb-row-grand{background:#0076B6;color:#fff;font-weight:800;border-top:2px solid #003B63;}' +
+// 		'.cb-row-grand td{color:#fff;}' +
+// 		'.cb-text-accent{color:#0076B6;font-weight:600;}' +
+
+// 		/* ── PPT TAB ── */
+// 		'.ppt-title-bar{margin-bottom:2px;}' +
+// 		'.ppt-main-title{font-size:12px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;margin-bottom:4px;}' +
+// 		'.ppt-currency-label{font-size:11px;font-style:italic;color:#111;text-align:right;margin-bottom:2px;}' +
+// 		'#ppt-table{border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif;border:1px solid #999;}' +
+// 		'#ppt-table thead tr.ppt-hdr1 th{background:#fff;text-align:center;font-weight:700;padding:6px 10px 4px;border:1px solid #999;color:#111;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th{background:#fff;text-align:center;font-weight:700;padding:4px 10px;border-left:1px dotted #aaa;border-right:1px dotted #aaa;border-bottom:1px dotted #aaa;border-top:none;color:#111;min-width:90px;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-unit-sub{border-left:1px solid #999;border-right:1px solid #999;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-first{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-last{border-right:1px solid #999 !important;}' +
+// 		'#ppt-table thead tr.ppt-hdr2 th.ppt-bgt-last{border-right:1px solid #999 !important;}' +
+// 		'#ppt-table tbody td{padding:5px 10px;border-bottom:1px dotted #aaa;text-align:right;white-space:nowrap;color:#111;border-left:none;border-right:none;}' +
+// 		'#ppt-table tbody td:first-child{text-align:left;border-left:1px solid #999;min-width:160px;}' +
+// 		'#ppt-table tbody td:last-child{border-right:1px solid #999;}' +
+// 		'#ppt-table tbody td.ppt-sep-left{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table tbody td.ppt-grp-sep{border-left:1px solid #999 !important;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td{font-weight:700;border-bottom:1px solid #999 !important;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td:first-child{border-left:1px solid #999;}' +
+// 		'#ppt-table tbody tr.ppt-total-row td:last-child{border-right:1px solid #999;}' +
+// 		'.ppt-dash{color:#555;text-align:center;display:block;}' +
+
+// 		/* BE sticky first column */
+// 		'#be-table td:first-child{position:sticky;left:0;z-index:10;background:inherit;}' +
+// 		'#be-table .cb-thead-main th:first-child{position:sticky;left:0;z-index:20;background:#0076B6;}' +
+// 		'#be-table .cb-thead-sub th{left:auto !important;}' +
+// 		'#be-table .cb-row-head td:first-child{background:#E9F4FB;}' +
+// 		'#be-table .cb-row-sub  td:first-child{background:#FFF3E6;}' +
+// 		'#be-table .cb-row-grand td:first-child{background:#0076B6;}' +
+// 		'#be-table .be-item-row td:first-child{background:#fff;}' +
+// 		'#be-table .be-grand-col{background:#E8F0FA;color:#003B63;border-left:2px solid #0076B6;}' +
+// 		'#be-table .cb-row-grand .be-grand-col{background:#003B63;color:#fff;}' +
+// 		'#be-table .cb-row-head .be-grand-col{background:#003B63 !important;color:#fff;}' +
+// 		'#be-table .cb-row-sub  .be-grand-col{background:#E8D5C4;color:#7a3b00;}' +
+
+// 		/* loader */
+// 		'#global-loader.loader-overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(18,18,18,.92);backdrop-filter:blur(6px);display:none;z-index:999999;align-items:center;justify-content:center;}' +
+// 		'.loader-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}' +
+// 		'.loader-logo{width:90px;height:90px;border-radius:50%;background:linear-gradient(145deg,#fff,#eaeaea);padding:14px;object-fit:contain;box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 4px rgba(255,255,255,.08);animation:loader-pulse 1.6s infinite ease-in-out;}' +
+// 		'.loader-text{margin-top:6px;font-size:14px;color:#fff;font-weight:600;letter-spacing:.5px;text-align:center;opacity:.85;}' +
+// 		'.loader-text::after{content:"";display:inline-block;width:1em;animation:loader-dots 1.5s infinite;}' +
+// 		'@keyframes loader-pulse{0%{transform:scale(1);opacity:.8;box-shadow:0 0 0 0 rgba(255,255,255,.3);}50%{transform:scale(1.08);opacity:1;box-shadow:0 0 20px 8px rgba(255,255,255,.15);}100%{transform:scale(1);opacity:.8;box-shadow:0 0 0 0 rgba(255,255,255,.3);}}' +
+// 		'@keyframes loader-dots{0%{content:"";}33%{content:".";}66%{content:"..";}100%{content:"...";}}' +
+// 		'</style>'
+// 	);
+
+// 	// =============================================================================
+// 	// NUMBER FORMATTER
+// 	// =============================================================================
+
+// 	function formatINR(v) {
+// 		var n = parseFloat(v);
+// 		if (isNaN(n)) { n = 0; }
+// 		return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// 	}
+
+// 	function fmtDash(v) {
+// 		var n = parseFloat(v) || 0;
+// 		return n === 0
+// 			? '<span class="ppt-dash">-</span>'
+// 			: n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// 	}
+
+// 	// =============================================================================
+// 	// HTML SKELETON
+// 	// =============================================================================
+
+// 	$(page.body).append(
+// 		'<div class="cb-wrapper">' +
+// 			'<div class="frappe-control-group row cb-filter-row" id="cb-filter-row"></div>' +
+// 			'<ul id="cb-tab-nav">' +
+// 				'<li><a class="cb-tab-link active" data-tab="ppt">PPT</a></li>' +
+// 				'<li><a class="cb-tab-link" data-tab="summary_inr">Summary in INR</a></li>' +
+// 				'<li><a class="cb-tab-link" data-tab="headcount">Headcount</a></li>' +
+// 				'<li><a class="cb-tab-link" data-tab="annual_budget">Annual Budget Consolidated</a></li>' +
+// 				'<li><a class="cb-tab-link" data-tab="estimate">Estimate Consolidated</a></li>' +
+// 				'<li><a class="cb-tab-link" data-tab="budget_estimate">Budget &amp; Estimate</a></li>' +
+// 			'</ul>' +
+// 			'<div id="cb-tab-content">' +
+
+// 				/* ── PPT TAB ── */
+// 				'<div class="cb-tab-pane active" id="tab-ppt">' +
+// 					'<div class="ppt-title-bar">' +
+// 						'<div class="ppt-main-title" id="ppt-main-title">Overall Foundation Numbers – Budget vs. Est</div>' +
+// 					'</div>' +
+// 					'<div class="ppt-currency-label">₹ Cr.</div>' +
+// 					'<div class="cb-controls">' +
+// 						'<input type="text" id="ppt-search" class="cb-search-input" placeholder="Search unit...">' +
+// 						'<button class="cb-export-btn" id="ppt-export-btn">↓ Export to Excel</button>' +
+// 					'</div>' +
+// 					'<div class="cb-scroll-wrapper">' +
+// 						'<table id="ppt-table" class="cb-table">' +
+// 							'<thead>' +
+// 								'<tr class="cb-thead-main">' +
+// 									'<th rowspan="2" style="min-width:180px;text-align:center;">Unit</th>' +
+// 									'<th colspan="3" id="ppt-budget-hdr">Budget</th>' +
+// 									'<th colspan="3" id="ppt-est-hdr">Estimate</th>' +
+// 								'</tr>' +
+// 								'<tr class="cb-thead-sub">' +
+// 									'<th>Opex</th>' +
+// 									'<th>Capex</th>' +
+// 									'<th>Total</th>' +
+// 									'<th>Opex</th>' +
+// 									'<th>Capex</th>' +
+// 									'<th>Total</th>' +
+// 								'</tr>' +
+// 							'</thead>' +
+// 							'<tbody id="ppt-tbody"></tbody>' +
+// 						'</table>' +
+// 					'</div>' +
+// 				'</div>' +
+
+// 				'<div class="cb-tab-pane" id="tab-summary_inr"></div>' +
+// 				'<div class="cb-tab-pane" id="tab-headcount"></div>' +
+
+// 				/* ANNUAL BUDGET */
+// 				'<div class="cb-tab-pane" id="tab-annual_budget">' +
+// 					'<div class="cb-controls">' +
+// 						'<input type="text" id="annual-search" class="cb-search-input" placeholder="Search Expense / Item / GL Code...">' +
+// 						'<div class="cb-checkbox-area">' +
+// 							'<label><input type="checkbox" id="annual-expand-quarters"> Expand Quarters</label>' +
+// 							'<label><input type="checkbox" id="annual-expand-items"> Expand Line Items</label>' +
+// 						'</div>' +
+// 					'</div>' +
+// 					'<div class="cb-scroll-wrapper">' +
+// 						'<table class="cb-table" id="annual-table"><thead></thead><tbody></tbody></table>' +
+// 					'</div>' +
+// 				'</div>' +
+
+// 				/* ESTIMATE */
+// 				'<div class="cb-tab-pane" id="tab-estimate">' +
+// 					'<div class="cb-controls">' +
+// 						'<input type="text" id="estimate-search" class="cb-search-input" placeholder="Search Expense / Item / GL Code...">' +
+// 						'<div class="cb-checkbox-area">' +
+// 							'<label><input type="checkbox" id="estimate-expand-quarters"> Expand Quarters</label>' +
+// 							'<label><input type="checkbox" id="estimate-expand-items"> Expand Line Items</label>' +
+// 						'</div>' +
+// 					'</div>' +
+// 					'<div class="cb-scroll-wrapper">' +
+// 						'<table class="cb-table" id="estimate-table"><thead></thead><tbody id="estimate-tbody"></tbody></table>' +
+// 					'</div>' +
+// 				'</div>' +
+
+// 				/* BUDGET & ESTIMATE */
+// 				'<div class="cb-tab-pane" id="tab-budget_estimate">' +
+// 					'<div class="cb-controls">' +
+// 						'<input type="text" id="be-search" class="cb-search-input" placeholder="Search Expense / Item / GL Code...">' +
+// 						'<div class="cb-checkbox-area">' +
+// 							'<label><input type="checkbox" id="be-expand-items"> Expand Line Items</label>' +
+// 						'</div>' +
+// 					'</div>' +
+// 					'<div class="cb-scroll-wrapper">' +
+// 						'<table class="cb-table" id="be-table"><thead></thead><tbody id="be-tbody"></tbody></table>' +
+// 					'</div>' +
+// 				'</div>' +
+
+// 			'</div>' +
+// 		'</div>'
+// 	);
+
+// 	// =============================================================================
+// 	// FINANCIAL YEAR FILTER
+// 	// =============================================================================
+
+// 	var $fyColumn = $('<div class="col-md-3 col-sm-12"></div>').appendTo('#cb-filter-row');
+
+// 	var fyControl = frappe.ui.form.make_control({
+// 		parent: $fyColumn,
+// 		df: {
+// 			label    : 'Financial Year',
+// 			fieldtype: 'Select',
+// 			fieldname: 'financial_year',
+// 			reqd     : 1,
+// 			change   : function () {
+// 				var y = this.get_value();
+// 				if (!y) { return; }
+// 				updatePageTitle(y);
+// 				TabLoader.resetAll();
+// 				var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
+// 				if (activeTab) { TabLoader.trigger(activeTab); }
+// 			}
+// 		},
+// 		render_input: true
+// 	});
+// 	fyControl.refresh();
+
+// 	frappe.call({
+// 		method: 'annual_budget.api.filter_options.get_financial_year_list',
+// 		callback: function (r) {
+// 			if (r.message && r.message.length) {
+// 				var years = r.message.map(function (d) { return d.financial_year; });
+// 				fyControl.df.options = years.join('\n');
+// 				fyControl.refresh();
+
+// 				var today = new Date();
+// 				var year  = today.getFullYear();
+// 				var month = today.getMonth() + 1;
+// 				var currentFY = (month >= 4)
+// 					? year + '-' + String(year + 1).slice(-2)
+// 					: (year - 1) + '-' + String(year).slice(-2);
+
+// 				if (years.indexOf(currentFY) !== -1) {
+// 					fyControl.set_value(currentFY);
+// 					updatePageTitle(currentFY);
+// 				} else {
+// 					fyControl.set_value(years[0]);
+// 					updatePageTitle(years[0]);
+// 				}
+// 			}
+// 		}
+// 	});
+// 	function getFinancialYearParams(fyControl) {
+//     const currentFY = fyControl.get_value();
+
+//     if (!currentFY) {
+//         return null;
+//     }
+
+//     const startYear = parseInt(currentFY.split("-")[0], 10);
+
+//     if (isNaN(startYear)) {
+//         return null;
+//     }
+
+//     const prevStart = startYear - 1;
+//     const prevEnd = String(prevStart + 1).slice(-2);
+
+//     const previousFY = `${prevStart}-${prevEnd}`;
+
+//     return {
+//         financial_year: currentFY,
+//         previous_financial_year: previousFY
+//     };
+// }
+// 	// =============================================================================
+// 	// TAB SWITCHING
+// 	// =============================================================================
+
+// 	$(document).on('click', '#cb-tab-nav .cb-tab-link', function () {
+// 		var tab = $(this).data('tab');
+// 		$('#cb-tab-nav .cb-tab-link').removeClass('active');
+// 		$('.cb-tab-pane').removeClass('active');
+// 		$(this).addClass('active');
+// 		$('#tab-' + tab).addClass('active');
+// 		TabLoader.trigger(tab);
+// 	});
+
+// 	// =============================================================================
+// 	// TAB LOADER
+// 	// =============================================================================
+
+// 	var TabLoader = (function () {
+// 		var loadedFY = {}, initDone = {};
+// 		var handlers = {
+// 			ppt            : function (fy) { PPT.load(fy);            },
+// 			annual_budget  : function (fy) { Annual.load(fy);         },
+// 			estimate       : function (fy) { Estimate.load(fy);       },
+// 			budget_estimate: function (fy) { BudgetEstimate.load(fy); }
+// 		};
+// 		function trigger(tab) {
+// 			if (!handlers[tab]) { return; }
+// 			var fy = fyControl.get_value() || '2025-26';
+// 			if (loadedFY[tab] === fy) { return; }
+// 			loadedFY[tab] = fy;
+// 			handlers[tab](fy);
+// 		}
+// 		function resetAll()  { loadedFY = {}; initDone = {}; }
+// 		function markInit(t) { initDone[t] = true; }
+// 		function isInit(t)   { return initDone[t] === true; }
+// 		return { trigger: trigger, resetAll: resetAll, markInit: markInit, isInit: isInit };
+// 	})();
+
+// 	// =============================================================================
+// 	// PPT MODULE
+// 	// =============================================================================
+
+// 	var PPT = (function () {
+
+// 		var currentFY = '';
+// 		var apiRows   = [];
+// 		var bound     = false;
+
+// 		// ── FY label helpers ──────────────────────────────────────────────────
+// 		function budgetLabel(fy) {
+// 			var parts = (fy || '2025-26').split('-');
+// 			return (parts[0] || '2025') + '-' + (parts[1] ? parts[1].slice(-2) : '26') + ' Budget';
+// 		}
+// 		function estLabel(fy) {
+// 			var parts = (fy || '2025-26').split('-');
+// 			var sy    = parseInt(parts[0] || '2025', 10) - 1;
+// 			var ey    = parseInt(parts[1] || '26',   10) - 1;
+// 			return sy + '-' + String(ey).padStart(2, '0') + ' Est';
+// 		}
+
+// 		// ── Convert raw rupees → ₹ Cr. ───────────────────────────────────────
+// 		function toCr(v) { return (parseFloat(v) || 0) / 10000000; }
+
+// 		// ── Transform API response → flat PPT row array ───────────────────────
+// 		// totals.*.ytd             = Budget
+// 		// totals.*.total_posted_amt = Estimate (Actuals)
+// 		function transformResponse(message) {
+// 			var rows      = [];
+// 			var covidRows = [];
+
+// 			(message || []).forEach(function (entity) {
+// 				var isCovid = (entity.label || '').toLowerCase().indexOf('covid') !== -1;
+// 				var totals  = entity.totals || {};
+// 				var capEx   = totals.capital_expenses   || {};
+// 				var opEx    = totals.operating_expenses || {};
+
+// 				var row = {
+// 					name  : entity.label || '',
+// 					bOpex : toCr(opEx.ytd),               // Budget  – Operating
+// 					bCapex: toCr(capEx.ytd),              // Budget  – Capital
+// 					eOpex : toCr(opEx.total_posted_amt),  // Est/Actual – Operating
+// 					eCapex: toCr(capEx.total_posted_amt)  // Est/Actual – Capital
+// 				};
+
+// 				if (isCovid) {
+// 					row.isCovid = true;
+// 					row.label   = entity.label;
+// 					covidRows.push(row);
+// 				} else {
+// 					rows.push(row);
+// 				}
+// 			});
+
+// 			// Sub Total (non-covid entities)
+// 			rows.push({ isSubTotal: true, label: 'Sub Total' });
+
+// 			// Covid rows after sub-total
+// 			covidRows.forEach(function (r) { rows.push(r); });
+
+// 			// Grand Total
+// 			rows.push({ isGrand: true, label: 'Grand Total' });
+
+// 			return rows;
+// 		}
+
+// 		// ── Compute sub-total and grand-total ─────────────────────────────────
+// 		function calcTotals(rows) {
+// 			var sub   = { bOpex: 0, bCapex: 0, eOpex: 0, eCapex: 0 };
+// 			var covid = { bOpex: 0, bCapex: 0, eOpex: 0, eCapex: 0 };
+
+// 			rows.forEach(function (r) {
+// 				if (r.isSubTotal || r.isGrand) { return; }
+// 				var t = r.isCovid ? covid : sub;
+// 				t.bOpex  += r.bOpex  || 0;
+// 				t.bCapex += r.bCapex || 0;
+// 				t.eOpex  += r.eOpex  || 0;
+// 				t.eCapex += r.eCapex || 0;
+// 			});
+
+// 			return {
+// 				sub  : sub,
+// 				grand: {
+// 					bOpex : sub.bOpex  + covid.bOpex,
+// 					bCapex: sub.bCapex + covid.bCapex,
+// 					eOpex : sub.eOpex  + covid.eOpex,
+// 					eCapex: sub.eCapex + covid.eCapex
+// 				}
+// 			};
+// 		}
+
+// 		// ── Number formatter ─────────────────────────────────────────────────
+// 		function fmt(v) {
+// 			var n = parseFloat(v) || 0;
+// 			return n === 0
+// 				? '<span class="ppt-dash">-</span>'
+// 				: n.toFixed(2);
+// 		}
+
+// 		// ── Update column headers with FY labels ──────────────────────────────
+// 		function updateHeaders() {
+// 			$('#ppt-budget-hdr').text(budgetLabel(currentFY));
+// 			$('#ppt-est-hdr').text(estLabel(currentFY));
+// 			$('#ppt-main-title').text(
+// 				'Overall Foundation Numbers \u2013 ' +
+// 				budgetLabel(currentFY) + ' vs. ' + estLabel(currentFY)
+// 			);
+// 		}
+
+// 		// ── Render table ──────────────────────────────────────────────────────
+// 		function renderTable(rows) {
+// 			updateHeaders();
+// 			var term   = ($('#ppt-search').val() || '').trim().toLowerCase();
+// 			var totals = calcTotals(rows);
+// 			var $tb    = $('#ppt-tbody').empty();
+
+// 			rows.forEach(function (row) {
+// 				var bO, bC, eO, eC, label, cls = '', bT, eT;
+
+// 				if (row.isSubTotal) {
+// 					var s = totals.sub;
+// 					bO = s.bOpex; bC = s.bCapex; eO = s.eOpex; eC = s.eCapex;
+// 					label = row.label || 'Sub Total';
+// 					cls   = 'ppt-total-row';
+
+// 				} else if (row.isGrand) {
+// 					var g = totals.grand;
+// 					bO = g.bOpex; bC = g.bCapex; eO = g.eOpex; eC = g.eCapex;
+// 					label = row.label || 'Grand Total';
+// 					cls   = 'ppt-total-row';
+
+// 				} else {
+// 					if (term && (row.name || row.label || '').toLowerCase().indexOf(term) === -1) { return; }
+// 					bO = row.bOpex || 0; bC = row.bCapex || 0;
+// 					eO = row.eOpex || 0; eC = row.eCapex || 0;
+// 					label = row.isCovid ? (row.label || 'COVID SUPPORT') : row.name;
+// 				}
+
+// 				bT = bO + bC;
+// 				eT = eO + eC;
+
+// 				$tb.append(
+// 					'<tr class="' + cls + '">' +
+// 						'<td>' + label + '</td>' +
+// 						'<td class="ppt-sep-left">' + fmt(bO) + '</td>' +
+// 						'<td>'                       + fmt(bC) + '</td>' +
+// 						'<td>'                       + fmt(bT) + '</td>' +
+// 						'<td class="ppt-grp-sep">'   + fmt(eO) + '</td>' +
+// 						'<td>'                       + fmt(eC) + '</td>' +
+// 						'<td>'                       + fmt(eT) + '</td>' +
+// 					'</tr>'
+// 				);
+// 			});
+// 		}
+
+// 		// ── Excel export ──────────────────────────────────────────────────────
+// 		function exportToExcel(rows) {
+// 			if (typeof XLSX === 'undefined') {
+// 				frappe.msgprint('XLSX library not loaded yet. Please try again in a moment.');
+// 				return;
+// 			}
+// 			var bl     = budgetLabel(currentFY);
+// 			var el_lbl = estLabel(currentFY);
+// 			var totals = calcTotals(rows);
+
+// 			var exRows = [[
+// 				'Unit',
+// 				bl + ' Opex', bl + ' Capex', bl + ' Total',
+// 				el_lbl + ' Opex', el_lbl + ' Capex', el_lbl + ' Total'
+// 			]];
+
+// 			rows.forEach(function (row) {
+// 				var bO, bC, eO, eC, label;
+// 				if (row.isSubTotal) {
+// 					var s = totals.sub;
+// 					bO = s.bOpex; bC = s.bCapex; eO = s.eOpex; eC = s.eCapex;
+// 					label = row.label || 'Sub Total';
+// 				} else if (row.isGrand) {
+// 					var g = totals.grand;
+// 					bO = g.bOpex; bC = g.bCapex; eO = g.eOpex; eC = g.eCapex;
+// 					label = row.label || 'Grand Total';
+// 				} else {
+// 					bO = row.bOpex || 0; bC = row.bCapex || 0;
+// 					eO = row.eOpex || 0; eC = row.eCapex || 0;
+// 					label = row.isCovid ? (row.label || 'COVID SUPPORT') : row.name;
+// 				}
+// 				exRows.push([label, bO, bC, bO + bC, eO, eC, eO + eC]);
+// 			});
+
+// 			var ws = XLSX.utils.aoa_to_sheet(exRows);
+// 			ws['!cols'] = [
+// 				{ wch: 28 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+// 				{ wch: 14 }, { wch: 14 }, { wch: 14 }
+// 			];
+// 			var wb = XLSX.utils.book_new();
+// 			XLSX.utils.book_append_sheet(wb, ws, 'PPT');
+// 			XLSX.writeFile(wb, 'Foundation_PPT_' + currentFY + '.xlsx');
+// 		}
+
+// 		// ── Bind UI events (once only) ────────────────────────────────────────
+// 		function bindEvents() {
+// 			$(document).on('input.ppt', '#ppt-search', function () {
+// 				renderTable(apiRows);
+// 			});
+// 			$(document).on('click.ppt', '#ppt-export-btn', function () {
+// 				if (!apiRows.length) {
+// 					frappe.msgprint('No data to export yet.');
+// 					return;
+// 				}
+// 				exportToExcel(apiRows);
+// 			});
+// 		}
+
+// 		// ── Fetch from API then render ────────────────────────────────────────
+// 		function fetchAndRender(fy) {
+// 			apiRows = [];
+// 			$('#ppt-tbody').empty();
+// 			Loader.show('Loading PPT data');
+
+// 			frappe.call({
+// 				method: 'annual_budget.api.foundation_consolidated_report.add_expense_totals',
+// 				args  : { financial_year: fy, month: 'March', set_group_id: 1 ,previous_financial_year: getFinancialYearParams(fyControl)},
+// 				callback: function (r) {
+// 					Loader.hide();
+// 					if (r.message && Array.isArray(r.message)) {
+// 						apiRows = transformResponse(r.message);
+// 						renderTable(apiRows);
+// 					} else {
+// 						frappe.msgprint('Failed to load PPT data.');
+// 					}
+// 				},
+// 				error: function () {
+// 					Loader.hide();
+// 					frappe.msgprint('Server error loading PPT data.');
+// 				}
+// 			});
+// 		}
+
+// 		// ── Public load() ─────────────────────────────────────────────────────
+// 		function load(fy) {
+// 			currentFY = fy || '2025-26';
+// 			if (!bound) {
+// 				frappe.require(
+// 					'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+// 					function () {}
+// 				);
+// 				bindEvents();
+// 				bound = true;
+// 			}
+// 			fetchAndRender(currentFY);
+// 		}
+
+// 		return { load: load };
+// 	})();
+
+// 	// =============================================================================
+// 	// ANNUAL BUDGET MODULE
+// 	// =============================================================================
+
+// 	var Annual = (function () {
+
+// 		var Q_DEFS = {
+// 			q1: { label: 'Quarter 1', months: ['April',   'May',      'June']      },
+// 			q2: { label: 'Quarter 2', months: ['July',    'August',   'September'] },
+// 			q3: { label: 'Quarter 3', months: ['October', 'November', 'December']  },
+// 			q4: { label: 'Quarter 4', months: ['January', 'February', 'March']     }
+// 		};
+// 		var Q_KEYS = ['q1','q2','q3','q4'];
+// 		var data = [], expandedQ = [], openH = {}, openS = {}, bound = false;
+
+// 		function sumArr(a) { var t=0; (a||[]).forEach(function(v){t+=(v||0);}); return t; }
+// 		function objTotal(o) { var t=0; Q_KEYS.forEach(function(k){t+=sumArr(o[k]);}); return t; }
+
+// 		function qCells(obj) {
+// 			var html = '';
+// 			Q_KEYS.forEach(function (k) {
+// 				var vals = obj[k] || [0,0,0];
+// 				if (expandedQ.indexOf(k) !== -1) {
+// 					vals.forEach(function (v) { html += '<td>' + formatINR(v) + '</td>'; });
+// 				} else {
+// 					html += '<td colspan="3">' + formatINR(sumArr(vals)) + '</td>';
+// 				}
+// 			});
+// 			return html;
+// 		}
+
+// 		function buildHeader() {
+// 			var $t = $('#annual-table thead').empty();
+// 			var $m = $('<tr class="cb-thead-main"></tr>');
+// 			$m.append('<th rowspan="2">Expense Head / Line Item</th>');
+// 			$m.append('<th rowspan="2">GL Code</th>');
+// 			Q_KEYS.forEach(function (k) {
+// 				var o = expandedQ.indexOf(k) !== -1;
+// 				$m.append('<th class="cb-q-header" data-quarter="' + k + '" colspan="3" rowspan="' + (o?1:2) + '" style="cursor:pointer;">' + Q_DEFS[k].label + ' ' + (o?'▲':'▼') + '</th>');
+// 			});
+// 			$m.append('<th rowspan="2">Total</th>');
+// 			$t.append($m);
+// 			if (expandedQ.length) {
+// 				var $s = $('<tr class="cb-thead-sub"></tr>');
+// 				Q_KEYS.forEach(function (k) {
+// 					if (expandedQ.indexOf(k) !== -1) {
+// 						Q_DEFS[k].months.forEach(function (m) { $s.append('<th>' + m + '</th>'); });
+// 					}
+// 				});
+// 				$t.append($s);
+// 			}
+// 		}
+
+// 		function renderTable() {
+// 			buildHeader();
+// 			var $tb   = $('#annual-table tbody').empty();
+// 			var term  = $('#annual-search').val().trim().toLowerCase();
+// 			var grand = { q1:[0,0,0], q2:[0,0,0], q3:[0,0,0], q4:[0,0,0] };
+
+// 			data.forEach(function (head, hi) {
+// 				if (term && !matchSearch(head, term)) { return; }
+// 				var hs = String(hi);
+// 				var ho = openH[hs] === true;
+// 				Q_KEYS.forEach(function (k) {
+// 					(head[k]||[0,0,0]).forEach(function (v,mi) { grand[k][mi]+=(v||0); });
+// 				});
+
+// 				$tb.append(
+// 					'<tr class="cb-row-head cb-annual-head" data-hi="' + hs + '" style="cursor:pointer;">' +
+// 						'<td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name.trim() + '</td>' +
+// 						'<td>-</td>' + qCells(head) +
+// 						'<td class="cb-text-accent">' + formatINR(objTotal(head)) + '</td>' +
+// 					'</tr>'
+// 				);
+
+// 				(head.sub_heads||[]).forEach(function (sub, si) {
+// 					var sk = hs+'-'+si;
+// 					var so = openS[sk] === true;
+// 					$tb.append(
+// 						'<tr class="cb-row-sub cb-annual-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + 'cursor:pointer;">' +
+// 							'<td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' +
+// 							'<td>-</td>' + qCells(sub) +
+// 							'<td>' + formatINR(objTotal(sub)) + '</td>' +
+// 						'</tr>'
+// 					);
+// 					(sub.items||[]).forEach(function (item) {
+// 						$tb.append(
+// 							'<tr class="cb-annual-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + ((ho&&so)?'':'display:none;') + '">' +
+// 								'<td style="padding-left:40px;">' + item.name + '</td>' +
+// 								'<td>' + (item.gl_code||'-') + '</td>' + qCells(item) +
+// 								'<td>' + formatINR(objTotal(item)) + '</td>' +
+// 							'</tr>'
+// 						);
+// 					});
+// 				});
+
+// 				(head.items||[]).forEach(function (d) {
+// 					$tb.append(
+// 						'<tr class="cb-annual-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '">' +
+// 							'<td style="padding-left:35px;">' + d.name + '</td>' +
+// 							'<td>' + (d.gl_code||'-') + '</td>' + qCells(d) +
+// 							'<td>' + formatINR(objTotal(d)) + '</td>' +
+// 						'</tr>'
+// 					);
+// 				});
+// 			});
+
+// 			var gt = 0; Q_KEYS.forEach(function (k) { gt += sumArr(grand[k]); });
+// 			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td><td>-</td>' + qCells(grand) + '<td>' + formatINR(gt) + '</td></tr>');
+// 		}
+
+// 		function toggleHead(hs) {
+// 			openH[hs] = !(openH[hs] === true);
+// 			if (!openH[hs]) {
+// 				data.forEach(function (h, hi) {
+// 					if (String(hi) !== hs) { return; }
+// 					(h.sub_heads||[]).forEach(function (_, si) { openS[hs+'-'+si] = false; });
+// 				});
+// 			}
+// 			renderTable();
+// 		}
+
+// 		function toggleSub(hs, ss) {
+// 			var sk = hs+'-'+ss;
+// 			openS[sk] = !(openS[sk] === true);
+// 			renderTable();
+// 		}
+
+// 		function matchSearch(head, term) {
+// 			if (!term) { return true; }
+// 			if (head.name.toLowerCase().indexOf(term) !== -1) { return true; }
+// 			var subs = head.sub_heads||[];
+// 			for (var s=0; s<subs.length; s++) {
+// 				if (subs[s].name.toLowerCase().indexOf(term) !== -1) { return true; }
+// 				for (var i=0; i<(subs[s].items||[]).length; i++) {
+// 					if ((subs[s].items[i].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 					if ((subs[s].items[i].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 				}
+// 			}
+// 			for (var d=0; d<(head.items||[]).length; d++) {
+// 				if ((head.items[d].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 				if ((head.items[d].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 			}
+// 			return false;
+// 		}
+
+// 		function bindEvents() {
+// 			$(document).on('input.annual', '#annual-search', function () { renderTable(); });
+
+// 			$(document).on('change.annual', '#annual-expand-quarters', function () {
+// 				expandedQ = this.checked ? Q_KEYS.slice() : [];
+// 				renderTable();
+// 			});
+
+// 			$(document).on('change.annual', '#annual-expand-items', function () {
+// 				if (this.checked) {
+// 					data.forEach(function (h, hi) {
+// 						openH[String(hi)] = true;
+// 						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
+// 					});
+// 				} else {
+// 					openH = {}; openS = {};
+// 				}
+// 				renderTable();
+// 			});
+
+// 			$(document).on('click.annual', '#annual-table .cb-q-header', function () {
+// 				var k   = String($(this).attr('data-quarter'));
+// 				var idx = expandedQ.indexOf(k);
+// 				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
+// 				$('#annual-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
+// 				renderTable();
+// 			});
+
+// 			$('#tab-annual_budget').on('click.annual', '.cb-annual-head', function (e) {
+// 				e.stopPropagation();
+// 				toggleHead(String($(this).attr('data-hi')));
+// 			});
+
+// 			$('#tab-annual_budget').on('click.annual', '.cb-annual-sub', function (e) {
+// 				e.stopPropagation();
+// 				toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si')));
+// 			});
+// 		}
+
+// 		function fetchAndRender(fy) {
+// 			data=[]; openH={}; openS={}; expandedQ=[];
+// 			$('#annual-expand-quarters,#annual-expand-items').prop('checked', false);
+// 			$('#annual-search').val('');
+// 			Loader.show('Loading Annual Budget');
+// 			frappe.call({
+// 				method  : 'annual_budget.api.phase_sheet.get_consolidated_report',
+// 				args    : { financial_year: fy },
+// 				callback: function (r) { data = r.message||[]; renderTable(); Loader.hide(); },
+// 				error   : function () { Loader.hide(); frappe.msgprint('Error loading Annual Budget.'); }
+// 			});
+// 		}
+
+// 		function load(fy) {
+// 			if (!bound) { bindEvents(); bound = true; }
+// 			fetchAndRender(fy);
+// 		}
+// 		return { load: load };
+// 	})();
+
+// 	// =============================================================================
+// 	// ESTIMATE MODULE
+// 	// =============================================================================
+
+// 	var Estimate = (function () {
+
+// 		var Q_DEFS = {
+// 			q1: { label: 'Quarter 1', months: ['April',   'May',      'June']      },
+// 			q2: { label: 'Quarter 2', months: ['July',    'August',   'September'] },
+// 			q3: { label: 'Quarter 3', months: ['October', 'November', 'December']  },
+// 			q4: { label: 'Quarter 4', months: ['January', 'February', 'March']     }
+// 		};
+// 		var Q_KEYS = ['q1','q2','q3','q4'];
+// 		var Q_IDX  = { q1:[0,1,2], q2:[3,4,5], q3:[6,7,8], q4:[9,10,11] };
+// 		var data=[],expandedQ=[],openH={},openS={},bound=false;
+
+// 		function getMth(obj) {
+// 			var m = obj.months||{};
+// 			return [
+// 				parseFloat(m['4']||0),  parseFloat(m['5']||0),  parseFloat(m['6']||0),
+// 				parseFloat(m['7']||0),  parseFloat(m['8']||0),  parseFloat(m['9']||0),
+// 				parseFloat(m['10']||0), parseFloat(m['11']||0), parseFloat(m['12']||0),
+// 				parseFloat(m['1']||0),  parseFloat(m['2']||0),  parseFloat(m['3']||0)
+// 			];
+// 		}
+// 		function qTot(obj) { return [parseFloat(obj['Q1']||0), parseFloat(obj['Q2']||0), parseFloat(obj['Q3']||0), parseFloat(obj['Q4']||0)]; }
+// 		function yTot(obj) { var q=qTot(obj); return q[0]+q[1]+q[2]+q[3]; }
+
+// 		function qCells(obj) {
+// 			var mths=getMth(obj), qtots=qTot(obj), html='';
+// 			Q_KEYS.forEach(function (q, qi) {
+// 				if (expandedQ.indexOf(q) !== -1) {
+// 					Q_IDX[q].forEach(function (mi) { html += '<td>' + formatINR(mths[mi]) + '</td>'; });
+// 				} else {
+// 					html += '<td colspan="3">' + formatINR(qtots[qi]) + '</td>';
+// 				}
+// 			});
+// 			return html;
+// 		}
+
+// 		function buildHeader() {
+// 			var $t = $('#estimate-table thead').empty();
+// 			var $m = $('<tr class="cb-thead-main"></tr>');
+// 			$m.append('<th rowspan="2">Expense</th>');
+// 			Q_KEYS.forEach(function (k) {
+// 				var o = expandedQ.indexOf(k) !== -1;
+// 				$m.append('<th class="est-q-toggle" data-q="' + k + '" colspan="3" rowspan="' + (o?1:2) + '" style="cursor:pointer;">' + Q_DEFS[k].label + ' ' + (o?'▲':'▼') + '</th>');
+// 			});
+// 			$m.append('<th rowspan="2">Total</th>');
+// 			$t.append($m);
+// 			if (expandedQ.length) {
+// 				var $s = $('<tr class="cb-thead-sub"></tr>');
+// 				Q_KEYS.forEach(function (k) {
+// 					if (expandedQ.indexOf(k) !== -1) {
+// 						Q_DEFS[k].months.forEach(function (m) { $s.append('<th>' + m + '</th>'); });
+// 					}
+// 				});
+// 				$t.append($s);
+// 			}
+// 		}
+
+// 		function renderTable() {
+// 			buildHeader();
+// 			var $tb  = $('#estimate-tbody').empty();
+// 			var term = $('#estimate-search').val().trim().toLowerCase();
+// 			if (!Array.isArray(data)||!data.length) {
+// 				$tb.append('<tr><td colspan="14" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
+// 				return;
+// 			}
+// 			var gM=[0,0,0,0,0,0,0,0,0,0,0,0], gQ=[0,0,0,0];
+
+// 			data.forEach(function (head, hi) {
+// 				if (term && !matchSearch(head, term)) { return; }
+// 				getMth(head).forEach(function (v,i) { gM[i]+=v; });
+// 				qTot(head).forEach(function  (v,i) { gQ[i]+=v; });
+// 				var hs=String(hi), ho=openH[hs];
+
+// 				$tb.append('<tr class="cb-row-head cb-est-head" data-hi="' + hs + '"><td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name + '</td>' + qCells(head) + '<td class="cb-text-accent">' + formatINR(yTot(head)) + '</td></tr>');
+
+// 				(head.items||[]).forEach(function (item) {
+// 					$tb.append('<tr class="cb-est-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:30px;">' + item.name + (item.gl_code?' ('+item.gl_code+')':'') + '</td>' + qCells(item) + '<td>' + formatINR(yTot(item)) + '</td></tr>');
+// 				});
+
+// 				(head.sub_heads||[]).forEach(function (sub, si) {
+// 					var sk=hs+'-'+si, so=openS[sk];
+// 					$tb.append('<tr class="cb-row-sub cb-est-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' + qCells(sub) + '<td>' + formatINR(yTot(sub)) + '</td></tr>');
+// 					(sub.items||[]).forEach(function (item) {
+// 						$tb.append('<tr class="cb-est-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + ((ho&&so)?'':'display:none;') + '"><td style="padding-left:45px;">' + item.name + (item.gl_code?' ('+item.gl_code+')':'') + '</td>' + qCells(item) + '<td>' + formatINR(yTot(item)) + '</td></tr>');
+// 					});
+// 				});
+// 			});
+
+// 			var gO = { Q1:gQ[0],Q2:gQ[1],Q3:gQ[2],Q4:gQ[3], months:{'4':gM[0],'5':gM[1],'6':gM[2],'7':gM[3],'8':gM[4],'9':gM[5],'10':gM[6],'11':gM[7],'12':gM[8],'1':gM[9],'2':gM[10],'3':gM[11]} };
+// 			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td>' + qCells(gO) + '<td>' + formatINR(gQ[0]+gQ[1]+gQ[2]+gQ[3]) + '</td></tr>');
+// 		}
+
+// 		function toggleHead(hs) {
+// 			var o = !openH[hs]; openH[hs] = o;
+// 			$('#estimate-table tbody .cb-est-head[data-hi="' + hs + '"]').find('.cb-arrow').text(o?'▼':'▶');
+// 			if (o) {
+// 				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').show();
+// 				$('#estimate-table tbody .cb-est-head-item[data-hi="' + hs + '"]').show();
+// 				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').each(function () {
+// 					var si = $(this).attr('data-si');
+// 					if (openS[hs+'-'+si]) { $('#estimate-table tbody .cb-est-sub-item[data-hi="' + hs + '"][data-si="' + si + '"]').show(); }
+// 				});
+// 			} else {
+// 				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').each(function () {
+// 					var si=$(this).attr('data-si'); openS[hs+'-'+si]=false; $(this).find('.cb-arrow').text('▶');
+// 				});
+// 				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"],.cb-est-sub-item[data-hi="' + hs + '"],.cb-est-head-item[data-hi="' + hs + '"]').hide();
+// 			}
+// 		}
+
+// 		function toggleSub(hs, ss) {
+// 			var sk=hs+'-'+ss, o=!openS[sk]; openS[sk]=o;
+// 			$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"][data-si="' + ss + '"]').find('.cb-arrow').text(o?'▼':'▶');
+// 			var $i = $('#estimate-table tbody .cb-est-sub-item[data-hi="' + hs + '"][data-si="' + ss + '"]');
+// 			o ? $i.show() : $i.hide();
+// 		}
+
+// 		function matchSearch(head, term) {
+// 			if (!term) { return true; }
+// 			if (head.name.toLowerCase().indexOf(term) !== -1) { return true; }
+// 			for (var s=0; s<(head.sub_heads||[]).length; s++) {
+// 				if (head.sub_heads[s].name.toLowerCase().indexOf(term) !== -1) { return true; }
+// 				for (var i=0; i<(head.sub_heads[s].items||[]).length; i++) {
+// 					if ((head.sub_heads[s].items[i].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 					if ((head.sub_heads[s].items[i].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 				}
+// 			}
+// 			for (var d=0; d<(head.items||[]).length; d++) {
+// 				if ((head.items[d].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 				if ((head.items[d].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
+// 			}
+// 			return false;
+// 		}
+
+// 		function bindEvents() {
+// 			$(document).on('click.estimate', '#estimate-table .est-q-toggle', function () {
+// 				var k=String($(this).attr('data-q')), idx=expandedQ.indexOf(k);
+// 				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
+// 				$('#estimate-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
+// 				renderTable();
+// 			});
+// 			$(document).on('change.estimate', '#estimate-expand-quarters', function () {
+// 				expandedQ = this.checked ? Q_KEYS.slice() : [];
+// 				renderTable();
+// 			});
+// 			$(document).on('change.estimate', '#estimate-expand-items', function () {
+// 				if (this.checked) {
+// 					data.forEach(function (h, hi) {
+// 						openH[String(hi)] = true;
+// 						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
+// 					});
+// 				} else {
+// 					openH = {}; openS = {};
+// 				}
+// 				renderTable();
+// 			});
+// 			$('#tab-estimate').on('click.estimate', '.cb-est-head', function (e) {
+// 				e.stopPropagation();
+// 				toggleHead(String($(this).attr('data-hi')));
+// 			});
+// 			$('#tab-estimate').on('click.estimate', '.cb-est-sub', function (e) {
+// 				e.stopPropagation();
+// 				toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si')));
+// 			});
+// 			$(document).on('input.estimate', '#estimate-search', function () { renderTable(); });
+// 		}
+
+// 		function fetchAndRender(fy) {
+// 			data=[]; openH={}; openS={}; expandedQ=[];
+// 			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked', false);
+// 			var year = (fy||'2025-26').split('-')[0];
+// 			Loader.show('Loading Estimate');
+// 			frappe.call({
+// 				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
+// 				args    : { fiscal_year: year, accounting_period: '12' },
+// 				callback: function (r) {
+// 					if (r.message && r.message.status === 'success') { data = r.message.data||[]; }
+// 					else { frappe.msgprint('Failed to load Estimate data.'); }
+// 					renderTable(); Loader.hide();
+// 				},
+// 				error: function () { Loader.hide(); frappe.msgprint('Server error loading Estimate data.'); }
+// 			});
+// 		}
+
+// 		function load(fy) { if (!bound) { bindEvents(); bound=true; } fetchAndRender(fy); }
+// 		return { load: load };
+// 	})();
+
+// 	// =============================================================================
+// 	// BUDGET & ESTIMATE MODULE
+// 	// =============================================================================
+
+// 	var BudgetEstimate = (function () {
+
+// 		var rawData     = [];
+// 		var currentFY   = '';
+// 		var openSec     = {};
+// 		var openSub     = {};
+// 		var expandItems = false;
+// 		var bound       = false;
+
+// 		function pl() { return getFYLabels(currentFY).plan; }
+// 		function el() { return getFYLabels(currentFY).est;  }
+// 		function entityLabel(entry) { return (entry.label || '').trim(); }
+
+// 		function buildStruct() {
+// 			if (!rawData.length) { return []; }
+// 			return (rawData[0].actuals || []).map(function (sec) {
+// 				return {
+// 					name     : sec.name,
+// 					sub_heads: (sec.sub_heads || []).map(function (sub) {
+// 						return {
+// 							name : sub.name,
+// 							items: (sub.items || []).map(function (i) {
+// 								return { name: i.name, gl_code: i.gl_code || '' };
+// 							})
+// 						};
+// 					}),
+// 					items: (sec.items || []).map(function (i) {
+// 						return { name: i.name, gl_code: i.gl_code || '' };
+// 					})
+// 				};
+// 			});
+// 		}
+
+// 		function itemVal(entry, itemName, field) {
+// 			var v = 0;
+// 			(entry.actuals || []).forEach(function (sec) {
+// 				(sec.items || []).forEach(function (i) {
+// 					if (i.name === itemName) { v += parseFloat(i[field] || 0); }
+// 				});
+// 				(sec.sub_heads || []).forEach(function (sub) {
+// 					(sub.items || []).forEach(function (i) {
+// 						if (i.name === itemName) { v += parseFloat(i[field] || 0); }
+// 					});
+// 				});
+// 			});
+// 			return v;
+// 		}
+// 		function subVal(entry, secName, subName, field) {
+// 			var v = 0;
+// 			(entry.actuals || []).forEach(function (sec) {
+// 				if (sec.name !== secName) { return; }
+// 				(sec.sub_heads || []).forEach(function (sub) {
+// 					if (sub.name !== subName) { return; }
+// 					v += parseFloat(field === 'plan' ? (sub.ytd || 0) : (sub.total_posted_amt_ytd || 0));
+// 				});
+// 			});
+// 			return v;
+// 		}
+// 		function secVal(entry, secName, field) {
+// 			var v = 0;
+// 			(entry.actuals || []).forEach(function (sec) {
+// 				if (sec.name !== secName) { return; }
+// 				v += parseFloat(field === 'plan' ? (sec.ytd || 0) : (sec.total_posted_amt_ytd || 0));
+// 			});
+// 			return v;
+// 		}
+// 		function grandVal(entry, field) {
+// 			var v = 0;
+// 			(entry.actuals || []).forEach(function (sec) {
+// 				v += parseFloat(field === 'plan' ? (sec.ytd || 0) : (sec.total_posted_amt_ytd || 0));
+// 			});
+// 			return v;
+// 		}
+
+// 		function itemCells(name) {
+// 			var h = '';
+// 			rawData.forEach(function (e) {
+// 				h += '<td>' + formatINR(itemVal(e, name, 'ytd'))              + '</td>';
+// 				h += '<td>' + formatINR(itemVal(e, name, 'total_posted_amt')) + '</td>';
+// 			});
+// 			return h;
+// 		}
+// 		function subCells(sn, subn) {
+// 			var h = '';
+// 			rawData.forEach(function (e) {
+// 				h += '<td class="cb-text-accent">' + formatINR(subVal(e, sn, subn, 'plan')) + '</td>';
+// 				h += '<td class="cb-text-accent">' + formatINR(subVal(e, sn, subn, 'est'))  + '</td>';
+// 			});
+// 			return h;
+// 		}
+// 		function secCells(sn) {
+// 			var h = '';
+// 			rawData.forEach(function (e) {
+// 				h += '<td style="font-weight:700;">' + formatINR(secVal(e, sn, 'plan')) + '</td>';
+// 				h += '<td style="font-weight:700;">' + formatINR(secVal(e, sn, 'est'))  + '</td>';
+// 			});
+// 			return h;
+// 		}
+// 		function grandCells() {
+// 			var h = '';
+// 			rawData.forEach(function (e) {
+// 				h += '<td>' + formatINR(grandVal(e, 'plan')) + '</td>';
+// 				h += '<td>' + formatINR(grandVal(e, 'est'))  + '</td>';
+// 			});
+// 			return h;
+// 		}
+// 		function itemTotalPlan(name)   { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'ytd');}); return v; }
+// 		function itemTotalEst(name)    { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'total_posted_amt');}); return v; }
+// 		function subTotalPlan(sn,subn) { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'plan');}); return v; }
+// 		function subTotalEst(sn,subn)  { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'est');}); return v; }
+// 		function secTotalPlan(sn)      { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'plan');}); return v; }
+// 		function secTotalEst(sn)       { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'est');}); return v; }
+// 		function allGrandPlan()        { var v=0; rawData.forEach(function(e){v+=grandVal(e,'plan');}); return v; }
+// 		function allGrandEst()         { var v=0; rawData.forEach(function(e){v+=grandVal(e,'est');}); return v; }
+
+// 		function totalCell2(plan, est, cls) {
+// 			cls = cls || '';
+// 			return '<td class="be-total-plan ' + cls + '" style="font-weight:700;">' + formatINR(plan) + '</td>' +
+// 			       '<td class="be-total-est '  + cls + '" style="font-weight:700;">' + formatINR(est)  + '</td>';
+// 		}
+
+// 		function buildHeader() {
+// 			var $t  = $('#be-table thead').empty();
+// 			var $r1 = $('<tr class="cb-thead-main"></tr>');
+// 			var $r2 = $('<tr class="cb-thead-sub"></tr>');
+// 			$r1.append(
+// 				'<th rowspan="2" style="text-align:left;min-width:280px;' +
+// 				'position:sticky;left:0;z-index:40;background:#0076B6;">' +
+// 				'Expense Head / Line Item</th>'
+// 			);
+// 			rawData.forEach(function (e) {
+// 				$r1.append('<th colspan="2" style="text-align:center;">' + entityLabel(e) + '</th>');
+// 			});
+// 			$r1.append('<th colspan="2" style="text-align:center;background:#003B63;">Grand Total</th>');
+// 			rawData.forEach(function () {
+// 				$r2.append('<th style="text-align:center;min-width:140px;">' + pl() + '</th>');
+// 				$r2.append('<th style="text-align:center;min-width:140px;">' + el() + '</th>');
+// 			});
+// 			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + pl() + '</th>');
+// 			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + el() + '</th>');
+// 			$t.append($r1).append($r2);
+// 		}
+
+// 		function renderTable() {
+// 			buildHeader();
+// 			var $tb    = $('#be-tbody').empty();
+// 			var term   = $('#be-search').val().trim().toLowerCase();
+// 			var struct = buildStruct();
+// 			var cols   = 1 + rawData.length * 2 + 2;
+
+// 			if (!rawData.length || !struct.length) {
+// 				$tb.append('<tr><td colspan="' + cols + '" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
+// 				return;
+// 			}
+
+// 			struct.forEach(function (sec) {
+// 				var sn      = sec.name;
+// 				var secOpen = openSec[sn] !== false;
+// 				var secVis  = secOpen ? '' : 'display:none;';
+
+// 				$tb.append(
+// 					'<tr class="cb-row-head be-sec-row" data-sec="' + sn + '">' +
+// 						'<td style="text-align:left;">' +
+// 							'<span class="cb-arrow">' + (secOpen ? '▼' : '▶') + '</span> ' + sn +
+// 						'</td>' +
+// 						secCells(sn) +
+// 						totalCell2(secTotalPlan(sn), secTotalEst(sn), 'be-grand-col') +
+// 					'</tr>'
+// 				);
+
+// 				sec.sub_heads.forEach(function (sub) {
+// 					var sk      = sn + '::' + sub.name;
+// 					var subOpen = expandItems || (openSub[sk] === true);
+// 					var subVis  = secOpen ? '' : 'display:none;';
+// 					var itmVis  = (secOpen && subOpen) ? '' : 'display:none;';
+
+// 					$tb.append(
+// 						'<tr class="cb-row-sub be-sec-child be-sub-row" ' +
+// 						'data-sec="' + sn + '" data-sub="' + sk + '" style="' + subVis + '">' +
+// 							'<td style="padding-left:22px;text-align:left;">' +
+// 								'<span class="cb-arrow">' + (subOpen ? '▼' : '▶') + '</span> ' + sub.name +
+// 							'</td>' +
+// 							subCells(sn, sub.name) +
+// 							totalCell2(subTotalPlan(sn, sub.name), subTotalEst(sn, sub.name), 'be-grand-col') +
+// 						'</tr>'
+// 					);
+
+// 					sub.items.forEach(function (item) {
+// 						if (term &&
+// 							item.name.toLowerCase().indexOf(term) === -1 &&
+// 							item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
+// 						$tb.append(
+// 							'<tr class="be-item-row be-sec-child be-sub-child" ' +
+// 							'data-sec="' + sn + '" data-sub="' + sk + '" style="' + itmVis + '">' +
+// 								'<td style="padding-left:42px;text-align:left;">' +
+// 									item.name +
+// 									(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
+// 								'</td>' +
+// 								itemCells(item.name) +
+// 								totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
+// 							'</tr>'
+// 						);
+// 					});
+// 				});
+
+// 				sec.items.forEach(function (item) {
+// 					if (term &&
+// 						item.name.toLowerCase().indexOf(term) === -1 &&
+// 						item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
+// 					$tb.append(
+// 						'<tr class="be-item-row be-sec-child be-direct-item" ' +
+// 						'data-sec="' + sn + '" style="' + secVis + '">' +
+// 							'<td style="padding-left:30px;text-align:left;">' +
+// 								item.name +
+// 								(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
+// 							'</td>' +
+// 							itemCells(item.name) +
+// 							totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
+// 						'</tr>'
+// 					);
+// 				});
+// 			});
+
+// 			$tb.append(
+// 				'<tr class="cb-row-grand">' +
+// 					'<td style="text-align:left;">GRAND TOTAL</td>' +
+// 					grandCells() +
+// 					totalCell2(allGrandPlan(), allGrandEst(), 'be-grand-col') +
+// 				'</tr>'
+// 			);
+// 		}
+
+// 		function toggleSec(sn) {
+// 			var o = !(openSec[sn] !== false);
+// 			openSec[sn] = o;
+// 			$('#be-table tbody .be-sec-row[data-sec="' + sn + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
+// 			var $ch = $('#be-table tbody .be-sec-child[data-sec="' + sn + '"]');
+// 			if (o) {
+// 				$ch.filter('.be-sub-row,.be-direct-item').show();
+// 				$ch.filter('.be-sub-child').each(function () {
+// 					var sk = $(this).attr('data-sub');
+// 					if (expandItems || openSub[sk] === true) { $(this).show(); }
+// 				});
+// 			} else { $ch.hide(); }
+// 		}
+
+// 		function toggleSubRow(sk) {
+// 			var o = !(openSub[sk] === true);
+// 			openSub[sk] = o;
+// 			$('#be-table tbody .be-sub-row[data-sub="' + sk + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
+// 			var $it = $('#be-table tbody .be-sub-child[data-sub="' + sk + '"]');
+// 			o ? $it.show() : $it.hide();
+// 		}
+
+// 		function bindEvents() {
+// 			$('#tab-budget_estimate').on('click.be', '.be-sec-row', function (e) {
+// 				e.stopPropagation();
+// 				toggleSec($(this).attr('data-sec'));
+// 			});
+// 			$('#tab-budget_estimate').on('click.be', '.be-sub-row', function (e) {
+// 				e.stopPropagation();
+// 				if (!expandItems) { toggleSubRow($(this).attr('data-sub')); }
+// 			});
+// 			$(document).on('change.be', '#be-expand-items', function () {
+// 				expandItems = this.checked;
+// 				buildStruct().forEach(function (sec) {
+// 					openSec[sec.name] = expandItems ? true : false;
+// 					sec.sub_heads.forEach(function (sub) {
+// 						openSub[sec.name + '::' + sub.name] = expandItems;
+// 					});
+// 				});
+// 				renderTable();
+// 			});
+// 			$(document).on('input.be', '#be-search', function () { renderTable(); });
+// 		}
+
+// 		function fetchAndRender(fy) {
+// 			currentFY   = fy;
+// 			rawData     = [];
+// 			openSec     = {};
+// 			openSub     = {};
+// 			expandItems = false;
+// 			$('#be-expand-items').prop('checked', false);
+
+// 			Loader.show('Loading Budget & Estimate');
+// 			frappe.call({
+// 				method  : 'annual_budget.api.foundation_consolidated_report.format_api',
+// 				args    : { financial_year: fy, month: 'March', set_group_id: 1,previous_financial_year:getFinancialYearParams(fyControl)},
+// 				callback: function (r) {
+// 					if (r.message && Array.isArray(r.message)) {
+// 						rawData = r.message;
+// 					} else {
+// 						frappe.msgprint('Failed to load Budget & Estimate data.');
+// 					}
+// 					renderTable();
+// 					Loader.hide();
+// 				},
+// 				error: function () {
+// 					Loader.hide();
+// 					frappe.msgprint('Server error loading Budget & Estimate data.');
+// 				}
+// 			});
+// 		}
+
+// 		function load(fy) {
+// 			if (!bound) { bindEvents(); bound = true; }
+// 			fetchAndRender(fy);
+// 		}
+
+// 		return { load: load };
+// 	})();
+
+// 	// =============================================================================
+// 	// AUTO-LOAD ACTIVE TAB ON PAGE OPEN
+// 	// =============================================================================
+
+// 	var initialFY = fyControl.get_value();
+// 	if (initialFY) { TabLoader.trigger('ppt'); }
+
+// };
 
 
 
@@ -2744,6 +4387,17 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	}
 
 	// =============================================================================
+	// PREV FY HELPER  — '2025-26' → '2024-25'
+	// =============================================================================
+
+	function getPrevFY(fy) {
+		var parts = (fy || '2025-26').split('-');
+		var s = parseInt(parts[0] || '2025', 10) - 1;
+		var e = parseInt(parts[1] || '26',   10) - 1;
+		return s + '-' + String(e).padStart(2, '0');
+	}
+
+	// =============================================================================
 	// GLOBAL LOADER
 	// =============================================================================
 
@@ -2779,82 +4433,108 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	$(page.body).append(
 		'<style>' +
-		':root{--blue-dark:#003B63;--blue-mid:#0076B6;--blue-light:#E9F4FB;' +
-		'--orange:#F26B21;--orange-light:#FFF3E6;--border-color:#ddd;}' +
 
+		/* ── CSS variables ── */
+		':root{' +
+			'--blue-dark:#003B63;--blue-mid:#0076B6;--blue-light:#E9F4FB;' +
+			'--orange:#F26B21;--orange-light:#FFF3E6;' +
+			'--border:#bbb;--border-light:#ddd;--border-header:#005f94;--border-orange:#d45a10;' +
+		'}' +
+
+		/* ── Layout ── */
 		'.cb-wrapper{padding:15px;background:#fff;}' +
-		'#cb-tab-nav{border-bottom:1px solid #ddd;list-style:none;padding:0;margin:0 0 16px;display:flex;align-items:flex-end;flex-wrap:wrap;}' +
+
+		/* ── Tab nav ── */
+		'#cb-tab-nav{border-bottom:2px solid #ddd;list-style:none;padding:0;margin:0 0 16px;display:flex;align-items:flex-end;flex-wrap:wrap;}' +
 		'#cb-tab-nav li{display:inline-block;}' +
-		'#cb-tab-nav .cb-tab-link{cursor:pointer;display:inline-block;padding:8px 20px;color:#555;font-size:13px;font-weight:400;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;}' +
-		'#cb-tab-nav .cb-tab-link.active{color:#000;font-weight:700;border-bottom:3px solid #000;}' +
+		'#cb-tab-nav .cb-tab-link{cursor:pointer;display:inline-block;padding:8px 20px;color:#555;font-size:13px;font-weight:400;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;text-decoration:none;transition:color .15s;}' +
+		'#cb-tab-nav .cb-tab-link.active{color:#003B63;font-weight:700;border-bottom:3px solid #003B63;}' +
 		'.cb-tab-pane{display:none;}.cb-tab-pane.active{display:block;}' +
 
+		/* ── Filter row ── */
 		'.cb-filter-row{padding:10px 0;background:#fff;margin-bottom:10px;}' +
 		'.cb-filter-row .col-md-3,.cb-filter-row .col-sm-12{padding-left:8px;padding-right:8px;}' +
 		'@media(max-width:768px){.cb-filter-row{padding:10px;}.cb-filter-row .col-md-3{width:100%;margin-bottom:8px;}}' +
 
-		'.cb-controls{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:#f7f9fb;border:1px solid #ddd;border-radius:6px;flex-wrap:wrap;gap:8px;}' +
-		'.cb-search-input{padding:7px 12px;border:1px solid #aaa;border-radius:6px;font-size:13px;width:280px;}' +
+		/* ── Controls bar ── */
+		'.cb-controls{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:10px;background:#f7f9fb;border:1px solid #ddd;border-radius:4px;flex-wrap:wrap;gap:8px;}' +
+		'.cb-search-input{padding:6px 10px;border:1px solid #bbb;border-radius:4px;font-size:13px;width:260px;}' +
 		'.cb-checkbox-area{display:flex;gap:18px;font-size:13px;font-weight:500;color:#444;}' +
 		'.cb-checkbox-area label{display:flex;align-items:center;gap:5px;cursor:pointer;}' +
-		'.cb-export-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:13px;font-weight:600;color:#fff;background:#0076B6;border:1px solid #0076B6;border-radius:6px;cursor:pointer;white-space:nowrap;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.12);}' +
-		'.cb-export-btn:hover{background:#005f94;border-color:#005f94;}' +
 
-		'.cb-scroll-wrapper{border:1px solid #ddd;border-radius:6px;overflow:auto;max-height:70vh;background:#fff;}' +
+		/* ── Scroll wrapper ── */
+		'.cb-scroll-wrapper{border:2px solid #bbb;border-radius:4px;overflow:auto;max-height:72vh;background:#fff;}' +
 
-		'.cb-table{min-width:900px;width:100%;border-collapse:collapse;font-size:13px;}' +
-		'.cb-table th,.cb-table td{border:1px solid #ddd;padding:8px 10px;white-space:nowrap;text-align:right;}' +
-		'.cb-table th:first-child,.cb-table td:first-child{text-align:left;}' +
-		'.cb-table th:nth-child(2),.cb-table td:nth-child(2){text-align:center;}' +
+		/* =================================================================
+		   SHARED TABLE BASE — every table uses border-collapse + full cell
+		   borders so ALL row and column dividers are always visible
+		   ================================================================= */
+		'.cb-table,.ppt-table-wrap{' +
+			'width:100%;border-collapse:collapse;font-size:13px;font-family:Arial,sans-serif;table-layout:auto;' +
+		'}' +
 
-		'.cb-thead-main th{background:#0076B6;color:#fff;font-weight:700;position:sticky;top:0;z-index:25;text-align:center;}' +
-		'.cb-thead-sub th{background:#F26B21;color:#fff;font-weight:600;position:sticky;top:34px;z-index:24;text-align:center;}' +
+		/* Every th and td gets a solid border on ALL four sides */
+		'.cb-table th,.cb-table td,' +
+		'.ppt-table-wrap th,.ppt-table-wrap td{' +
+			'border:1px solid #bbb;' +
+			'padding:7px 11px;' +
+			'white-space:nowrap;' +
+			'text-align:right;' +
+		'}' +
 
+		/* First column — left-align */
+		'.cb-table th:first-child,.cb-table td:first-child,' +
+		'.ppt-table-wrap th:first-child,.ppt-table-wrap td:first-child{text-align:left;}' +
+
+		/* Second column — center (GL code) */
+		'.cb-table td:nth-child(2){text-align:center;color:#666;}' +
+
+		/* ── Sticky headers ── */
+		'.cb-thead-main th{' +
+			'background:#0076B6;color:#fff;font-weight:700;text-align:center;' +
+			'position:sticky;top:0;z-index:25;border-color:#005f94;' +
+		'}' +
+		'.cb-thead-sub th{' +
+			'background:#F26B21;color:#fff;font-weight:600;text-align:center;' +
+			'position:sticky;top:37px;z-index:24;border-color:#c85810;min-width:100px;' +
+		'}' +
+
+		/* ── Row types — cb-table ── */
 		'.cb-row-head{font-weight:700;cursor:pointer;background:#E9F4FB;color:#003B63;}' +
-		'.cb-row-head:hover td{background:#dceef9;}' +
+		'.cb-row-head:hover td{background:#d0e8f5;}' +
 		'.cb-row-sub{background:#FFF3E6;font-weight:600;cursor:pointer;}' +
-		'.cb-row-sub:hover td{background:#ffe8d4;}' +
-		'.cb-row-item td:first-child{padding-left:35px;}' +
-		'.cb-row-sub-item td:first-child{padding-left:50px;}' +
-		'.cb-row-grand{background:#0076B6;color:#fff;font-weight:800;border-top:2px solid #003B63;}' +
-		'.cb-row-grand td{color:#fff;}' +
+		'.cb-row-sub:hover td{background:#ffe0c2;}' +
+		'.cb-row-grand td{background:#0076B6 !important;color:#fff !important;font-weight:800;border-color:#005f94 !important;}' +
 		'.cb-text-accent{color:#0076B6;font-weight:600;}' +
 
-		/* ── PPT TAB – clean report table ── */
-		'.ppt-title-bar{margin-bottom:2px;}' +
-		'.ppt-main-title{font-size:12px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;margin-bottom:4px;}' +
-		'.ppt-currency-label{font-size:11px;font-style:italic;color:#111;text-align:right;margin-bottom:2px;}' +
-		'#ppt-table{border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif;border:1px solid #999;}' +
-		'#ppt-table thead tr.ppt-hdr1 th{background:#fff;text-align:center;font-weight:700;padding:6px 10px 4px;border:1px solid #999;color:#111;}' +
-		'#ppt-table thead tr.ppt-hdr2 th{background:#fff;text-align:center;font-weight:700;padding:4px 10px;border-left:1px dotted #aaa;border-right:1px dotted #aaa;border-bottom:1px dotted #aaa;border-top:none;color:#111;min-width:90px;}' +
-		'#ppt-table thead tr.ppt-hdr2 th.ppt-unit-sub{border-left:1px solid #999;border-right:1px solid #999;}' +
-		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-first{border-left:1px solid #999 !important;}' +
-		'#ppt-table thead tr.ppt-hdr2 th.ppt-est-last{border-right:1px solid #999 !important;}' +
-		'#ppt-table thead tr.ppt-hdr2 th.ppt-bgt-last{border-right:1px solid #999 !important;}' +
-		'#ppt-table tbody td{padding:5px 10px;border-bottom:1px dotted #aaa;text-align:right;white-space:nowrap;color:#111;border-left:none;border-right:none;}' +
-		'#ppt-table tbody td:first-child{text-align:left;border-left:1px solid #999;min-width:160px;}' +
-		'#ppt-table tbody td:last-child{border-right:1px solid #999;}' +
-		'#ppt-table tbody td.ppt-sep-left{border-left:1px solid #999 !important;}' +
-		'#ppt-table tbody td.ppt-grp-sep{border-left:1px solid #999 !important;}' +
-		'#ppt-table tbody tr.ppt-total-row td{font-weight:700;border-bottom:1px solid #999 !important;}' +
-		'#ppt-table tbody tr.ppt-total-row td:first-child{border-left:1px solid #999;}' +
-		'#ppt-table tbody tr.ppt-total-row td:last-child{border-right:1px solid #999;}' +
-		'.ppt-dash{color:#555;text-align:center;display:block;}' +
+		/* ── PPT title area ── */
+		'.ppt-title-bar{margin:10px 0 3px;}' +
+		'.ppt-main-title{font-size:12px;font-weight:700;text-transform:uppercase;text-decoration:underline;letter-spacing:.3px;color:#111;}' +
+		'.ppt-currency-label{font-size:11px;font-style:italic;color:#555;text-align:right;margin-bottom:4px;}' +
 
-		/* BE sticky first column */
+		/* ── PPT table specific ── */
+		'.ppt-table-wrap thead tr.cb-thead-main th{border-color:#005f94;}' +
+		'.ppt-table-wrap thead tr.cb-thead-sub th{border-color:#c85810;}' +
+		'.ppt-table-wrap tbody tr td{background:#fff;color:#111;}' +
+		/* Sub Total / Grand Total rows */
+		'.ppt-table-wrap tbody tr.ppt-total-row td{font-weight:700;background:#e8f0fa !important;color:#003B63 !important;border-color:#999 !important;}' +
+		'.ppt-dash{color:#aaa;text-align:center;display:block;}' +
+
+		/* ── Budget & Estimate — sticky first column ── */
 		'#be-table td:first-child{position:sticky;left:0;z-index:10;background:inherit;}' +
-		'#be-table .cb-thead-main th:first-child{position:sticky;left:0;z-index:20;background:#0076B6;}' +
-		'#be-table .cb-thead-sub th{left:auto !important;}' +
+		'#be-table thead th:first-child{position:sticky;left:0;z-index:30;}' +
+		'#be-table .cb-thead-main th:first-child{background:#0076B6;}' +
+		'#be-table .cb-thead-sub th:first-child{background:#F26B21;}' +
 		'#be-table .cb-row-head td:first-child{background:#E9F4FB;}' +
 		'#be-table .cb-row-sub  td:first-child{background:#FFF3E6;}' +
-		'#be-table .cb-row-grand td:first-child{background:#0076B6;}' +
+		'#be-table .cb-row-grand td:first-child{background:#0076B6 !important;}' +
 		'#be-table .be-item-row td:first-child{background:#fff;}' +
-		'#be-table .be-grand-col{background:#E8F0FA;color:#003B63;border-left:2px solid #0076B6;}' +
-		'#be-table .cb-row-grand .be-grand-col{background:#003B63;color:#fff;}' +
-		'#be-table .cb-row-head .be-grand-col{background:#003B63 !important;color:#fff;}' +
-		'#be-table .cb-row-sub  .be-grand-col{background:#E8D5C4;color:#7a3b00;}' +
+		'#be-table .be-grand-col{background:#ddeaf7 !important;color:#003B63;border-left:2px solid #0076B6 !important;}' +
+		'#be-table .cb-row-grand .be-grand-col{background:#003B63 !important;color:#fff !important;}' +
+		'#be-table .cb-row-head .be-grand-col{background:#003B63 !important;color:#fff !important;}' +
+		'#be-table .cb-row-sub  .be-grand-col{background:#f0ddd0 !important;color:#7a3b00 !important;}' +
 
-		/* loader */
+		/* ── Loader ── */
 		'#global-loader.loader-overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(18,18,18,.92);backdrop-filter:blur(6px);display:none;z-index:999999;align-items:center;justify-content:center;}' +
 		'.loader-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}' +
 		'.loader-logo{width:90px;height:90px;border-radius:50%;background:linear-gradient(145deg,#fff,#eaeaea);padding:14px;object-fit:contain;box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 4px rgba(255,255,255,.08);animation:loader-pulse 1.6s infinite ease-in-out;}' +
@@ -2873,13 +4553,6 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		var n = parseFloat(v);
 		if (isNaN(n)) { n = 0; }
 		return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-	}
-
-	function fmtDash(v) {
-		var n = parseFloat(v) || 0;
-		return n === 0
-			? '<span class="ppt-dash">-</span>'
-			: n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 	}
 
 	// =============================================================================
@@ -2901,46 +4574,52 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 				/* ── PPT TAB ── */
 				'<div class="cb-tab-pane active" id="tab-ppt">' +
+
+					/* Current FY */
 					'<div class="ppt-title-bar">' +
-						'<div class="ppt-main-title" id="ppt-main-title">Overall Foundation Numbers – Budget vs. Est</div>' +
+						'<div class="ppt-main-title" id="ppt-main-title">Overall Foundation Numbers - Budget vs. Est</div>' +
 					'</div>' +
-
-					'<div class="ppt-currency-label">₹ Cr.</div>' +
-
-					'<div class="cb-controls">' +
-						'<input type="text" id="ppt-search" class="cb-search-input" placeholder="Search unit...">' +
-						'<button class="cb-export-btn" id="ppt-export-btn">↓ Export to Excel</button>' +
-					'</div>' +
-
-					'<div class="cb-scroll-wrapper">' +
-
-						'<table id="ppt-table" class="cb-table">' +
-
+					'<div class="ppt-currency-label">&#8377; Cr.</div>' +
+					'<div class="cb-scroll-wrapper" style="margin-bottom:24px;">' +
+						'<table id="ppt-table" class="ppt-table-wrap">' +
 							'<thead>' +
-
 								'<tr class="cb-thead-main">' +
 									'<th rowspan="2" style="min-width:180px;text-align:center;">Unit</th>' +
-									'<th colspan="3">Budget</th>' +
-									'<th colspan="3">Estimate</th>' +
+									'<th colspan="3" id="ppt-budget-hdr">Budget</th>' +
+									'<th colspan="3" id="ppt-est-hdr">Estimate</th>' +
 								'</tr>' +
-
 								'<tr class="cb-thead-sub">' +
-									'<th>Opex</th>' +
-									'<th>Capex</th>' +
-									'<th>Total</th>' +
-									'<th>Opex</th>' +
-									'<th>Capex</th>' +
-									'<th>Total</th>' +
+									'<th>Opex</th><th>Capex</th><th>Total</th>' +
+									'<th>Opex</th><th>Capex</th><th>Total</th>' +
 								'</tr>' +
-
 							'</thead>' +
-
 							'<tbody id="ppt-tbody"></tbody>' +
-
 						'</table>' +
-
 					'</div>' +
-				'</div>'+
+
+					/* Previous FY */
+					'<div class="ppt-title-bar">' +
+						'<div class="ppt-main-title" id="ppt-prev-title">Overall Foundation Numbers - Previous Year Budget vs. Est</div>' +
+					'</div>' +
+					'<div class="ppt-currency-label">&#8377; Cr.</div>' +
+					'<div class="cb-scroll-wrapper">' +
+						'<table id="ppt-prev-table" class="ppt-table-wrap">' +
+							'<thead>' +
+								'<tr class="cb-thead-main">' +
+									'<th rowspan="2" style="min-width:180px;text-align:center;">Unit</th>' +
+									'<th colspan="3" id="ppt-prev-budget-hdr">Budget</th>' +
+									'<th colspan="3" id="ppt-prev-est-hdr">Estimate</th>' +
+								'</tr>' +
+								'<tr class="cb-thead-sub">' +
+									'<th>Opex</th><th>Capex</th><th>Total</th>' +
+									'<th>Opex</th><th>Capex</th><th>Total</th>' +
+								'</tr>' +
+							'</thead>' +
+							'<tbody id="ppt-prev-tbody"></tbody>' +
+						'</table>' +
+					'</div>' +
+
+				'</div>' +
 
 				'<div class="cb-tab-pane" id="tab-summary_inr"></div>' +
 				'<div class="cb-tab-pane" id="tab-headcount"></div>' +
@@ -2959,7 +4638,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					'</div>' +
 				'</div>' +
 
-				/* ESTIMATE — added Expand Quarters + Expand Line Items checkboxes */
+				/* ESTIMATE */
 				'<div class="cb-tab-pane" id="tab-estimate">' +
 					'<div class="cb-controls">' +
 						'<input type="text" id="estimate-search" class="cb-search-input" placeholder="Search Expense / Item / GL Code...">' +
@@ -2996,101 +4675,45 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var $fyColumn = $('<div class="col-md-3 col-sm-12"></div>').appendTo('#cb-filter-row');
 
-	// var fyControl = frappe.ui.form.make_control({
-	// 	parent: $fyColumn,
-	// 	df: {
-	// 		label    : 'Financial Year',
-	// 		fieldtype: 'Select',
-	// 		fieldname: 'financial_year',
-	// 		reqd     : 1,
-	// 		change   : function () {
-	// 			var y = this.get_value();
-	// 			if (!y) { return; }
-	// 			updatePageTitle(y);
-	// 			TabLoader.resetAll();
-	// 			var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
-	// 			if (activeTab) { TabLoader.trigger(activeTab); }
-	// 		}
-	// 	},
-	// 	render_input: true
-	// });
-	// fyControl.refresh();
-
-	// frappe.call({
-	// 	method  : 'frappe.client.get_list',
-	// 	args    : { doctype: 'Financial Year List', fields: ['name'], order_by: 'name desc', limit_page_length: 100 },
-	// 	callback: function (r) {
-	// 		if (r.message && r.message.length) {
-	// 			var names = r.message.map(function (x) { return x.name; });
-	// 			fyControl.df.options = names.join('\n');
-	// 			fyControl.refresh();
-	// 			fyControl.set_value(names[0]);
-	// 			updatePageTitle(names[0]);
-	// 		}
-	// 	}
-	// });
-			// ---------- Financial Year Filter ----------
 	var fyControl = frappe.ui.form.make_control({
 		parent: $fyColumn,
 		df: {
-			label: 'Financial Year',
+			label    : 'Financial Year',
 			fieldtype: 'Select',
 			fieldname: 'financial_year',
-			reqd: 1,
-			change: function () {
-
+			reqd     : 1,
+			change   : function () {
 				var y = this.get_value();
-				if (!y) return;
-
+				if (!y) { return; }
 				updatePageTitle(y);
 				TabLoader.resetAll();
-
 				var activeTab = $('#cb-tab-nav .cb-tab-link.active').data('tab');
-				if (activeTab) {
-					TabLoader.trigger(activeTab);
-				}
+				if (activeTab) { TabLoader.trigger(activeTab); }
 			}
 		},
 		render_input: true
 	});
-
 	fyControl.refresh();
 
-
-	// ---------- Fetch Financial Years ----------
 	frappe.call({
-		method: "annual_budget.api.filter_options.get_financial_year_list",
+		method: 'annual_budget.api.filter_options.get_financial_year_list',
 		callback: function (r) {
-
 			if (r.message && r.message.length) {
-
-				let years = r.message.map(d => d.financial_year);
-
-				// set dropdown options
-				fyControl.df.options = years.join("\n");
+				var years = r.message.map(function (d) { return d.financial_year; });
+				fyControl.df.options = years.join('\n');
 				fyControl.refresh();
 
+				var today     = new Date();
+				var year      = today.getFullYear();
+				var month     = today.getMonth() + 1;
+				var currentFY = (month >= 4)
+					? year + '-' + String(year + 1).slice(-2)
+					: (year - 1) + '-' + String(year).slice(-2);
 
-				// ---------- Detect Current Financial Year ----------
-				let today = new Date();
-				let year = today.getFullYear();
-				let month = today.getMonth() + 1;
-
-				let currentFY;
-
-				if (month >= 4) {
-					currentFY = year + "-" + String(year + 1).slice(-2);
-				} else {
-					currentFY = (year - 1) + "-" + String(year).slice(-2);
-				}
-
-
-				// ---------- Set Default Value ----------
-				if (years.includes(currentFY)) {
+				if (years.indexOf(currentFY) !== -1) {
 					fyControl.set_value(currentFY);
 					updatePageTitle(currentFY);
 				} else {
-					// fallback to latest FY
 					fyControl.set_value(years[0]);
 					updatePageTitle(years[0]);
 				}
@@ -3143,163 +4766,125 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	var PPT = (function () {
 
 		var currentFY = '';
-		var bound     = false;
 
-		// ── FY label helpers ────────────────────────────────────────────────────
-		function budgetLabel(fy) {
-			var parts = (fy || '2026-27').split('-');
-			return (parts[0] || '2026') + '-' + (parts[1] ? parts[1].slice(-2) : '27') + '  Budget';
-		}
-		function estLabel(fy) {
-			var parts = (fy || '2026-27').split('-');
-			var sy = parseInt(parts[0] || '2026', 10) - 1;
-			var ey = parseInt(parts[1] || '27',   10) - 1;
-			return sy + '-' + String(ey).padStart(2,'0') + ' Est';
-		}
+		function toCr(v) { return (parseFloat(v) || 0) / 10000000; }
 
-		// ── Test data ────────────────────────────────────────────────────────────
-		// TODO: replace with API – format_api returns this structure per entity.
-		// For the flat PPT view, data shape is:
-		//   [ { name, isTotal, isGrand, bOpex, bCapex, eOpex, eCapex } ]
-		// where bTotal = bOpex + bCapex, eTotal = eOpex + eCapex
-		var TEST_ROWS = [
-			{ name: 'Education',       bOpex: 45.20, bCapex:  8.50, eOpex: 42.10, eCapex:  7.80 },
-			{ name: 'Health',          bOpex: 32.15, bCapex:  5.25, eOpex: 30.20, eCapex:  4.90 },
-			{ name: 'Livelihoods',     bOpex: 28.60, bCapex:  3.40, eOpex: 27.30, eCapex:  3.10 },
-			{ name: 'University',      bOpex: 18.75, bCapex: 12.60, eOpex: 17.50, eCapex: 11.20 },
-			{ name: 'Philanthropy',    bOpex: 15.40, bCapex:  0.80, eOpex: 14.90, eCapex:  0.70 },
-			{ name: 'New Initiatives', bOpex:  8.20, bCapex:  2.10, eOpex:  6.50, eCapex:  1.80 },
-			{ name: 'Enablers',        bOpex: 22.30, bCapex:  4.50, eOpex: 21.10, eCapex:  4.20 },
-			{ name: '__SUB__',   isTotal: true,  label: 'Total' },
-			{ name: 'Covid-19',        bOpex:  2.50, bCapex:  0.00, eOpex:  3.10, eCapex:  0.00 },
-			{ name: '__GRAND__', isGrand: true,  label: 'Total' }
-		];
-
-		// ── Number formatter ────────────────────────────────────────────────────
 		function fmt(v) {
-			if (!v || v === 0) { return '<span class="ppt-dash">-</span>'; }
-			return parseFloat(v).toFixed(2);
+			var n = parseFloat(v) || 0;
+			return n === 0
+				? '<span class="ppt-dash">-</span>'
+				: n.toFixed(2);
 		}
 
-		// ── Compute subtotals ────────────────────────────────────────────────────
-		function calcTotals(rows) {
-			var mainRows  = rows.filter(function (r) { return !r.isTotal && !r.isGrand && r.name !== 'Covid-19'; });
-			var covidRow  = rows.find(function (r) { return r.name === 'Covid-19'; }) || {};
-			var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
-			mainRows.forEach(function (r) {
-				sub.bOpex  += r.bOpex  || 0;
-				sub.bCapex += r.bCapex || 0;
-				sub.eOpex  += r.eOpex  || 0;
-				sub.eCapex += r.eCapex || 0;
+		// overall_foundation_numbers[idx]:  budget / actual  fields
+		function transformResponse(message, idx) {
+			var rows = [], covidRows = [];
+			(message || []).forEach(function (entity) {
+				var isCovid = (entity.label || '').toLowerCase().indexOf('covid') !== -1;
+				var ofn     = (entity.overall_foundation_numbers || [])[idx] || {};
+				var capEx   = ofn.capital_expenses   || {};
+				var opEx    = ofn.operating_expenses || {};
+				var row = {
+					name  : entity.label || '',
+					bOpex : toCr(opEx.budget),
+					bCapex: toCr(capEx.budget),
+					eOpex : toCr(opEx.actual),
+					eCapex: toCr(capEx.actual)
+				};
+				if (isCovid) { row.isCovid = true; row.label = entity.label; covidRows.push(row); }
+				else         { rows.push(row); }
 			});
-			var grand = {
-				bOpex : sub.bOpex  + (covidRow.bOpex  || 0),
-				bCapex: sub.bCapex + (covidRow.bCapex || 0),
-				eOpex : sub.eOpex  + (covidRow.eOpex  || 0),
-				eCapex: sub.eCapex + (covidRow.eCapex || 0)
-			};
-			return { sub: sub, grand: grand };
+			rows.push({ isSubTotal: true, label: 'Sub Total' });
+			covidRows.forEach(function (r) { rows.push(r); });
+			rows.push({ isGrand: true, label: 'Grand Total' });
+			return rows;
 		}
 
-		// ── renderTable ──────────────────────────────────────────────────────────
-		function renderTable(rows) {
-			// Update FY labels in header
-			$('#ppt-budget-hdr').text(budgetLabel(currentFY));
-			$('#ppt-est-hdr').text(estLabel(currentFY));
-			$('#ppt-main-title').text(
-				'Overall Foundation Numbers \u2013 ' +
-				budgetLabel(currentFY).replace('Budget','Budget vs.') + ' ' + estLabel(currentFY)
-			);
+		function calcTotals(rows) {
+			var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+			var cov = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+			rows.forEach(function (r) {
+				if (r.isSubTotal || r.isGrand) { return; }
+				var t = r.isCovid ? cov : sub;
+				t.bOpex += r.bOpex||0; t.bCapex += r.bCapex||0;
+				t.eOpex += r.eOpex||0; t.eCapex += r.eCapex||0;
+			});
+			return {
+				sub  : sub,
+				grand: { bOpex:sub.bOpex+cov.bOpex, bCapex:sub.bCapex+cov.bCapex,
+				         eOpex:sub.eOpex+cov.eOpex, eCapex:sub.eCapex+cov.eCapex }
+			};
+		}
 
-			var term   = ($('#ppt-search').val() || '').trim().toLowerCase();
+		function renderTable(rows, title, tbodyId, titleId, budgetHdrId, estHdrId) {
+			$('#' + titleId).text(title);
+			var bm = title.match(/([\d]{4}-[\d]{2})\s+BUDGET/i);
+			var em = title.match(/([\d]{4}-[\d]{2})\s+EST/i);
+			$('#' + budgetHdrId).text(bm ? bm[1] + ' Budget' : 'Budget');
+			$('#' + estHdrId).text(em ? em[1] + ' Est' : 'Est');
+
 			var totals = calcTotals(rows);
-			var $tb    = $('#ppt-tbody').empty();
+			var $tb    = $('#' + tbodyId).empty();
 
 			rows.forEach(function (row) {
-				var bO, bC, eO, eC, label, cls = '', bT, eT;
-
-				if (row.isTotal || row.isGrand) {
-					var t = row.isGrand ? totals.grand : totals.sub;
-					bO = t.bOpex; bC = t.bCapex; eO = t.eOpex; eC = t.eCapex;
-					label = row.label || 'Total';
-					cls = 'ppt-total-row';
+				var bO, bC, eO, eC, label, cls = '';
+				if (row.isSubTotal) {
+					var s = totals.sub;
+					bO=s.bOpex; bC=s.bCapex; eO=s.eOpex; eC=s.eCapex;
+					label = row.label || 'Sub Total'; cls = 'ppt-total-row';
+				} else if (row.isGrand) {
+					var g = totals.grand;
+					bO=g.bOpex; bC=g.bCapex; eO=g.eOpex; eC=g.eCapex;
+					label = row.label || 'Grand Total'; cls = 'ppt-total-row';
 				} else {
-					if (term && row.name.toLowerCase().indexOf(term) === -1) { return; }
-					bO = row.bOpex || 0; bC = row.bCapex || 0;
-					eO = row.eOpex || 0; eC = row.eCapex || 0;
-					label = row.name;
+					bO=row.bOpex||0; bC=row.bCapex||0; eO=row.eOpex||0; eC=row.eCapex||0;
+					label = row.isCovid ? (row.label||'COVID SUPPORT') : row.name;
 				}
-				bT = bO + bC; eT = eO + eC;
-
 				$tb.append(
 					'<tr class="' + cls + '">' +
 						'<td>' + label + '</td>' +
-						'<td class="ppt-sep-left">' + fmt(bO) + '</td>' +
+						'<td>' + fmt(bO) + '</td>' +
 						'<td>' + fmt(bC) + '</td>' +
-						'<td>' + fmt(bT) + '</td>' +
-						'<td class="ppt-grp-sep">' + fmt(eO) + '</td>' +
+						'<td>' + fmt(bO+bC) + '</td>' +
+						'<td>' + fmt(eO) + '</td>' +
 						'<td>' + fmt(eC) + '</td>' +
-						'<td>' + fmt(eT) + '</td>' +
+						'<td>' + fmt(eO+eC) + '</td>' +
 					'</tr>'
 				);
 			});
 		}
 
-		// ── Excel export ─────────────────────────────────────────────────────────
-		function exportToExcel(rows) {
-			if (typeof XLSX === 'undefined') {
-				frappe.msgprint('XLSX library not loaded yet. Please try again in a moment.');
-				return;
-			}
-			var bl = budgetLabel(currentFY), el = estLabel(currentFY);
-			var totals = calcTotals(rows);
-			var exRows = [
-				['Unit', bl + ' Opex', bl + ' Capex', bl + ' Total', el + ' Opex', el + ' Capex', el + ' Total']
-			];
-			rows.forEach(function (row) {
-				var bO, bC, eO, eC, label;
-				if (row.isTotal || row.isGrand) {
-					var t = row.isGrand ? totals.grand : totals.sub;
-					bO=t.bOpex; bC=t.bCapex; eO=t.eOpex; eC=t.eCapex;
-					label = row.label || 'Total';
-				} else {
-					bO=row.bOpex||0; bC=row.bCapex||0; eO=row.eOpex||0; eC=row.eCapex||0;
-					label = row.name;
+		function fetchAndRender(fy) {
+			var loading = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">Loading...</td></tr>';
+			$('#ppt-tbody,#ppt-prev-tbody').html(loading);
+			Loader.show('Loading PPT data');
+
+			frappe.call({
+				method  : 'annual_budget.api.foundation_consolidated_report.add_expense_totals',
+				args    : { financial_year: fy, month: 'March', set_group_id: 1, previous_financial_year: getPrevFY(fy) },
+				callback: function (r) {
+					Loader.hide();
+					if (!r.message || !Array.isArray(r.message)) {
+						$('#ppt-tbody,#ppt-prev-tbody').html('<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">No data.</td></tr>');
+						return;
+					}
+					var msg  = r.message;
+					var ofn0 = ((msg[0]||{}).overall_foundation_numbers||[])[0]||{};
+					var ofn1 = ((msg[0]||{}).overall_foundation_numbers||[])[1]||{};
+					var t0   = ofn0.title || ('Overall Foundation Numbers - ' + fy + ' Budget vs. ' + fy + ' Est');
+					var t1   = ofn1.title || ('Overall Foundation Numbers - ' + getPrevFY(fy) + ' Budget vs. ' + getPrevFY(fy) + ' Est');
+					renderTable(transformResponse(msg,0), t0, 'ppt-tbody',      'ppt-main-title',  'ppt-budget-hdr',      'ppt-est-hdr');
+					renderTable(transformResponse(msg,1), t1, 'ppt-prev-tbody', 'ppt-prev-title',  'ppt-prev-budget-hdr', 'ppt-prev-est-hdr');
+				},
+				error: function () {
+					Loader.hide();
+					$('#ppt-tbody,#ppt-prev-tbody').html('<tr><td colspan="7" style="text-align:center;padding:24px;color:red;">Error loading data.</td></tr>');
 				}
-				exRows.push([label, bO, bC, bO+bC, eO, eC, eO+eC]);
-			});
-			var ws = XLSX.utils.aoa_to_sheet(exRows);
-			ws['!cols'] = [{wch:24},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
-			var wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'PPT');
-			XLSX.writeFile(wb, 'Foundation_PPT_' + currentFY + '.xlsx');
-		}
-
-		// ── bindEvents ───────────────────────────────────────────────────────────
-		function bindEvents() {
-			$(document).on('input.ppt', '#ppt-search', function () { renderTable(TEST_ROWS); });
-			$(document).on('click.ppt', '#ppt-export-btn', function () {
-				exportToExcel(TEST_ROWS);
 			});
 		}
 
-		// ── load ─────────────────────────────────────────────────────────────────
-		function load(fy_val) {
-			currentFY = fy_val || '2026-27';
-			if (!bound) {
-				frappe.require('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () {});
-				bindEvents();
-				bound = true;
-			}
-			// TODO: swap TEST_ROWS with API response when ready:
-			// frappe.call({ method: 'annual_budget.api.foundation_consolidated_report.format_api',
-			//   args: { financial_year: fy_val, month: 'March' },
-			//   callback: function(r) { renderTable(transformApiResponse(r.message)); }
-			// });
-			renderTable(TEST_ROWS);
-		}
-
-	return { load: load };
+		function load(fy) { currentFY = fy || '2025-26'; fetchAndRender(currentFY); }
+		return { load: load };
 	})();
 
 	// =============================================================================
@@ -3309,14 +4894,13 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	var Annual = (function () {
 
 		var Q_DEFS = {
-			q1: { label: 'Quarter 1', months: ['April',   'May',      'June']      },
-			q2: { label: 'Quarter 2', months: ['July',    'August',   'September'] },
-			q3: { label: 'Quarter 3', months: ['October', 'November', 'December']  },
-			q4: { label: 'Quarter 4', months: ['January', 'February', 'March']     }
+			q1: { label: 'Quarter 1', months: ['April','May','June'] },
+			q2: { label: 'Quarter 2', months: ['July','August','September'] },
+			q3: { label: 'Quarter 3', months: ['October','November','December'] },
+			q4: { label: 'Quarter 4', months: ['January','February','March'] }
 		};
 		var Q_KEYS = ['q1','q2','q3','q4'];
-		// ── bound is a closure variable — never reset by TabLoader ──
-		var data = [], expandedQ = [], openH = {}, openS = {}, bound = false;
+		var data=[], expandedQ=[], openH={}, openS={}, bound=false;
 
 		function sumArr(a) { var t=0; (a||[]).forEach(function(v){t+=(v||0);}); return t; }
 		function objTotal(o) { var t=0; Q_KEYS.forEach(function(k){t+=sumArr(o[k]);}); return t; }
@@ -3324,7 +4908,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function qCells(obj) {
 			var html = '';
 			Q_KEYS.forEach(function (k) {
-				var vals = obj[k] || [0,0,0];
+				var vals = obj[k]||[0,0,0];
 				if (expandedQ.indexOf(k) !== -1) {
 					vals.forEach(function (v) { html += '<td>' + formatINR(v) + '</td>'; });
 				} else {
@@ -3337,25 +4921,25 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function buildHeader() {
 			var $t = $('#annual-table thead').empty();
 			var $m = $('<tr class="cb-thead-main"></tr>');
-			$m.append('<th rowspan="2">Expense Head / Line Item</th>');
-			$m.append('<th rowspan="2">GL Code</th>');
+			$m.append('<th rowspan="2" style="min-width:220px;">Expense Head / Line Item</th>');
+			$m.append('<th rowspan="2" style="min-width:90px;text-align:center;">GL Code</th>');
 			Q_KEYS.forEach(function (k) {
 				var o = expandedQ.indexOf(k) !== -1;
-				$m.append('<th class="cb-q-header" data-quarter="' + k + '" colspan="3" rowspan="' + (o?1:2) + '" style="cursor:pointer;">' + Q_DEFS[k].label + ' ' + (o?'▲':'▼') + '</th>');
+				$m.append('<th class="cb-q-header" data-quarter="' + k + '" colspan="3" rowspan="' + (o?1:2) + '" style="cursor:pointer;text-align:center;">' + Q_DEFS[k].label + ' ' + (o?'▲':'▼') + '</th>');
 			});
-			$m.append('<th rowspan="2">Total</th>');
+			$m.append('<th rowspan="2" style="min-width:110px;">Total</th>');
 			$t.append($m);
 			if (expandedQ.length) {
 				var $s = $('<tr class="cb-thead-sub"></tr>');
 				Q_KEYS.forEach(function (k) {
-					if (expandedQ.indexOf(k) !== -1) { Q_DEFS[k].months.forEach(function (m) { $s.append('<th>' + m + '</th>'); }); }
+					if (expandedQ.indexOf(k) !== -1) {
+						Q_DEFS[k].months.forEach(function (m) { $s.append('<th>' + m + '</th>'); });
+					}
 				});
 				$t.append($s);
 			}
 		}
 
-		// ── renderTable reads openH / openS to decide visibility ──
-		// ── Initial render: openH={} so everything starts collapsed ──
 		function renderTable() {
 			buildHeader();
 			var $tb   = $('#annual-table tbody').empty();
@@ -3364,282 +4948,61 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 			data.forEach(function (head, hi) {
 				if (term && !matchSearch(head, term)) { return; }
-				var hs = String(hi);
-				var ho = openH[hs] === true;   // false = collapsed by default
-				Q_KEYS.forEach(function (k) { (head[k]||[0,0,0]).forEach(function (v,mi) { grand[k][mi]+=(v||0); }); });
+				var hs = String(hi), ho = openH[hs] === true;
+				Q_KEYS.forEach(function (k) { (head[k]||[0,0,0]).forEach(function(v,mi){grand[k][mi]+=(v||0);}); });
 
-				// Head row — always visible
 				$tb.append(
-					'<tr class="cb-row-head cb-annual-head" data-hi="' + hs + '" style="cursor:pointer;">' +
+					'<tr class="cb-row-head cb-annual-head" data-hi="' + hs + '">' +
 						'<td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name.trim() + '</td>' +
-						'<td>-</td>' + qCells(head) +
+						'<td style="text-align:center;">-</td>' + qCells(head) +
 						'<td class="cb-text-accent">' + formatINR(objTotal(head)) + '</td>' +
 					'</tr>'
 				);
 
-				// Sub-heads — hidden when head collapsed
 				(head.sub_heads||[]).forEach(function (sub, si) {
-					var sk = hs+'-'+si;
-					var so = openS[sk] === true;   // false = collapsed by default
+					var sk = hs+'-'+si, so = openS[sk]===true;
 					$tb.append(
-						'<tr class="cb-row-sub cb-annual-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + 'cursor:pointer;">' +
-							'<td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' +
-							'<td>-</td>' + qCells(sub) +
+						'<tr class="cb-row-sub cb-annual-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + '">' +
+							'<td style="padding-left:22px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' +
+							'<td style="text-align:center;">-</td>' + qCells(sub) +
 							'<td>' + formatINR(objTotal(sub)) + '</td>' +
 						'</tr>'
 					);
-					// Sub-items — hidden unless both head & sub are open
 					(sub.items||[]).forEach(function (item) {
 						$tb.append(
 							'<tr class="cb-annual-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + ((ho&&so)?'':'display:none;') + '">' +
-								'<td style="padding-left:40px;">' + item.name + '</td>' +
-								'<td>' + (item.gl_code||'-') + '</td>' + qCells(item) +
+								'<td style="padding-left:42px;">' + item.name + '</td>' +
+								'<td style="text-align:center;">' + (item.gl_code||'-') + '</td>' + qCells(item) +
 								'<td>' + formatINR(objTotal(item)) + '</td>' +
 							'</tr>'
 						);
 					});
 				});
 
-				// Direct items under head — hidden when head collapsed
 				(head.items||[]).forEach(function (d) {
 					$tb.append(
 						'<tr class="cb-annual-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '">' +
 							'<td style="padding-left:35px;">' + d.name + '</td>' +
-							'<td>' + (d.gl_code||'-') + '</td>' + qCells(d) +
+							'<td style="text-align:center;">' + (d.gl_code||'-') + '</td>' + qCells(d) +
 							'<td>' + formatINR(objTotal(d)) + '</td>' +
 						'</tr>'
 					);
 				});
 			});
 
-			var gt = 0; Q_KEYS.forEach(function (k) { gt += sumArr(grand[k]); });
-			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td><td>-</td>' + qCells(grand) + '<td>' + formatINR(gt) + '</td></tr>');
+			var gt=0; Q_KEYS.forEach(function(k){gt+=sumArr(grand[k]);});
+			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td><td style="text-align:center;">-</td>' + qCells(grand) + '<td>' + formatINR(gt) + '</td></tr>');
 		}
 
-		// ── Toggle helpers: update state then re-render ──
-		// (re-render is the safest approach — no stale DOM state possible)
 		function toggleHead(hs) {
-			openH[hs] = !(openH[hs] === true);
-			// When collapsing a head, also collapse all its sub-heads
+			openH[hs] = !(openH[hs]===true);
 			if (!openH[hs]) {
-				data.forEach(function (h, hi) {
-					if (String(hi) !== hs) { return; }
-					(h.sub_heads||[]).forEach(function (_, si) { openS[hs+'-'+si] = false; });
-				});
+				data.forEach(function(h,hi){ if(String(hi)!==hs){return;} (h.sub_heads||[]).forEach(function(_,si){openS[hs+'-'+si]=false;}); });
 			}
 			renderTable();
 		}
+		function toggleSub(hs,ss) { openS[hs+'-'+ss]=!(openS[hs+'-'+ss]===true); renderTable(); }
 
-		function toggleSub(hs, ss) {
-			var sk = hs+'-'+ss;
-			openS[sk] = !(openS[sk] === true);
-			renderTable();
-		}
-
-		function matchSearch(head, term) {
-			if (!term) { return true; }
-			if (head.name.toLowerCase().indexOf(term) !== -1) { return true; }
-			var subs = head.sub_heads||[];
-			for (var s=0; s<subs.length; s++) {
-				if (subs[s].name.toLowerCase().indexOf(term) !== -1) { return true; }
-				for (var i=0; i<(subs[s].items||[]).length; i++) {
-					if ((subs[s].items[i].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
-					if ((subs[s].items[i].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
-				}
-			}
-			for (var d=0; d<(head.items||[]).length; d++) {
-				if ((head.items[d].name||'').toLowerCase().indexOf(term) !== -1) { return true; }
-				if ((head.items[d].gl_code||'').toLowerCase().indexOf(term) !== -1) { return true; }
-			}
-			return false;
-		}
-
-		// ── bindEvents uses namespaced events + bound flag ──
-		// ── so it fires exactly once, even across FY changes  ──
-		function bindEvents() {
-			// Search
-			$(document).on('input.annual', '#annual-search', function () { renderTable(); });
-
-			// Expand Quarters checkbox
-			$(document).on('change.annual', '#annual-expand-quarters', function () {
-				expandedQ = this.checked ? Q_KEYS.slice() : [];
-				renderTable();
-			});
-
-			// Expand Line Items checkbox
-			$(document).on('change.annual', '#annual-expand-items', function () {
-				if (this.checked) {
-					data.forEach(function (h, hi) {
-						openH[String(hi)] = true;
-						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
-					});
-				} else {
-					// Collapse everything
-					openH = {}; openS = {};
-				}
-				renderTable();
-			});
-
-			// Quarter column header click (expand single quarter)
-			$(document).on('click.annual', '#annual-table .cb-q-header', function () {
-				var k = String($(this).attr('data-quarter'));
-				var idx = expandedQ.indexOf(k);
-				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
-				// Sync checkbox
-				$('#annual-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
-				renderTable();
-			});
-
-			// ── Head row click — delegated on the tab container ──
-			$('#tab-annual_budget').on('click.annual', '.cb-annual-head', function (e) {
-				e.stopPropagation();
-				toggleHead(String($(this).attr('data-hi')));
-			});
-
-			// ── Sub-head row click ──
-			$('#tab-annual_budget').on('click.annual', '.cb-annual-sub', function (e) {
-				e.stopPropagation();
-				toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si')));
-			});
-		}
-
-		function fetchAndRender(fy) {
-			// Reset state — always start collapsed
-			data=[]; openH={}; openS={}; expandedQ=[];
-			$('#annual-expand-quarters,#annual-expand-items').prop('checked', false);
-			$('#annual-search').val('');
-			Loader.show('Loading Annual Budget');
-			frappe.call({
-				method  : 'annual_budget.api.phase_sheet.get_consolidated_report',
-				args    : { financial_year: fy },
-				callback: function (r) { data = r.message||[]; renderTable(); Loader.hide(); },
-				error   : function () { Loader.hide(); frappe.msgprint('Error loading Annual Budget.'); }
-			});
-		}
-
-		function load(fy) {
-			// bound is a closure variable — never reset externally
-			if (!bound) { bindEvents(); bound = true; }
-			fetchAndRender(fy);
-		}
-		return { load: load };
-	})();
-
-	// =============================================================================
-	// ESTIMATE MODULE  — with Expand Quarters + Expand Line Items checkboxes
-	// =============================================================================
-
-	var Estimate = (function () {
-
-		var Q_DEFS = {
-			q1: { label: 'Quarter 1', months: ['April',   'May',      'June']      },
-			q2: { label: 'Quarter 2', months: ['July',    'August',   'September'] },
-			q3: { label: 'Quarter 3', months: ['October', 'November', 'December']  },
-			q4: { label: 'Quarter 4', months: ['January', 'February', 'March']     }
-		};
-		var Q_KEYS = ['q1','q2','q3','q4'];
-		var Q_IDX  = { q1:[0,1,2], q2:[3,4,5], q3:[6,7,8], q4:[9,10,11] };
-		var data=[],expandedQ=[],openH={},openS={},bound=false;
-
-		function getMth(obj) {
-			var m = obj.months||{};
-			return [
-				parseFloat(m['4']||0),  parseFloat(m['5']||0),  parseFloat(m['6']||0),
-				parseFloat(m['7']||0),  parseFloat(m['8']||0),  parseFloat(m['9']||0),
-				parseFloat(m['10']||0), parseFloat(m['11']||0), parseFloat(m['12']||0),
-				parseFloat(m['1']||0),  parseFloat(m['2']||0),  parseFloat(m['3']||0)
-			];
-		}
-		function qTot(obj) { return [parseFloat(obj['Q1']||0), parseFloat(obj['Q2']||0), parseFloat(obj['Q3']||0), parseFloat(obj['Q4']||0)]; }
-		function yTot(obj) { var q=qTot(obj); return q[0]+q[1]+q[2]+q[3]; }
-
-		function qCells(obj) {
-			var mths=getMth(obj), qtots=qTot(obj), html='';
-			Q_KEYS.forEach(function (q, qi) {
-				if (expandedQ.indexOf(q) !== -1) {
-					Q_IDX[q].forEach(function (mi) { html += '<td>' + formatINR(mths[mi]) + '</td>'; });
-				} else {
-					html += '<td colspan="3">' + formatINR(qtots[qi]) + '</td>';
-				}
-			});
-			return html;
-		}
-
-		function buildHeader() {
-			var $t = $('#estimate-table thead').empty();
-			var $m = $('<tr class="cb-thead-main"></tr>');
-			$m.append('<th rowspan="2">Expense</th>');
-			Q_KEYS.forEach(function (k) {
-				var o = expandedQ.indexOf(k) !== -1;
-				$m.append('<th class="est-q-toggle" data-q="' + k + '" colspan="3" rowspan="' + (o?1:2) + '" style="cursor:pointer;">' + Q_DEFS[k].label + ' ' + (o?'▲':'▼') + '</th>');
-			});
-			$m.append('<th rowspan="2">Total</th>');
-			$t.append($m);
-			if (expandedQ.length) {
-				var $s = $('<tr class="cb-thead-sub"></tr>');
-				Q_KEYS.forEach(function (k) {
-					if (expandedQ.indexOf(k) !== -1) { Q_DEFS[k].months.forEach(function (m) { $s.append('<th>' + m + '</th>'); }); }
-				});
-				$t.append($s);
-			}
-		}
-
-		function renderTable() {
-			buildHeader();
-			var $tb  = $('#estimate-tbody').empty();
-			var term = $('#estimate-search').val().trim().toLowerCase();
-			if (!Array.isArray(data)||!data.length) {
-				$tb.append('<tr><td colspan="14" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
-				return;
-			}
-			var gM=[0,0,0,0,0,0,0,0,0,0,0,0], gQ=[0,0,0,0];
-
-			data.forEach(function (head, hi) {
-				if (term && !matchSearch(head, term)) { return; }
-				getMth(head).forEach(function (v,i) { gM[i]+=v; });
-				qTot(head).forEach(function  (v,i) { gQ[i]+=v; });
-				var hs=String(hi), ho=openH[hs];
-
-				$tb.append('<tr class="cb-row-head cb-est-head" data-hi="' + hs + '"><td><span class="cb-arrow">' + (ho?'▼':'▶') + '</span> ' + head.name + '</td>' + qCells(head) + '<td class="cb-text-accent">' + formatINR(yTot(head)) + '</td></tr>');
-
-				(head.items||[]).forEach(function (item) {
-					$tb.append('<tr class="cb-est-head-item" data-hi="' + hs + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:30px;">' + item.name + (item.gl_code?' ('+item.gl_code+')':'') + '</td>' + qCells(item) + '<td>' + formatINR(yTot(item)) + '</td></tr>');
-				});
-
-				(head.sub_heads||[]).forEach(function (sub, si) {
-					var sk=hs+'-'+si, so=openS[sk];
-					$tb.append('<tr class="cb-row-sub cb-est-sub" data-hi="' + hs + '" data-si="' + si + '" style="' + (ho?'':'display:none;') + '"><td style="padding-left:20px;"><span class="cb-arrow">' + (so?'▼':'▶') + '</span> ' + sub.name + '</td>' + qCells(sub) + '<td>' + formatINR(yTot(sub)) + '</td></tr>');
-					(sub.items||[]).forEach(function (item) {
-						$tb.append('<tr class="cb-est-sub-item" data-hi="' + hs + '" data-si="' + si + '" style="' + ((ho&&so)?'':'display:none;') + '"><td style="padding-left:45px;">' + item.name + (item.gl_code?' ('+item.gl_code+')':'') + '</td>' + qCells(item) + '<td>' + formatINR(yTot(item)) + '</td></tr>');
-					});
-				});
-			});
-
-			var gO = { Q1:gQ[0],Q2:gQ[1],Q3:gQ[2],Q4:gQ[3], months:{'4':gM[0],'5':gM[1],'6':gM[2],'7':gM[3],'8':gM[4],'9':gM[5],'10':gM[6],'11':gM[7],'12':gM[8],'1':gM[9],'2':gM[10],'3':gM[11]} };
-			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td>' + qCells(gO) + '<td>' + formatINR(gQ[0]+gQ[1]+gQ[2]+gQ[3]) + '</td></tr>');
-		}
-
-		function toggleHead(hs) {
-			var o = !openH[hs]; openH[hs] = o;
-			$('#estimate-table tbody .cb-est-head[data-hi="' + hs + '"]').find('.cb-arrow').text(o?'▼':'▶');
-			if (o) {
-				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').show();
-				$('#estimate-table tbody .cb-est-head-item[data-hi="' + hs + '"]').show();
-				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').each(function () {
-					var si = $(this).attr('data-si');
-					if (openS[hs+'-'+si]) { $('#estimate-table tbody .cb-est-sub-item[data-hi="' + hs + '"][data-si="' + si + '"]').show(); }
-				});
-			} else {
-				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"]').each(function () { var si=$(this).attr('data-si'); openS[hs+'-'+si]=false; $(this).find('.cb-arrow').text('▶'); });
-				$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"],.cb-est-sub-item[data-hi="' + hs + '"],.cb-est-head-item[data-hi="' + hs + '"]').hide();
-			}
-		}
-		function toggleSub(hs, ss) {
-			var sk=hs+'-'+ss, o=!openS[sk]; openS[sk]=o;
-			$('#estimate-table tbody .cb-est-sub[data-hi="' + hs + '"][data-si="' + ss + '"]').find('.cb-arrow').text(o?'▼':'▶');
-			var $i = $('#estimate-table tbody .cb-est-sub-item[data-hi="' + hs + '"][data-si="' + ss + '"]');
-			o ? $i.show() : $i.hide();
-		}
 		function matchSearch(head, term) {
 			if (!term) { return true; }
 			if (head.name.toLowerCase().indexOf(term) !== -1) { return true; }
@@ -3658,53 +5021,37 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		}
 
 		function bindEvents() {
-			// Column header click (toggle single quarter)
-			$(document).on('click.estimate', '#estimate-table .est-q-toggle', function () {
-				var k=String($(this).attr('data-q')), idx=expandedQ.indexOf(k);
-				if (idx !== -1) { expandedQ.splice(idx,1); } else { expandedQ.push(k); }
-				$('#estimate-expand-quarters').prop('checked', expandedQ.length === Q_KEYS.length);
-				renderTable();
-			});
-
-			// Expand Quarters checkbox
-			$(document).on('change.estimate', '#estimate-expand-quarters', function () {
+			$(document).on('input.annual', '#annual-search', function () { renderTable(); });
+			$(document).on('change.annual', '#annual-expand-quarters', function () {
 				expandedQ = this.checked ? Q_KEYS.slice() : [];
 				renderTable();
 			});
-
-			// Expand Line Items checkbox
-			$(document).on('change.estimate', '#estimate-expand-items', function () {
+			$(document).on('change.annual', '#annual-expand-items', function () {
 				if (this.checked) {
-					data.forEach(function (h, hi) {
-						openH[String(hi)] = true;
-						(h.sub_heads||[]).forEach(function (_, si) { openS[hi+'-'+si] = true; });
-					});
-				} else {
-					openH = {}; openS = {};
-				}
+					data.forEach(function(h,hi){ openH[String(hi)]=true; (h.sub_heads||[]).forEach(function(_,si){openS[hi+'-'+si]=true;}); });
+				} else { openH={}; openS={}; }
 				renderTable();
 			});
-
-			// Row clicks — delegated on tab container (safe, no duplicates)
-			$('#tab-estimate').on('click.estimate', '.cb-est-head', function (e) { e.stopPropagation(); toggleHead(String($(this).attr('data-hi'))); });
-			$('#tab-estimate').on('click.estimate', '.cb-est-sub',  function (e) { e.stopPropagation(); toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si'))); });
-			$(document).on('input.estimate', '#estimate-search', function () { renderTable(); });
+			$(document).on('click.annual', '#annual-table .cb-q-header', function () {
+				var k=String($(this).attr('data-quarter')), idx=expandedQ.indexOf(k);
+				if (idx!==-1){expandedQ.splice(idx,1);}else{expandedQ.push(k);}
+				$('#annual-expand-quarters').prop('checked', expandedQ.length===Q_KEYS.length);
+				renderTable();
+			});
+			$('#tab-annual_budget').on('click.annual', '.cb-annual-head', function (e) { e.stopPropagation(); toggleHead(String($(this).attr('data-hi'))); });
+			$('#tab-annual_budget').on('click.annual', '.cb-annual-sub',  function (e) { e.stopPropagation(); toggleSub(String($(this).attr('data-hi')), String($(this).attr('data-si'))); });
 		}
 
 		function fetchAndRender(fy) {
 			data=[]; openH={}; openS={}; expandedQ=[];
-			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked', false);
-			var year = (fy||'2025-26').split('-')[0];
-			Loader.show('Loading Estimate');
+			$('#annual-expand-quarters,#annual-expand-items').prop('checked', false);
+			$('#annual-search').val('');
+			Loader.show('Loading Annual Budget');
 			frappe.call({
-				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
-				args    : { fiscal_year: year, accounting_period: '12' },
-				callback: function (r) {
-					if (r.message && r.message.status === 'success') { data = r.message.data||[]; }
-					else { frappe.msgprint('Failed to load Estimate data.'); }
-					renderTable(); Loader.hide();
-				},
-				error: function () { Loader.hide(); frappe.msgprint('Server error loading Estimate data.'); }
+				method  : 'annual_budget.api.phase_sheet.get_consolidated_report',
+				args    : { financial_year: fy },
+				callback: function (r) { data=r.message||[]; renderTable(); Loader.hide(); },
+				error   : function () { Loader.hide(); frappe.msgprint('Error loading Annual Budget.'); }
 			});
 		}
 
@@ -3712,6 +5059,166 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		return { load: load };
 	})();
 
+	// =============================================================================
+	// ESTIMATE MODULE
+	// =============================================================================
+
+	var Estimate = (function () {
+
+		var Q_DEFS = {
+			q1: { label:'Quarter 1', months:['April','May','June'] },
+			q2: { label:'Quarter 2', months:['July','August','September'] },
+			q3: { label:'Quarter 3', months:['October','November','December'] },
+			q4: { label:'Quarter 4', months:['January','February','March'] }
+		};
+		var Q_KEYS=['q1','q2','q3','q4'];
+		var Q_IDX={q1:[0,1,2],q2:[3,4,5],q3:[6,7,8],q4:[9,10,11]};
+		var data=[],expandedQ=[],openH={},openS={},bound=false;
+
+		function getMth(obj) {
+			var m=obj.months||{};
+			return [parseFloat(m['4']||0),parseFloat(m['5']||0),parseFloat(m['6']||0),
+			        parseFloat(m['7']||0),parseFloat(m['8']||0),parseFloat(m['9']||0),
+			        parseFloat(m['10']||0),parseFloat(m['11']||0),parseFloat(m['12']||0),
+			        parseFloat(m['1']||0),parseFloat(m['2']||0),parseFloat(m['3']||0)];
+		}
+		function qTot(obj){return [parseFloat(obj['Q1']||0),parseFloat(obj['Q2']||0),parseFloat(obj['Q3']||0),parseFloat(obj['Q4']||0)];}
+		function yTot(obj){var q=qTot(obj);return q[0]+q[1]+q[2]+q[3];}
+
+		function qCells(obj) {
+			var mths=getMth(obj),qtots=qTot(obj),html='';
+			Q_KEYS.forEach(function(q,qi){
+				if (expandedQ.indexOf(q)!==-1) {
+					Q_IDX[q].forEach(function(mi){html+='<td>'+formatINR(mths[mi])+'</td>';});
+				} else {
+					html+='<td colspan="3">'+formatINR(qtots[qi])+'</td>';
+				}
+			});
+			return html;
+		}
+
+		function buildHeader() {
+			var $t=$('#estimate-table thead').empty();
+			var $m=$('<tr class="cb-thead-main"></tr>');
+			$m.append('<th rowspan="2" style="min-width:220px;">Expense</th>');
+			Q_KEYS.forEach(function(k){
+				var o=expandedQ.indexOf(k)!==-1;
+				$m.append('<th class="est-q-toggle" data-q="'+k+'" colspan="3" rowspan="'+(o?1:2)+'" style="cursor:pointer;text-align:center;">'+Q_DEFS[k].label+' '+(o?'▲':'▼')+'</th>');
+			});
+			$m.append('<th rowspan="2" style="min-width:110px;">Total</th>');
+			$t.append($m);
+			if (expandedQ.length) {
+				var $s=$('<tr class="cb-thead-sub"></tr>');
+				Q_KEYS.forEach(function(k){
+					if (expandedQ.indexOf(k)!==-1){Q_DEFS[k].months.forEach(function(m){$s.append('<th>'+m+'</th>');});}
+				});
+				$t.append($s);
+			}
+		}
+
+		function renderTable() {
+			buildHeader();
+			var $tb=$('#estimate-tbody').empty();
+			var term=$('#estimate-search').val().trim().toLowerCase();
+			if (!Array.isArray(data)||!data.length) {
+				$tb.append('<tr><td colspan="14" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
+				return;
+			}
+			var gM=[0,0,0,0,0,0,0,0,0,0,0,0],gQ=[0,0,0,0];
+			data.forEach(function(head,hi){
+				if (term&&!matchSearch(head,term)){return;}
+				getMth(head).forEach(function(v,i){gM[i]+=v;});
+				qTot(head).forEach(function(v,i){gQ[i]+=v;});
+				var hs=String(hi),ho=openH[hs];
+				$tb.append('<tr class="cb-row-head cb-est-head" data-hi="'+hs+'"><td><span class="cb-arrow">'+(ho?'▼':'▶')+'</span> '+head.name+'</td>'+qCells(head)+'<td class="cb-text-accent">'+formatINR(yTot(head))+'</td></tr>');
+				(head.items||[]).forEach(function(item){
+					$tb.append('<tr class="cb-est-head-item" data-hi="'+hs+'" style="'+(ho?'':'display:none;')+'"><td style="padding-left:28px;">'+item.name+(item.gl_code?' ('+item.gl_code+')':'')+'</td>'+qCells(item)+'<td>'+formatINR(yTot(item))+'</td></tr>');
+				});
+				(head.sub_heads||[]).forEach(function(sub,si){
+					var sk=hs+'-'+si,so=openS[sk];
+					$tb.append('<tr class="cb-row-sub cb-est-sub" data-hi="'+hs+'" data-si="'+si+'" style="'+(ho?'':'display:none;')+'"><td style="padding-left:20px;"><span class="cb-arrow">'+(so?'▼':'▶')+'</span> '+sub.name+'</td>'+qCells(sub)+'<td>'+formatINR(yTot(sub))+'</td></tr>');
+					(sub.items||[]).forEach(function(item){
+						$tb.append('<tr class="cb-est-sub-item" data-hi="'+hs+'" data-si="'+si+'" style="'+((ho&&so)?'':'display:none;')+'"><td style="padding-left:44px;">'+item.name+(item.gl_code?' ('+item.gl_code+')':'')+'</td>'+qCells(item)+'<td>'+formatINR(yTot(item))+'</td></tr>');
+					});
+				});
+			});
+			var gO={Q1:gQ[0],Q2:gQ[1],Q3:gQ[2],Q4:gQ[3],months:{'4':gM[0],'5':gM[1],'6':gM[2],'7':gM[3],'8':gM[4],'9':gM[5],'10':gM[6],'11':gM[7],'12':gM[8],'1':gM[9],'2':gM[10],'3':gM[11]}};
+			$tb.append('<tr class="cb-row-grand"><td>GRAND TOTAL</td>'+qCells(gO)+'<td>'+formatINR(gQ[0]+gQ[1]+gQ[2]+gQ[3])+'</td></tr>');
+		}
+
+		function toggleHead(hs) {
+			var o=!openH[hs]; openH[hs]=o;
+			$('#estimate-table tbody .cb-est-head[data-hi="'+hs+'"]').find('.cb-arrow').text(o?'▼':'▶');
+			if (o) {
+				$('#estimate-table tbody .cb-est-sub[data-hi="'+hs+'"]').show();
+				$('#estimate-table tbody .cb-est-head-item[data-hi="'+hs+'"]').show();
+				$('#estimate-table tbody .cb-est-sub[data-hi="'+hs+'"]').each(function(){
+					var si=$(this).attr('data-si');
+					if (openS[hs+'-'+si]){$('#estimate-table tbody .cb-est-sub-item[data-hi="'+hs+'"][data-si="'+si+'"]').show();}
+				});
+			} else {
+				$('#estimate-table tbody .cb-est-sub[data-hi="'+hs+'"]').each(function(){var si=$(this).attr('data-si');openS[hs+'-'+si]=false;$(this).find('.cb-arrow').text('▶');});
+				$('#estimate-table tbody .cb-est-sub[data-hi="'+hs+'"],.cb-est-sub-item[data-hi="'+hs+'"],.cb-est-head-item[data-hi="'+hs+'"]').hide();
+			}
+		}
+		function toggleSub(hs,ss) {
+			var sk=hs+'-'+ss,o=!openS[sk]; openS[sk]=o;
+			$('#estimate-table tbody .cb-est-sub[data-hi="'+hs+'"][data-si="'+ss+'"]').find('.cb-arrow').text(o?'▼':'▶');
+			var $i=$('#estimate-table tbody .cb-est-sub-item[data-hi="'+hs+'"][data-si="'+ss+'"]');
+			o?$i.show():$i.hide();
+		}
+		function matchSearch(head,term) {
+			if (!term){return true;}
+			if (head.name.toLowerCase().indexOf(term)!==-1){return true;}
+			for (var s=0;s<(head.sub_heads||[]).length;s++){
+				if (head.sub_heads[s].name.toLowerCase().indexOf(term)!==-1){return true;}
+				for (var i=0;i<(head.sub_heads[s].items||[]).length;i++){
+					if ((head.sub_heads[s].items[i].name||'').toLowerCase().indexOf(term)!==-1){return true;}
+					if ((head.sub_heads[s].items[i].gl_code||'').toLowerCase().indexOf(term)!==-1){return true;}
+				}
+			}
+			for (var d=0;d<(head.items||[]).length;d++){
+				if ((head.items[d].name||'').toLowerCase().indexOf(term)!==-1){return true;}
+				if ((head.items[d].gl_code||'').toLowerCase().indexOf(term)!==-1){return true;}
+			}
+			return false;
+		}
+		function bindEvents() {
+			$(document).on('click.estimate','#estimate-table .est-q-toggle',function(){
+				var k=String($(this).attr('data-q')),idx=expandedQ.indexOf(k);
+				if(idx!==-1){expandedQ.splice(idx,1);}else{expandedQ.push(k);}
+				$('#estimate-expand-quarters').prop('checked',expandedQ.length===Q_KEYS.length);
+				renderTable();
+			});
+			$(document).on('change.estimate','#estimate-expand-quarters',function(){expandedQ=this.checked?Q_KEYS.slice():[];renderTable();});
+			$(document).on('change.estimate','#estimate-expand-items',function(){
+				if(this.checked){data.forEach(function(h,hi){openH[String(hi)]=true;(h.sub_heads||[]).forEach(function(_,si){openS[hi+'-'+si]=true;});});}
+				else{openH={};openS={};}
+				renderTable();
+			});
+			$('#tab-estimate').on('click.estimate','.cb-est-head',function(e){e.stopPropagation();toggleHead(String($(this).attr('data-hi')));});
+			$('#tab-estimate').on('click.estimate','.cb-est-sub', function(e){e.stopPropagation();toggleSub(String($(this).attr('data-hi')),String($(this).attr('data-si')));});
+			$(document).on('input.estimate','#estimate-search',function(){renderTable();});
+		}
+		function fetchAndRender(fy) {
+			data=[]; openH={}; openS={}; expandedQ=[];
+			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked',false);
+			var year=(fy||'2025-26').split('-')[0];
+			Loader.show('Loading Estimate');
+			frappe.call({
+				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
+				args    : { fiscal_year: year, accounting_period: '12' },
+				callback: function(r){
+					if(r.message&&r.message.status==='success'){data=r.message.data||[];}
+					else{frappe.msgprint('Failed to load Estimate data.');}
+					renderTable(); Loader.hide();
+				},
+				error: function(){Loader.hide();frappe.msgprint('Server error loading Estimate data.');}
+			});
+		}
+		function load(fy){if(!bound){bindEvents();bound=true;}fetchAndRender(fy);}
+		return {load:load};
+	})();
 
 	// =============================================================================
 	// BUDGET & ESTIMATE MODULE
@@ -3719,314 +5226,186 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var BudgetEstimate = (function () {
 
-		var rawData     = [];
-		var currentFY   = '';
-		var openSec     = {};
-		var openSub     = {};
-		var expandItems = false;
-		var bound       = false;
+		var rawData=[], currentFY='', openSec={}, openSub={}, expandItems=false, bound=false;
 
-		function pl() { return getFYLabels(currentFY).plan; }
-		function el() { return getFYLabels(currentFY).est;  }
-		function entityLabel(entry) { return (entry.label || '').trim(); }
+		function pl(){return getFYLabels(currentFY).plan;}
+		function el(){return getFYLabels(currentFY).est;}
+		function entityLabel(e){return (e.label||'').trim();}
 
 		function buildStruct() {
-			if (!rawData.length) { return []; }
-			return (rawData[0].actuals || []).map(function (sec) {
+			if (!rawData.length){return [];}
+			return (rawData[0].actuals||[]).map(function(sec){
 				return {
 					name     : sec.name,
-					sub_heads: (sec.sub_heads || []).map(function (sub) {
-						return {
-							name : sub.name,
-							items: (sub.items || []).map(function (i) {
-								return { name: i.name, gl_code: i.gl_code || '' };
-							})
-						};
+					sub_heads: (sec.sub_heads||[]).map(function(sub){
+						return {name:sub.name, items:(sub.items||[]).map(function(i){return {name:i.name,gl_code:i.gl_code||''};})};
 					}),
-					items: (sec.items || []).map(function (i) {
-						return { name: i.name, gl_code: i.gl_code || '' };
-					})
+					items: (sec.items||[]).map(function(i){return {name:i.name,gl_code:i.gl_code||''};})
 				};
 			});
 		}
 
-		function itemVal(entry, itemName, field) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (sec) {
-				(sec.items || []).forEach(function (i) {
-					if (i.name === itemName) { v += parseFloat(i[field] || 0); }
-				});
-				(sec.sub_heads || []).forEach(function (sub) {
-					(sub.items || []).forEach(function (i) {
-						if (i.name === itemName) { v += parseFloat(i[field] || 0); }
-					});
-				});
+		function itemVal(entry,name,field){
+			var v=0;
+			(entry.actuals||[]).forEach(function(sec){
+				(sec.items||[]).forEach(function(i){if(i.name===name){v+=parseFloat(i[field]||0);}});
+				(sec.sub_heads||[]).forEach(function(sub){(sub.items||[]).forEach(function(i){if(i.name===name){v+=parseFloat(i[field]||0);}});});
 			});
 			return v;
 		}
-		function subVal(entry, secName, subName, field) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (sec) {
-				if (sec.name !== secName) { return; }
-				(sec.sub_heads || []).forEach(function (sub) {
-					if (sub.name !== subName) { return; }
-					v += parseFloat(field === 'plan' ? (sub.ytd || 0) : (sub.total_posted_amt_ytd || 0));
+		function subVal(entry,sn,subn,field){
+			var v=0;
+			(entry.actuals||[]).forEach(function(sec){
+				if(sec.name!==sn){return;}
+				(sec.sub_heads||[]).forEach(function(sub){
+					if(sub.name!==subn){return;}
+					v+=parseFloat(field==='plan'?(sub.ytd||0):(sub.total_posted_amt_ytd||0));
 				});
 			});
 			return v;
 		}
-		function secVal(entry, secName, field) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (sec) {
-				if (sec.name !== secName) { return; }
-				v += parseFloat(field === 'plan' ? (sec.ytd || 0) : (sec.total_posted_amt_ytd || 0));
+		function secVal(entry,sn,field){
+			var v=0;
+			(entry.actuals||[]).forEach(function(sec){
+				if(sec.name!==sn){return;}
+				v+=parseFloat(field==='plan'?(sec.ytd||0):(sec.total_posted_amt_ytd||0));
 			});
 			return v;
 		}
-		function grandVal(entry, field) {
-			var v = 0;
-			(entry.actuals || []).forEach(function (sec) {
-				v += parseFloat(field === 'plan' ? (sec.ytd || 0) : (sec.total_posted_amt_ytd || 0));
-			});
+		function grandVal(entry,field){
+			var v=0;
+			(entry.actuals||[]).forEach(function(sec){v+=parseFloat(field==='plan'?(sec.ytd||0):(sec.total_posted_amt_ytd||0));});
 			return v;
 		}
+		function itemCells(name){var h='';rawData.forEach(function(e){h+='<td>'+formatINR(itemVal(e,name,'ytd'))+'</td><td>'+formatINR(itemVal(e,name,'total_posted_amt'))+'</td>';});return h;}
+		function subCells(sn,subn){var h='';rawData.forEach(function(e){h+='<td class="cb-text-accent">'+formatINR(subVal(e,sn,subn,'plan'))+'</td><td class="cb-text-accent">'+formatINR(subVal(e,sn,subn,'est'))+'</td>';});return h;}
+		function secCells(sn){var h='';rawData.forEach(function(e){h+='<td style="font-weight:700;">'+formatINR(secVal(e,sn,'plan'))+'</td><td style="font-weight:700;">'+formatINR(secVal(e,sn,'est'))+'</td>';});return h;}
+		function grandCells(){var h='';rawData.forEach(function(e){h+='<td>'+formatINR(grandVal(e,'plan'))+'</td><td>'+formatINR(grandVal(e,'est'))+'</td>';});return h;}
+		function iTotP(n){var v=0;rawData.forEach(function(e){v+=itemVal(e,n,'ytd');});return v;}
+		function iTotE(n){var v=0;rawData.forEach(function(e){v+=itemVal(e,n,'total_posted_amt');});return v;}
+		function sTotP(sn,subn){var v=0;rawData.forEach(function(e){v+=subVal(e,sn,subn,'plan');});return v;}
+		function sTotE(sn,subn){var v=0;rawData.forEach(function(e){v+=subVal(e,sn,subn,'est');});return v;}
+		function secTP(sn){var v=0;rawData.forEach(function(e){v+=secVal(e,sn,'plan');});return v;}
+		function secTE(sn){var v=0;rawData.forEach(function(e){v+=secVal(e,sn,'est');});return v;}
+		function allGP(){var v=0;rawData.forEach(function(e){v+=grandVal(e,'plan');});return v;}
+		function allGE(){var v=0;rawData.forEach(function(e){v+=grandVal(e,'est');});return v;}
 
-		function itemCells(name) {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td>' + formatINR(itemVal(e, name, 'ytd'))              + '</td>';
-				h += '<td>' + formatINR(itemVal(e, name, 'total_posted_amt')) + '</td>';
-			});
-			return h;
-		}
-		function subCells(sn, subn) {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td class="cb-text-accent">' + formatINR(subVal(e, sn, subn, 'plan')) + '</td>';
-				h += '<td class="cb-text-accent">' + formatINR(subVal(e, sn, subn, 'est'))  + '</td>';
-			});
-			return h;
-		}
-		function secCells(sn) {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td style="font-weight:700;">' + formatINR(secVal(e, sn, 'plan')) + '</td>';
-				h += '<td style="font-weight:700;">' + formatINR(secVal(e, sn, 'est'))  + '</td>';
-			});
-			return h;
-		}
-		function grandCells() {
-			var h = '';
-			rawData.forEach(function (e) {
-				h += '<td>' + formatINR(grandVal(e, 'plan')) + '</td>';
-				h += '<td>' + formatINR(grandVal(e, 'est'))  + '</td>';
-			});
-			return h;
-		}
-		function itemTotalPlan(name)       { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'ytd');}); return v; }
-		function itemTotalEst(name)        { var v=0; rawData.forEach(function(e){v+=itemVal(e,name,'total_posted_amt');}); return v; }
-		function subTotalPlan(sn,subn)     { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'plan');}); return v; }
-		function subTotalEst(sn,subn)      { var v=0; rawData.forEach(function(e){v+=subVal(e,sn,subn,'est');}); return v; }
-		function secTotalPlan(sn)          { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'plan');}); return v; }
-		function secTotalEst(sn)           { var v=0; rawData.forEach(function(e){v+=secVal(e,sn,'est');}); return v; }
-		function allGrandPlan()            { var v=0; rawData.forEach(function(e){v+=grandVal(e,'plan');}); return v; }
-		function allGrandEst()             { var v=0; rawData.forEach(function(e){v+=grandVal(e,'est');}); return v; }
-
-		function totalCell2(plan, est, cls) {
-			cls = cls || '';
-			return '<td class="be-total-plan ' + cls + '" style="font-weight:700;">' + formatINR(plan) + '</td>' +
-			       '<td class="be-total-est '  + cls + '" style="font-weight:700;">' + formatINR(est)  + '</td>';
+		function tc2(plan,est,cls){
+			cls=cls||'';
+			return '<td class="be-total-plan '+cls+'" style="font-weight:700;">'+formatINR(plan)+'</td>' +
+			       '<td class="be-total-est '+cls+'" style="font-weight:700;">'+formatINR(est)+'</td>';
 		}
 
 		function buildHeader() {
-			var $t = $('#be-table thead').empty();
-			var $r1 = $('<tr class="cb-thead-main"></tr>');
-			var $r2 = $('<tr class="cb-thead-sub"></tr>');
-			$r1.append(
-				'<th rowspan="2" style="text-align:left;min-width:280px;' +
-				'position:sticky;left:0;z-index:40;background:#0076B6;">' +
-				'Expense Head / Line Item</th>'
-			);
-			rawData.forEach(function (e) {
-				$r1.append('<th colspan="2" style="text-align:center;">' + entityLabel(e) + '</th>');
-			});
+			var $t=$('#be-table thead').empty();
+			var $r1=$('<tr class="cb-thead-main"></tr>');
+			var $r2=$('<tr class="cb-thead-sub"></tr>');
+			$r1.append('<th rowspan="2" style="text-align:left;min-width:280px;position:sticky;left:0;z-index:30;background:#0076B6;">Expense Head / Line Item</th>');
+			rawData.forEach(function(e){$r1.append('<th colspan="2" style="text-align:center;">'+entityLabel(e)+'</th>');});
 			$r1.append('<th colspan="2" style="text-align:center;background:#003B63;">Grand Total</th>');
-			rawData.forEach(function () {
-				$r2.append('<th style="text-align:center;min-width:140px;">' + pl() + '</th>');
-				$r2.append('<th style="text-align:center;min-width:140px;">' + el() + '</th>');
+			rawData.forEach(function(){
+				$r2.append('<th style="text-align:center;min-width:130px;">'+pl()+'</th>');
+				$r2.append('<th style="text-align:center;min-width:130px;">'+el()+'</th>');
 			});
-			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + pl() + '</th>');
-			$r2.append('<th style="text-align:center;min-width:140px;background:#004F8B;">' + el() + '</th>');
+			$r2.append('<th style="text-align:center;min-width:130px;background:#004F8B;">'+pl()+'</th>');
+			$r2.append('<th style="text-align:center;min-width:130px;background:#004F8B;">'+el()+'</th>');
 			$t.append($r1).append($r2);
 		}
 
 		function renderTable() {
 			buildHeader();
-			var $tb    = $('#be-tbody').empty();
-			var term   = $('#be-search').val().trim().toLowerCase();
-			var struct = buildStruct();
-			var cols   = 1 + rawData.length * 2 + 2;
-
-			if (!rawData.length || !struct.length) {
-				$tb.append('<tr><td colspan="' + cols + '" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
+			var $tb=$('#be-tbody').empty();
+			var term=$('#be-search').val().trim().toLowerCase();
+			var struct=buildStruct();
+			var cols=1+rawData.length*2+2;
+			if (!rawData.length||!struct.length) {
+				$tb.append('<tr><td colspan="'+cols+'" style="text-align:center;padding:40px;color:#aaa;">No data available.</td></tr>');
 				return;
 			}
-
-			struct.forEach(function (sec) {
-				var sn      = sec.name;
-				var secOpen = openSec[sn] !== false;
-				var secVis  = secOpen ? '' : 'display:none;';
-
+			struct.forEach(function(sec){
+				var sn=sec.name, secOpen=openSec[sn]!==false, secVis=secOpen?'':'display:none;';
 				$tb.append(
-					'<tr class="cb-row-head be-sec-row" data-sec="' + sn + '">' +
-						'<td style="text-align:left;">' +
-							'<span class="cb-arrow">' + (secOpen ? '▼' : '▶') + '</span> ' + sn +
-						'</td>' +
-						secCells(sn) +
-						totalCell2(secTotalPlan(sn), secTotalEst(sn), 'be-grand-col') +
+					'<tr class="cb-row-head be-sec-row" data-sec="'+sn+'">' +
+						'<td style="text-align:left;"><span class="cb-arrow">'+(secOpen?'▼':'▶')+'</span> '+sn+'</td>' +
+						secCells(sn)+tc2(secTP(sn),secTE(sn),'be-grand-col') +
 					'</tr>'
 				);
-
-				sec.sub_heads.forEach(function (sub) {
-					var sk      = sn + '::' + sub.name;
-					var subOpen = expandItems || (openSub[sk] === true);
-					var subVis  = secOpen ? '' : 'display:none;';
-					var itmVis  = (secOpen && subOpen) ? '' : 'display:none;';
-
+				sec.sub_heads.forEach(function(sub){
+					var sk=sn+'::'+sub.name, subOpen=expandItems||(openSub[sk]===true), itmVis=(secOpen&&subOpen)?'':'display:none;';
 					$tb.append(
-						'<tr class="cb-row-sub be-sec-child be-sub-row" ' +
-						'data-sec="' + sn + '" data-sub="' + sk + '" style="' + subVis + '">' +
-							'<td style="padding-left:22px;text-align:left;">' +
-								'<span class="cb-arrow">' + (subOpen ? '▼' : '▶') + '</span> ' + sub.name +
-							'</td>' +
-							subCells(sn, sub.name) +
-							totalCell2(subTotalPlan(sn, sub.name), subTotalEst(sn, sub.name), 'be-grand-col') +
+						'<tr class="cb-row-sub be-sec-child be-sub-row" data-sec="'+sn+'" data-sub="'+sk+'" style="'+secVis+'">' +
+							'<td style="padding-left:22px;text-align:left;"><span class="cb-arrow">'+(subOpen?'▼':'▶')+'</span> '+sub.name+'</td>' +
+							subCells(sn,sub.name)+tc2(sTotP(sn,sub.name),sTotE(sn,sub.name),'be-grand-col') +
 						'</tr>'
 					);
-
-					sub.items.forEach(function (item) {
-						if (term &&
-							item.name.toLowerCase().indexOf(term) === -1 &&
-							item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
+					sub.items.forEach(function(item){
+						if(term&&item.name.toLowerCase().indexOf(term)===-1&&item.gl_code.toLowerCase().indexOf(term)===-1){return;}
 						$tb.append(
-							'<tr class="be-item-row be-sec-child be-sub-child" ' +
-							'data-sec="' + sn + '" data-sub="' + sk + '" style="' + itmVis + '">' +
-								'<td style="padding-left:42px;text-align:left;">' +
-									item.name +
-									(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
-								'</td>' +
-								itemCells(item.name) +
-								totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
+							'<tr class="be-item-row be-sec-child be-sub-child" data-sec="'+sn+'" data-sub="'+sk+'" style="'+itmVis+'">' +
+								'<td style="padding-left:42px;text-align:left;">'+item.name+(item.gl_code?' <span style="color:#aaa;font-size:11px;">('+item.gl_code+')</span>':'')+'</td>' +
+								itemCells(item.name)+tc2(iTotP(item.name),iTotE(item.name),'be-grand-col') +
 							'</tr>'
 						);
 					});
 				});
-
-				sec.items.forEach(function (item) {
-					if (term &&
-						item.name.toLowerCase().indexOf(term) === -1 &&
-						item.gl_code.toLowerCase().indexOf(term) === -1) { return; }
+				sec.items.forEach(function(item){
+					if(term&&item.name.toLowerCase().indexOf(term)===-1&&item.gl_code.toLowerCase().indexOf(term)===-1){return;}
 					$tb.append(
-						'<tr class="be-item-row be-sec-child be-direct-item" ' +
-						'data-sec="' + sn + '" style="' + secVis + '">' +
-							'<td style="padding-left:30px;text-align:left;">' +
-								item.name +
-								(item.gl_code ? ' <span style="color:#aaa;font-size:11px;">(' + item.gl_code + ')</span>' : '') +
-							'</td>' +
-							itemCells(item.name) +
-							totalCell2(itemTotalPlan(item.name), itemTotalEst(item.name), 'be-grand-col') +
+						'<tr class="be-item-row be-sec-child be-direct-item" data-sec="'+sn+'" style="'+secVis+'">' +
+							'<td style="padding-left:30px;text-align:left;">'+item.name+(item.gl_code?' <span style="color:#aaa;font-size:11px;">('+item.gl_code+')</span>':'')+'</td>' +
+							itemCells(item.name)+tc2(iTotP(item.name),iTotE(item.name),'be-grand-col') +
 						'</tr>'
 					);
 				});
 			});
-
-			$tb.append(
-				'<tr class="cb-row-grand">' +
-					'<td style="text-align:left;">GRAND TOTAL</td>' +
-					grandCells() +
-					totalCell2(allGrandPlan(), allGrandEst(), 'be-grand-col') +
-				'</tr>'
-			);
+			$tb.append('<tr class="cb-row-grand"><td style="text-align:left;">GRAND TOTAL</td>'+grandCells()+tc2(allGP(),allGE(),'be-grand-col')+'</tr>');
 		}
 
-		function toggleSec(sn) {
-			var o = !(openSec[sn] !== false);
-			openSec[sn] = o;
-			$('#be-table tbody .be-sec-row[data-sec="' + sn + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
-			var $ch = $('#be-table tbody .be-sec-child[data-sec="' + sn + '"]');
-			if (o) {
+		function toggleSec(sn){
+			var o=!(openSec[sn]!==false); openSec[sn]=o;
+			$('#be-table tbody .be-sec-row[data-sec="'+sn+'"]').find('.cb-arrow').text(o?'▼':'▶');
+			var $ch=$('#be-table tbody .be-sec-child[data-sec="'+sn+'"]');
+			if(o){
 				$ch.filter('.be-sub-row,.be-direct-item').show();
-				$ch.filter('.be-sub-child').each(function () {
-					var sk = $(this).attr('data-sub');
-					if (expandItems || openSub[sk] === true) { $(this).show(); }
-				});
-			} else { $ch.hide(); }
+				$ch.filter('.be-sub-child').each(function(){var sk=$(this).attr('data-sub');if(expandItems||openSub[sk]===true){$(this).show();}});
+			} else {$ch.hide();}
 		}
-
-		function toggleSubRow(sk) {
-			var o = !(openSub[sk] === true);
-			openSub[sk] = o;
-			$('#be-table tbody .be-sub-row[data-sub="' + sk + '"]').find('.cb-arrow').text(o ? '▼' : '▶');
-			var $it = $('#be-table tbody .be-sub-child[data-sub="' + sk + '"]');
-			o ? $it.show() : $it.hide();
+		function toggleSubRow(sk){
+			var o=!(openSub[sk]===true); openSub[sk]=o;
+			$('#be-table tbody .be-sub-row[data-sub="'+sk+'"]').find('.cb-arrow').text(o?'▼':'▶');
+			var $it=$('#be-table tbody .be-sub-child[data-sub="'+sk+'"]');
+			o?$it.show():$it.hide();
 		}
-
-		function bindEvents() {
-			$('#tab-budget_estimate').on('click.be', '.be-sec-row', function (e) {
-				e.stopPropagation();
-				toggleSec($(this).attr('data-sec'));
-			});
-			$('#tab-budget_estimate').on('click.be', '.be-sub-row', function (e) {
-				e.stopPropagation();
-				if (!expandItems) { toggleSubRow($(this).attr('data-sub')); }
-			});
-			$(document).on('change.be', '#be-expand-items', function () {
-				expandItems = this.checked;
-				buildStruct().forEach(function (sec) {
-					openSec[sec.name] = expandItems ? true : false;
-					sec.sub_heads.forEach(function (sub) {
-						openSub[sec.name + '::' + sub.name] = expandItems;
-					});
+		function bindEvents(){
+			$('#tab-budget_estimate').on('click.be','.be-sec-row',function(e){e.stopPropagation();toggleSec($(this).attr('data-sec'));});
+			$('#tab-budget_estimate').on('click.be','.be-sub-row',function(e){e.stopPropagation();if(!expandItems){toggleSubRow($(this).attr('data-sub'));}});
+			$(document).on('change.be','#be-expand-items',function(){
+				expandItems=this.checked;
+				buildStruct().forEach(function(sec){
+					openSec[sec.name]=expandItems?true:false;
+					sec.sub_heads.forEach(function(sub){openSub[sec.name+'::'+sub.name]=expandItems;});
 				});
 				renderTable();
 			});
-			$(document).on('input.be', '#be-search', function () { renderTable(); });
+			$(document).on('input.be','#be-search',function(){renderTable();});
 		}
-
-		function fetchAndRender(fy) {
-			currentFY   = fy;
-			rawData     = [];
-			openSec     = {};
-			openSub     = {};
-			expandItems = false;
-			$('#be-expand-items').prop('checked', false);
-
+		function fetchAndRender(fy){
+			currentFY=fy; rawData=[]; openSec={}; openSub={}; expandItems=false;
+			$('#be-expand-items').prop('checked',false);
 			Loader.show('Loading Budget & Estimate');
 			frappe.call({
 				method  : 'annual_budget.api.foundation_consolidated_report.format_api',
-				args    : { financial_year: fy, month: 'March' },
-				callback: function (r) {
-					if (r.message && Array.isArray(r.message)) {
-						rawData = r.message;
-					} else {
-						frappe.msgprint('Failed to load Budget & Estimate data.');
-					}
-					renderTable();
-					Loader.hide();
+				args    : { financial_year: fy, month: 'March', set_group_id: 1, previous_financial_year: getPrevFY(fy) },
+				callback: function(r){
+					if(r.message&&Array.isArray(r.message)){rawData=r.message;}
+					else{frappe.msgprint('Failed to load Budget & Estimate data.');}
+					renderTable(); Loader.hide();
 				},
-				error: function () {
-					Loader.hide();
-					frappe.msgprint('Server error loading Budget & Estimate data.');
-				}
+				error: function(){Loader.hide();frappe.msgprint('Server error loading Budget & Estimate data.');}
 			});
 		}
-
-		function load(fy) {
-			if (!bound) { bindEvents(); bound = true; }
-			fetchAndRender(fy);
-		}
-
-		return { load: load };
+		function load(fy){if(!bound){bindEvents();bound=true;}fetchAndRender(fy);}
+		return {load:load};
 	})();
 
 	// =============================================================================
@@ -4036,4 +5415,4 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	var initialFY = fyControl.get_value();
 	if (initialFY) { TabLoader.trigger('ppt'); }
 
-}; 
+};

@@ -1,4 +1,4 @@
-from annual_budget.api.actual_format import get_accounting_period_from_month, sum_of_actuals_by_sequence
+from annual_budget.api.actual_format import get_accounting_period_from_month, get_previous_financial_year, sum_of_actuals_by_sequence
 from annual_budget.api.actuals import get_actuals_from_erp_month_wise, get_grouped_actuals
 from annual_budget.api.phase_sheet import get_consolidated_report, get_consolidated_report_actual_ytd, get_number_card_settings
 import frappe
@@ -640,17 +640,18 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 
 # new working one with one time api call
 @frappe.whitelist(allow_guest=True)
-def format_api(financial_year=None, month=None):
+def format_api(financial_year=None, month=None,set_group_id=None,previous_financial_year=None):
 
-    settings = get_number_card_settings()
-
+    previous_financial_year=get_previous_financial_year(financial_year)
+    settings = get_number_card_settings(set_group_id)
+    # print(previous_financial_year,"previous_financial_year")
     # sort settings
     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
 
     final_results = []
     formatted = get_accounting_period_from_month(
         month,
-        financial_year
+        previous_financial_year
     )
     accounting_period = formatted.get("accounting_period")
     fiscal_year = formatted.get("fiscal_year")
@@ -690,7 +691,6 @@ def format_api(financial_year=None, month=None):
             "cost_centers_erp": cost_centers_erp,
             "locations_erp": locations_erp,
             "actuals": actuals_data,
-            "grouped_actuals_data":grouped_actuals_data
         })
 
     # return {"grouped_actuals_data":grouped_actuals_data,"final_results":final_results}
@@ -927,4 +927,208 @@ def get_combined_actuals(
 
     return structure
 
+
+# @frappe.whitelist(allow_guest=True)
+# def add_expense_totals(financial_year=None, month=None, set_group_id=None,previous_financial_year=None):
+
+#     data = format_api(
+#         financial_year=financial_year,
+#         month=month,
+#         set_group_id=set_group_id,previous_financial_year=previous_financial_year
+#     )
+
+#     for record in data:
+
+#         actuals = record.get("actuals", [])
+
+#         capital_total = {
+#             "name": "TOTAL CAPITAL EXPENSES",
+#             "ytd": 0.0,
+#             "total_posted_amt": 0.0
+#         }
+
+#         operating_total = {
+#             "name": "TOTAL OPERATING EXPENSES",
+#             "ytd": 0.0,
+#             "total_posted_amt": 0.0
+#         }
+
+#         for head in actuals:
+
+#             name = head.get("name", "").strip()
+
+#             if name == "CAPITAL  EXPENSES":
+#                 capital_total["ytd"] += head.get("ytd", 0.0)
+#                 capital_total["total_posted_amt"] += head.get("total_posted_amt_ytd", 0.0)
+
+#             elif name == "OPERATING  EXPENSES":
+#                 operating_total["ytd"] += head.get("ytd", 0.0)
+#                 operating_total["total_posted_amt"] += head.get("total_posted_amt_ytd", 0.0)
+
+#         # ✅ Add totals into same dataset
+#         record["totals"] = {
+#             "capital_expenses": capital_total,
+#             "operating_expenses": operating_total
+#         }
+
+#     return data
+
+# @frappe.whitelist(allow_guest=True)
+# def add_expense_totals(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
+
+#     data = format_api(
+#         financial_year=financial_year,
+#         month=month,
+#         set_group_id=set_group_id
+#     )
+
+#     result = []
+
+#     for record in data:
+
+#         actuals = record.get("actuals", [])
+
+#         capital_budget = 0.0
+#         capital_actual = 0.0
+
+#         operating_budget = 0.0
+#         operating_actual = 0.0
+
+#         for head in actuals:
+
+#             name = head.get("name", "").strip()
+
+#             if name == "CAPITAL  EXPENSES":
+#                 capital_budget += head.get("ytd", 0.0)
+#                 capital_actual += head.get("total_posted_amt_ytd", 0.0)
+
+#             elif name == "OPERATING  EXPENSES":
+#                 operating_budget += head.get("ytd", 0.0)
+#                 operating_actual += head.get("total_posted_amt_ytd", 0.0)
+
+#         grand_budget = capital_budget + operating_budget
+#         grand_actual = capital_actual + operating_actual
+
+#         # ✅ Build clean response per record
+#         result.append({
+#             "settings_doc": record.get("settings_doc"),
+#             "label": record.get("label"),
+#             "units": record.get("units"),
+#             "cost_centers": record.get("cost_centers"),
+#             "locations": record.get("locations"),
+#             "cost_centers_erp": record.get("cost_centers_erp"),
+#             "locations_erp": record.get("locations_erp"),
+
+#             "capital_expenses": {
+#                 "budget": capital_budget,
+#                 "actual": capital_actual
+#             },
+#             "operating_expenses": {
+#                 "budget": operating_budget,
+#                 "actual": operating_actual
+#             },
+#             "grand_total": {
+#                 "budget": grand_budget,
+#                 "actual": grand_actual
+#             }
+#         })
+
+#     return result
+
+
+@frappe.whitelist(allow_guest=True)
+def add_expense_totals(financial_year=None, month=None, set_group_id=None):
+
+    # ✅ Current year data
+    current_data = format_api(
+        financial_year=financial_year,
+        month=month,
+        set_group_id=set_group_id
+    )
+
+    # ✅ Previous year
+    start_year = int(financial_year.split("-")[0])
+    prev_start = start_year - 1
+    prev_end = str(prev_start + 1)[-2:]
+    prev_fy = f"{prev_start}-{prev_end}"
+
+    # ✅ Previous year data
+    prev_data = format_api(
+        financial_year=prev_fy,
+        month=month,
+        set_group_id=set_group_id
+    )
+
+    result = []
+
+    for i, record in enumerate(current_data):
+
+        prev_record = prev_data[i] if i < len(prev_data) else {}
+
+        # -------- CURRENT YEAR TOTALS --------
+        def get_totals(actuals):
+            capital_budget = 0.0
+            capital_actual = 0.0
+            operating_budget = 0.0
+            operating_actual = 0.0
+
+            for head in actuals:
+                name = head.get("name", "").strip()
+
+                if name == "CAPITAL  EXPENSES":
+                    capital_budget += head.get("ytd", 0.0)
+                    capital_actual += head.get("total_posted_amt_ytd", 0.0)
+
+                elif name == "OPERATING  EXPENSES":
+                    operating_budget += head.get("ytd", 0.0)
+                    operating_actual += head.get("total_posted_amt_ytd", 0.0)
+
+            return {
+                "capital": {
+                    "budget": capital_budget,
+                    "actual": capital_actual
+                },
+                "operating": {
+                    "budget": operating_budget,
+                    "actual": operating_actual
+                },
+                "grand": {
+                    "budget": capital_budget + operating_budget,
+                    "actual": capital_actual + operating_actual
+                }
+            }
+
+        current_totals = get_totals(record.get("actuals", []))
+        prev_totals = get_totals(prev_record.get("actuals", []))
+
+        result.append({
+            "settings_doc": record.get("settings_doc"),
+            "label": record.get("label"),
+            "units": record.get("units"),
+            "cost_centers": record.get("cost_centers"),
+            "locations": record.get("locations"),
+            "cost_centers_erp": record.get("cost_centers_erp"),
+            "locations_erp": record.get("locations_erp"),
+
+            "overall_foundation_numbers": [
+
+                # ✅ Current vs Previous
+                {
+                    "title": f"OVERALL FOUNDATION NUMBERS - {financial_year} BUDGET VS. {prev_fy} EST",
+                    "capital_expenses": current_totals["capital"],
+                    "operating_expenses": current_totals["operating"],
+                    "grand_total": current_totals["grand"]
+                },
+
+                # ✅ Previous vs Previous
+                {
+                    "title": f"OVERALL FOUNDATION NUMBERS - {prev_fy} BUDGET VS. {prev_fy} EST",
+                    "capital_expenses": prev_totals["capital"],
+                    "operating_expenses": prev_totals["operating"],
+                    "grand_total": prev_totals["grand"]
+                }
+            ]
+        })
+
+    return result
 
