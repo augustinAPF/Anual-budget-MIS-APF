@@ -888,36 +888,60 @@ def export_phase_sheet_excel(
 
 
 
-
-
+import frappe
 import tempfile
 import xlsxwriter
 from frappe.utils import nowdate
-import frappe
 
 
 @frappe.whitelist()
-def download_finance_budget_import_template(user):
+def start_budget_template_generation(user, entity_data=None):
 
     if not user:
         frappe.throw("User required")
 
+    frappe.enqueue(
+        "annual_budget.api.export_reports.generate_budget_template",
+        queue="long",
+        timeout=1800,
+        user=user,
+        entity_data=entity_data
+    )
+
+    return {"status": "started"}
+
+
+def generate_budget_template(user, entity_data=None):
+
+    # ── Parse entity_data ─────────────────────────────────
+    # Can be:
+    #   None          → use all mappings from access_doc
+    #   JSON string   → parse into list or single dict
+    #   list          → multiple selected rows
+    #   dict          → single selected row (legacy)
+
+    if entity_data and isinstance(entity_data, str):
+        entity_data = frappe.parse_json(entity_data)
+
+    # Normalise to a list (or None)
+    if isinstance(entity_data, dict):
+        entity_data = [entity_data]   # wrap single row in a list
+
+    # entity_data is now either a list of dicts or None
+
+    # ── Fetch Finance User Access ──────────────────────────
     doc_name = frappe.db.get_value(
         "Finance user access",
         {"user": user},
         "name"
     )
 
-    if not doc_name:
-        frappe.throw("No Finance User Access record found for this user.")
+    access_doc = frappe.get_doc("Finance user access", doc_name) if doc_name else None
 
-    access_doc = frappe.get_doc("Finance user access", doc_name)
+    if not access_doc:
+        return
 
-    # ── allow_edit_template checkbox ──────────────────────
-    # Checked (1)   → skip sheet protection → entire sheet is editable
-    # Unchecked (0) → protect sheet         → only month columns are editable
-    is_editable = access_doc.allow_edit_template == 1
-
+    # ── Import Template ────────────────────────────────────
     import_template = frappe.get_doc(
         "Import Templates",
         access_doc.import_template_id
@@ -930,6 +954,23 @@ def download_finance_budget_import_template(user):
         "current_financial_year"
     )
 
+    # ── Decide mappings source ─────────────────────────────
+    # If entity_data list provided → use those rows
+    # Otherwise → use all rows from access_doc.mapping
+    if entity_data:
+        mappings       = entity_data          # list of plain dicts from frontend
+        use_dict       = True                 # access via .get()
+    else:
+        mappings       = access_doc.mapping   # list of child doc objects
+        use_dict       = False                # access via getattr()
+
+    # ── Helper: read a field from either a dict or a child doc ──
+    def get_field(field, mapping):
+        if use_dict:
+            return mapping.get(field) or ""
+        return getattr(mapping, field, "") or ""
+
+    # ── Create Excel ───────────────────────────────────────
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
 
     workbook  = xlsxwriter.Workbook(tmp.name)
@@ -937,11 +978,7 @@ def download_finance_budget_import_template(user):
 
     header_format = workbook.add_format({"bold": True, "locked": True})
     locked        = workbook.add_format({"locked": True})
-
-    # Month columns are always written with locked=False.
-    # When is_editable=False → sheet is protected → only these cells are editable.
-    # When is_editable=True  → sheet is not protected → all cells are editable anyway.
-    unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
+    unlocked      = workbook.add_format({"locked": False, "num_format": "0.00"})
 
     headers = [
         "Entity / Unit",
@@ -987,7 +1024,8 @@ def download_finance_budget_import_template(user):
 
     row_index = 1
 
-    for mapping in access_doc.mapping:
+    # ── Write one block of rows per mapping ───────────────
+    for mapping in mappings:
 
         first_row = True
 
@@ -995,15 +1033,15 @@ def download_finance_budget_import_template(user):
 
             if first_row:
                 parent_values = [
-                    mapping.unit,
-                    mapping.unit_description,
-                    mapping.cost_center,
-                    mapping.cost_center_erp,
-                    mapping.cost_center_description,
-                    mapping.location_code,
-                    mapping.location_code_erp,
-                    mapping.location_description,
-                    mapping.state,
+                    get_field("unit",                   mapping),
+                    get_field("unit_description",       mapping),
+                    get_field("cost_center",            mapping),
+                    get_field("cost_center_erp",        mapping),
+                    get_field("cost_center_description",mapping),
+                    get_field("location_code",          mapping),
+                    get_field("location_code_erp",      mapping),
+                    get_field("location_description",   mapping),
+                    get_field("state",                  mapping),
                     financial_year,
                     user
                 ]
@@ -1023,12 +1061,10 @@ def download_finance_budget_import_template(user):
                 if val:
                     col_widths[col] = max(col_widths[col], len(str(val)))
 
-            # Month columns (April–March)
             for col in range(15, 27):
                 worksheet.write(row_index, col, 0, unlocked)
 
             r = row_index + 1
-
             worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
             worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
             worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
@@ -1037,19 +1073,194 @@ def download_finance_budget_import_template(user):
 
             row_index += 1
 
-    # Protect only when allow_edit_template is unchecked
-    if not is_editable:
-        worksheet.protect("[REDACTED-PASSWORD]")
+    worksheet.protect("[REDACTED-PASSWORD]")
 
     for i, width in enumerate(col_widths):
         worksheet.set_column(i, i, width + 3)
 
     workbook.close()
 
-    with open(tmp.name, "rb") as f:
-        frappe.response["filename"]    = f"Budget_Import_{nowdate()}.xlsx"
+    frappe.cache().set_value(
+        f"budget_template_{user}",
+        tmp.name,
+        expires_in_sec=3600
+    )
+
+
+@frappe.whitelist()
+def download_generated_template(user):
+
+    path = frappe.cache().get_value(f"budget_template_{user}")
+
+    if not path:
+        return {"status": "processing"}
+
+    with open(path, "rb") as f:
+        frappe.response["filename"]    = f"Budget_mis_Import_{nowdate()}.xlsx"
         frappe.response["filecontent"] = f.read()
         frappe.response["type"]        = "download"
+
+
+# import tempfile
+# import xlsxwriter
+# from frappe.utils import nowdate
+# import frappe
+
+
+# @frappe.whitelist()
+# def download_finance_budget_import_template(user):
+
+#     if not user:
+#         frappe.throw("User required")
+
+#     doc_name = frappe.db.get_value(
+#         "Finance user access",
+#         {"user": user},
+#         "name"
+#     )
+
+#     if not doc_name:
+#         frappe.throw("No Finance User Access record found for this user.")
+
+#     access_doc = frappe.get_doc("Finance user access", doc_name)
+
+#     # ── allow_edit_template checkbox ──────────────────────
+#     # Checked (1)   → skip sheet protection → entire sheet is editable
+#     # Unchecked (0) → protect sheet         → only month columns are editable
+#     is_editable = access_doc.allow_edit_template == 1
+
+#     import_template = frappe.get_doc(
+#         "Import Templates",
+#         access_doc.import_template_id
+#     )
+
+#     template_items = import_template.import_template_item_list
+
+#     financial_year = frappe.db.get_single_value(
+#         "Master Settings",
+#         "current_financial_year"
+#     )
+
+#     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+#     workbook  = xlsxwriter.Workbook(tmp.name)
+#     worksheet = workbook.add_worksheet("Finance Budget Import")
+
+#     header_format = workbook.add_format({"bold": True, "locked": True})
+#     locked        = workbook.add_format({"locked": True})
+
+#     # Month columns are always written with locked=False.
+#     # When is_editable=False → sheet is protected → only these cells are editable.
+#     # When is_editable=True  → sheet is not protected → all cells are editable anyway.
+#     unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
+
+#     headers = [
+#         "Entity / Unit",
+#         "Entity / Unit Description",
+#         "Cost Center",
+#         "Cost Center(Original)",
+#         "Cost Center Description",
+#         "Location code",
+#         "Location code(Original)",
+#         "Function / Sub Unit / Division",
+#         "State",
+#         "Financial year",
+#         "Uploaded By",
+#         "Type of expense ID (Budget Amounts)",
+#         "Head of expense (Budget Amounts)",
+#         "Sub head of expense (Budget Amounts)",
+#         "Type of expense (Budget Amounts)",
+#         "April (Budget Amounts)",
+#         "May (Budget Amounts)",
+#         "June (Budget Amounts)",
+#         "July (Budget Amounts)",
+#         "August (Budget Amounts)",
+#         "September (Budget Amounts)",
+#         "October (Budget Amounts)",
+#         "November (Budget Amounts)",
+#         "December (Budget Amounts)",
+#         "January (Budget Amounts)",
+#         "February (Budget Amounts)",
+#         "March (Budget Amounts)",
+#         "Quarter 1 Total Amount (Budget Amounts)",
+#         "Quarter 2 Total Amount (Budget Amounts)",
+#         "Quarter 3 Total Amount (Budget Amounts)",
+#         "Quarter 4 Total Amount (Budget Amounts)",
+#         "Year Total Amount (Budget Amounts)"
+#     ]
+
+#     col_widths = [len(h) for h in headers]
+
+#     for col, header in enumerate(headers):
+#         worksheet.write(0, col, header, header_format)
+
+#     worksheet.freeze_panes(1, 0)
+
+#     row_index = 1
+
+#     for mapping in access_doc.mapping:
+
+#         first_row = True
+
+#         for item in template_items:
+
+#             if first_row:
+#                 parent_values = [
+#                     mapping.unit,
+#                     mapping.unit_description,
+#                     mapping.cost_center,
+#                     mapping.cost_center_erp,
+#                     mapping.cost_center_description,
+#                     mapping.location_code,
+#                     mapping.location_code_erp,
+#                     mapping.location_description,
+#                     mapping.state,
+#                     financial_year,
+#                     user
+#                 ]
+#                 first_row = False
+#             else:
+#                 parent_values = [""] * 11
+
+#             row = parent_values + [
+#                 item.type_of_expense_id,
+#                 item.head_of_expense,
+#                 item.sub_head_of_expense,
+#                 item.type_of_expense
+#             ]
+
+#             for col, val in enumerate(row):
+#                 worksheet.write(row_index, col, val, locked)
+#                 if val:
+#                     col_widths[col] = max(col_widths[col], len(str(val)))
+
+#             # Month columns (April–March)
+#             for col in range(15, 27):
+#                 worksheet.write(row_index, col, 0, unlocked)
+
+#             r = row_index + 1
+
+#             worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
+#             worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
+#             worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
+#             worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})")
+#             worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})")
+
+#             row_index += 1
+
+#     # Protect only when allow_edit_template is unchecked
+#     if not is_editable:
+#         worksheet.protect("[REDACTED-PASSWORD]")
+
+#     for i, width in enumerate(col_widths):
+#         worksheet.set_column(i, i, width + 3)
+
+#     workbook.close()
+
+#     with open(tmp.name, "rb") as f:
+#         frappe.response["filename"]    = f"Budget_Import_{nowdate()}.xlsx"
+#         frappe.response["filecontent"] = f.read()
+#         frappe.response["type"]        = "download"
 
 
 

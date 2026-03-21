@@ -127,11 +127,79 @@ def get_cost_centers_by_set_id(units=None):
 
     return {"data": data}
 # ! =======================================================  Location code filter values =============================================================================
+# @frappe.whitelist(allow_guest=True)
+# def get_location_codes_by_unit(unit=None):
+
+#     if not unit:
+#         return {"data": []}
+#     if isinstance(unit, str):
+#         unit = [u.strip() for u in unit.split(",") if u.strip()]
+
+#     current_user = frappe.session.user
+#     roles = frappe.get_roles(current_user)
+
+#     is_admin = (
+#         "System Manager" in roles or
+#         "Finance MIS Admin" in roles
+#     )
+#     if is_admin:
+
+#         locations = frappe.get_all(
+#             "Location Code",
+#             filters={
+#                 "unit": ["in", unit]
+#             },
+#             fields=["name", "location_code", "decription"],
+#             order_by="location_code asc"
+#         )
+#     else:
+#         finance_docs = frappe.get_all(
+#             "Finance user access",
+#             filters={"user": current_user},
+#             fields=["name"]
+#         )
+
+#         allowed_location_codes = []
+
+#         for finance in finance_docs:
+#             doc = frappe.get_doc("Finance user access", finance.name)
+
+#             for row in doc.mapping:
+#                 if row.unit in unit and row.location_code_erp:
+#                     allowed_location_codes.append(row.location_code_erp)
+
+#         if not allowed_location_codes:
+#             return {"data": []}
+
+#         locations = frappe.get_all(
+#             "Location Code",
+#             filters={
+#                 "location_code": ["in", allowed_location_codes]
+#             },
+#             fields=["name", "location_code", "decription"],
+#             order_by="location_code asc"
+#         )
+#     data = []
+
+#     for loc in locations:
+#         data.append({
+#             "label": f"{loc.location_code} - {loc.decription}",
+#             "value": loc.name,
+#             "erp_loc_value": loc.location_code,
+#         })
+
+#     return {
+#         "data": data
+#     }
+
+
+
 @frappe.whitelist(allow_guest=True)
 def get_location_codes_by_unit(unit=None):
 
     if not unit:
         return {"data": []}
+
     if isinstance(unit, str):
         unit = [u.strip() for u in unit.split(",") if u.strip()]
 
@@ -142,13 +210,11 @@ def get_location_codes_by_unit(unit=None):
         "System Manager" in roles or
         "Finance MIS Admin" in roles
     )
-    if is_admin:
 
+    if is_admin:
         locations = frappe.get_all(
             "Location Code",
-            filters={
-                "unit": ["in", unit]
-            },
+            filters={"unit": ["in", unit]},
             fields=["name", "location_code", "decription"],
             order_by="location_code asc"
         )
@@ -179,18 +245,37 @@ def get_location_codes_by_unit(unit=None):
             fields=["name", "location_code", "decription"],
             order_by="location_code asc"
         )
-    data = []
+
+    # 🔹 Group by description
+    data_map = {}
 
     for loc in locations:
+        key = loc.decription or "Unknown"
+
+        if key not in data_map:
+            data_map[key] = {
+                "label": f"{loc.location_code} - {loc.decription}",
+                "value": set(),
+                "erp_loc_value": str(loc.location_code),  # ✅ only one value
+            }
+
+        data_map[key]["value"].add(str(loc.name))
+
+    # 🔹 Final output
+    data = []
+
+    for item in data_map.values():
         data.append({
-            "label": f"{loc.location_code} - {loc.decription}",
-            "value": loc.name,
-            "erp_loc_value": loc.location_code,
+            "label": item["label"],
+            "value": ",".join(sorted(item["value"])),
+            "erp_loc_value": item["erp_loc_value"],  # ✅ single value only
         })
 
     return {
         "data": data
     }
+
+
 # ! =======================================================  Theme filter values =============================================================================
 @frappe.whitelist(allow_guest=True)
 def get_theme():
@@ -201,7 +286,7 @@ def get_theme():
     )
     return theme
 # ! =======================================================  User permission level filter values =============================================================================
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_user_mappings():
 
     current_user = frappe.session.user
@@ -216,7 +301,7 @@ def get_user_mappings():
             fields=["name", "user", "user_nmae"]
         )
     else:
-        finance_docs = frappe.get_all(
+     finance_docs = frappe.get_all(
             "Finance user access",
             filters={"user": current_user},
             fields=["name", "user", "user_nmae"]
@@ -236,7 +321,8 @@ def get_user_mappings():
                 "unit_description": row.unit_description,
                 "cost_center": row.cost_center_erp,
                 "cost_center_description": row.cost_center_description,
-
+                "cost_center_id": row.cost_center,
+                "location_code_id": row.location_code,
                 "location_code": row.location_code_erp,
                 "location_description": row.location_description
             })
