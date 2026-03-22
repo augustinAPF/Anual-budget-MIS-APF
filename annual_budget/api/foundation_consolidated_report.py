@@ -639,22 +639,85 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 
 
 # new working one with one time api call
-@frappe.whitelist(allow_guest=True)
-def format_api(financial_year=None, month=None,set_group_id=None,previous_financial_year=None):
+# @frappe.whitelist(allow_guest=True)
+# def format_api(financial_year=None, month=None,set_group_id=None,previous_financial_year=None):
 
-    previous_financial_year=get_previous_financial_year(financial_year)
+#     previous_financial_year=get_previous_financial_year(financial_year)
+#     settings = get_number_card_settings(set_group_id)
+#     # print(previous_financial_year,"previous_financial_year")
+#     # sort settings
+#     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
+
+#     final_results = []
+#     formatted = get_accounting_period_from_month(
+#         month,
+#         previous_financial_year
+#     )
+#     accounting_period = formatted.get("accounting_period")
+#     fiscal_year = formatted.get("fiscal_year")
+#     # ✅ CALL ONLY ONCE
+#     grouped_actuals_response = get_grouped_actuals(
+#         fiscal_year=fiscal_year,
+#         accounting_period=accounting_period
+#     )
+
+#     grouped_actuals_data = grouped_actuals_response.get("data", [])
+
+#     for s in settings:
+
+#         units = ",".join(s["units"]) if s["units"] else ""
+#         cost_centers = ",".join(s["cost_centers"]) if s["cost_centers"] else ""
+#         locations = ",".join(s["locations"]) if s["locations"] else ""
+#         cost_centers_erp = ",".join(s["cost_centers_erp"]) if s["cost_centers_erp"] else ""
+#         locations_erp = ",".join(s["locations_erp"]) if s["locations_erp"] else ""
+
+#         actuals_data = get_combined_actuals(
+#             financial_year=financial_year,
+#             month=month,
+#             unit=units,
+#             cost_center=cost_centers,
+#             location_code=locations,
+#             erp_cost_center_value=cost_centers_erp,
+#             erp_loc_value=locations_erp,
+#             grouped_actuals_data=grouped_actuals_data  # ✅ pass once-fetched data
+#         )
+
+#         final_results.append({
+#             "settings_doc": s["settings_doc"],
+#             "label": s["label"],
+#             "units": units,
+#             "cost_centers": cost_centers,
+#             "locations": locations,
+#             "cost_centers_erp": cost_centers_erp,
+#             "locations_erp": locations_erp,
+#             "actuals": actuals_data,
+#         })
+
+#     # return {"grouped_actuals_data":grouped_actuals_data,"final_results":final_results}
+#     return final_results
+
+
+@frappe.whitelist(allow_guest=True)
+def format_api(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
+
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    previous_financial_year = get_previous_financial_year(financial_year)
     settings = get_number_card_settings(set_group_id)
-    # print(previous_financial_year,"previous_financial_year")
+
     # sort settings
     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
 
     final_results = []
+
     formatted = get_accounting_period_from_month(
         month,
         previous_financial_year
     )
     accounting_period = formatted.get("accounting_period")
     fiscal_year = formatted.get("fiscal_year")
+
     # ✅ CALL ONLY ONCE
     grouped_actuals_response = get_grouped_actuals(
         fiscal_year=fiscal_year,
@@ -665,11 +728,12 @@ def format_api(financial_year=None, month=None,set_group_id=None,previous_financ
 
     for s in settings:
 
-        units = ",".join(s["units"]) if s["units"] else ""
-        cost_centers = ",".join(s["cost_centers"]) if s["cost_centers"] else ""
-        locations = ",".join(s["locations"]) if s["locations"] else ""
-        cost_centers_erp = ",".join(s["cost_centers_erp"]) if s["cost_centers_erp"] else ""
-        locations_erp = ",".join(s["locations_erp"]) if s["locations_erp"] else ""
+        # ✅ SAFE JOIN (FIXED)
+        units = safe_join(s.get("units"))
+        cost_centers = safe_join(s.get("cost_centers"))
+        locations = safe_join(s.get("locations"))
+        cost_centers_erp = safe_join(s.get("cost_centers_erp"))
+        locations_erp = safe_join(s.get("locations_erp"))
 
         actuals_data = get_combined_actuals(
             financial_year=financial_year,
@@ -679,12 +743,12 @@ def format_api(financial_year=None, month=None,set_group_id=None,previous_financ
             location_code=locations,
             erp_cost_center_value=cost_centers_erp,
             erp_loc_value=locations_erp,
-            grouped_actuals_data=grouped_actuals_data  # ✅ pass once-fetched data
+            grouped_actuals_data=grouped_actuals_data
         )
 
         final_results.append({
-            "settings_doc": s["settings_doc"],
-            "label": s["label"],
+            "settings_doc": s.get("settings_doc"),
+            "label": s.get("label"),
             "units": units,
             "cost_centers": cost_centers,
             "locations": locations,
@@ -693,9 +757,7 @@ def format_api(financial_year=None, month=None,set_group_id=None,previous_financ
             "actuals": actuals_data,
         })
 
-    # return {"grouped_actuals_data":grouped_actuals_data,"final_results":final_results}
     return final_results
-
 @frappe.whitelist(allow_guest=True)
 def get_combined_actuals(
     financial_year=None,
