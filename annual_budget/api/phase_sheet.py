@@ -231,11 +231,246 @@ from annual_budget.api.actual_format import get_filtered_actuals, sum_of_actuals
 #     return final
 
 
+# @frappe.whitelist(allow_guest=True)
+# def get_consolidated_report(financial_year=None, units=None, cost_center=None, location_code=None):
+
+#     if not financial_year:
+#         frappe.throw("Financial Year is required")
+
+#     import re
+#     from decimal import Decimal
+
+#     def _num(x):
+#         if x is None:
+#             return 0.0
+#         try:
+#             return float(Decimal(str(x)))
+#         except Exception:
+#             return 0.0
+
+#     # ------------------------------------------------------------
+#     # Fetch Expenses (sequence + sub head from master)
+#     # ------------------------------------------------------------
+#     expense_rows = frappe.db.get_all(
+#         "Expenses",
+#         fields=["name", "sequence_id", "sub_head_of_expense"]
+#     )
+
+#     sequence_map = {}
+#     expense_sub_map = {}
+
+#     for e in expense_rows:
+#         sequence_map[e.name] = int(e.sequence_id or 9999)
+#         expense_sub_map[e.name] = (e.sub_head_of_expense or "").strip()
+
+#     # ------------------------------------------------------------
+#     # Filters
+#     # ------------------------------------------------------------
+#     filters = {"financial_year": financial_year}
+
+#     if units:
+#         filters["set_id"] = ["in", [u.strip() for u in units.split(",") if u.strip()]]
+
+#     if cost_center:
+#         filters["cost_center"] = ["in", [c.strip() for c in cost_center.split(",") if c.strip()]]
+
+#     if location_code:
+#         filters["location_code"] = ["in", [l.strip() for l in location_code.split(",") if l.strip()]]
+
+#     parents = frappe.get_all("Finance Budget", filters=filters, fields=["name"])
+
+#     if not parents:
+#         return []
+
+#     parent_names = [p.name for p in parents]
+
+#     rows = frappe.get_all(
+#         "Finance Budget Amounts",
+#         filters={"parent": ["in", parent_names]},
+#         fields=[
+#             "type_of_expense_id",
+#             "type_of_expense",
+#             "gl_code",
+#             "head_of_expense",
+#             "sub_head_of_expense",
+#             "april", "may", "june",
+#             "july", "august", "september",
+#             "october", "november", "december",
+#             "january", "february", "march"
+#         ]
+#     )
+
+#     TOP_LEVEL_HEADS = [
+#         "CAPITAL EXPENSES",
+#         "OPERATING EXPENSES",
+#         "COVID SUPPORT"
+#     ]
+
+#     heads = {}
+
+#     # ------------------------------------------------------------
+#     # Process rows
+#     # ------------------------------------------------------------
+#     for r in rows:
+
+#         expense_id = r.type_of_expense_id
+#         item_label = r.type_of_expense
+
+#         original_head = (r.head_of_expense or "").strip()
+#         original_sub = (r.sub_head_of_expense or "").strip()
+
+#         raw_head = re.sub(r"\s+", " ", original_head).strip().upper()
+#         sub = re.sub(r"\s+", " ", original_sub).strip().upper()
+
+#         gl = str(r.gl_code or "").strip()
+
+#         q1 = [_num(r.april), _num(r.may), _num(r.june)]
+#         q2 = [_num(r.july), _num(r.august), _num(r.september)]
+#         q3 = [_num(r.october), _num(r.november), _num(r.december)]
+#         q4 = [_num(r.january), _num(r.february), _num(r.march)]
+
+#         # Determine parent head
+#         if raw_head not in TOP_LEVEL_HEADS:
+#             parent_head = "OPERATING EXPENSES"
+#             sub = raw_head
+#             original_sub = original_head
+#         else:
+#             parent_head = raw_head
+
+#         if parent_head not in heads:
+#             heads[parent_head] = {
+#                 "name": parent_head,
+#                 "sequence_id": 0,
+#                 "q1": [0, 0, 0],
+#                 "q2": [0, 0, 0],
+#                 "q3": [0, 0, 0],
+#                 "q4": [0, 0, 0],
+#                 "items": {},
+#                 "sub_heads": {}
+#             }
+
+#         # Add head totals
+#         for i in range(3):
+#             heads[parent_head]["q1"][i] += q1[i]
+#             heads[parent_head]["q2"][i] += q2[i]
+#             heads[parent_head]["q3"][i] += q3[i]
+#             heads[parent_head]["q4"][i] += q4[i]
+
+#         # ============================================================
+#         # CAPITAL + COVID SUPPORT (Direct Items)
+#         # ============================================================
+#         if parent_head in ["CAPITAL EXPENSES", "COVID SUPPORT"]:
+
+#             if expense_id not in heads[parent_head]["items"]:
+#                 heads[parent_head]["items"][expense_id] = {
+#                     "name": item_label,
+#                     "sequence_id": sequence_map.get(expense_id, 9999),
+#                     "gl_code": gl,
+#                     "head_of_expense": original_head,
+#                     # 🔥 ONLY CHANGE HERE
+#                     "sub_head_of_expense": expense_sub_map.get(expense_id, original_sub),
+#                     "q1": [0,0,0],
+#                     "q2": [0,0,0],
+#                     "q3": [0,0,0],
+#                     "q4": [0,0,0]
+#                 }
+
+#             item = heads[parent_head]["items"][expense_id]
+
+#         # ============================================================
+#         # OPERATING EXPENSES (With Sub-Heads)
+#         # ============================================================
+#         else:
+
+#             if sub not in heads[parent_head]["sub_heads"]:
+#                 heads[parent_head]["sub_heads"][sub] = {
+#                     "name": original_sub,
+#                     "sequence_id": 0,
+#                     "q1": [0,0,0],
+#                     "q2": [0,0,0],
+#                     "q3": [0,0,0],
+#                     "q4": [0,0,0],
+#                     "items": {}
+#                 }
+
+#             # Sub-head totals
+#             for i in range(3):
+#                 heads[parent_head]["sub_heads"][sub]["q1"][i] += q1[i]
+#                 heads[parent_head]["sub_heads"][sub]["q2"][i] += q2[i]
+#                 heads[parent_head]["sub_heads"][sub]["q3"][i] += q3[i]
+#                 heads[parent_head]["sub_heads"][sub]["q4"][i] += q4[i]
+
+#             if expense_id not in heads[parent_head]["sub_heads"][sub]["items"]:
+#                 heads[parent_head]["sub_heads"][sub]["items"][expense_id] = {
+#                     "name": item_label,
+#                     "sequence_id": sequence_map.get(expense_id, 9999),
+#                     "gl_code": gl,
+#                     "head_of_expense": original_head,
+#                     # 🔥 ONLY CHANGE HERE
+#                     "sub_head_of_expense": expense_sub_map.get(expense_id, original_sub),
+#                     "q1": [0,0,0],
+#                     "q2": [0,0,0],
+#                     "q3": [0,0,0],
+#                     "q4": [0,0,0]
+#                 }
+
+#             item = heads[parent_head]["sub_heads"][sub]["items"][expense_id]
+
+#         # Item totals
+#         for i in range(3):
+#             item["q1"][i] += q1[i]
+#             item["q2"][i] += q2[i]
+#             item["q3"][i] += q3[i]
+#             item["q4"][i] += q4[i]
+
+#     # ------------------------------------------------------------
+#     # Final Sorting (unchanged)
+#     # ------------------------------------------------------------
+#     final = []
+
+#     for head in heads.values():
+
+#         head["items"] = sorted(
+#             head["items"].values(),
+#             key=lambda x: x["sequence_id"]
+#         )
+
+#         sorted_subs = []
+
+#         for sub in head["sub_heads"].values():
+
+#             sub["items"] = sorted(
+#                 sub["items"].values(),
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             if sub["items"]:
+#                 sub["sequence_id"] = min(
+#                     item["sequence_id"] for item in sub["items"]
+#                 )
+#             else:
+#                 sub["sequence_id"] = 9999
+
+#             sorted_subs.append(sub)
+
+#         head["sub_heads"] = sorted(
+#             sorted_subs,
+#             key=lambda x: x["sequence_id"]
+#         )
+
+#         final.append(head)
+
+#     return final
+
+
 @frappe.whitelist(allow_guest=True)
-def get_consolidated_report(financial_year=None, units=None, cost_center=None, location_code=None):
+def get_consolidated_report(financial_year=None, units=None, cost_center=None, location_code=None, template_name="Budget Templat Master"):
 
     if not financial_year:
         frappe.throw("Financial Year is required")
+
+    if not template_name:
+        frappe.throw("Template Name is required")
 
     import re
     from decimal import Decimal
@@ -249,22 +484,31 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
             return 0.0
 
     # ------------------------------------------------------------
-    # Fetch Expenses (sequence + sub head from master)
+    # FETCH TEMPLATE
     # ------------------------------------------------------------
-    expense_rows = frappe.db.get_all(
-        "Expenses",
-        fields=["name", "sequence_id", "sub_head_of_expense"]
+    template_doc = frappe.get_doc(
+        "Import Templates",
+        {"template_name": template_name}
     )
 
     sequence_map = {}
     expense_sub_map = {}
+    expense_head_map = {}
+    allowed_expenses = set()
 
-    for e in expense_rows:
-        sequence_map[e.name] = int(e.sequence_id or 9999)
-        expense_sub_map[e.name] = (e.sub_head_of_expense or "").strip()
+    for item in template_doc.import_template_item_list:
+        expense_id = item.type_of_expense_id
+
+        if not expense_id:
+            continue
+
+        sequence_map[expense_id] = int(item.sequence_id or 9999)
+        expense_sub_map[expense_id] = (item.sub_head_of_expense or "").strip()
+        expense_head_map[expense_id] = (item.head_of_expense or "").strip()
+        allowed_expenses.add(expense_id)
 
     # ------------------------------------------------------------
-    # Filters
+    # FILTERS
     # ------------------------------------------------------------
     filters = {"financial_year": financial_year}
 
@@ -278,28 +522,27 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
         filters["location_code"] = ["in", [l.strip() for l in location_code.split(",") if l.strip()]]
 
     parents = frappe.get_all("Finance Budget", filters=filters, fields=["name"])
+    parent_names = [p.name for p in parents] if parents else []
 
-    if not parents:
-        return []
+    rows = []
+    if parent_names:
+        rows = frappe.get_all(
+            "Finance Budget Amounts",
+            filters={"parent": ["in", parent_names]},
+            fields=[
+                "type_of_expense_id",
+                "type_of_expense",
+                "gl_code",
+                "april", "may", "june",
+                "july", "august", "september",
+                "october", "november", "december",
+                "january", "february", "march"
+            ]
+        )
 
-    parent_names = [p.name for p in parents]
-
-    rows = frappe.get_all(
-        "Finance Budget Amounts",
-        filters={"parent": ["in", parent_names]},
-        fields=[
-            "type_of_expense_id",
-            "type_of_expense",
-            "gl_code",
-            "head_of_expense",
-            "sub_head_of_expense",
-            "april", "may", "june",
-            "july", "august", "september",
-            "october", "november", "december",
-            "january", "february", "march"
-        ]
-    )
-
+    # ------------------------------------------------------------
+    # PRE-BUILD FROM TEMPLATE (IMPORTANT)
+    # ------------------------------------------------------------
     TOP_LEVEL_HEADS = [
         "CAPITAL EXPENSES",
         "OPERATING EXPENSES",
@@ -308,28 +551,19 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
 
     heads = {}
 
-    # ------------------------------------------------------------
-    # Process rows
-    # ------------------------------------------------------------
-    for r in rows:
+    for item in template_doc.import_template_item_list:
 
-        expense_id = r.type_of_expense_id
-        item_label = r.type_of_expense
+        expense_id = item.type_of_expense_id
+        if not expense_id:
+            continue
 
-        original_head = (r.head_of_expense or "").strip()
-        original_sub = (r.sub_head_of_expense or "").strip()
+        item_label = item.type_of_expense
+        original_head = (item.head_of_expense or "").strip()
+        original_sub = (item.sub_head_of_expense or "").strip()
 
         raw_head = re.sub(r"\s+", " ", original_head).strip().upper()
         sub = re.sub(r"\s+", " ", original_sub).strip().upper()
 
-        gl = str(r.gl_code or "").strip()
-
-        q1 = [_num(r.april), _num(r.may), _num(r.june)]
-        q2 = [_num(r.july), _num(r.august), _num(r.september)]
-        q3 = [_num(r.october), _num(r.november), _num(r.december)]
-        q4 = [_num(r.january), _num(r.february), _num(r.march)]
-
-        # Determine parent head
         if raw_head not in TOP_LEVEL_HEADS:
             parent_head = "OPERATING EXPENSES"
             sub = raw_head
@@ -349,74 +583,93 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
                 "sub_heads": {}
             }
 
-        # Add head totals
+        # CAPITAL / COVID
+        if parent_head in ["CAPITAL EXPENSES", "COVID SUPPORT"]:
+
+            heads[parent_head]["items"][expense_id] = {
+                "name": item_label,
+                "sequence_id": sequence_map.get(expense_id, 9999),
+                "gl_code": "",
+                "head_of_expense": original_head,
+                "sub_head_of_expense": original_sub,
+                "q1": [0, 0, 0],
+                "q2": [0, 0, 0],
+                "q3": [0, 0, 0],
+                "q4": [0, 0, 0]
+            }
+
+        else:
+            if sub not in heads[parent_head]["sub_heads"]:
+                heads[parent_head]["sub_heads"][sub] = {
+                    "name": original_sub,
+                    "sequence_id": 0,
+                    "q1": [0, 0, 0],
+                    "q2": [0, 0, 0],
+                    "q3": [0, 0, 0],
+                    "q4": [0, 0, 0],
+                    "items": {}
+                }
+
+            heads[parent_head]["sub_heads"][sub]["items"][expense_id] = {
+                "name": item_label,
+                "sequence_id": sequence_map.get(expense_id, 9999),
+                "gl_code": "",
+                "head_of_expense": original_head,
+                "sub_head_of_expense": original_sub,
+                "q1": [0, 0, 0],
+                "q2": [0, 0, 0],
+                "q3": [0, 0, 0],
+                "q4": [0, 0, 0]
+            }
+
+    # ------------------------------------------------------------
+    # MERGE ACTUAL VALUES
+    # ------------------------------------------------------------
+    for r in rows:
+
+        expense_id = r.type_of_expense_id
+        if expense_id not in allowed_expenses:
+            continue
+
+        original_head = (expense_head_map.get(expense_id) or "").strip()
+        original_sub = (expense_sub_map.get(expense_id) or "").strip()
+
+        raw_head = re.sub(r"\s+", " ", original_head).strip().upper()
+        sub = re.sub(r"\s+", " ", original_sub).strip().upper()
+
+        if raw_head not in TOP_LEVEL_HEADS:
+            parent_head = "OPERATING EXPENSES"
+            sub = raw_head
+        else:
+            parent_head = raw_head
+
+        q1 = [_num(r.april), _num(r.may), _num(r.june)]
+        q2 = [_num(r.july), _num(r.august), _num(r.september)]
+        q3 = [_num(r.october), _num(r.november), _num(r.december)]
+        q4 = [_num(r.january), _num(r.february), _num(r.march)]
+
+        # Head totals
         for i in range(3):
             heads[parent_head]["q1"][i] += q1[i]
             heads[parent_head]["q2"][i] += q2[i]
             heads[parent_head]["q3"][i] += q3[i]
             heads[parent_head]["q4"][i] += q4[i]
 
-        # ============================================================
-        # CAPITAL + COVID SUPPORT (Direct Items)
-        # ============================================================
         if parent_head in ["CAPITAL EXPENSES", "COVID SUPPORT"]:
+            item = heads[parent_head]["items"].get(expense_id)
 
-            if expense_id not in heads[parent_head]["items"]:
-                heads[parent_head]["items"][expense_id] = {
-                    "name": item_label,
-                    "sequence_id": sequence_map.get(expense_id, 9999),
-                    "gl_code": gl,
-                    "head_of_expense": original_head,
-                    # 🔥 ONLY CHANGE HERE
-                    "sub_head_of_expense": expense_sub_map.get(expense_id, original_sub),
-                    "q1": [0,0,0],
-                    "q2": [0,0,0],
-                    "q3": [0,0,0],
-                    "q4": [0,0,0]
-                }
-
-            item = heads[parent_head]["items"][expense_id]
-
-        # ============================================================
-        # OPERATING EXPENSES (With Sub-Heads)
-        # ============================================================
         else:
+            item = heads[parent_head]["sub_heads"][sub]["items"].get(expense_id)
 
-            if sub not in heads[parent_head]["sub_heads"]:
-                heads[parent_head]["sub_heads"][sub] = {
-                    "name": original_sub,
-                    "sequence_id": 0,
-                    "q1": [0,0,0],
-                    "q2": [0,0,0],
-                    "q3": [0,0,0],
-                    "q4": [0,0,0],
-                    "items": {}
-                }
-
-            # Sub-head totals
             for i in range(3):
                 heads[parent_head]["sub_heads"][sub]["q1"][i] += q1[i]
                 heads[parent_head]["sub_heads"][sub]["q2"][i] += q2[i]
                 heads[parent_head]["sub_heads"][sub]["q3"][i] += q3[i]
                 heads[parent_head]["sub_heads"][sub]["q4"][i] += q4[i]
 
-            if expense_id not in heads[parent_head]["sub_heads"][sub]["items"]:
-                heads[parent_head]["sub_heads"][sub]["items"][expense_id] = {
-                    "name": item_label,
-                    "sequence_id": sequence_map.get(expense_id, 9999),
-                    "gl_code": gl,
-                    "head_of_expense": original_head,
-                    # 🔥 ONLY CHANGE HERE
-                    "sub_head_of_expense": expense_sub_map.get(expense_id, original_sub),
-                    "q1": [0,0,0],
-                    "q2": [0,0,0],
-                    "q3": [0,0,0],
-                    "q4": [0,0,0]
-                }
+        if not item:
+            continue
 
-            item = heads[parent_head]["sub_heads"][sub]["items"][expense_id]
-
-        # Item totals
         for i in range(3):
             item["q1"][i] += q1[i]
             item["q2"][i] += q2[i]
@@ -424,7 +677,7 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
             item["q4"][i] += q4[i]
 
     # ------------------------------------------------------------
-    # Final Sorting (unchanged)
+    # FINAL SORTING
     # ------------------------------------------------------------
     final = []
 
@@ -461,7 +714,6 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
         final.append(head)
 
     return final
-
 
 @frappe.whitelist(allow_guest=True)
 def get_consolidated_report_actual_ytd(
