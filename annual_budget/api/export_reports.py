@@ -888,6 +888,221 @@ def export_phase_sheet_excel(
 
 
 
+    # import frappe
+    # import tempfile
+    # import xlsxwriter
+    # from frappe.utils import nowdate
+
+
+    # @frappe.whitelist()
+    # def start_budget_template_generation(user, entity_data=None):
+
+    #     if not user:
+    #         frappe.throw("User required")
+
+    #     frappe.enqueue(
+    #         "annual_budget.api.export_reports.generate_budget_template",
+    #         queue="long",
+    #         timeout=1800,
+    #         user=user,
+    #         entity_data=entity_data
+    #     )
+
+    #     return {"status": "started"}
+
+
+    # def generate_budget_template(user, entity_data=None):
+
+    #     # ── Parse entity_data ─────────────────────────────────
+    #     # Can be:
+    #     #   None          → use all mappings from access_doc
+    #     #   JSON string   → parse into list or single dict
+    #     #   list          → multiple selected rows
+    #     #   dict          → single selected row (legacy)
+
+    #     if entity_data and isinstance(entity_data, str):
+    #         entity_data = frappe.parse_json(entity_data)
+
+    #     # Normalise to a list (or None)
+    #     if isinstance(entity_data, dict):
+    #         entity_data = [entity_data]   # wrap single row in a list
+
+    #     # entity_data is now either a list of dicts or None
+
+    #     # ── Fetch Finance User Access ──────────────────────────
+    #     doc_name = frappe.db.get_value(
+    #         "Finance user access",
+    #         {"user": user},
+    #         "name"
+    #     )
+
+    #     access_doc = frappe.get_doc("Finance user access", doc_name) if doc_name else None
+
+    #     if not access_doc:
+    #         return
+
+    #     # ── Import Template ────────────────────────────────────
+    #     import_template = frappe.get_doc(
+    #         "Import Templates",
+    #         access_doc.import_template_id
+    #     )
+
+    #     template_items = import_template.import_template_item_list
+
+    #     financial_year = frappe.db.get_single_value(
+    #         "Master Settings",
+    #         "current_financial_year"
+    #     )
+
+    #     # ── Decide mappings source ─────────────────────────────
+    #     # If entity_data list provided → use those rows
+    #     # Otherwise → use all rows from access_doc.mapping
+    #     if entity_data:
+    #         mappings       = entity_data          # list of plain dicts from frontend
+    #         use_dict       = True                 # access via .get()
+    #     else:
+    #         mappings       = access_doc.mapping   # list of child doc objects
+    #         use_dict       = False                # access via getattr()
+
+    #     # ── Helper: read a field from either a dict or a child doc ──
+    #     def get_field(field, mapping):
+    #         if use_dict:
+    #             return mapping.get(field) or ""
+    #         return getattr(mapping, field, "") or ""
+
+    #     # ── Create Excel ───────────────────────────────────────
+    #     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+    #     workbook  = xlsxwriter.Workbook(tmp.name)
+    #     worksheet = workbook.add_worksheet("Finance Budget Import")
+
+    #     header_format = workbook.add_format({"bold": True, "locked": True})
+    #     locked        = workbook.add_format({"locked": True})
+    #     unlocked      = workbook.add_format({"locked": False, "num_format": "0.00"})
+
+    #     headers = [
+    #         "Entity / Unit",
+    #         "Entity / Unit Description",
+    #         "Cost Center",
+    #         "Cost Center(Original)",
+    #         "Cost Center Description",
+    #         "Location code",
+    #         "Location code(Original)",
+    #         "Function / Sub Unit / Division",
+    #         "State",
+    #         "Financial year",
+    #         "Uploaded By",
+    #         "Type of expense ID (Budget Amounts)",
+    #         "Head of expense (Budget Amounts)",
+    #         "Sub head of expense (Budget Amounts)",
+    #         "Type of expense (Budget Amounts)",
+    #         "April (Budget Amounts)",
+    #         "May (Budget Amounts)",
+    #         "June (Budget Amounts)",
+    #         "July (Budget Amounts)",
+    #         "August (Budget Amounts)",
+    #         "September (Budget Amounts)",
+    #         "October (Budget Amounts)",
+    #         "November (Budget Amounts)",
+    #         "December (Budget Amounts)",
+    #         "January (Budget Amounts)",
+    #         "February (Budget Amounts)",
+    #         "March (Budget Amounts)",
+    #         "Quarter 1 Total Amount (Budget Amounts)",
+    #         "Quarter 2 Total Amount (Budget Amounts)",
+    #         "Quarter 3 Total Amount (Budget Amounts)",
+    #         "Quarter 4 Total Amount (Budget Amounts)",
+    #         "Year Total Amount (Budget Amounts)"
+    #     ]
+
+    #     col_widths = [len(h) for h in headers]
+
+    #     for col, header in enumerate(headers):
+    #         worksheet.write(0, col, header, header_format)
+
+    #     worksheet.freeze_panes(1, 0)
+
+    #     row_index = 1
+
+    #     # ── Write one block of rows per mapping ───────────────
+    #     for mapping in mappings:
+
+    #         first_row = True
+
+    #         for item in template_items:
+
+    #             if first_row:
+    #                 parent_values = [
+    #                     get_field("unit",                   mapping),
+    #                     get_field("unit_description",       mapping),
+    #                     get_field("cost_center",            mapping),
+    #                     get_field("cost_center_erp",        mapping),
+    #                     get_field("cost_center_description",mapping),
+    #                     get_field("location_code",          mapping),
+    #                     get_field("location_code_erp",      mapping),
+    #                     get_field("location_description",   mapping),
+    #                     get_field("state",                  mapping),
+    #                     financial_year,
+    #                     user
+    #                 ]
+    #                 first_row = False
+    #             else:
+    #                 parent_values = [""] * 11
+
+    #             row = parent_values + [
+    #                 item.type_of_expense_id,
+    #                 item.head_of_expense,
+    #                 item.sub_head_of_expense,
+    #                 item.type_of_expense
+    #             ]
+
+    #             for col, val in enumerate(row):
+    #                 worksheet.write(row_index, col, val, locked)
+    #                 if val:
+    #                     col_widths[col] = max(col_widths[col], len(str(val)))
+
+    #             for col in range(15, 27):
+    #                 worksheet.write(row_index, col, 0, unlocked)
+
+    #             r = row_index + 1
+    #             worksheet.write_formula(row_index, 27, f"=SUM(P{r}:R{r})")
+    #             worksheet.write_formula(row_index, 28, f"=SUM(S{r}:U{r})")
+    #             worksheet.write_formula(row_index, 29, f"=SUM(V{r}:X{r})")
+    #             worksheet.write_formula(row_index, 30, f"=SUM(Y{r}:AA{r})")
+    #             worksheet.write_formula(row_index, 31, f"=SUM(AB{r}:AE{r})")
+
+    #             row_index += 1
+
+    #     worksheet.protect("[REDACTED-PASSWORD]")
+
+    #     for i, width in enumerate(col_widths):
+    #         worksheet.set_column(i, i, width + 3)
+
+    #     workbook.close()
+
+    #     frappe.cache().set_value(
+    #         f"budget_template_{user}",
+    #         tmp.name,
+    #         expires_in_sec=3600
+    #     )
+
+
+    # @frappe.whitelist()
+    # def download_generated_template(user):
+
+    #     path = frappe.cache().get_value(f"budget_template_{user}")
+
+    #     if not path:
+    #         return {"status": "processing"}
+
+    #     with open(path, "rb") as f:
+    #         frappe.response["filename"]    = f"Budget_mis_Import_{nowdate()}.xlsx"
+    #         frappe.response["filecontent"] = f.read()
+    #         frappe.response["type"]        = "download"
+
+
+
+
 import frappe
 import tempfile
 import xlsxwriter
@@ -895,10 +1110,9 @@ from frappe.utils import nowdate
 
 
 @frappe.whitelist()
-def start_budget_template_generation(user, entity_data=None):
+def start_budget_template_generation(entity_data=None):
 
-    if not user:
-        frappe.throw("User required")
+    user = frappe.session.user
 
     frappe.enqueue(
         "annual_budget.api.export_reports.generate_budget_template",
@@ -911,25 +1125,19 @@ def start_budget_template_generation(user, entity_data=None):
     return {"status": "started"}
 
 
-def generate_budget_template(user, entity_data=None):
+def generate_budget_template(user=None, entity_data=None):
+
+    # ── Use logged-in user ────────────────────────────────
+    user = user or frappe.session.user
 
     # ── Parse entity_data ─────────────────────────────────
-    # Can be:
-    #   None          → use all mappings from access_doc
-    #   JSON string   → parse into list or single dict
-    #   list          → multiple selected rows
-    #   dict          → single selected row (legacy)
-
     if entity_data and isinstance(entity_data, str):
         entity_data = frappe.parse_json(entity_data)
 
-    # Normalise to a list (or None)
     if isinstance(entity_data, dict):
-        entity_data = [entity_data]   # wrap single row in a list
+        entity_data = [entity_data]
 
-    # entity_data is now either a list of dicts or None
-
-    # ── Fetch Finance User Access ──────────────────────────
+    # ── Fetch Finance User Access ─────────────────────────
     doc_name = frappe.db.get_value(
         "Finance user access",
         {"user": user},
@@ -941,7 +1149,10 @@ def generate_budget_template(user, entity_data=None):
     if not access_doc:
         return
 
-    # ── Import Template ────────────────────────────────────
+    # ✅ Check Allow Edit Template
+    allow_edit = access_doc.allow_edit_template or 0
+
+    # ── Import Template ───────────────────────────────────
     import_template = frappe.get_doc(
         "Import Templates",
         access_doc.import_template_id
@@ -955,30 +1166,34 @@ def generate_budget_template(user, entity_data=None):
     )
 
     # ── Decide mappings source ─────────────────────────────
-    # If entity_data list provided → use those rows
-    # Otherwise → use all rows from access_doc.mapping
     if entity_data:
-        mappings       = entity_data          # list of plain dicts from frontend
-        use_dict       = True                 # access via .get()
+        mappings = entity_data
+        use_dict = True
     else:
-        mappings       = access_doc.mapping   # list of child doc objects
-        use_dict       = False                # access via getattr()
+        mappings = access_doc.mapping
+        use_dict = False
 
-    # ── Helper: read a field from either a dict or a child doc ──
-    def get_field(field, mapping):
+    # ── Helper ────────────────────────────────────────────
+    def get_field(frontend_key, child_key, mapping):
         if use_dict:
-            return mapping.get(field) or ""
-        return getattr(mapping, field, "") or ""
+            return mapping.get(frontend_key) or ""
+        return getattr(mapping, child_key, "") or ""
 
-    # ── Create Excel ───────────────────────────────────────
+    # ── Create Excel ──────────────────────────────────────
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
 
     workbook  = xlsxwriter.Workbook(tmp.name)
     worksheet = workbook.add_worksheet("Finance Budget Import")
 
     header_format = workbook.add_format({"bold": True, "locked": True})
-    locked        = workbook.add_format({"locked": True})
-    unlocked      = workbook.add_format({"locked": False, "num_format": "0.00"})
+
+    # ✅ Apply locking based on Allow Edit Template
+    if allow_edit:
+        locked = workbook.add_format({"locked": False})
+        unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
+    else:
+        locked = workbook.add_format({"locked": True})
+        unlocked = workbook.add_format({"locked": False, "num_format": "0.00"})
 
     headers = [
         "Entity / Unit",
@@ -988,7 +1203,7 @@ def generate_budget_template(user, entity_data=None):
         "Cost Center Description",
         "Location code",
         "Location code(Original)",
-        "Function / Sub Unit / Division",
+        "Location Description",
         "State",
         "Financial year",
         "Uploaded By",
@@ -1024,7 +1239,6 @@ def generate_budget_template(user, entity_data=None):
 
     row_index = 1
 
-    # ── Write one block of rows per mapping ───────────────
     for mapping in mappings:
 
         first_row = True
@@ -1033,15 +1247,15 @@ def generate_budget_template(user, entity_data=None):
 
             if first_row:
                 parent_values = [
-                    get_field("unit",                   mapping),
-                    get_field("unit_description",       mapping),
-                    get_field("cost_center",            mapping),
-                    get_field("cost_center_erp",        mapping),
-                    get_field("cost_center_description",mapping),
-                    get_field("location_code",          mapping),
-                    get_field("location_code_erp",      mapping),
-                    get_field("location_description",   mapping),
-                    get_field("state",                  mapping),
+                    get_field("unit", "unit", mapping),
+                    get_field("unit_description", "unit_description", mapping),
+                    get_field("cost_center_id", "cost_center_erp", mapping),
+                    get_field("cost_center", "cost_center", mapping),
+                    get_field("cost_center_description", "cost_center_description", mapping),
+                    get_field("location_code_id", "location_code_erp", mapping),
+                    get_field("location_code", "location_code", mapping),
+                    get_field("location_description", "location_description", mapping),
+                    get_field("state", "state", mapping),
                     financial_year,
                     user
                 ]
@@ -1061,6 +1275,7 @@ def generate_budget_template(user, entity_data=None):
                 if val:
                     col_widths[col] = max(col_widths[col], len(str(val)))
 
+            # Editable monthly fields
             for col in range(15, 27):
                 worksheet.write(row_index, col, 0, unlocked)
 
@@ -1073,7 +1288,9 @@ def generate_budget_template(user, entity_data=None):
 
             row_index += 1
 
-    worksheet.protect("[REDACTED-PASSWORD]")
+    # ✅ Apply protection ONLY if edit not allowed
+    if not allow_edit:
+        worksheet.protect("[REDACTED-PASSWORD]")
 
     for i, width in enumerate(col_widths):
         worksheet.set_column(i, i, width + 3)
@@ -1088,7 +1305,9 @@ def generate_budget_template(user, entity_data=None):
 
 
 @frappe.whitelist()
-def download_generated_template(user):
+def download_generated_template():
+
+    user = frappe.session.user
 
     path = frappe.cache().get_value(f"budget_template_{user}")
 
@@ -1099,7 +1318,6 @@ def download_generated_template(user):
         frappe.response["filename"]    = f"Budget_mis_Import_{nowdate()}.xlsx"
         frappe.response["filecontent"] = f.read()
         frappe.response["type"]        = "download"
-
 
 # import tempfile
 # import xlsxwriter

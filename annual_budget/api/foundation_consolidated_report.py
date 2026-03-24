@@ -323,338 +323,28 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
         }
     
 
-# @frappe.whitelist(allow_guest=True)
-# def format_api(financial_year=None, month=None):
-
-#     settings = get_number_card_settings()
-
-#     final_results = []
-
-#     for s in settings:
-
-#         units = ",".join(s["units"]) if s["units"] else ""
-#         cost_centers = ",".join(s["cost_centers"]) if s["cost_centers"] else ""
-#         locations = ",".join(s["locations"]) if s["locations"] else ""
-#         cost_centers_erp = ",".join(s["cost_centers_erp"]) if s["cost_centers_erp"] else ""
-#         locations_erp = ",".join(s["locations_erp"]) if s["locations_erp"] else ""
-
-#         # call actuals method
-#         actuals_data = get_combined_actuals(
-#             financial_year=financial_year,
-#             month=month,
-#             unit=units,
-#             cost_center=cost_centers,
-#             location_code=locations,
-#             erp_cost_center_value=cost_centers_erp,
-#             erp_loc_value=locations_erp
-#         )
-
-#         final_results.append({
-#             "settings_doc": s["settings_doc"],
-#             "label": s["label"],
-#             "units": units,
-#             "cost_centers": cost_centers,
-#             "locations": locations,
-#             "cost_centers_erp": cost_centers_erp,
-#             "locations_erp": locations_erp,
-#             "actuals": actuals_data
-#         })
-
-#     return final_results
 
 # @frappe.whitelist(allow_guest=True)
-# def format_api(financial_year=None, month=None):
+# def format_api(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
 
-#     settings = get_number_card_settings()
+#     def safe_join(arr):
+#         return ",".join([str(x).strip() for x in (arr or []) if x])
 
-#     # sort settings by settings_doc
-#     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
-
-#     final_results = []
-
-#     for s in settings:
-
-#         units = ",".join(s["units"]) if s["units"] else ""
-#         cost_centers = ",".join(s["cost_centers"]) if s["cost_centers"] else ""
-#         locations = ",".join(s["locations"]) if s["locations"] else ""
-#         cost_centers_erp = ",".join(s["cost_centers_erp"]) if s["cost_centers_erp"] else ""
-#         locations_erp = ",".join(s["locations_erp"]) if s["locations_erp"] else ""
-
-#         # call actuals method
-#         actuals_data = get_combined_actuals(
-#             financial_year=financial_year,
-#             month=month,
-#             unit=units,
-#             cost_center=cost_centers,
-#             location_code=locations,
-#             erp_cost_center_value=cost_centers_erp,
-#             erp_loc_value=locations_erp
-#         )
-
-#         final_results.append({
-#             "settings_doc": s["settings_doc"],
-#             "label": s["label"],
-#             "units": units,
-#             "cost_centers": cost_centers,
-#             "locations": locations,
-#             "cost_centers_erp": cost_centers_erp,
-#             "locations_erp": locations_erp,
-#             "actuals": actuals_data
-#         })
-
-#     return final_results
-
-
-# @frappe.whitelist(allow_guest=True)
-# def get_combined_actuals(
-#     financial_year=None,
-#     month=None,
-#     unit=None,
-#     cost_center=None,
-#     location_code=None,
-#     erp_loc_value=None,
-#     erp_cost_center_value=None
-# ):
-#     from decimal import Decimal, ROUND_HALF_UP
-
-#     def to_decimal(value):
-#         try:
-#             return Decimal(str(value or 0))
-#         except Exception:
-#             return Decimal("0")
-
-#     def to_float(value):
-#         return float(value.quantize(Decimal("0.01"), ROUND_HALF_UP))
-
-#     MOVE_UNDER_OPERATING = [
-#         "OTHER  OPERATING EXPENSES",
-#         "Medical Expenses"
-#     ]
-
-#     CAPITAL_HEAD = "CAPITAL  EXPENSES"
-#     OPERATING_HEAD = "OPERATING  EXPENSES"
-#     COVID_HEAD = "COVID SUPPORT"
-
-#     # --------------------------------------------------
-#     # Previous Financial Year Logic (FIXED)
-#     # --------------------------------------------------
-
-#     last_financial_year = None
-#     if financial_year:
-#         last_financial_year = str(int(financial_year.split("-")[0]) - 1) if financial_year else None
-#     # --------------------------------------------------
-#     # 1️⃣ Build Base Structure
-#     # --------------------------------------------------
-
-#     expense_rows = frappe.get_all(
-#         "Expenses",
-#         fields=[
-#             "head_of_expense",
-#             "sub_head_of_expense",
-#             "type_of_expense",
-#             "gl_code",
-#             "sequence_id"
-#         ],
-#         order_by="sequence_id asc"
-#     )
-
-#     heads = {}
-
-#     for row in expense_rows:
-
-#         head_name = (row.head_of_expense or "").strip()
-#         sub_name = (row.sub_head_of_expense or "").strip()
-#         expense_name = (row.type_of_expense or "").strip()
-#         seq = row.sequence_id or 9999
-
-#         if not head_name or not expense_name:
-#             continue
-
-#         # Move some heads under OPERATING
-#         if head_name in MOVE_UNDER_OPERATING:
-#             sub_name = head_name
-#             head_name = OPERATING_HEAD
-
-#         head_obj = heads.setdefault(head_name, {
-#             "name": head_name,
-#             "sequence_id": seq,
-#             "sub_heads": {},
-#             "items": [],
-#             "ytd": Decimal("0"),
-#             "total_posted_amt_ytd": Decimal("0")
-#         })
-
-#         item_data = {
-#             "name": expense_name,
-#             "sequence_id": seq,
-#             "gl_code": row.gl_code or "",
-#             "ytd": Decimal("0"),
-#             "total_posted_amt": Decimal("0")
-#         }
-
-#         # Heads with only items (no sub-heads)
-#         if head_name in [CAPITAL_HEAD, COVID_HEAD]:
-#             head_obj["items"].append(item_data)
-
-#         else:
-#             if sub_name:
-#                 sub_obj = head_obj["sub_heads"].setdefault(sub_name, {
-#                     "name": sub_name,
-#                     "sequence_id": seq,
-#                     "items": [],
-#                     "ytd": Decimal("0"),
-#                     "total_posted_amt_ytd": Decimal("0")
-#                 })
-
-#                 sub_obj["items"].append(item_data)
-
-#             else:
-#                 head_obj["items"].append(item_data)
-
-#     # --------------------------------------------------
-#     # 2️⃣ Convert Dict → Ordered List
-#     # --------------------------------------------------
-
-#     structure = []
-
-#     for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
-
-#         head["sub_heads"] = sorted(
-#             head["sub_heads"].values(),
-#             key=lambda x: x["sequence_id"]
-#         )
-
-#         structure.append(head)
-
-#     # --------------------------------------------------
-#     # 3️⃣ Budget Lookup
-#     # --------------------------------------------------
-
-#     budget_lookup = {}
-
-#     budget_data = get_consolidated_report_actual_ytd(
-#         financial_year=financial_year,
-#         units=unit,
-#         cost_center=cost_center,
-#         location_code=location_code,
-#         month=month
-#     )
-
-#     for head in budget_data or []:
-
-#         for item in head.get("items", []):
-#             key = (item.get("sequence_id"), item.get("name"))
-#             budget_lookup[key] = to_decimal(item.get("ytd"))
-
-#         for sub in head.get("sub_heads", []):
-#             for item in sub.get("items", []):
-#                 key = (item.get("sequence_id"), item.get("name"))
-#                 budget_lookup[key] = to_decimal(item.get("ytd"))
-
-#     # --------------------------------------------------
-#     # 4️⃣ Actual Lookup
-#     # --------------------------------------------------
-
-#     actual_lookup = {}
-
-#     actual_data = sum_of_actuals_by_sequence(
-#         month=month,
-#         financial_year=last_financial_year,
-#         unit=unit,
-#         cost_center=erp_cost_center_value,
-#         location_code=erp_loc_value
-#     )
-
-#     for row in (actual_data.get("data", []) if actual_data else []):
-#         key = (row.get("sequence_id"), row.get("type_of_expense"))
-#         actual_lookup[key] = to_decimal(row.get("total_posted_amt"))
-
-#     # --------------------------------------------------
-#     # 5️⃣ Inject Budget + Actual Totals
-#     # --------------------------------------------------
-
-#     for head in structure:
-
-#         head_budget_total = Decimal("0")
-#         head_actual_total = Decimal("0")
-
-#         for item in head["items"]:
-
-#             key = (item["sequence_id"], item["name"])
-
-#             item["ytd"] = budget_lookup.get(key, Decimal("0"))
-#             item["total_posted_amt"] = actual_lookup.get(key, Decimal("0"))
-
-#             head_budget_total += item["ytd"]
-#             head_actual_total += item["total_posted_amt"]
-
-#         for sub in head["sub_heads"]:
-
-#             sub_budget_total = Decimal("0")
-#             sub_actual_total = Decimal("0")
-
-#             for item in sub["items"]:
-
-#                 key = (item["sequence_id"], item["name"])
-
-#                 item["ytd"] = budget_lookup.get(key, Decimal("0"))
-#                 item["total_posted_amt"] = actual_lookup.get(key, Decimal("0"))
-
-#                 sub_budget_total += item["ytd"]
-#                 sub_actual_total += item["total_posted_amt"]
-
-#             sub["ytd"] = sub_budget_total
-#             sub["total_posted_amt_ytd"] = sub_actual_total
-
-#             head_budget_total += sub_budget_total
-#             head_actual_total += sub_actual_total
-
-#         head["ytd"] = head_budget_total
-#         head["total_posted_amt_ytd"] = head_actual_total
-
-#     # --------------------------------------------------
-#     # 6️⃣ Convert Decimal → Float
-#     # --------------------------------------------------
-
-#     for head in structure:
-
-#         head["ytd"] = to_float(head["ytd"])
-#         head["total_posted_amt_ytd"] = to_float(head["total_posted_amt_ytd"])
-
-#         for item in head["items"]:
-#             item["ytd"] = to_float(item["ytd"])
-#             item["total_posted_amt"] = to_float(item["total_posted_amt"])
-
-#         for sub in head["sub_heads"]:
-
-#             sub["ytd"] = to_float(sub.get("ytd", Decimal("0")))
-#             sub["total_posted_amt_ytd"] = to_float(sub.get("total_posted_amt_ytd", Decimal("0")))
-
-#             for item in sub["items"]:
-#                 item["ytd"] = to_float(item["ytd"])
-#                 item["total_posted_amt"] = to_float(item["total_posted_amt"])
-
-#     return structure
-
-
-
-# new working one with one time api call
-# @frappe.whitelist(allow_guest=True)
-# def format_api(financial_year=None, month=None,set_group_id=None,previous_financial_year=None):
-
-#     previous_financial_year=get_previous_financial_year(financial_year)
+#     previous_financial_year = get_previous_financial_year(financial_year)
 #     settings = get_number_card_settings(set_group_id)
-#     # print(previous_financial_year,"previous_financial_year")
+
 #     # sort settings
 #     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
 
 #     final_results = []
+
 #     formatted = get_accounting_period_from_month(
 #         month,
 #         previous_financial_year
 #     )
 #     accounting_period = formatted.get("accounting_period")
 #     fiscal_year = formatted.get("fiscal_year")
+
 #     # ✅ CALL ONLY ONCE
 #     grouped_actuals_response = get_grouped_actuals(
 #         fiscal_year=fiscal_year,
@@ -665,11 +355,12 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 
 #     for s in settings:
 
-#         units = ",".join(s["units"]) if s["units"] else ""
-#         cost_centers = ",".join(s["cost_centers"]) if s["cost_centers"] else ""
-#         locations = ",".join(s["locations"]) if s["locations"] else ""
-#         cost_centers_erp = ",".join(s["cost_centers_erp"]) if s["cost_centers_erp"] else ""
-#         locations_erp = ",".join(s["locations_erp"]) if s["locations_erp"] else ""
+#         # ✅ SAFE JOIN (FIXED)
+#         units = safe_join(s.get("units"))
+#         cost_centers = safe_join(s.get("cost_centers"))
+#         locations = safe_join(s.get("locations"))
+#         cost_centers_erp = safe_join(s.get("cost_centers_erp"))
+#         locations_erp = safe_join(s.get("locations_erp"))
 
 #         actuals_data = get_combined_actuals(
 #             financial_year=financial_year,
@@ -679,12 +370,12 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 #             location_code=locations,
 #             erp_cost_center_value=cost_centers_erp,
 #             erp_loc_value=locations_erp,
-#             grouped_actuals_data=grouped_actuals_data  # ✅ pass once-fetched data
+#             grouped_actuals_data=grouped_actuals_data
 #         )
 
 #         final_results.append({
-#             "settings_doc": s["settings_doc"],
-#             "label": s["label"],
+#             "settings_doc": s.get("settings_doc"),
+#             "label": s.get("label"),
 #             "units": units,
 #             "cost_centers": cost_centers,
 #             "locations": locations,
@@ -693,42 +384,33 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 #             "actuals": actuals_data,
 #         })
 
-#     # return {"grouped_actuals_data":grouped_actuals_data,"final_results":final_results}
 #     return final_results
-
 
 @frappe.whitelist(allow_guest=True)
 def format_api(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
-
     def safe_join(arr):
         return ",".join([str(x).strip() for x in (arr or []) if x])
 
     previous_financial_year = get_previous_financial_year(financial_year)
-    settings = get_number_card_settings(set_group_id)
 
-    # sort settings
-    settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
+    settings = get_number_card_settings(set_group_id)
+    settings = sorted(settings, key=lambda x: x.get("settings_doc") or "")
 
     final_results = []
-
     formatted = get_accounting_period_from_month(
         month,
         previous_financial_year
     )
     accounting_period = formatted.get("accounting_period")
     fiscal_year = formatted.get("fiscal_year")
-
-    # ✅ CALL ONLY ONCE
     grouped_actuals_response = get_grouped_actuals(
         fiscal_year=fiscal_year,
         accounting_period=accounting_period
     )
 
     grouped_actuals_data = grouped_actuals_response.get("data", [])
-
     for s in settings:
 
-        # ✅ SAFE JOIN (FIXED)
         units = safe_join(s.get("units"))
         cost_centers = safe_join(s.get("cost_centers"))
         locations = safe_join(s.get("locations"))
@@ -758,6 +440,8 @@ def format_api(financial_year=None, month=None, set_group_id=None, previous_fina
         })
 
     return final_results
+
+
 @frappe.whitelist(allow_guest=True)
 def get_combined_actuals(
     financial_year=None,
@@ -990,131 +674,20 @@ def get_combined_actuals(
     return structure
 
 
-# @frappe.whitelist(allow_guest=True)
-# def add_expense_totals(financial_year=None, month=None, set_group_id=None,previous_financial_year=None):
-
-#     data = format_api(
-#         financial_year=financial_year,
-#         month=month,
-#         set_group_id=set_group_id,previous_financial_year=previous_financial_year
-#     )
-
-#     for record in data:
-
-#         actuals = record.get("actuals", [])
-
-#         capital_total = {
-#             "name": "TOTAL CAPITAL EXPENSES",
-#             "ytd": 0.0,
-#             "total_posted_amt": 0.0
-#         }
-
-#         operating_total = {
-#             "name": "TOTAL OPERATING EXPENSES",
-#             "ytd": 0.0,
-#             "total_posted_amt": 0.0
-#         }
-
-#         for head in actuals:
-
-#             name = head.get("name", "").strip()
-
-#             if name == "CAPITAL  EXPENSES":
-#                 capital_total["ytd"] += head.get("ytd", 0.0)
-#                 capital_total["total_posted_amt"] += head.get("total_posted_amt_ytd", 0.0)
-
-#             elif name == "OPERATING  EXPENSES":
-#                 operating_total["ytd"] += head.get("ytd", 0.0)
-#                 operating_total["total_posted_amt"] += head.get("total_posted_amt_ytd", 0.0)
-
-#         # ✅ Add totals into same dataset
-#         record["totals"] = {
-#             "capital_expenses": capital_total,
-#             "operating_expenses": operating_total
-#         }
-
-#     return data
-
-# @frappe.whitelist(allow_guest=True)
-# def add_expense_totals(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
-
-#     data = format_api(
-#         financial_year=financial_year,
-#         month=month,
-#         set_group_id=set_group_id
-#     )
-
-#     result = []
-
-#     for record in data:
-
-#         actuals = record.get("actuals", [])
-
-#         capital_budget = 0.0
-#         capital_actual = 0.0
-
-#         operating_budget = 0.0
-#         operating_actual = 0.0
-
-#         for head in actuals:
-
-#             name = head.get("name", "").strip()
-
-#             if name == "CAPITAL  EXPENSES":
-#                 capital_budget += head.get("ytd", 0.0)
-#                 capital_actual += head.get("total_posted_amt_ytd", 0.0)
-
-#             elif name == "OPERATING  EXPENSES":
-#                 operating_budget += head.get("ytd", 0.0)
-#                 operating_actual += head.get("total_posted_amt_ytd", 0.0)
-
-#         grand_budget = capital_budget + operating_budget
-#         grand_actual = capital_actual + operating_actual
-
-#         # ✅ Build clean response per record
-#         result.append({
-#             "settings_doc": record.get("settings_doc"),
-#             "label": record.get("label"),
-#             "units": record.get("units"),
-#             "cost_centers": record.get("cost_centers"),
-#             "locations": record.get("locations"),
-#             "cost_centers_erp": record.get("cost_centers_erp"),
-#             "locations_erp": record.get("locations_erp"),
-
-#             "capital_expenses": {
-#                 "budget": capital_budget,
-#                 "actual": capital_actual
-#             },
-#             "operating_expenses": {
-#                 "budget": operating_budget,
-#                 "actual": operating_actual
-#             },
-#             "grand_total": {
-#                 "budget": grand_budget,
-#                 "actual": grand_actual
-#             }
-#         })
-
-#     return result
-
-
 @frappe.whitelist(allow_guest=True)
 def add_expense_totals(financial_year=None, month=None, set_group_id=None):
 
-    # ✅ Current year data
     current_data = format_api(
         financial_year=financial_year,
         month=month,
         set_group_id=set_group_id
     )
 
-    # ✅ Previous year
     start_year = int(financial_year.split("-")[0])
     prev_start = start_year - 1
     prev_end = str(prev_start + 1)[-2:]
     prev_fy = f"{prev_start}-{prev_end}"
 
-    # ✅ Previous year data
     prev_data = format_api(
         financial_year=prev_fy,
         month=month,
@@ -1173,8 +746,6 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
             "locations_erp": record.get("locations_erp"),
 
             "overall_foundation_numbers": [
-
-                # ✅ Current vs Previous
                 {
                     "title": f"OVERALL FOUNDATION NUMBERS - {financial_year} BUDGET VS. {prev_fy} EST",
                     "capital_expenses": current_totals["capital"],
@@ -1182,7 +753,6 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
                     "grand_total": current_totals["grand"]
                 },
 
-                # ✅ Previous vs Previous
                 {
                     "title": f"OVERALL FOUNDATION NUMBERS - {prev_fy} BUDGET VS. {prev_fy} EST",
                     "capital_expenses": prev_totals["capital"],

@@ -193,7 +193,6 @@ def get_cost_centers_by_set_id(units=None):
 #     }
 
 
-
 @frappe.whitelist(allow_guest=True)
 def get_location_codes_by_unit(unit=None):
 
@@ -281,7 +280,7 @@ def get_location_codes_by_unit(unit=None):
 def get_theme():
     theme = frappe.get_all(
         "Overview number cards settings",
-        filters=[["set_group_id", "like", "%2%"]],
+        filters=[["set_group_id", "like", "%1%"]],
         fields=["name", "number_card_title"]
     )
     return theme
@@ -324,7 +323,8 @@ def get_user_mappings():
                 "cost_center_id": row.cost_center,
                 "location_code_id": row.location_code,
                 "location_code": row.location_code_erp,
-                "location_description": row.location_description
+                "location_description": row.location_description,
+                "state":row.state
             })
 
     return results

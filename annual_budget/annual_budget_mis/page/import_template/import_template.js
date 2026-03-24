@@ -8965,6 +8965,1146 @@
 
 
 
+// frappe.pages["import-template"].on_page_load = function (wrapper) {
+
+// 	frappe.ui.make_app_page({
+// 		parent       : wrapper,
+// 		title        : "Budget Import Template",
+// 		single_column: true
+// 	});
+
+// 	var $container = $(wrapper).find(".layout-main-section");
+// 	$container.addClass("budget-import-wrapper");
+
+// 	/* ============================================================
+// 	   STYLES
+// 	============================================================ */
+// 	if (!document.getElementById("allocation-style")) {
+// 		var style = document.createElement("style");
+// 		style.id  = "allocation-style";
+// 		var rules = [
+// 			/* ── wrapper ── */
+// 			".budget-import-wrapper{padding:24px;background:#f7f9fb;min-height:100vh;box-sizing:border-box;}",
+
+// 			/* ── loading / empty ── */
+// 			".loading-state,.empty-state{text-align:center;padding:60px 20px;font-size:15px;font-weight:600;color:#0076B6;}",
+// 			".loading-state i,.empty-state i{font-size:28px;margin-bottom:10px;display:block;}",
+
+// 			/* ── user section ── */
+// 			".user-section{margin-bottom:24px;background:#fff;border:1px solid #dcdcdc;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.06);overflow:hidden;}",
+
+// 			/* ── profile card ── */
+// 			".profile-card{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#F4F9FD;border-bottom:1px solid #dcdcdc;gap:12px;}",
+// 			".profile-collapsible{border-radius:8px;}",
+// 			".profile-collapsible.is-open{border-radius:8px 8px 0 0;}",
+// 			".profile-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}",
+// 			".profile-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}",
+// 			".uhi-avatar{width:40px;height:40px;border-radius:50%;background:#0076B6;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(0,118,182,0.3);}",
+// 			".uhi-info{display:flex;flex-direction:column;gap:2px;min-width:0;}",
+// 			".user-name{font-size:14px;font-weight:700;color:#003B63;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+// 			".user-email{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+
+// 			/* ── expand toggle ── */
+// 			".expand-toggle-wrap{display:flex;align-items:center;gap:8px;}",
+// 			".expand-toggle-label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:0;padding:5px 12px;border:1px solid #aaa;border-radius:6px;background:#fff;transition:border-color 0.15s,box-shadow 0.15s;}",
+// 			".expand-toggle-label:hover{border-color:#0076B6;box-shadow:0 0 0 3px rgba(0,118,182,0.08);}",
+// 			".expand-toggle-cb{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;flex-shrink:0;}",
+// 			".expand-toggle-btn{font-size:12px;font-weight:600;color:#0076B6;white-space:nowrap;}",
+// 			".expand-row-count{font-size:11px;font-weight:600;color:#fff;background:#0076B6;padding:2px 9px;border-radius:99px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
+
+// 			/* ── tip banner ── */
+// 			".dl-tip-banner{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;background:#EBF4FF;border-bottom:1px solid #dcdcdc;}",
+// 			".dl-tip-icon-wrap{width:22px;height:22px;border-radius:50%;background:#0076B6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}",
+// 			".dl-tip-icon-wrap i{font-size:10px;color:#fff;}",
+// 			".dl-tip-text{font-size:12px;color:#1a4f72;line-height:1.65;flex:1;}",
+// 			".dl-tip-text strong{color:#003B63;font-weight:600;}",
+// 			".dl-tip-em{font-weight:600;color:#0076B6;}",
+// 			".dl-tip-close{font-size:18px;color:#7a9ab0;cursor:pointer;line-height:1;flex-shrink:0;padding:0 2px;margin-top:-1px;}",
+// 			".dl-tip-close:hover{color:#003B63;}",
+
+// 			/* ── user-body ── */
+// 			".user-body{padding:0;}",
+
+// 			/* ── NOTE / IMPORTANT banner ── */
+// 			".note-warning{background:#fff;border-bottom:1px solid #dcdcdc;display:flex;overflow:hidden;}",
+// 			".note-left-bar{width:5px;background:#f4b400;flex-shrink:0;}",
+// 			".note-inner{padding:18px 20px;flex:1;min-width:0;box-sizing:border-box;}",
+// 			".note-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}",
+// 			".note-icon-ring{width:34px;height:34px;border-radius:50%;background:#FFF3E6;border:1.5px solid #f4b400;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}",
+// 			".note-icon-ring i{font-size:14px;color:#e67e22;}",
+// 			".note-badge{display:inline-flex;align-items:center;gap:5px;background:#f4b400;color:#5c3800;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:0.6px;margin-bottom:5px;}",
+// 			".note-badge-dot{width:5px;height:5px;border-radius:50%;background:#5c3800;display:inline-block;animation:softBlink 1.5s ease-in-out infinite;}",
+// 			"@keyframes softBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}",
+// 			".note-title{font-size:13px;font-weight:500;color:#3d2800;line-height:1.65;}",
+// 			".note-divider{height:1px;background:#fde68a;margin:14px 0;}",
+
+// 			/* ── contact grid ── */
+// 			".contact-wrapper{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}",
+
+// 			/* ── contact card — REDESIGNED ──
+// 			   Layout: avatar + name (top row) → amber divider → email row → phone row
+// 			   Email gets the full card width so it never needs to wrap or cut.        */
+// 			".contact-card{background:#FFF3E6;border:1px solid #f0d97a;border-radius:7px;padding:14px 15px;box-sizing:border-box;transition:border-color 0.15s,box-shadow 0.15s;}",
+// 			".contact-card:hover{border-color:#e0a800;box-shadow:0 3px 8px rgba(244,180,0,0.18);}",
+
+// 			/* top row: avatar + name */
+// 			".cc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}",
+// 			".cc-avatar{width:36px;height:36px;min-width:36px;border-radius:50%;background:#f4b400;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#5c3800;flex-shrink:0;box-shadow:0 2px 5px rgba(244,180,0,0.3);}",
+// 			".cc-name{font-size:13px;font-weight:700;color:#3d2800;line-height:1.35;word-break:break-word;}",
+
+// 			/* amber hairline divider */
+// 			".cc-divider{height:1px;background:#f0d97a;margin-bottom:10px;}",
+
+// 			/* detail rows — icon pill + value, full card width */
+// 			".cc-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}",
+// 			".cc-row:last-child{margin-bottom:0;}",
+// 			".cc-icon-pill{width:20px;height:20px;min-width:20px;border-radius:50%;background:#f4b400;display:flex;align-items:center;justify-content:center;flex-shrink:0;}",
+// 			".cc-icon-pill i{font-size:9px;color:#5c3800;}",
+
+// 			/* value text — single line, ellipsis on extreme overflow, full remaining width */
+// 			".cc-val{font-size:13.5px;color:#7a5200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;line-height:1.4;}",
+// 			".cc-val.email{font-size:13px;letter-spacing:-0.1px;}",
+
+// 			/* ── gap between note and table ── */
+// 			".note-to-table-gap{height:20px;background:#f7f9fb;}",
+// 			".section-spacer{height:20px;background:#f7f9fb;}",
+
+// 			/* ── table card ── */
+// 			".tbl-card{border-top:1px solid #dcdcdc;border-radius:0 0 8px 8px;overflow:hidden;background:#fff;}",
+
+// 			/* ── action bar ── */
+// 			".tbl-action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;background:#f7f9fb;border-bottom:1px solid #dcdcdc;}",
+// 			".tbl-bar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;}",
+// 			".tbl-bar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}",
+
+// 			/* ── search ── */
+// 			".tbl-search-inner{position:relative;display:flex;align-items:center;width:300px;max-width:100%;}",
+// 			".tbl-search-icon-pill{position:absolute;left:9px;width:20px;height:20px;background:#0076B6;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;flex-shrink:0;}",
+// 			".tbl-search-icon-pill i{font-size:9px;color:#fff;}",
+// 			".tbl-search-input{width:100%;padding:7px 34px 7px 36px;border:1px solid #aaa;border-radius:6px;font-size:13px;color:#333;outline:none;background:#fff;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;}",
+// 			".tbl-search-input::placeholder{color:#aaa;}",
+// 			".tbl-search-input:focus{border-color:#0076B6;box-shadow:0 0 0 3px rgba(0,118,182,0.10);}",
+// 			".tbl-search-clear{position:absolute;right:9px;width:18px;height:18px;border-radius:50%;background:#d0dde8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#4a6070;font-weight:700;transition:background 0.15s,color 0.15s;}",
+// 			".tbl-search-clear:hover{background:#c0392b;color:#fff;}",
+// 			".tbl-search-count{font-size:11px;color:#0076B6;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:4px;}",
+// 			".tbl-search-count::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#0076B6;}",
+
+// 			/* ── bulk select ── */
+// 			".tbl-bulk-label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:0;padding:5px 10px;border:1px solid #aaa;border-radius:6px;background:#fff;transition:border-color 0.15s;}",
+// 			".tbl-bulk-label:hover{border-color:#0076B6;}",
+// 			".tbl-bulk-label input{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;flex-shrink:0;}",
+// 			".tbl-bulk-text{font-size:12px;font-weight:600;color:#444;white-space:nowrap;}",
+
+// 			/* ── selection badge ── */
+// 			".tbl-sel-badge{font-size:12px;font-weight:600;color:#fff;background:#0076B6;padding:3px 10px;border-radius:99px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
+
+// 			/* ── deselect button ── */
+// 			".tbl-desel-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:12px;font-weight:600;color:#444;cursor:pointer;transition:all 0.15s;white-space:nowrap;}",
+// 			".tbl-desel-btn:hover{border-color:#c0392b;color:#c0392b;}",
+
+// 			/* ── download button ── */
+// 			".dl-btn-main{display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border-radius:6px;cursor:pointer;border:1px solid #0076B6;background:#0076B6;transition:background 0.15s ease,box-shadow 0.15s ease;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.12);}",
+// 			".dl-btn-main:hover{background:#005f94;border-color:#005f94;box-shadow:0 3px 8px rgba(0,118,182,0.35);}",
+// 			".dl-btn-main:active{background:#004f7a;border-color:#004f7a;box-shadow:none;}",
+// 			".dl-btn-main:disabled{opacity:0.55;cursor:not-allowed;box-shadow:none;}",
+// 			".dl-btn-icon{font-size:15px;color:#fff;flex-shrink:0;}",
+// 			".dl-btn-body{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}",
+// 			".dl-btn-label{font-size:13px;font-weight:600;color:#fff;line-height:1.2;}",
+// 			".dl-btn-count{font-size:11px;color:rgba(255,255,255,0.8);line-height:1.3;}",
+// 			".dl-cnt-sel{color:#fff;font-weight:700;}",
+// 			".dl-btn-main-sel{border-color:#1a8a4a;background:#1a8a4a;}",
+// 			".dl-btn-main-sel:hover{background:#145e32;border-color:#145e32;box-shadow:0 3px 8px rgba(26,138,74,0.35);}",
+// 			".dl-btn-main-sel .dl-btn-icon,.dl-btn-main-sel .dl-btn-label{color:#fff;}",
+// 			".dl-btn-main-sel .dl-btn-count{color:rgba(255,255,255,0.8);}",
+
+// 			/* ── TABLE ── */
+// 			".table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}",
+// 			".mis-table{width:100%;border-collapse:collapse;font-size:13px;min-width:580px;}",
+// 			".mis-table thead tr{background:#0076B6;}",
+// 			".mis-table th{color:#fff;font-weight:700;padding:9px 10px;text-align:center;white-space:nowrap;font-size:12px;border:1px solid #ddd;}",
+// 			".mis-table tbody tr:nth-child(odd) td{background:#fff;}",
+// 			".mis-table tbody tr:nth-child(even) td{background:#F4F9FD;}",
+// 			".mis-table tbody td{padding:8px 10px;border:1px solid #ddd;text-align:center;color:#333;font-size:13px;vertical-align:middle;}",
+// 			".mis-table tbody tr:nth-child(odd) td:first-child{border-left:3px solid transparent;}",
+// 			".mis-table tbody tr:nth-child(even) td:first-child{border-left:3px solid #b8d9f5;}",
+// 			".mis-table tbody tr:hover td{background:#daeeff !important;}",
+// 			".mis-table tbody tr:hover td:first-child{border-left-color:#0076B6 !important;}",
+// 			".mis-table tbody tr.row-selected td{background:#cce8fd !important;border-color:#99cef5 !important;}",
+// 			".mis-table tbody tr.row-selected td:first-child{border-left:3px solid #0076B6 !important;}",
+// 			".sl-badge-odd{display:inline-block;background:#e8f1fa;color:#0076B6;font-weight:700;border-radius:99px;padding:1px 8px;font-size:11.5px;min-width:28px;}",
+// 			".sl-badge-even{display:inline-block;background:#0076B6;color:#fff;font-weight:700;border-radius:99px;padding:1px 8px;font-size:11.5px;min-width:28px;}",
+// 			".cb-cell{width:36px;min-width:36px;text-align:center;padding:6px !important;}",
+// 			".row-select-cb,.bulk-all-cb{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;vertical-align:middle;}",
+
+// 			/* ── admin global search ── */
+// 			".global-user-search-wrap{margin-bottom:20px;padding:14px 16px;background:#f7f9fb;border:1px solid #dcdcdc;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}",
+// 			".gus-label{font-size:11px;font-weight:700;color:#0076B6;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}",
+// 			".gus-label i{margin-right:6px;}",
+// 			".gus-inner{position:relative;display:flex;align-items:center;max-width:460px;}",
+// 			".gus-icon-pill{position:absolute;left:10px;width:20px;height:20px;background:#0076B6;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;}",
+// 			".gus-icon-pill i{font-size:9px;color:#fff;}",
+// 			".gus-input{width:100%;padding:7px 32px 7px 38px;border:1px solid #aaa;border-radius:6px;font-size:13px;color:#333;outline:none;background:#fff;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;}",
+// 			".gus-input::placeholder{color:#aaa;}",
+// 			".gus-input:focus{border-color:#0076B6;box-shadow:0 0 0 3px rgba(0,118,182,0.10);}",
+// 			".gus-clear{position:absolute;right:10px;width:18px;height:18px;border-radius:50%;background:#d0dde8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#4a6070;font-weight:700;transition:background 0.15s,color 0.15s;}",
+// 			".gus-clear:hover{background:#c0392b;color:#fff;}",
+// 			".gus-count{margin-top:6px;font-size:12px;color:#0076B6;font-weight:600;display:flex;align-items:center;gap:4px;}",
+// 			".gus-count::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#0076B6;}",
+
+// 			/* ── review modal ── */
+// 			"#rev-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:99999;padding:15px;}",
+// 			".rev-modal-box{background:#fff;width:700px;max-width:100%;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;overflow:hidden;}",
+// 			".rev-modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#F4F9FD;border-bottom:1px solid #dcdcdc;font-weight:700;font-size:15px;color:#003B63;flex-shrink:0;}",
+// 			".rev-modal-title i{margin-right:8px;color:#0076B6;}",
+// 			"#rev-modal-close{cursor:pointer;font-size:22px;color:#666;line-height:1;}",
+// 			"#rev-modal-close:hover{color:#003B63;}",
+// 			".rev-modal-body{padding:18px 20px;overflow-y:auto;flex:1;}",
+// 			".rev-warning-banner{display:flex;align-items:flex-start;gap:12px;background:#FFF3E6;border:1px solid #f4b400;border-left:4px solid #f4b400;border-radius:6px;padding:12px 16px;margin-bottom:14px;}",
+// 			".rev-warn-icon{font-size:20px;color:#e67e22;flex-shrink:0;margin-top:2px;}",
+// 			".rev-warn-title{font-size:13px;font-weight:700;color:#5c3d00;margin-bottom:3px;}",
+// 			".rev-warn-sub{font-size:12px;color:#7a5200;line-height:1.6;}",
+// 			".rev-count-badge{display:inline-block;font-size:12px;font-weight:600;color:#fff;background:#0076B6;padding:3px 12px;border-radius:99px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
+// 			".rev-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:14px;border-radius:6px;border:1px solid #ddd;}",
+// 			".rev-table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px;}",
+// 			".rev-table thead tr{background:#0076B6;}",
+// 			".rev-table th{color:#fff;font-weight:700;padding:8px 10px;text-align:center;white-space:nowrap;border:1px solid #ddd;}",
+// 			".rev-table tbody tr:nth-child(odd) td{background:#fff;}",
+// 			".rev-table tbody tr:nth-child(even) td{background:#F4F9FD;}",
+// 			".rev-table td{padding:7px 10px;border:1px solid #ddd;text-align:center;color:#333;}",
+// 			".rev-table tbody tr:hover td{background:#daeeff !important;}",
+// 			".rev-sl{width:36px;}",
+// 			".rev-confirm-wrap{background:#f7f9fb;border:1px solid #dcdcdc;border-radius:6px;padding:12px 14px;}",
+// 			".rev-confirm-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0;font-size:13px;color:#333;}",
+// 			".rev-confirm-label input{width:14px;height:14px;margin-top:2px;accent-color:#0076B6;flex-shrink:0;cursor:pointer;}",
+// 			".rev-confirm-label i{color:#28a745;margin-right:4px;}",
+// 			".rev-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid #dcdcdc;flex-shrink:0;background:#f7f9fb;}",
+// 			".rev-modal-footer .btn{min-width:130px;}",
+// 			"#rev-btn-proceed:disabled{opacity:0.6;cursor:not-allowed;}",
+
+// 			/* ── APF modal ── */
+// 			"#apf-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:15px;}",
+// 			".apf-modal-box{background:#fff;width:520px;max-width:100%;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,0.2);padding:26px;}",
+// 			".apf-modal-header{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin-bottom:18px;color:#003B63;}",
+// 			".apf-modal-title i{margin-right:8px;color:#0076B6;}",
+// 			"#apf-modal-close{cursor:pointer;font-size:22px;color:#666;line-height:1;}",
+// 			"#apf-modal-close:hover{color:#003B63;}",
+// 			".apf-modal-body{text-align:center;margin-bottom:18px;}",
+// 			".apf-modal-icon{font-size:38px;margin-bottom:10px;}",
+// 			".apf-modal-text{font-weight:600;font-size:13px;color:#c0392b;margin-bottom:8px;line-height:1.6;}",
+// 			".apf-modal-sub{font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;}",
+// 			".apf-checkbox-wrapper{background:#f7f9fb;padding:12px;border-radius:6px;border:1px solid #dcdcdc;font-size:13px;text-align:left;}",
+// 			".apf-checkbox-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0;}",
+// 			".apf-checkbox-label i{color:#28a745;margin-right:4px;}",
+// 			".apf-checkbox-label input{margin-top:3px;flex-shrink:0;accent-color:#0076B6;}",
+// 			".apf-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}",
+// 			".apf-modal-footer .btn{min-width:130px;}",
+// 			"#apf-modal-proceed:disabled{opacity:0.6;cursor:not-allowed;}",
+
+// 			/* ── loader ── */
+// 			"#global-loader.loader-overlay{position:fixed;inset:0;width:100vw;height:100vh;background:rgba(18,18,18,0.92);backdrop-filter:blur(6px);z-index:999999;display:none;align-items:center;justify-content:center;}",
+// 			"#global-loader.loader-overlay.active{display:flex;}",
+// 			".loader-box{display:flex;flex-direction:column;align-items:center;gap:16px;}",
+// 			".loader-ring-wrap{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center;}",
+// 			".loader-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}",
+// 			".loader-ring-bg{fill:none;stroke:rgba(255,255,255,0.12);stroke-width:6;}",
+// 			".loader-ring-fill{fill:none;stroke:url(#ringGrad);stroke-width:6;stroke-linecap:round;stroke-dasharray:276.46;stroke-dashoffset:276.46;transition:stroke-dashoffset 0.35s ease;}",
+// 			".loader-logo{width:72px;height:72px;border-radius:50%;background:#fff;padding:11px;object-fit:contain;position:relative;z-index:1;box-shadow:0 10px 30px rgba(0,0,0,0.35),0 0 0 4px rgba(255,255,255,0.08);animation:pulse 1.6s infinite ease-in-out;}",
+// 			".loader-pct-inside{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#fff;background:rgba(0,118,182,0.85);padding:1px 7px;border-radius:99px;z-index:2;white-space:nowrap;}",
+// 			".loader-text{font-size:14px;color:#fff;font-weight:600;letter-spacing:0.5px;text-align:center;opacity:0.85;}",
+// 			"@keyframes pulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.08);opacity:1;}}",
+// 			".dl-anim-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:56px;}",
+// 			".dl-arrow-track{width:22px;height:26px;overflow:hidden;position:relative;}",
+// 			".dl-arrow{display:flex;flex-direction:column;align-items:center;position:absolute;left:50%;transform:translateX(-50%);animation:dl-drop 1.2s ease-in-out infinite;}",
+// 			".dl-arrow-stem{width:3px;height:13px;background:#0076B6;border-radius:2px;}",
+// 			".dl-arrow-head{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #0076B6;}",
+// 			"@keyframes dl-drop{0%{top:-26px;opacity:0;}30%{opacity:1;}70%{opacity:1;}100%{top:26px;opacity:0;}}",
+// 			".dl-bar{width:40px;height:4px;background:#0076B6;border-radius:99px;animation:dl-bar-pulse 1.2s ease-in-out infinite;}",
+// 			"@keyframes dl-bar-pulse{0%,100%{opacity:0.4;transform:scaleX(0.8);}50%{opacity:1;transform:scaleX(1);}}",
+// 			".dl-dots{display:flex;gap:5px;}",
+// 			".dl-dots span{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.6);animation:dl-bounce 1.2s ease-in-out infinite;}",
+// 			".dl-dots span:nth-child(1){animation-delay:0s;}",
+// 			".dl-dots span:nth-child(2){animation-delay:0.2s;}",
+// 			".dl-dots span:nth-child(3){animation-delay:0.4s;}",
+// 			"@keyframes dl-bounce{0%,80%,100%{transform:scale(1);opacity:0.5;}40%{transform:scale(1.5);opacity:1;}}",
+
+// 			/* ================================================================
+// 			   RESPONSIVE BREAKPOINTS
+// 			================================================================ */
+
+// 			/* ── ≤1280px ── */
+// 			"@media(max-width:1280px){",
+// 			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}",
+// 			".tbl-search-inner{width:280px;}",
+// 			"}",
+
+// 			/* ── ≤1024px ── */
+// 			"@media(max-width:1024px){",
+// 			".budget-import-wrapper{padding:20px;}",
+// 			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}",
+// 			".tbl-search-inner{width:240px;}",
+// 			".gus-inner{max-width:100%;}",
+// 			"}",
+
+// 			/* ── ≤900px ── */
+// 			"@media(max-width:900px){",
+// 			".budget-import-wrapper{padding:16px;}",
+// 			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}",
+// 			".tbl-search-inner{width:210px;}",
+// 			".note-to-table-gap,.section-spacer{height:16px;}",
+// 			".note-inner{padding:16px 18px;}",
+// 			"}",
+
+// 			/* ── ≤768px ── */
+// 			"@media(max-width:768px){",
+// 			".budget-import-wrapper{padding:12px;}",
+// 			".profile-card{flex-wrap:wrap;gap:10px;}",
+// 			".profile-right{width:100%;justify-content:flex-end;}",
+// 			".tbl-action-bar{flex-direction:column;align-items:stretch;gap:8px;}",
+// 			".tbl-bar-left,.tbl-bar-right{width:100%;}",
+// 			".tbl-bar-right{justify-content:flex-end;}",
+// 			".tbl-search-inner{width:100%;}",
+// 			".dl-btn-main{width:100%;justify-content:center;}",
+// 			".contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}",
+// 			".note-inner{padding:14px 16px;}",
+// 			".note-to-table-gap,.section-spacer{height:14px;}",
+// 			".rev-modal-footer{flex-wrap:wrap;gap:8px;}",
+// 			".rev-modal-footer .btn{flex:1;min-width:unset;}",
+// 			".apf-modal-footer{flex-wrap:wrap;gap:8px;}",
+// 			".apf-modal-footer .btn{flex:1;min-width:unset;}",
+// 			".mis-table{min-width:520px;}",
+// 			"}",
+
+// 			/* ── ≤600px ── */
+// 			"@media(max-width:600px){",
+// 			".budget-import-wrapper{padding:10px;}",
+// 			".contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}",
+// 			".contact-card{padding:11px 12px;}",
+// 			".cc-avatar{width:32px;height:32px;min-width:32px;font-size:11px;}",
+// 			".cc-name{font-size:12px;}",
+// 			".cc-val{font-size:12.5px;}",
+// 			".cc-val.email{font-size:12px;}",
+// 			".uhi-avatar{width:36px;height:36px;font-size:13px;}",
+// 			".user-name{font-size:13px;}",
+// 			".user-email{font-size:11px;}",
+// 			".tbl-action-bar{padding:8px 10px;}",
+// 			".tbl-bulk-text{display:none;}",
+// 			".tbl-sel-badge{font-size:11px;}",
+// 			".dl-btn-count{display:none;}",
+// 			".dl-tip-text{font-size:11.5px;}",
+// 			".note-badge{font-size:9px;}",
+// 			".note-title{font-size:12.5px;}",
+// 			".note-inner{padding:12px 13px;}",
+// 			".note-to-table-gap,.section-spacer{height:12px;}",
+// 			".expand-row-count{display:none;}",
+// 			".mis-table{font-size:12px;min-width:460px;}",
+// 			".mis-table th{padding:7px 8px;font-size:11px;}",
+// 			".mis-table tbody td{padding:6px 8px;}",
+// 			"}",
+
+// 			/* ── ≤480px ── */
+// 			"@media(max-width:480px){",
+// 			".budget-import-wrapper{padding:8px;}",
+// 			".profile-card{padding:10px 12px;}",
+// 			".contact-wrapper{grid-template-columns:minmax(0,1fr);}",
+// 			".contact-card{padding:12px 14px;}",
+// 			".cc-avatar{width:34px;height:34px;min-width:34px;font-size:12px;}",
+// 			".cc-name{font-size:13px;}",
+// 			".cc-val{font-size:13px;}",
+// 			".cc-val.email{font-size:12.5px;}",
+// 			".tbl-bar-right{flex-direction:column;align-items:stretch;}",
+// 			".tbl-desel-btn{justify-content:center;}",
+// 			".tbl-bulk-label{justify-content:center;}",
+// 			".expand-toggle-label{padding:4px 8px;}",
+// 			".note-to-table-gap,.section-spacer{height:10px;}",
+// 			".dl-tip-banner{padding:8px 12px;}",
+// 			".dl-tip-text{font-size:11px;}",
+// 			".mis-table{min-width:400px;font-size:11px;}",
+// 			".mis-table th{padding:5px 6px;font-size:10px;}",
+// 			".mis-table tbody td{padding:5px 6px;}",
+// 			".rev-modal-footer{flex-direction:column;}",
+// 			".rev-modal-footer .btn{width:100%;min-width:unset;}",
+// 			".apf-modal-box{padding:16px;}",
+// 			".apf-modal-footer{flex-direction:column;}",
+// 			".apf-modal-footer .btn{width:100%;min-width:unset;}",
+// 			"}",
+
+// 			/* ── ≤360px ── */
+// 			"@media(max-width:360px){",
+// 			".budget-import-wrapper{padding:6px;}",
+// 			".profile-card{padding:8px 10px;}",
+// 			".uhi-avatar{width:32px;height:32px;font-size:12px;}",
+// 			".user-name{font-size:12px;}",
+// 			".user-email{font-size:10.5px;}",
+// 			".contact-card{padding:10px 12px;}",
+// 			".cc-avatar{width:30px;height:30px;min-width:30px;font-size:10px;}",
+// 			".cc-name{font-size:12px;}",
+// 			".cc-val{font-size:11px;}",
+// 			".cc-val.email{font-size:10.5px;}",
+// 			".note-inner{padding:10px 11px;}",
+// 			".note-title{font-size:12px;}",
+// 			".tbl-action-bar{padding:6px 8px;}",
+// 			".mis-table{min-width:360px;font-size:10px;}",
+// 			".mis-table th,.mis-table tbody td{padding:4px 5px;}",
+// 			"}"
+// 		];
+// 		style.textContent = rules.join("");
+// 		document.head.appendChild(style);
+// 	}
+
+// 	/* ============================================================
+// 	   LOADER
+// 	============================================================ */
+// 	function init_loader() {
+// 		if ($("#global-loader").length) return;
+// 		$("body").append(
+// 			'<div id="global-loader" class="loader-overlay">' +
+// 			'<div class="loader-box">' +
+// 			'<div class="loader-ring-wrap">' +
+// 			'<svg class="loader-ring" viewBox="0 0 100 100">' +
+// 			'<defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+// 			'<stop offset="0%" stop-color="#0076B6"/><stop offset="100%" stop-color="#00c6ff"/>' +
+// 			'</linearGradient></defs>' +
+// 			'<circle class="loader-ring-bg" cx="50" cy="50" r="44"/>' +
+// 			'<circle class="loader-ring-fill" id="loader-ring-fill" cx="50" cy="50" r="44"/>' +
+// 			'</svg>' +
+// 			'<img src="/files/APF logo.png" class="loader-logo" alt="Loading">' +
+// 			'<div class="loader-pct-inside" id="loader-pct">0%</div>' +
+// 			'</div>' +
+// 			'<div class="dl-anim-wrap">' +
+// 			'<div class="dl-arrow-track"><div class="dl-arrow"><div class="dl-arrow-stem"></div><div class="dl-arrow-head"></div></div></div>' +
+// 			'<div class="dl-bar"></div>' +
+// 			'<div class="dl-dots"><span></span><span></span><span></span></div>' +
+// 			'</div>' +
+// 			'<div class="loader-text" id="loader-text-msg">Preparing download...</div>' +
+// 			'</div></div>'
+// 		);
+// 	}
+
+// 	function set_progress(pct) {
+// 		var offset = 276.46 - (pct / 100) * 276.46;
+// 		$("#loader-ring-fill").css("stroke-dashoffset", offset);
+// 		$("#loader-pct").text(Math.round(pct) + "%");
+// 	}
+
+// 	var Loader = {
+// 		show        : function (msg) { init_loader(); $("#loader-text-msg").text(msg || "Preparing download..."); set_progress(0); $("#global-loader").addClass("active"); },
+// 		setText     : function (msg) { $("#loader-text-msg").text(msg); },
+// 		setProgress : function (pct) { set_progress(pct); },
+// 		hide        : function () { $("#global-loader").removeClass("active"); }
+// 	};
+
+// 	/* ============================================================
+// 	   APF MODAL
+// 	============================================================ */
+// 	function init_apf_modal() {
+// 		if ($("#apf-modal-overlay").length) return;
+// 		$("body").append(
+// 			'<div id="apf-modal-overlay">' +
+// 			'<div class="apf-modal-box">' +
+// 			'<div class="apf-modal-header">' +
+// 			'<div class="apf-modal-title" id="apf-modal-title"></div>' +
+// 			'<span id="apf-modal-close" title="Close">&times;</span>' +
+// 			'</div>' +
+// 			'<div class="apf-modal-body">' +
+// 			'<div class="apf-modal-icon" id="apf-modal-icon"><i id="apf-modal-icon-i" class="fa"></i></div>' +
+// 			'<div class="apf-modal-text" id="apf-modal-text"></div>' +
+// 			'<div class="apf-modal-sub" id="apf-modal-sub"></div>' +
+// 			'<div class="apf-checkbox-wrapper" id="apf-checkbox-wrap" style="display:none;">' +
+// 			'<label class="apf-checkbox-label">' +
+// 			'<input type="checkbox" id="apf-modal-checkbox">' +
+// 			'<span><i class="fa fa-check-circle"></i> I confirm that I have verified all details carefully.</span>' +
+// 			'</label></div></div>' +
+// 			'<div class="apf-modal-footer" id="apf-modal-footer"></div>' +
+// 			'</div></div>'
+// 		);
+// 		$(document)
+// 			.off(".apfModal")
+// 			.on("click.apfModal", "#apf-modal-close", hide_apf_modal)
+// 			.on("click.apfModal", "#apf-modal-overlay", function (e) {
+// 				if ($(e.target).is("#apf-modal-overlay")) hide_apf_modal();
+// 			})
+// 			.on("change.apfModal", "#apf-modal-checkbox", function () {
+// 				$("#apf-modal-proceed").prop("disabled", !this.checked);
+// 			});
+// 	}
+
+// 	function hide_apf_modal() {
+// 		$("#apf-modal-overlay").hide();
+// 		$("#apf-modal-checkbox").prop("checked", false);
+// 		$("#apf-modal-proceed").prop("disabled", true);
+// 	}
+
+// 	function show_apf_modal(opts) {
+// 		init_apf_modal();
+// 		$("#apf-modal-title").html(opts.title || "");
+// 		$("#apf-modal-icon-i")
+// 			.attr("class", "fa " + (opts.icon || "fa-exclamation-triangle"))
+// 			.closest(".apf-modal-icon").css("color", opts.iconColor || "#e74c3c");
+// 		$("#apf-modal-text").html(opts.text || "");
+// 		$("#apf-modal-sub").html(opts.sub || "");
+// 		var showCb = !!opts.showCheckbox;
+// 		$("#apf-checkbox-wrap").toggle(showCb);
+// 		if (showCb) $("#apf-modal-checkbox").prop("checked", false);
+// 		var $footer = $("#apf-modal-footer").empty();
+// 		(opts.buttons || []).forEach(function (btn) {
+// 			var $b = $('<button id="' + (btn.id || "") + '" class="btn ' + (btn.cls || "btn-default") + ' btn-sm">' + btn.label + '</button>').prop("disabled", !!btn.disabled);
+// 			$b.on("click", function () { if (btn.onClick) btn.onClick(); });
+// 			$footer.append($b);
+// 		});
+// 		$("#apf-modal-overlay").css("display", "flex");
+// 	}
+
+// 	/* ============================================================
+// 	   REVIEW MODAL
+// 	============================================================ */
+// 	function init_review_modal() {
+// 		if ($("#rev-modal-overlay").length) return;
+// 		$("body").append(
+// 			'<div id="rev-modal-overlay">' +
+// 			'<div class="rev-modal-box">' +
+// 			'<div class="rev-modal-header">' +
+// 			'<div class="rev-modal-title"><i class="fa fa-list-alt"></i> Review Selected Items</div>' +
+// 			'<span id="rev-modal-close" title="Close">&times;</span>' +
+// 			'</div>' +
+// 			'<div class="rev-modal-body">' +
+// 			'<div class="rev-warning-banner">' +
+// 			'<i class="fa fa-exclamation-triangle rev-warn-icon"></i>' +
+// 			'<div><div class="rev-warn-title">Please make a note of the items listed below.</div>' +
+// 			'<div class="rev-warn-sub">Keep a record of the selected Cost Centers and Location Codes to avoid duplicates when importing.</div></div>' +
+// 			'</div>' +
+// 			'<div class="rev-count-badge" id="rev-count-badge"></div>' +
+// 			'<div class="rev-table-wrap">' +
+// 			'<table class="rev-table">' +
+// 			'<thead><tr><th class="rev-sl">#</th><th>Unit</th><th>Unit Description</th><th>Cost Center</th><th>Cost Center Description</th><th>Location Code</th><th>Location Description</th></tr></thead>' +
+// 			'<tbody id="rev-table-body"></tbody>' +
+// 			'</table></div>' +
+// 			'<div class="rev-confirm-wrap">' +
+// 			'<label class="rev-confirm-label">' +
+// 			'<input type="checkbox" id="rev-confirm-cb">' +
+// 			'<span><i class="fa fa-check-circle"></i> I have noted down the selected items and I am ready to proceed.</span>' +
+// 			'</label></div></div>' +
+// 			'<div class="rev-modal-footer">' +
+// 			'<button id="rev-btn-cancel" class="btn btn-default btn-sm"><i class="fa fa-times"></i> Cancel</button>' +
+// 			'<button id="rev-btn-proceed" class="btn btn-success btn-sm" disabled><i class="fa fa-download"></i> Proceed to Download</button>' +
+// 			'</div></div></div>'
+// 		);
+// 		$(document)
+// 			.off(".revModal")
+// 			.on("click.revModal", "#rev-modal-close, #rev-btn-cancel", hide_review_modal)
+// 			.on("click.revModal", "#rev-modal-overlay", function (e) {
+// 				if ($(e.target).is("#rev-modal-overlay")) hide_review_modal();
+// 			})
+// 			.on("change.revModal", "#rev-confirm-cb", function () {
+// 				$("#rev-btn-proceed").prop("disabled", !this.checked);
+// 			})
+// 			.on("click.revModal", "#rev-btn-proceed", function () {
+// 				var $overlay = $("#rev-modal-overlay");
+// 				var sid      = $overlay.data("safe-id");
+// 				var email    = $overlay.data("user-email");
+// 				var $section = $(".user-section").filter(function () {
+// 					return $(this).data("email") === (email || "").toLowerCase();
+// 				});
+// 				hide_review_modal();
+// 				run_download($section.find(".dl-btn-main"), email, sid);
+// 			});
+// 	}
+
+// 	function hide_review_modal() {
+// 		$("#rev-modal-overlay").hide();
+// 		$("#rev-confirm-cb").prop("checked", false);
+// 		$("#rev-btn-proceed").prop("disabled", true);
+// 	}
+
+// 	function show_review_modal(safeId, userEmail) {
+// 		var selected = get_selected_rows(safeId);
+// 		if (!selected.length) {
+// 			frappe.msgprint({ title: "Nothing Selected", message: "Please select at least one row.", indicator: "orange" });
+// 			return;
+// 		}
+// 		init_review_modal();
+// 		var rows = selected.map(function (r, i) {
+// 			return '<tr><td class="rev-sl">' + (i + 1) + '</td>' +
+// 				'<td>' + esc(r.unit) + '</td>' +
+// 				'<td>' + esc(r.unit_description) + '</td>' +
+// 				'<td>' + esc(r.cost_center) + '</td>' +
+// 				'<td>' + esc(r.cost_center_description) + '</td>' +
+// 				'<td>' + esc(r.location_code) + '</td>' +
+// 				'<td>' + esc(r.location_description) + '</td></tr>';
+// 		}).join("");
+// 		$("#rev-table-body").html(rows);
+// 		$("#rev-count-badge").text(selected.length + " item" + (selected.length !== 1 ? "s" : "") + " selected");
+// 		$("#rev-confirm-cb").prop("checked", false);
+// 		$("#rev-btn-proceed").prop("disabled", true);
+// 		$("#rev-modal-overlay").data("safe-id", safeId).data("user-email", userEmail).css("display", "flex");
+// 	}
+
+// 	/* ============================================================
+// 	   HELPERS
+// 	============================================================ */
+// 	function esc(str) {
+// 		return $("<div>").text(str || "").html();
+// 	}
+
+// 	function initials(name) {
+// 		return (name || "").split(" ").slice(0, 2).map(function (w) { return w[0] || ""; }).join("").toUpperCase();
+// 	}
+
+// 	function reset_btn($btn, loading, loadingText) {
+// 		$btn.prop("disabled", loading);
+// 		if (loading) {
+// 			$btn.find(".dl-btn-icon").attr("class", "fa fa-spinner fa-spin dl-btn-icon");
+// 			$btn.find(".dl-btn-label").text(loadingText || "Loading...");
+// 			$btn.find(".dl-btn-count").text("");
+// 		} else {
+// 			$btn.find(".dl-btn-icon").attr("class", "fa fa-download dl-btn-icon");
+// 		}
+// 	}
+
+// 	function get_selected_rows(safeId) {
+// 		var selected = [];
+// 		$(".mis-table[data-safe-id='" + safeId + "'] tbody tr").each(function () {
+// 			var $row = $(this);
+// 			if (!$row.find(".row-select-cb").is(":checked")) return;
+// 			selected.push({
+// 				unit                    : $row.data("unit")                    || "",
+// 				unit_description        : $row.data("unit-description")        || "",
+// 				cost_center             : $row.data("cost-center")             || "",
+// 				cost_center_description : $row.data("cost-center-description") || "",
+// 				location_code           : $row.data("location-code")           || "",
+// 				location_description    : $row.data("location-description")    || ""
+// 			});
+// 		});
+// 		return selected;
+// 	}
+
+// 	function sync_bulk_cb(safeId) {
+// 		var $all     = $(".mis-table[data-safe-id='" + safeId + "'] tbody tr:visible .row-select-cb");
+// 		var $checked = $all.filter(":checked");
+// 		var $cbs     = $(".bulk-all-cb[data-safe-id='" + safeId + "']");
+// 		if ($all.length === 0 || $checked.length === 0) {
+// 			$cbs.prop("checked", false).prop("indeterminate", false);
+// 		} else if ($checked.length === $all.length) {
+// 			$cbs.prop("checked", true).prop("indeterminate", false);
+// 		} else {
+// 			$cbs.prop("checked", false).prop("indeterminate", true);
+// 		}
+// 	}
+
+// 	function update_toolbar_actions(safeId) {
+// 		var count  = $(".mis-table[data-safe-id='" + safeId + "'] .row-select-cb:checked").length;
+// 		var $badge = $("#tbl-sel-badge-" + safeId);
+// 		var $desel = $(".tbl-desel-btn[data-safe-id='" + safeId + "']");
+// 		if (count > 0) {
+// 			$badge.text(count + " row" + (count !== 1 ? "s" : "") + " selected").show();
+// 			$desel.show();
+// 		} else {
+// 			$badge.hide();
+// 			$desel.hide();
+// 		}
+// 	}
+
+// 	function update_dl_btn_state(safeId) {
+// 		var count = $(".mis-table[data-safe-id='" + safeId + "'] .row-select-cb:checked").length;
+// 		var total = $(".mis-table[data-safe-id='" + safeId + "'] tbody tr").length;
+// 		var $lbl  = $("#dl-lbl-" + safeId);
+// 		var $cnt  = $("#dl-cnt-" + safeId);
+// 		var $btn  = $lbl.closest(".dl-btn-main");
+// 		if (count > 0) {
+// 			$btn.addClass("dl-btn-main-sel");
+// 			$lbl.text("Download selected");
+// 			$cnt.html('<span class="dl-cnt-sel">' + count + " of " + total + " rows selected</span>");
+// 		} else {
+// 			$btn.removeClass("dl-btn-main-sel");
+// 			$lbl.text("Download all");
+// 			$cnt.text(total + " rows \u00b7 full template");
+// 		}
+// 	}
+
+// 	function deselect_all(safeId) {
+// 		$(".mis-table[data-safe-id='" + safeId + "'] .row-select-cb").prop("checked", false);
+// 		$(".mis-table[data-safe-id='" + safeId + "'] tbody tr").removeClass("row-selected");
+// 		$(".bulk-all-cb[data-safe-id='" + safeId + "']").prop("checked", false).prop("indeterminate", false);
+// 		update_dl_btn_state(safeId);
+// 		update_toolbar_actions(safeId);
+// 	}
+
+// 	function run_table_search(safeId, query) {
+// 		var q       = (query || "").trim().toLowerCase();
+// 		var $table  = $(".mis-table[data-safe-id='" + safeId + "']");
+// 		var visible = 0;
+// 		$table.find("tbody tr").each(function () {
+// 			var match = !q || this.textContent.toLowerCase().indexOf(q) !== -1;
+// 			$(this).toggle(match);
+// 			if (match) visible++;
+// 		});
+// 		sync_bulk_cb(safeId);
+// 		var $count = $("#tbl-count-" + safeId);
+// 		if (q) { $count.text(visible + " row" + (visible !== 1 ? "s" : "") + " matched").show(); }
+// 		else   { $count.hide(); }
+// 		$("#tbl-clear-" + safeId).toggle(q.length > 0);
+// 	}
+
+// 	function run_user_search(query) {
+// 		var q     = query.trim().toLowerCase();
+// 		var total = 0;
+// 		$(".user-section").each(function () {
+// 			var $sec  = $(this);
+// 			var match = !q || ($sec.data("name") || "").indexOf(q) !== -1 || ($sec.data("email") || "").indexOf(q) !== -1;
+// 			$sec.toggle(match);
+// 			if (match) total++;
+// 		});
+// 		var $c = $("#admin-user-search-count");
+// 		if (q) { $c.text(total + " user" + (total !== 1 ? "s" : "") + " found").show(); }
+// 		else   { $c.hide(); }
+// 		$("#admin-user-search-clear").toggle(q.length > 0);
+// 	}
+
+// 	/* ============================================================
+// 	   CONTACT CARD — REDESIGNED
+// 	   Structure:
+// 	     .contact-card
+// 	       .cc-top          ← avatar + name (flex row)
+// 	       .cc-divider      ← amber hairline
+// 	       .cc-row.email    ← icon pill + full-width email (ellipsis)
+// 	       .cc-row.phone    ← icon pill + phone number
+// 	============================================================ */
+// 	function build_note_html() {
+// 		var contacts = [
+// 			["Rakesh Ahuja",        "rakesh.ahuja@azimpremjifoundation.org",      "+91 7022068106"],
+// 			["Saravana G",          "saravana.g@azimpremjifoundation.org",        "+91 9380861952"],
+// 			["Augustin Moses R",    "augustin.moses@azimpremjifoundation.org",    "+91 8667719594"],
+// 			["Mercy Selvanayagi R", "mercy.selvanayagi@azimpremjifoundation.org", "+91 9047828687"],
+// 			["Mahaveer Ram P",      "mahaveer.p@azimpremjifoundation.org",        "+91 8825879412"]
+// 		];
+// 		var cards = contacts.map(function (c) {
+// 			return '<div class="contact-card">' +
+// 				/* top row: avatar + name */
+// 				'<div class="cc-top">' +
+// 				'<div class="cc-avatar">' + initials(c[0]) + '</div>' +
+// 				'<div class="cc-name">' + esc(c[0]) + '</div>' +
+// 				'</div>' +
+// 				/* amber divider */
+// 				'<div class="cc-divider"></div>' +
+// 				/* email row — full card width, ellipsis on overflow, title tooltip */
+// 				'<div class="cc-row">' +
+// 				'<div class="cc-icon-pill"><i class="fa fa-envelope"></i></div>' +
+// 				'<span class="cc-val email" title="' + esc(c[1]) + '">' + esc(c[1]) + '</span>' +
+// 				'</div>' +
+// 				/* phone row */
+// 				'<div class="cc-row">' +
+// 				'<div class="cc-icon-pill"><i class="fa fa-phone"></i></div>' +
+// 				'<span class="cc-val">' + esc(c[2]) + '</span>' +
+// 				'</div>' +
+// 				'</div>';
+// 		}).join("");
+
+// 		return '<div class="note-warning">' +
+// 			'<div class="note-left-bar"></div>' +
+// 			'<div class="note-inner">' +
+// 			'<div class="note-header">' +
+// 			'<div class="note-icon-ring"><i class="fa fa-exclamation"></i></div>' +
+// 			'<div>' +
+// 			'<div class="note-badge"><span class="note-badge-dot"></span>&nbsp;IMPORTANT</div>' +
+// 			'<div class="note-title">Before importing, please carefully cross-verify the allocated Units and Cost Centers listed below. If you notice any discrepancies, contact the support team immediately.</div>' +
+// 			'</div></div>' +
+// 			'<div class="note-divider"></div>' +
+// 			'<div class="contact-wrapper">' + cards + '</div>' +
+// 			'</div></div>';
+// 	}
+
+// 	function sl_badge(idx) {
+// 		return idx % 2 === 0
+// 			? '<span class="sl-badge-odd">'  + (idx + 1) + '</span>'
+// 			: '<span class="sl-badge-even">' + (idx + 1) + '</span>';
+// 	}
+
+// 	function build_table_html(rows, safeId) {
+// 		var COLS = [
+// 			["unit",                    "Unit"                    ],
+// 			["unit_description",        "Unit Description"        ],
+// 			["cost_center",             "Cost Center"             ],
+// 			["cost_center_description", "Cost Center Description" ],
+// 			["location_code",           "Location Code"           ],
+// 			["location_description",    "Location Description"    ]
+// 		];
+// 		var headers = COLS.map(function (c) { return "<th>" + c[1] + "</th>"; }).join("");
+// 		var bodyRows = rows.map(function (row, i) {
+// 			var da =
+// 				'data-unit="'                    + esc(row.unit || "")                    + '" ' +
+// 				'data-unit-description="'        + esc(row.unit_description || "")        + '" ' +
+// 				'data-cost-center="'             + esc(row.cost_center || "")             + '" ' +
+// 				'data-cost-center-description="' + esc(row.cost_center_description || "") + '" ' +
+// 				'data-location-code="'           + esc(row.location_code || "")           + '" ' +
+// 				'data-location-description="'    + esc(row.location_description || "")    + '"';
+// 			var cells = COLS.map(function (c) { return "<td>" + esc(row[c[0]] || "") + "</td>"; }).join("");
+// 			return '<tr ' + da + '><td class="cb-cell"><input type="checkbox" class="row-select-cb"></td><td>' + sl_badge(i) + '</td>' + cells + '</tr>';
+// 		}).join("");
+// 		return '<div class="table-wrapper">' +
+// 			'<table class="mis-table" data-safe-id="' + safeId + '">' +
+// 			'<thead><tr>' +
+// 			'<th class="cb-cell"><input type="checkbox" class="bulk-all-cb" data-safe-id="' + safeId + '"></th>' +
+// 			'<th>Sl. No.</th>' + headers +
+// 			'</tr></thead>' +
+// 			'<tbody>' + bodyRows + '</tbody>' +
+// 			'</table></div>';
+// 	}
+
+// 	/* ============================================================
+// 	   DOWNLOAD
+// 	============================================================ */
+// 	function run_download($btn, userEmail, safeId) {
+// 		var selected      = (safeId && safeId !== "null") ? get_selected_rows(safeId) : [];
+// 		var entityDataArg = selected.length ? JSON.stringify(selected) : null;
+
+// 		reset_btn($btn, true, "Downloading...");
+// 		Loader.show("Generating your template...");
+
+// 		var pct = 0;
+// 		var timer = setInterval(function () {
+// 			pct = Math.min(pct + (pct < 40 ? 3 : pct < 70 ? 1.5 : 0.4), 84);
+// 			Loader.setProgress(pct);
+// 		}, 300);
+
+// 		function on_done(success) {
+// 			clearInterval(timer);
+// 			if (success) {
+// 				Loader.setProgress(100);
+// 				Loader.setText("Download ready!");
+// 				setTimeout(function () {
+// 					Loader.hide();
+// 					reset_btn($btn, false);
+// 					if (safeId) deselect_all(safeId);
+// 				}, 800);
+// 			} else {
+// 				Loader.hide();
+// 				reset_btn($btn, false);
+// 			}
+// 		}
+
+// 		frappe.call({
+// 			method  : "annual_budget.api.export_reports.start_budget_template_generation",
+// 			args    : { user: userEmail, entity_data: entityDataArg },
+// 			callback: function () {
+// 				clearInterval(timer);
+// 				Loader.setText("Fetching your template...");
+// 				pct   = 30;
+// 				timer = setInterval(function () { pct = Math.min(pct + 0.3, 84); Loader.setProgress(pct); }, 400);
+
+// 				var polling = false;
+// 				var stopped = false;
+
+// 				var pollTimer = setInterval(function () {
+// 					if (polling || stopped) return;
+// 					polling = true;
+// 					fetch(
+// 						"/api/method/annual_budget.api.export_reports.download_generated_template?user=" + encodeURIComponent(userEmail),
+// 						{ headers: { "X-Frappe-CSRF-Token": frappe.csrf_token } }
+// 					)
+// 					.then(function (resp) {
+// 						if (!resp.ok) { polling = false; throw new Error("Server returned " + resp.status); }
+// 						var ct = resp.headers.get("content-type") || "";
+// 						if (ct.indexOf("application/json") !== -1) {
+// 							return resp.json().then(function () { polling = false; Loader.setText("Still generating, please wait..."); });
+// 						}
+// 						stopped = true;
+// 						clearInterval(pollTimer);
+// 						clearInterval(timer);
+// 						Loader.setProgress(95);
+// 						Loader.setText("Preparing file...");
+// 						var disp     = resp.headers.get("Content-Disposition") || "";
+// 						var match    = disp.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
+// 						var filename = match ? decodeURIComponent(match[1].trim()) : "Budget_Import_Template.xlsx";
+// 						return resp.blob().then(function (blob) {
+// 							var url = URL.createObjectURL(blob);
+// 							var a   = document.createElement("a");
+// 							a.href = url; a.download = filename;
+// 							document.body.appendChild(a); a.click(); a.remove();
+// 							setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+// 							on_done(true);
+// 						});
+// 					})
+// 					.catch(function (err) {
+// 						if (stopped) return;
+// 						stopped = true;
+// 						clearInterval(pollTimer); clearInterval(timer);
+// 						on_done(false);
+// 						frappe.msgprint({ title: "Download Failed", message: "Could not download the template.<br><small>" + err.message + "</small>", indicator: "red" });
+// 					});
+// 				}, 3000);
+// 			},
+// 			error: function () {
+// 				clearInterval(timer); on_done(false);
+// 				frappe.msgprint({ title: "Error", message: "Could not start template generation. Please try again.", indicator: "red" });
+// 			}
+// 		});
+// 	}
+
+// 	function check_and_download($btn, userEmail, isAdmin) {
+// 		reset_btn($btn, true, "Checking...");
+// 		frappe.call({
+// 			method  : "frappe.client.get_value",
+// 			args    : { doctype: "Finance user access", filters: { user: userEmail }, fieldname: "import_template_id" },
+// 			callback: function (r) {
+// 				var tid = r.message && r.message.import_template_id;
+// 				if (!tid) {
+// 					reset_btn($btn, false);
+// 					show_apf_modal({
+// 						title    : '<i class="fa fa-exclamation-triangle"></i> ' + (isAdmin ? "Template Not Configured" : "Import Template Missing"),
+// 						icon     : "fa-exclamation-triangle",
+// 						iconColor: isAdmin ? "#e67e22" : "#e74c3c",
+// 						text     : isAdmin ? "No Import Template is linked for this user account." : "Import Template is not configured for this account.",
+// 						sub      : isAdmin
+// 							? "The <b>import_template_id</b> field in <b>Finance User Access</b> is empty for <b>" + esc(userEmail) + "</b>. Please assign a valid Import Template before retrying."
+// 							: "Please contact your administrator to link an <b>Import Template</b> in <b>Finance User Access</b> before downloading.",
+// 						buttons  : [{ label: '<i class="fa fa-times"></i> Close', cls: "btn-default", onClick: hide_apf_modal }]
+// 					});
+// 					return;
+// 				}
+// 				if (isAdmin) {
+// 					run_download($btn, userEmail, null);
+// 				} else {
+// 					reset_btn($btn, false);
+// 					show_apf_modal({
+// 						title       : '<i class="fa fa-download"></i> Confirm Download',
+// 						icon        : "fa-exclamation-triangle",
+// 						iconColor   : "#e74c3c",
+// 						text        : "Please carefully review and validate all allocated Units, Cost Centers, and Location Codes before downloading.",
+// 						sub         : "Do not proceed unless everything has been reviewed and confirmed.",
+// 						showCheckbox: true,
+// 						buttons     : [
+// 							{ label: '<i class="fa fa-times"></i> Cancel', cls: "btn-default", onClick: hide_apf_modal },
+// 							{ id: "apf-modal-proceed", label: '<i class="fa fa-download"></i> Proceed to Download', cls: "btn-primary", disabled: true,
+// 							  onClick: function () { hide_apf_modal(); run_download($btn, userEmail, null); } }
+// 						]
+// 					});
+// 				}
+// 			},
+// 			error: function () {
+// 				reset_btn($btn, false);
+// 				frappe.msgprint({ title: "Check Failed", message: "Could not verify the Import Template. Please try again.", indicator: "red" });
+// 			}
+// 		});
+// 	}
+
+// 	/* ============================================================
+// 	   RENDER CONTENT
+// 	============================================================ */
+// 	function render_content(container, data) {
+// 		var roles                = Array.isArray(frappe.user_roles) ? frappe.user_roles : [];
+// 		var isFinanceCoordinator = roles.indexOf("Finance Unit Coordinator") !== -1;
+// 		var isSystemManager      = roles.indexOf("System Manager") !== -1;
+// 		var isFinanceAdmin       = roles.indexOf("Finance Admin") !== -1;
+// 		var needsModal           = isFinanceCoordinator && !isSystemManager && !isFinanceAdmin;
+// 		var isCollapsible        = isSystemManager || isFinanceAdmin;
+
+// 		var grouped = {};
+// 		data.forEach(function (row) {
+// 			if (!grouped[row.user]) {
+// 				grouped[row.user] = { user_fullname: row.user_fullname || "", email: row.user, rows: [] };
+// 			}
+// 			grouped[row.user].rows.push(row);
+// 		});
+
+// 		container.empty();
+
+// 		if (isCollapsible) {
+// 			container.append(
+// 				'<div class="global-user-search-wrap">' +
+// 				'<div class="gus-label"><i class="fa fa-users"></i> Search User</div>' +
+// 				'<div class="gus-inner">' +
+// 				'<div class="gus-icon-pill"><i class="fa fa-search"></i></div>' +
+// 				'<input type="text" id="admin-user-search" class="gus-input" placeholder="Search by name or email..." autocomplete="off"/>' +
+// 				'<div id="admin-user-search-clear" class="gus-clear" title="Clear" style="display:none;">&#10005;</div>' +
+// 				'</div>' +
+// 				'<div id="admin-user-search-count" class="gus-count" style="display:none;"></div>' +
+// 				'</div>'
+// 			);
+// 		}
+
+// 		Object.keys(grouped).forEach(function (key) {
+// 			var userData    = grouped[key];
+// 			var displayName = userData.user_fullname || userData.email;
+// 			var rowCount    = userData.rows.length;
+// 			var safeId      = userData.email.replace(/[^a-z0-9]/gi, "_");
+// 			var cbId        = "expand-cb-" + safeId;
+
+// 			var expandHtml = isCollapsible
+// 				? '<div class="expand-toggle-wrap">' +
+// 				  '<label class="expand-toggle-label" for="' + cbId + '">' +
+// 				  '<input type="checkbox" id="' + cbId + '" class="expand-toggle-cb">' +
+// 				  '<span class="expand-toggle-btn">Expand</span>' +
+// 				  '</label>' +
+// 				  '<span class="expand-row-count">' + rowCount + " row" + (rowCount !== 1 ? "s" : "") + '</span>' +
+// 				  '</div>'
+// 				: "";
+
+// 			var $section = $(
+// 				'<div class="user-section" data-name="' + esc(displayName.toLowerCase()) + '" data-email="' + esc(userData.email.toLowerCase()) + '">' +
+
+// 				'<div class="profile-card ' + (isCollapsible ? "profile-collapsible" : "") + '">' +
+// 				'<div class="profile-left">' +
+// 				'<div class="uhi-avatar">' + esc(initials(displayName)) + '</div>' +
+// 				'<div class="uhi-info">' +
+// 				'<div class="user-name">' + esc(displayName) + '</div>' +
+// 				'<div class="user-email">' + esc(userData.email) + '</div>' +
+// 				'</div></div>' +
+// 				'<div class="profile-right">' + expandHtml + '</div>' +
+// 				'</div>' +
+
+// 				'<div class="dl-tip-banner">' +
+// 				'<div class="dl-tip-icon-wrap"><i class="fa fa-info-circle"></i></div>' +
+// 				'<div class="dl-tip-text">' +
+// 				'<strong>How to download</strong> &mdash; Click <span class="dl-tip-em">Download all</span> to get the full template, or tick specific rows and the button will switch to <span class="dl-tip-em">Download selected</span>.' +
+// 				'</div>' +
+// 				'<span class="dl-tip-close" title="Dismiss">&times;</span>' +
+// 				'</div>' +
+
+// 				'<div class="user-body" style="display:' + (isCollapsible ? "none" : "block") + ';">' +
+// 				'<div class="note-slot"></div>' +
+// 				'<div class="connector-slot"></div>' +
+// 				'<div class="tbl-card">' +
+// 				'<div class="tbl-action-bar">' +
+// 				'<div class="tbl-bar-left">' +
+// 				'<div class="tbl-search-inner">' +
+// 				'<div class="tbl-search-icon-pill"><i class="fa fa-search"></i></div>' +
+// 				'<input type="text" id="tbl-search-' + safeId + '" class="tbl-search-input" data-safe-id="' + safeId + '" placeholder="Search units, cost centers, locations..." autocomplete="off"/>' +
+// 				'<div id="tbl-clear-' + safeId + '" class="tbl-search-clear" data-safe-id="' + safeId + '" title="Clear" style="display:none;">&#10005;</div>' +
+// 				'</div>' +
+// 				'<span id="tbl-count-' + safeId + '" class="tbl-search-count" style="display:none;"></span>' +
+// 				'</div>' +
+// 				'<div class="tbl-bar-right">' +
+// 				'<label class="tbl-bulk-label" title="Select / deselect all visible rows">' +
+// 				'<input type="checkbox" id="bulk-cb-' + safeId + '" class="bulk-all-cb" data-safe-id="' + safeId + '">' +
+// 				'<span class="tbl-bulk-text">Select all</span>' +
+// 				'</label>' +
+// 				'<span class="tbl-sel-badge" id="tbl-sel-badge-' + safeId + '" style="display:none;"></span>' +
+// 				'<button class="tbl-desel-btn" data-safe-id="' + safeId + '" style="display:none;"><i class="fa fa-times"></i> Deselect all</button>' +
+// 				'<div class="button-container"></div>' +
+// 				'</div></div>' +
+// 				'<div class="table-slot"></div>' +
+// 				'</div>' +
+// 				'</div></div>'
+// 			);
+
+// 			container.append($section);
+
+// 			if (needsModal) {
+// 				$section.find(".note-slot").html(build_note_html());
+// 				$section.find(".connector-slot").html('<div class="note-to-table-gap"></div>');
+// 			} else {
+// 				$section.find(".connector-slot").html('<div class="section-spacer"></div>');
+// 			}
+
+// 			$section.find(".table-slot").html(build_table_html(userData.rows, safeId));
+
+// 			if (isCollapsible) {
+// 				$section.find(".expand-toggle-cb").on("change", function () {
+// 					var $body = $section.find(".user-body");
+// 					var $card = $section.find(".profile-card");
+// 					var $txt  = $section.find(".expand-toggle-btn");
+// 					if (this.checked) {
+// 						$body.slideDown(200); $card.addClass("is-open"); $txt.text("Collapse");
+// 					} else {
+// 						$body.slideUp(200); $card.removeClass("is-open"); $txt.text("Expand");
+// 						run_table_search(safeId, ""); deselect_all(safeId);
+// 					}
+// 				});
+// 			}
+
+// 			(function (sid, email, admin) {
+// 				var $dlBtn = $(
+// 					'<button class="dl-btn-main dl-btn">' +
+// 					'<i class="fa fa-download dl-btn-icon"></i>' +
+// 					'<div class="dl-btn-body">' +
+// 					'<span class="dl-btn-label" id="dl-lbl-' + sid + '">Download all</span>' +
+// 					'<span class="dl-btn-count" id="dl-cnt-' + sid + '">' + rowCount + ' rows \u00b7 full template</span>' +
+// 					'</div></button>'
+// 				);
+// 				$section.find(".tbl-bar-right .button-container").append($dlBtn);
+// 				$dlBtn.on("click", function () {
+// 					var anySelected = $(".mis-table[data-safe-id='" + sid + "'] .row-select-cb:checked").length > 0;
+// 					if (anySelected) { show_review_modal(sid, email); }
+// 					else             { check_and_download($(this), email, admin); }
+// 				});
+// 			})(safeId, userData.email, !needsModal);
+// 		});
+
+// 		$(document)
+// 			.off(".rowSelect")
+// 			.on("change.rowSelect", ".bulk-all-cb", function () {
+// 				var sid     = $(this).data("safe-id");
+// 				var checked = this.checked;
+// 				$(".mis-table[data-safe-id='" + sid + "'] tbody tr:visible").each(function () {
+// 					$(this).find(".row-select-cb").prop("checked", checked);
+// 					$(this).toggleClass("row-selected", checked);
+// 				});
+// 				sync_bulk_cb(sid);
+// 				update_dl_btn_state(sid);
+// 				update_toolbar_actions(sid);
+// 			})
+// 			.on("change.rowSelect", ".row-select-cb", function () {
+// 				var $row = $(this).closest("tr");
+// 				var sid  = $(this).closest(".mis-table").data("safe-id");
+// 				$row.toggleClass("row-selected", this.checked);
+// 				sync_bulk_cb(sid);
+// 				update_dl_btn_state(sid);
+// 				update_toolbar_actions(sid);
+// 			});
+
+// 		$(document)
+// 			.off(".selSubmit")
+// 			.on("click.selSubmit", ".tbl-desel-btn", function () {
+// 				deselect_all($(this).data("safe-id"));
+// 			});
+
+// 		$(document)
+// 			.off(".tblSearch")
+// 			.on("input.tblSearch", ".tbl-search-input", function () {
+// 				run_table_search($(this).data("safe-id"), this.value);
+// 			})
+// 			.on("click.tblSearch", ".tbl-search-clear", function () {
+// 				var sid = $(this).data("safe-id");
+// 				$("#tbl-search-" + sid).val("");
+// 				run_table_search(sid, "");
+// 			});
+
+// 		$(document)
+// 			.off(".tipDismiss")
+// 			.on("click.tipDismiss", ".dl-tip-close", function () {
+// 				$(this).closest(".dl-tip-banner").slideUp(200);
+// 			});
+
+// 		if (isCollapsible) {
+// 			$(document)
+// 				.off(".adminUserSearch")
+// 				.on("input.adminUserSearch", "#admin-user-search", function () { run_user_search(this.value); })
+// 				.on("click.adminUserSearch", "#admin-user-search-clear", function () {
+// 					$("#admin-user-search").val(""); run_user_search("");
+// 				});
+// 			$("#admin-user-search-clear").hide();
+// 		}
+// 	}
+
+// 	/* ============================================================
+// 	   INIT
+// 	============================================================ */
+// 	$container.html('<div class="loading-state"><i class="fa fa-spinner fa-spin"></i> Loading Data...</div>');
+
+// 	frappe.call({
+// 		method  : "annual_budget.api.filter_options.get_user_mappings",
+// 		callback: function (r) {
+// 			if (!r.message || !r.message.length) {
+// 				$container.html('<div class="empty-state"><i class="fa fa-inbox"></i> No Data Found</div>');
+// 				return;
+// 			}
+// 			render_content($container, r.message);
+// 		}
+// 	});
+
+// };
+
+
+
 frappe.pages["import-template"].on_page_load = function (wrapper) {
 
 	frappe.ui.make_app_page({
@@ -8983,17 +10123,10 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		var style = document.createElement("style");
 		style.id  = "allocation-style";
 		var rules = [
-			/* ── wrapper ── */
 			".budget-import-wrapper{padding:24px;background:#f7f9fb;min-height:100vh;box-sizing:border-box;}",
-
-			/* ── loading / empty ── */
 			".loading-state,.empty-state{text-align:center;padding:60px 20px;font-size:15px;font-weight:600;color:#0076B6;}",
 			".loading-state i,.empty-state i{font-size:28px;margin-bottom:10px;display:block;}",
-
-			/* ── user section ── */
 			".user-section{margin-bottom:24px;background:#fff;border:1px solid #dcdcdc;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.06);overflow:hidden;}",
-
-			/* ── profile card ── */
 			".profile-card{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#F4F9FD;border-bottom:1px solid #dcdcdc;gap:12px;}",
 			".profile-collapsible{border-radius:8px;}",
 			".profile-collapsible.is-open{border-radius:8px 8px 0 0;}",
@@ -9003,16 +10136,12 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".uhi-info{display:flex;flex-direction:column;gap:2px;min-width:0;}",
 			".user-name{font-size:14px;font-weight:700;color:#003B63;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
 			".user-email{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
-
-			/* ── expand toggle ── */
 			".expand-toggle-wrap{display:flex;align-items:center;gap:8px;}",
 			".expand-toggle-label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:0;padding:5px 12px;border:1px solid #aaa;border-radius:6px;background:#fff;transition:border-color 0.15s,box-shadow 0.15s;}",
 			".expand-toggle-label:hover{border-color:#0076B6;box-shadow:0 0 0 3px rgba(0,118,182,0.08);}",
 			".expand-toggle-cb{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;flex-shrink:0;}",
 			".expand-toggle-btn{font-size:12px;font-weight:600;color:#0076B6;white-space:nowrap;}",
 			".expand-row-count{font-size:11px;font-weight:600;color:#fff;background:#0076B6;padding:2px 9px;border-radius:99px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
-
-			/* ── tip banner ── */
 			".dl-tip-banner{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;background:#EBF4FF;border-bottom:1px solid #dcdcdc;}",
 			".dl-tip-icon-wrap{width:22px;height:22px;border-radius:50%;background:#0076B6;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}",
 			".dl-tip-icon-wrap i{font-size:10px;color:#fff;}",
@@ -9021,11 +10150,7 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".dl-tip-em{font-weight:600;color:#0076B6;}",
 			".dl-tip-close{font-size:18px;color:#7a9ab0;cursor:pointer;line-height:1;flex-shrink:0;padding:0 2px;margin-top:-1px;}",
 			".dl-tip-close:hover{color:#003B63;}",
-
-			/* ── user-body ── */
 			".user-body{padding:0;}",
-
-			/* ── NOTE / IMPORTANT banner ── */
 			".note-warning{background:#fff;border-bottom:1px solid #dcdcdc;display:flex;overflow:hidden;}",
 			".note-left-bar{width:5px;background:#f4b400;flex-shrink:0;}",
 			".note-inner{padding:18px 20px;flex:1;min-width:0;box-sizing:border-box;}",
@@ -9037,47 +10162,25 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			"@keyframes softBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}",
 			".note-title{font-size:13px;font-weight:500;color:#3d2800;line-height:1.65;}",
 			".note-divider{height:1px;background:#fde68a;margin:14px 0;}",
-
-			/* ── contact grid ── */
 			".contact-wrapper{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}",
-
-			/* ── contact card — REDESIGNED ──
-			   Layout: avatar + name (top row) → amber divider → email row → phone row
-			   Email gets the full card width so it never needs to wrap or cut.        */
 			".contact-card{background:#FFF3E6;border:1px solid #f0d97a;border-radius:7px;padding:14px 15px;box-sizing:border-box;transition:border-color 0.15s,box-shadow 0.15s;}",
 			".contact-card:hover{border-color:#e0a800;box-shadow:0 3px 8px rgba(244,180,0,0.18);}",
-
-			/* top row: avatar + name */
 			".cc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}",
 			".cc-avatar{width:36px;height:36px;min-width:36px;border-radius:50%;background:#f4b400;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#5c3800;flex-shrink:0;box-shadow:0 2px 5px rgba(244,180,0,0.3);}",
 			".cc-name{font-size:13px;font-weight:700;color:#3d2800;line-height:1.35;word-break:break-word;}",
-
-			/* amber hairline divider */
 			".cc-divider{height:1px;background:#f0d97a;margin-bottom:10px;}",
-
-			/* detail rows — icon pill + value, full card width */
 			".cc-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}",
 			".cc-row:last-child{margin-bottom:0;}",
 			".cc-icon-pill{width:20px;height:20px;min-width:20px;border-radius:50%;background:#f4b400;display:flex;align-items:center;justify-content:center;flex-shrink:0;}",
 			".cc-icon-pill i{font-size:9px;color:#5c3800;}",
-
-			/* value text — single line, ellipsis on extreme overflow, full remaining width */
 			".cc-val{font-size:13.5px;color:#7a5200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;line-height:1.4;}",
 			".cc-val.email{font-size:13px;letter-spacing:-0.1px;}",
-
-			/* ── gap between note and table ── */
 			".note-to-table-gap{height:20px;background:#f7f9fb;}",
 			".section-spacer{height:20px;background:#f7f9fb;}",
-
-			/* ── table card ── */
 			".tbl-card{border-top:1px solid #dcdcdc;border-radius:0 0 8px 8px;overflow:hidden;background:#fff;}",
-
-			/* ── action bar ── */
 			".tbl-action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;background:#f7f9fb;border-bottom:1px solid #dcdcdc;}",
 			".tbl-bar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;}",
 			".tbl-bar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}",
-
-			/* ── search ── */
 			".tbl-search-inner{position:relative;display:flex;align-items:center;width:300px;max-width:100%;}",
 			".tbl-search-icon-pill{position:absolute;left:9px;width:20px;height:20px;background:#0076B6;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;flex-shrink:0;}",
 			".tbl-search-icon-pill i{font-size:9px;color:#fff;}",
@@ -9088,21 +10191,13 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".tbl-search-clear:hover{background:#c0392b;color:#fff;}",
 			".tbl-search-count{font-size:11px;color:#0076B6;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:4px;}",
 			".tbl-search-count::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#0076B6;}",
-
-			/* ── bulk select ── */
 			".tbl-bulk-label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:0;padding:5px 10px;border:1px solid #aaa;border-radius:6px;background:#fff;transition:border-color 0.15s;}",
 			".tbl-bulk-label:hover{border-color:#0076B6;}",
 			".tbl-bulk-label input{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;flex-shrink:0;}",
 			".tbl-bulk-text{font-size:12px;font-weight:600;color:#444;white-space:nowrap;}",
-
-			/* ── selection badge ── */
 			".tbl-sel-badge{font-size:12px;font-weight:600;color:#fff;background:#0076B6;padding:3px 10px;border-radius:99px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
-
-			/* ── deselect button ── */
 			".tbl-desel-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:12px;font-weight:600;color:#444;cursor:pointer;transition:all 0.15s;white-space:nowrap;}",
 			".tbl-desel-btn:hover{border-color:#c0392b;color:#c0392b;}",
-
-			/* ── download button ── */
 			".dl-btn-main{display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border-radius:6px;cursor:pointer;border:1px solid #0076B6;background:#0076B6;transition:background 0.15s ease,box-shadow 0.15s ease;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.12);}",
 			".dl-btn-main:hover{background:#005f94;border-color:#005f94;box-shadow:0 3px 8px rgba(0,118,182,0.35);}",
 			".dl-btn-main:active{background:#004f7a;border-color:#004f7a;box-shadow:none;}",
@@ -9116,8 +10211,6 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".dl-btn-main-sel:hover{background:#145e32;border-color:#145e32;box-shadow:0 3px 8px rgba(26,138,74,0.35);}",
 			".dl-btn-main-sel .dl-btn-icon,.dl-btn-main-sel .dl-btn-label{color:#fff;}",
 			".dl-btn-main-sel .dl-btn-count{color:rgba(255,255,255,0.8);}",
-
-			/* ── TABLE ── */
 			".table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}",
 			".mis-table{width:100%;border-collapse:collapse;font-size:13px;min-width:580px;}",
 			".mis-table thead tr{background:#0076B6;}",
@@ -9135,8 +10228,6 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".sl-badge-even{display:inline-block;background:#0076B6;color:#fff;font-weight:700;border-radius:99px;padding:1px 8px;font-size:11.5px;min-width:28px;}",
 			".cb-cell{width:36px;min-width:36px;text-align:center;padding:6px !important;}",
 			".row-select-cb,.bulk-all-cb{width:14px;height:14px;cursor:pointer;accent-color:#0076B6;vertical-align:middle;}",
-
-			/* ── admin global search ── */
 			".global-user-search-wrap{margin-bottom:20px;padding:14px 16px;background:#f7f9fb;border:1px solid #dcdcdc;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}",
 			".gus-label{font-size:11px;font-weight:700;color:#0076B6;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}",
 			".gus-label i{margin-right:6px;}",
@@ -9150,10 +10241,8 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".gus-clear:hover{background:#c0392b;color:#fff;}",
 			".gus-count{margin-top:6px;font-size:12px;color:#0076B6;font-weight:600;display:flex;align-items:center;gap:4px;}",
 			".gus-count::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#0076B6;}",
-
-			/* ── review modal ── */
 			"#rev-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:99999;padding:15px;}",
-			".rev-modal-box{background:#fff;width:700px;max-width:100%;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;overflow:hidden;}",
+			".rev-modal-box{background:#fff;width:1000px;max-width:100%;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;overflow:hidden;}",
 			".rev-modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#F4F9FD;border-bottom:1px solid #dcdcdc;font-weight:700;font-size:15px;color:#003B63;flex-shrink:0;}",
 			".rev-modal-title i{margin-right:8px;color:#0076B6;}",
 			"#rev-modal-close{cursor:pointer;font-size:22px;color:#666;line-height:1;}",
@@ -9165,7 +10254,7 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".rev-warn-sub{font-size:12px;color:#7a5200;line-height:1.6;}",
 			".rev-count-badge{display:inline-block;font-size:12px;font-weight:600;color:#fff;background:#0076B6;padding:3px 12px;border-radius:99px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,118,182,0.3);}",
 			".rev-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:14px;border-radius:6px;border:1px solid #ddd;}",
-			".rev-table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px;}",
+			".rev-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}",
 			".rev-table thead tr{background:#0076B6;}",
 			".rev-table th{color:#fff;font-weight:700;padding:8px 10px;text-align:center;white-space:nowrap;border:1px solid #ddd;}",
 			".rev-table tbody tr:nth-child(odd) td{background:#fff;}",
@@ -9180,8 +10269,6 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".rev-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid #dcdcdc;flex-shrink:0;background:#f7f9fb;}",
 			".rev-modal-footer .btn{min-width:130px;}",
 			"#rev-btn-proceed:disabled{opacity:0.6;cursor:not-allowed;}",
-
-			/* ── APF modal ── */
 			"#apf-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:15px;}",
 			".apf-modal-box{background:#fff;width:520px;max-width:100%;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,0.2);padding:26px;}",
 			".apf-modal-header{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin-bottom:18px;color:#003B63;}",
@@ -9199,8 +10286,6 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".apf-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}",
 			".apf-modal-footer .btn{min-width:130px;}",
 			"#apf-modal-proceed:disabled{opacity:0.6;cursor:not-allowed;}",
-
-			/* ── loader ── */
 			"#global-loader.loader-overlay{position:fixed;inset:0;width:100vw;height:100vh;background:rgba(18,18,18,0.92);backdrop-filter:blur(6px);z-index:999999;display:none;align-items:center;justify-content:center;}",
 			"#global-loader.loader-overlay.active{display:flex;}",
 			".loader-box{display:flex;flex-direction:column;align-items:center;gap:16px;}",
@@ -9226,126 +10311,13 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			".dl-dots span:nth-child(2){animation-delay:0.2s;}",
 			".dl-dots span:nth-child(3){animation-delay:0.4s;}",
 			"@keyframes dl-bounce{0%,80%,100%{transform:scale(1);opacity:0.5;}40%{transform:scale(1.5);opacity:1;}}",
-
-			/* ================================================================
-			   RESPONSIVE BREAKPOINTS
-			================================================================ */
-
-			/* ── ≤1280px ── */
-			"@media(max-width:1280px){",
-			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}",
-			".tbl-search-inner{width:280px;}",
-			"}",
-
-			/* ── ≤1024px ── */
-			"@media(max-width:1024px){",
-			".budget-import-wrapper{padding:20px;}",
-			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}",
-			".tbl-search-inner{width:240px;}",
-			".gus-inner{max-width:100%;}",
-			"}",
-
-			/* ── ≤900px ── */
-			"@media(max-width:900px){",
-			".budget-import-wrapper{padding:16px;}",
-			".contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}",
-			".tbl-search-inner{width:210px;}",
-			".note-to-table-gap,.section-spacer{height:16px;}",
-			".note-inner{padding:16px 18px;}",
-			"}",
-
-			/* ── ≤768px ── */
-			"@media(max-width:768px){",
-			".budget-import-wrapper{padding:12px;}",
-			".profile-card{flex-wrap:wrap;gap:10px;}",
-			".profile-right{width:100%;justify-content:flex-end;}",
-			".tbl-action-bar{flex-direction:column;align-items:stretch;gap:8px;}",
-			".tbl-bar-left,.tbl-bar-right{width:100%;}",
-			".tbl-bar-right{justify-content:flex-end;}",
-			".tbl-search-inner{width:100%;}",
-			".dl-btn-main{width:100%;justify-content:center;}",
-			".contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}",
-			".note-inner{padding:14px 16px;}",
-			".note-to-table-gap,.section-spacer{height:14px;}",
-			".rev-modal-footer{flex-wrap:wrap;gap:8px;}",
-			".rev-modal-footer .btn{flex:1;min-width:unset;}",
-			".apf-modal-footer{flex-wrap:wrap;gap:8px;}",
-			".apf-modal-footer .btn{flex:1;min-width:unset;}",
-			".mis-table{min-width:520px;}",
-			"}",
-
-			/* ── ≤600px ── */
-			"@media(max-width:600px){",
-			".budget-import-wrapper{padding:10px;}",
-			".contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}",
-			".contact-card{padding:11px 12px;}",
-			".cc-avatar{width:32px;height:32px;min-width:32px;font-size:11px;}",
-			".cc-name{font-size:12px;}",
-			".cc-val{font-size:12.5px;}",
-			".cc-val.email{font-size:12px;}",
-			".uhi-avatar{width:36px;height:36px;font-size:13px;}",
-			".user-name{font-size:13px;}",
-			".user-email{font-size:11px;}",
-			".tbl-action-bar{padding:8px 10px;}",
-			".tbl-bulk-text{display:none;}",
-			".tbl-sel-badge{font-size:11px;}",
-			".dl-btn-count{display:none;}",
-			".dl-tip-text{font-size:11.5px;}",
-			".note-badge{font-size:9px;}",
-			".note-title{font-size:12.5px;}",
-			".note-inner{padding:12px 13px;}",
-			".note-to-table-gap,.section-spacer{height:12px;}",
-			".expand-row-count{display:none;}",
-			".mis-table{font-size:12px;min-width:460px;}",
-			".mis-table th{padding:7px 8px;font-size:11px;}",
-			".mis-table tbody td{padding:6px 8px;}",
-			"}",
-
-			/* ── ≤480px ── */
-			"@media(max-width:480px){",
-			".budget-import-wrapper{padding:8px;}",
-			".profile-card{padding:10px 12px;}",
-			".contact-wrapper{grid-template-columns:minmax(0,1fr);}",
-			".contact-card{padding:12px 14px;}",
-			".cc-avatar{width:34px;height:34px;min-width:34px;font-size:12px;}",
-			".cc-name{font-size:13px;}",
-			".cc-val{font-size:13px;}",
-			".cc-val.email{font-size:12.5px;}",
-			".tbl-bar-right{flex-direction:column;align-items:stretch;}",
-			".tbl-desel-btn{justify-content:center;}",
-			".tbl-bulk-label{justify-content:center;}",
-			".expand-toggle-label{padding:4px 8px;}",
-			".note-to-table-gap,.section-spacer{height:10px;}",
-			".dl-tip-banner{padding:8px 12px;}",
-			".dl-tip-text{font-size:11px;}",
-			".mis-table{min-width:400px;font-size:11px;}",
-			".mis-table th{padding:5px 6px;font-size:10px;}",
-			".mis-table tbody td{padding:5px 6px;}",
-			".rev-modal-footer{flex-direction:column;}",
-			".rev-modal-footer .btn{width:100%;min-width:unset;}",
-			".apf-modal-box{padding:16px;}",
-			".apf-modal-footer{flex-direction:column;}",
-			".apf-modal-footer .btn{width:100%;min-width:unset;}",
-			"}",
-
-			/* ── ≤360px ── */
-			"@media(max-width:360px){",
-			".budget-import-wrapper{padding:6px;}",
-			".profile-card{padding:8px 10px;}",
-			".uhi-avatar{width:32px;height:32px;font-size:12px;}",
-			".user-name{font-size:12px;}",
-			".user-email{font-size:10.5px;}",
-			".contact-card{padding:10px 12px;}",
-			".cc-avatar{width:30px;height:30px;min-width:30px;font-size:10px;}",
-			".cc-name{font-size:12px;}",
-			".cc-val{font-size:11px;}",
-			".cc-val.email{font-size:10.5px;}",
-			".note-inner{padding:10px 11px;}",
-			".note-title{font-size:12px;}",
-			".tbl-action-bar{padding:6px 8px;}",
-			".mis-table{min-width:360px;font-size:10px;}",
-			".mis-table th,.mis-table tbody td{padding:4px 5px;}",
-			"}"
+			"@media(max-width:1280px){.contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}.tbl-search-inner{width:280px;}}",
+			"@media(max-width:1024px){.budget-import-wrapper{padding:20px;}.contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}.tbl-search-inner{width:240px;}.gus-inner{max-width:100%;}}",
+			"@media(max-width:900px){.budget-import-wrapper{padding:16px;}.contact-wrapper{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}.tbl-search-inner{width:210px;}.note-to-table-gap,.section-spacer{height:16px;}.note-inner{padding:16px 18px;}}",
+			"@media(max-width:768px){.budget-import-wrapper{padding:12px;}.profile-card{flex-wrap:wrap;gap:10px;}.profile-right{width:100%;justify-content:flex-end;}.tbl-action-bar{flex-direction:column;align-items:stretch;gap:8px;}.tbl-bar-left,.tbl-bar-right{width:100%;}.tbl-bar-right{justify-content:flex-end;}.tbl-search-inner{width:100%;}.dl-btn-main{width:100%;justify-content:center;}.contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.note-inner{padding:14px 16px;}.note-to-table-gap,.section-spacer{height:14px;}.rev-modal-footer{flex-wrap:wrap;gap:8px;}.rev-modal-footer .btn{flex:1;min-width:unset;}.apf-modal-footer{flex-wrap:wrap;gap:8px;}.apf-modal-footer .btn{flex:1;min-width:unset;}.mis-table{min-width:520px;}}",
+			"@media(max-width:600px){.budget-import-wrapper{padding:10px;}.contact-wrapper{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}.contact-card{padding:11px 12px;}.cc-avatar{width:32px;height:32px;min-width:32px;font-size:11px;}.cc-name{font-size:12px;}.cc-val{font-size:12.5px;}.cc-val.email{font-size:12px;}.uhi-avatar{width:36px;height:36px;font-size:13px;}.user-name{font-size:13px;}.user-email{font-size:11px;}.tbl-action-bar{padding:8px 10px;}.tbl-bulk-text{display:none;}.tbl-sel-badge{font-size:11px;}.dl-btn-count{display:none;}.dl-tip-text{font-size:11.5px;}.note-badge{font-size:9px;}.note-title{font-size:12.5px;}.note-inner{padding:12px 13px;}.note-to-table-gap,.section-spacer{height:12px;}.expand-row-count{display:none;}.mis-table{font-size:12px;min-width:460px;}.mis-table th{padding:7px 8px;font-size:11px;}.mis-table tbody td{padding:6px 8px;}}",
+			"@media(max-width:480px){.budget-import-wrapper{padding:8px;}.profile-card{padding:10px 12px;}.contact-wrapper{grid-template-columns:minmax(0,1fr);}.contact-card{padding:12px 14px;}.cc-avatar{width:34px;height:34px;min-width:34px;font-size:12px;}.cc-name{font-size:13px;}.cc-val{font-size:13px;}.cc-val.email{font-size:12.5px;}.tbl-bar-right{flex-direction:column;align-items:stretch;}.tbl-desel-btn{justify-content:center;}.tbl-bulk-label{justify-content:center;}.expand-toggle-label{padding:4px 8px;}.note-to-table-gap,.section-spacer{height:10px;}.dl-tip-banner{padding:8px 12px;}.dl-tip-text{font-size:11px;}.mis-table{min-width:400px;font-size:11px;}.mis-table th{padding:5px 6px;font-size:10px;}.mis-table tbody td{padding:5px 6px;}.rev-modal-footer{flex-direction:column;}.rev-modal-footer .btn{width:100%;min-width:unset;}.apf-modal-box{padding:16px;}.apf-modal-footer{flex-direction:column;}.apf-modal-footer .btn{width:100%;min-width:unset;}}",
+			"@media(max-width:360px){.budget-import-wrapper{padding:6px;}.profile-card{padding:8px 10px;}.uhi-avatar{width:32px;height:32px;font-size:12px;}.user-name{font-size:12px;}.user-email{font-size:10.5px;}.contact-card{padding:10px 12px;}.cc-avatar{width:30px;height:30px;min-width:30px;font-size:10px;}.cc-name{font-size:12px;}.cc-val{font-size:11px;}.cc-val.email{font-size:10.5px;}.note-inner{padding:10px 11px;}.note-title{font-size:12px;}.tbl-action-bar{padding:6px 8px;}.mis-table{min-width:360px;font-size:10px;}.mis-table th,.mis-table tbody td{padding:4px 5px;}}"
 		];
 		style.textContent = rules.join("");
 		document.head.appendChild(style);
@@ -9475,7 +10447,17 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			'<div class="rev-count-badge" id="rev-count-badge"></div>' +
 			'<div class="rev-table-wrap">' +
 			'<table class="rev-table">' +
-			'<thead><tr><th class="rev-sl">#</th><th>Unit</th><th>Unit Description</th><th>Cost Center</th><th>Cost Center Description</th><th>Location Code</th><th>Location Description</th></tr></thead>' +
+			'<thead><tr>' +
+			'<th class="rev-sl">#</th>' +
+			'<th>Unit</th>' +
+			'<th>Unit Description</th>' +
+			'<th>Cost Center</th>' +
+			'<th>Cost Center Description</th>' +
+			'<th>Cost Center ID</th>' +
+			'<th>Location Code</th>' +
+			'<th>Location Description</th>' +
+			'<th>Location Code ID</th>' +
+			'</tr></thead>' +
 			'<tbody id="rev-table-body"></tbody>' +
 			'</table></div>' +
 			'<div class="rev-confirm-wrap">' +
@@ -9523,13 +10505,17 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		}
 		init_review_modal();
 		var rows = selected.map(function (r, i) {
-			return '<tr><td class="rev-sl">' + (i + 1) + '</td>' +
-				'<td>' + esc(r.unit) + '</td>' +
-				'<td>' + esc(r.unit_description) + '</td>' +
-				'<td>' + esc(r.cost_center) + '</td>' +
-				'<td>' + esc(r.cost_center_description) + '</td>' +
-				'<td>' + esc(r.location_code) + '</td>' +
-				'<td>' + esc(r.location_description) + '</td></tr>';
+			return '<tr>' +
+				'<td class="rev-sl">' + (i + 1)                       + '</td>' +
+				'<td>'               + esc(r.unit)                     + '</td>' +
+				'<td>'               + esc(r.unit_description)          + '</td>' +
+				'<td>'               + esc(r.cost_center)               + '</td>' +
+				'<td>'               + esc(r.cost_center_description)   + '</td>' +
+				'<td>'               + esc(r.cost_center_id)            + '</td>' +
+				'<td>'               + esc(r.location_code)             + '</td>' +
+				'<td>'               + esc(r.location_description)      + '</td>' +
+				'<td>'               + esc(r.location_code_id)          + '</td>' +
+				'</tr>';
 		}).join("");
 		$("#rev-table-body").html(rows);
 		$("#rev-count-badge").text(selected.length + " item" + (selected.length !== 1 ? "s" : "") + " selected");
@@ -9560,18 +10546,32 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		}
 	}
 
+	/* ============================================================
+	   get_selected_rows
+	   Reads ALL data-* attributes from each selected <tr> and
+	   returns the complete object that will be sent to the API.
+	   Fields match exactly what get_user_mappings returns:
+	     full_name, user, unit, unit_description,
+	     cost_center, cost_center_description, cost_center_id,
+	     location_code, location_description, location_code_id
+	============================================================ */
 	function get_selected_rows(safeId) {
 		var selected = [];
 		$(".mis-table[data-safe-id='" + safeId + "'] tbody tr").each(function () {
 			var $row = $(this);
 			if (!$row.find(".row-select-cb").is(":checked")) return;
 			selected.push({
-				unit                    : $row.data("unit")                    || "",
-				unit_description        : $row.data("unit-description")        || "",
-				cost_center             : $row.data("cost-center")             || "",
-				cost_center_description : $row.data("cost-center-description") || "",
-				location_code           : $row.data("location-code")           || "",
-				location_description    : $row.data("location-description")    || ""
+				full_name               : String($row.data("full-name")               || ""),
+				user                    : String($row.data("user")                    || ""),
+				unit                    : String($row.data("unit")                    || ""),
+				unit_description        : String($row.data("unit-description")        || ""),
+				cost_center             : String($row.data("cost-center")             || ""),
+				cost_center_description : String($row.data("cost-center-description") || ""),
+				cost_center_id          : String($row.data("cost-center-id")          || ""),
+				location_code           : String($row.data("location-code")           || ""),
+				location_description    : String($row.data("location-description")    || ""),
+				location_code_id        : String($row.data("location-code-id")        || ""),
+				state                   : String($row.data("state")                   || "")
 			});
 		});
 		return selected;
@@ -9629,12 +10629,27 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 	}
 
 	function run_table_search(safeId, query) {
-		var q       = (query || "").trim().toLowerCase();
-		var $table  = $(".mis-table[data-safe-id='" + safeId + "']");
+		var q      = (query || "").trim().toLowerCase();
 		var visible = 0;
-		$table.find("tbody tr").each(function () {
-			var match = !q || this.textContent.toLowerCase().indexOf(q) !== -1;
-			$(this).toggle(match);
+		/* search across ALL data-* attributes (every column incl. hidden ones) */
+		var SEARCH_ATTRS = [
+			"unit", "unit-description",
+			"cost-center", "cost-center-description", "cost-center-id",
+			"location-code", "location-description", "location-code-id",
+			"state", "full-name", "user"
+		];
+		$(".mis-table[data-safe-id='" + safeId + "'] tbody tr").each(function () {
+			var $row  = $(this);
+			var match = false;
+			if (!q) {
+				match = true;
+			} else {
+				for (var i = 0; i < SEARCH_ATTRS.length; i++) {
+					var val = String($row.data(SEARCH_ATTRS[i]) || "").toLowerCase();
+					if (val.indexOf(q) !== -1) { match = true; break; }
+				}
+			}
+			$row.toggle(match);
 			if (match) visible++;
 		});
 		sync_bulk_cb(safeId);
@@ -9660,13 +10675,7 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 	}
 
 	/* ============================================================
-	   CONTACT CARD — REDESIGNED
-	   Structure:
-	     .contact-card
-	       .cc-top          ← avatar + name (flex row)
-	       .cc-divider      ← amber hairline
-	       .cc-row.email    ← icon pill + full-width email (ellipsis)
-	       .cc-row.phone    ← icon pill + phone number
+	   CONTACT CARDS
 	============================================================ */
 	function build_note_html() {
 		var contacts = [
@@ -9678,26 +10687,21 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		];
 		var cards = contacts.map(function (c) {
 			return '<div class="contact-card">' +
-				/* top row: avatar + name */
 				'<div class="cc-top">' +
 				'<div class="cc-avatar">' + initials(c[0]) + '</div>' +
-				'<div class="cc-name">' + esc(c[0]) + '</div>' +
+				'<div class="cc-name">'  + esc(c[0])       + '</div>' +
 				'</div>' +
-				/* amber divider */
 				'<div class="cc-divider"></div>' +
-				/* email row — full card width, ellipsis on overflow, title tooltip */
 				'<div class="cc-row">' +
 				'<div class="cc-icon-pill"><i class="fa fa-envelope"></i></div>' +
 				'<span class="cc-val email" title="' + esc(c[1]) + '">' + esc(c[1]) + '</span>' +
 				'</div>' +
-				/* phone row */
 				'<div class="cc-row">' +
 				'<div class="cc-icon-pill"><i class="fa fa-phone"></i></div>' +
 				'<span class="cc-val">' + esc(c[2]) + '</span>' +
 				'</div>' +
 				'</div>';
 		}).join("");
-
 		return '<div class="note-warning">' +
 			'<div class="note-left-bar"></div>' +
 			'<div class="note-inner">' +
@@ -9718,26 +10722,64 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 			: '<span class="sl-badge-even">' + (idx + 1) + '</span>';
 	}
 
+	/* ============================================================
+	   build_table_html
+	   VISIBLE columns  → rendered as <th>/<td> in the UI
+	   HIDDEN columns   → cost_center_id, location_code_id
+	                      stored only as data-* on <tr>, never
+	                      shown in the table but passed to the API
+	   ALL other fields → full_name, user also stored as data-*
+	============================================================ */
 	function build_table_html(rows, safeId) {
+		/* visible columns */
 		var COLS = [
 			["unit",                    "Unit"                    ],
 			["unit_description",        "Unit Description"        ],
 			["cost_center",             "Cost Center"             ],
 			["cost_center_description", "Cost Center Description" ],
 			["location_code",           "Location Code"           ],
-			["location_description",    "Location Description"    ]
+			["location_description",    "Location Description"    ],
+			["state",                   "State"                   ]
 		];
 		var headers = COLS.map(function (c) { return "<th>" + c[1] + "</th>"; }).join("");
+
+		/* collect unique sorted values per column at render time
+		   and embed them as JSON in data-values so cfp_open() always has them */
+		var filterCells = COLS.map(function (c) {
+			var uniq = {};
+			rows.forEach(function (r) { var v = String(r[c[0]] || ""); if (v) uniq[v] = true; });
+			var vals = JSON.stringify(Object.keys(uniq).sort());
+			return '<th>' +
+				'<div class="col-filter-wrap">' +
+				'<button type="button" class="col-filter-btn"' +
+				' data-col="'      + c[0]        + '"' +
+				' data-safe-id="'  + safeId       + '"' +
+				' data-values=\''  + vals.replace(/'/g, "&#39;") + '\'' +
+				'>All <span class="col-filter-icon"><i class="fa fa-filter"></i></span></button>' +
+				'</div></th>';
+		}).join("");
+
 		var bodyRows = rows.map(function (row, i) {
+			/* ALL fields (visible + hidden) stored as data-* */
 			var da =
-				'data-unit="'                    + esc(row.unit || "")                    + '" ' +
-				'data-unit-description="'        + esc(row.unit_description || "")        + '" ' +
-				'data-cost-center="'             + esc(row.cost_center || "")             + '" ' +
+				'data-full-name="'               + esc(row.full_name               || "") + '" ' +
+				'data-user="'                    + esc(row.user                    || "") + '" ' +
+				'data-unit="'                    + esc(row.unit                    || "") + '" ' +
+				'data-unit-description="'        + esc(row.unit_description        || "") + '" ' +
+				'data-cost-center="'             + esc(row.cost_center             || "") + '" ' +
 				'data-cost-center-description="' + esc(row.cost_center_description || "") + '" ' +
-				'data-location-code="'           + esc(row.location_code || "")           + '" ' +
-				'data-location-description="'    + esc(row.location_description || "")    + '"';
+				'data-cost-center-id="'          + esc(row.cost_center_id          || "") + '" ' +  /* hidden */
+				'data-location-code="'           + esc(row.location_code           || "") + '" ' +
+				'data-location-description="'    + esc(row.location_description    || "") + '" ' +
+				'data-location-code-id="'        + esc(row.location_code_id        || "") + '" ' +  /* hidden */
+				'data-state="'                   + esc(row.state                   || "") + '"';
+			/* only visible COLS rendered as <td> */
 			var cells = COLS.map(function (c) { return "<td>" + esc(row[c[0]] || "") + "</td>"; }).join("");
-			return '<tr ' + da + '><td class="cb-cell"><input type="checkbox" class="row-select-cb"></td><td>' + sl_badge(i) + '</td>' + cells + '</tr>';
+			return '<tr ' + da + '>' +
+				'<td class="cb-cell"><input type="checkbox" class="row-select-cb"></td>' +
+				'<td>' + sl_badge(i) + '</td>' +
+				cells +
+				'</tr>';
 		}).join("");
 		return '<div class="table-wrapper">' +
 			'<table class="mis-table" data-safe-id="' + safeId + '">' +
@@ -9751,6 +10793,22 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 
 	/* ============================================================
 	   DOWNLOAD
+	   entity_data sent to start_budget_template_generation:
+	   [
+	     {
+	       "full_name": "...",
+	       "user": "...",
+	       "unit": "...",
+	       "unit_description": "...",
+	       "cost_center": "...",
+	       "cost_center_description": "...",
+	       "cost_center_id": "...",
+	       "location_code": "...",
+	       "location_description": "...",
+	       "location_code_id": "..."
+	     }, ...
+	   ]
+	   null when downloading all rows (API uses its own full set).
 	============================================================ */
 	function run_download($btn, userEmail, safeId) {
 		var selected      = (safeId && safeId !== "null") ? get_selected_rows(safeId) : [];
@@ -9783,7 +10841,10 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 
 		frappe.call({
 			method  : "annual_budget.api.export_reports.start_budget_template_generation",
-			args    : { user: userEmail, entity_data: entityDataArg },
+			args    : {
+				user        : userEmail,
+				entity_data : entityDataArg   /* null = full template; JSON string = selected rows with all fields */
+			},
 			callback: function () {
 				clearInterval(timer);
 				Loader.setText("Fetching your template...");
@@ -9900,7 +10961,7 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		var grouped = {};
 		data.forEach(function (row) {
 			if (!grouped[row.user]) {
-				grouped[row.user] = { user_fullname: row.user_fullname || "", email: row.user, rows: [] };
+				grouped[row.user] = { user_fullname: row.full_name || "", email: row.user, rows: [] };
 			}
 			grouped[row.user].rows.push(row);
 		});
@@ -9940,17 +11001,15 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 
 			var $section = $(
 				'<div class="user-section" data-name="' + esc(displayName.toLowerCase()) + '" data-email="' + esc(userData.email.toLowerCase()) + '">' +
-
 				'<div class="profile-card ' + (isCollapsible ? "profile-collapsible" : "") + '">' +
 				'<div class="profile-left">' +
 				'<div class="uhi-avatar">' + esc(initials(displayName)) + '</div>' +
 				'<div class="uhi-info">' +
-				'<div class="user-name">' + esc(displayName) + '</div>' +
+				'<div class="user-name">'  + esc(displayName)   + '</div>' +
 				'<div class="user-email">' + esc(userData.email) + '</div>' +
 				'</div></div>' +
 				'<div class="profile-right">' + expandHtml + '</div>' +
 				'</div>' +
-
 				'<div class="dl-tip-banner">' +
 				'<div class="dl-tip-icon-wrap"><i class="fa fa-info-circle"></i></div>' +
 				'<div class="dl-tip-text">' +
@@ -9958,7 +11017,6 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 				'</div>' +
 				'<span class="dl-tip-close" title="Dismiss">&times;</span>' +
 				'</div>' +
-
 				'<div class="user-body" style="display:' + (isCollapsible ? "none" : "block") + ';">' +
 				'<div class="note-slot"></div>' +
 				'<div class="connector-slot"></div>' +
@@ -10074,6 +11132,160 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 				$(this).closest(".dl-tip-banner").slideUp(200);
 			});
 
+		/* ── Excel-style column filter dropdowns ──────────────────
+		   All state lives on the button element via $.data()
+		   so it survives across open/close cycles.
+		   colValues are read live from the DOM on each panel open.
+		================================================================ */
+		var _cfpBtn    = null;   /* currently open button */
+		var _cfpPanel  = null;   /* currently open panel element */
+
+		function cfp_close() {
+			if (_cfpPanel) { $(_cfpPanel).remove(); _cfpPanel = null; }
+			if (_cfpBtn)   { $(_cfpBtn).removeClass("active");        _cfpBtn  = null; }
+		}
+
+		/* read unique values directly from the table rows for a given col */
+		function cfp_unique_values(sid, col) {
+			var uniq = {};
+			$(".mis-table[data-safe-id='" + sid + "'] tbody tr").each(function () {
+				var v = String($(this).data(col.replace(/_/g, "-")) || "");
+				if (v) uniq[v] = true;
+			});
+			return Object.keys(uniq).sort();
+		}
+
+		function cfp_apply(sid) {
+			var filters = {};
+			$(".col-filter-btn[data-safe-id='" + sid + "']").each(function () {
+				var col = $(this).data("col");
+				var sel = $(this).data("cfp-selected") || [];
+				if (sel.length) filters[col] = sel;
+			});
+			var visible = 0;
+			$(".mis-table[data-safe-id='" + sid + "'] tbody tr").each(function () {
+				var $row = $(this), show = true;
+				$.each(filters, function (col, sel) {
+					var v = String($row.data(col.replace(/_/g, "-")) || "");
+					if (sel.indexOf(v) === -1) { show = false; return false; }
+				});
+				$row.toggle(show);
+				if (show) visible++;
+			});
+			sync_bulk_cb(sid);
+			var $count = $("#tbl-count-" + sid);
+			if (Object.keys(filters).length) {
+				$count.text(visible + " row" + (visible !== 1 ? "s" : "") + " matched").show();
+			} else {
+				$count.hide();
+			}
+		}
+
+		function cfp_update_btn($btn, sel) {
+			if (!sel || !sel.length) {
+				$btn.html("All").removeClass("filtered");
+			} else if (sel.length === 1) {
+				$btn.html(esc(sel[0]) + ' <span class="col-filter-count">1</span>').addClass("filtered");
+			} else {
+				$btn.html('Filtered <span class="col-filter-count">' + sel.length + '</span>').addClass("filtered");
+			}
+		}
+
+		function cfp_open($btn) {
+			cfp_close();
+			var sid     = $btn.data("safe-id");
+			var col     = $btn.data("col");
+			/* read values embedded at render time — always available */
+			var allVals = [];
+			try { allVals = JSON.parse($btn.attr("data-values") || "[]"); } catch(e) {}
+			var sel     = ($btn.data("cfp-selected") || []).slice();
+
+			/* position panel using fixed coords from button rect */
+			var rect    = $btn[0].getBoundingClientRect();
+			var $panel  = $('<div class="col-filter-panel"></div>').css({
+				top  : rect.bottom + 3,
+				left : rect.left,
+				width: Math.max(rect.width, 200)
+			});
+
+			/* search */
+			$panel.append('<div class="cfp-search-wrap"><input class="cfp-search" type="text" placeholder="Search values..." autocomplete="off"></div>');
+
+			/* select all / clear */
+			$panel.append('<div class="cfp-actions"><button type="button" class="cfp-action-btn cfp-sel-all">Select All</button><button type="button" class="cfp-action-btn cfp-clear">Clear</button></div>');
+
+			var $list = $('<div class="cfp-list"></div>');
+			$panel.append($list);
+
+			function render_list(q) {
+				$list.empty();
+				var filtered = allVals.filter(function (v) {
+					return !q || v.toLowerCase().indexOf(q.toLowerCase()) !== -1;
+				});
+				if (!filtered.length) { $list.append('<div class="cfp-empty">No values found</div>'); return; }
+				filtered.forEach(function (v) {
+					var chk = sel.indexOf(v) !== -1;
+					var $item = $('<label class="cfp-item">' +
+						'<input type="checkbox" value="' + esc(v) + '"' + (chk ? " checked" : "") + '>' +
+						'<span>' + esc(v) + '</span></label>');
+					$item.find("input").on("change", function () {
+						if (this.checked) { if (sel.indexOf(v) === -1) sel.push(v); }
+						else              { sel = sel.filter(function (s) { return s !== v; }); }
+						$btn.data("cfp-selected", sel.slice());
+						cfp_update_btn($btn, sel);
+						cfp_apply(sid);
+					});
+					$list.append($item);
+				});
+			}
+
+			render_list("");
+
+			$panel.find(".cfp-search").on("input", function () { render_list(this.value); });
+
+			$panel.find(".cfp-sel-all").on("click", function () {
+				var q = $panel.find(".cfp-search").val();
+				allVals.filter(function (v) {
+					return !q || v.toLowerCase().indexOf(q.toLowerCase()) !== -1;
+				}).forEach(function (v) { if (sel.indexOf(v) === -1) sel.push(v); });
+				$btn.data("cfp-selected", sel.slice());
+				render_list(q);
+				cfp_update_btn($btn, sel);
+				cfp_apply(sid);
+			});
+
+			$panel.find(".cfp-clear").on("click", function () {
+				sel = [];
+				$btn.data("cfp-selected", []);
+				render_list($panel.find(".cfp-search").val());
+				cfp_update_btn($btn, sel);
+				cfp_apply(sid);
+			});
+
+			$("body").append($panel);
+			_cfpPanel = $panel[0];
+			_cfpBtn   = $btn[0];
+			$btn.addClass("active");
+
+			/* close on outside click */
+			setTimeout(function () {
+				$(document).one("click.cfpOutside", function (e) {
+					if (!$(e.target).closest(".col-filter-panel, .col-filter-btn").length) {
+						cfp_close();
+					}
+				});
+			}, 10);
+		}
+
+		$(document)
+			.off(".colFilter")
+			.on("click.colFilter", ".col-filter-btn", function (e) {
+				e.stopPropagation();
+				var $btn = $(this);
+				if (_cfpBtn === $btn[0]) { cfp_close(); }
+				else                     { cfp_open($btn); }
+			});
+
 		if (isCollapsible) {
 			$(document)
 				.off(".adminUserSearch")
@@ -10101,4 +11313,4 @@ frappe.pages["import-template"].on_page_load = function (wrapper) {
 		}
 	});
 
-}; /* end on_page_load */
+};
