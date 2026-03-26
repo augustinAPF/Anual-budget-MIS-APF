@@ -50,7 +50,7 @@
   {
    "default": "0",
    "fieldname": "set_group_id",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Set Group ID"
@@ -59,7 +59,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-12 10:55:16.583033",
+ "modified": "2026-03-26 10:51:13.634122",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Overview number cards settings",
