@@ -6758,7 +6758,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     let theme_filter = frappe.ui.form.make_control({
         parent: theme_col,
         df: {
-            label: "Theme",
+            label: "Operating Units",
             fieldtype: "MultiSelectList",
             fieldname: "theme",
             get_data: function () {
@@ -6777,7 +6777,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         },
         render_input: true
     });
-    addSelectAllButton(theme_filter, "Theme");
+    addSelectAllButton(theme_filter, "Operating Units");
 
     /* ── Unit ── */
     let unit_col = make_field();

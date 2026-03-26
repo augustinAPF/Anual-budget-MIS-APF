@@ -1252,454 +1252,117 @@
 // ---------------------------------------------------------------------------
 // CONSOLIDATED REPORT PAGE
 // ---------------------------------------------------------------------------
-
 frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
 
-	const page = frappe.ui.make_app_page({
-		parent: wrapper,
-		title: 'Consolidated Report',
-		single_column: true
-	});
-
-	// -------------------------------------------------
-	// HTML STRUCTURE
-	// -------------------------------------------------
-	const html = `
-	<div class="dashboard-wrapper">
-
-		<!-- FILTERS -->
-		<div class="filter-row" id="cb-filter-row">
-			<div id="fy-field-wrapper"></div>
-		</div>
-
-		<!-- NUMBER CARDS -->
-		<div class="card-row"></div>
-
-		<!-- // ----------------------------- TABLE SECTION START ----------------------------- -->
-
-		<!-- // STICKY SEARCH BAR -->
-		<!-- <div class="table-controls">
-			<div class="search-bar">
-				<input type="text" id="search-input" placeholder="🔍 Search expense..." />
-			</div>
-		</div> -->
-
-		<!-- // SCROLLABLE TABLE -->
-		<!-- <div class="scroll-wrapper">
-			<table class="university-table" id="expense-table">
-				<thead id="table-header"></thead>
-				<tbody id="table-body"></tbody>
-			</table>
-		</div> -->
-
-		<!-- // ----------------------------- TABLE SECTION END ----------------------------- -->
-
-	</div>
-	`;
-
-	$(page.body).html(html);
-
-	// -------------------------------------------------
-	// CSS INJECTION
-	// -------------------------------------------------
-	$(`
-	<style>
-
-	.page-content { background: #f5f6f8; }
-
-	.dashboard-wrapper { padding: 16px; color: #111; }
-
-	/* FILTERS */
-	.filter-row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
-		gap: 12px;
-		margin-bottom: 20px;
-	}
-
-	#fy-field-wrapper {
-		min-width: 180px;
-	}
-
-	/* NUMBER CARDS */
-	.card-row {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 16px;
-		margin-bottom: 20px;
-	}
-
-	.number-card {
-		background: #ffffff;
-		border-radius: 10px;
-		padding: 18px;
-		box-shadow: 0 3px 10px rgba(0,0,0,.06);
-		transition: .2s ease;
-	}
-
-	.number-card:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 6px 18px rgba(0,0,0,.12);
-	}
-
-	.number-title {
-		font-size: 13px;
-		font-weight: 600;
-		text-transform: uppercase;
-		margin-bottom: 8px;
-		letter-spacing: .5px;
-		color: #000;
-	}
-
-	.number-value {
-		font-size: 22px;
-		font-weight: 700;
-		color: #000;
-	}
-
-	/* // ----------------------------- TABLE STYLES START -----------------------------
-
-	.table-controls {
-		position: sticky;
-		top: 0;
-		z-index: 60;
-		display: flex;
-		align-items: center;
-		padding: 6px 10px;
-		border: 1px solid #0076B6;
-		border-radius: 4px 4px 0 0;
-		background-color: #fff;
-		border-bottom: 3px solid #0076B6;
-	}
-
-	.search-bar input {
-		width: 240px;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		padding: 6px 8px;
-		font-size: 13px;
-	}
-
-	.scroll-wrapper {
-		border: 1px solid #000;
-		border-radius: 0 0 4px 4px;
-		overflow-x: auto;
-		overflow-y: auto;
-		max-height: 55vh;
-		width: 100%;
-		position: relative;
-		scrollbar-width: thin;
-		scrollbar-color: #0076B6 #f1f1f1;
-	}
-
-	.scroll-wrapper::-webkit-scrollbar { height: 8px; }
-	.scroll-wrapper::-webkit-scrollbar-thumb { background-color: #0076B6; border-radius: 4px; }
-	.scroll-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
-
-	table.university-table {
-		min-width: 1200px;
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 13px;
-		text-align: center;
-		color: #111;
-	}
-
-	table.university-table th,
-	table.university-table td {
-		border: 1px solid #000;
-		padding: 6px 8px;
-		white-space: nowrap;
-		vertical-align: middle;
-	}
-
-	table.university-table thead th {
-		position: sticky;
-		background-clip: padding-box;
-		z-index: 10;
-	}
-
-	table.university-table thead tr:first-child th {
-		background-color: #0076B6; color: #fff;
-		top: 0; height: 34px; z-index: 60;
-	}
-
-	table.university-table thead tr:nth-child(2) th {
-		background-color: #F26B21; color: #fff;
-		top: 34px; height: 34px; z-index: 59;
-	}
-
-	table.university-table thead tr:nth-child(3) th {
-		background-color: #f3f4f6;
-		top: 68px; height: 34px; z-index: 58;
-	}
-
-	table.university-table th:first-child,
-	table.university-table td:first-child {
-		position: sticky;
-		left: 0;
-		background-color: #fff;
-		z-index: 65;
-		text-align: left;
-		box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-	}
-
-	table.university-table thead tr:first-child th:first-child {
-		background-color: #0076B6; color: #fff; z-index: 70;
-	}
-
-	table.university-table thead tr:nth-child(2) th:first-child {
-		background-color: #F26B21; color: #fff; z-index: 69;
-	}
-
-	table.university-table thead tr:nth-child(3) th:first-child {
-		background-color: #f3f4f6; z-index: 68;
-	}
-
-	.total-row {
-		font-weight: 700;
-		background-color: #f9f9f9 !important;
-		border-top: 2px solid #000;
-		border-bottom: 2px solid #000;
-	}
-
-	.total-row td:first-child {
-		text-align: right;
-		background-color: #f9f9f9 !important;
-	}
-
-	// ----------------------------- TABLE STYLES END ----------------------------- */
-
-	/* Responsive Cards */
-	@media (max-width: 1024px) { .card-row { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
-	@media (max-width: 768px)  { .card-row { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; } .number-value { font-size: 18px; } }
-	@media (max-width: 480px)  { .card-row { grid-template-columns: 1fr 1fr; } .number-value { font-size: 16px; } }
-
-	</style>
-	`).appendTo(page.body);
-
-	// -------------------------------------------------
-	// FINANCIAL YEAR FILTER
-	// -------------------------------------------------
-	const fyControl = frappe.ui.form.make_control({
-		parent: $('#fy-field-wrapper'),
-		df: {
-			label    : 'Financial Year',
-			fieldtype: 'Select',
-			fieldname: 'financial_year',
-			reqd     : 1,
-		},
-		render_input: true
-	});
-	fyControl.refresh();
-
-	page.fyControl = fyControl;
-
-	// Populate FY options and set default
-	frappe.call({
-		method: 'annual_budget.api.filter_options.get_financial_year_list',
-		callback: function (r) {
-			if (!r.message || !r.message.length) return;
-
-			const years = r.message.map(d => d.financial_year);
-			fyControl.df.options = years.join('\n');
-			fyControl.refresh();
-
-			// Detect current FY
-			const today = new Date();
-			const y = today.getFullYear();
-			const m = today.getMonth() + 1;
-			const currentFY = (m >= 4)
-				? `${y}-${String(y + 1).slice(-2)}`
-				: `${y - 1}-${String(y).slice(-2)}`;
-
-			const defaultFY = years.includes(currentFY) ? currentFY : years[0];
-			fyControl.set_value(defaultFY);
-
-			// Initial data load
-			loadAll(defaultFY);
-		}
-	});
-
-	// Reload when FY changes
-	fyControl.$input.on('change', function () {
-		const fy = fyControl.get_value();
-		if (fy) loadAll(fy);
-	});
-
-	// // ----------------------------- TABLE: search listener START -----------------------------
-	// document.getElementById('search-input')
-	// 	.addEventListener('input', filterTable);
-	// // ----------------------------- TABLE: search listener END -----------------------------
-
-	// -------------------------------------------------
-	// HELPERS
-	// -------------------------------------------------
-
-	function loadAll(fy) {
-		loadNumberCards(fy);
-		// loadConsolidatedReport(fy); // TABLE: uncomment to reload table on FY change
-	}
-
-	// -------------------------------------------------
-	// NUMBER CARDS
-	// -------------------------------------------------
-
-	function formatINR(value) {
-		return new Intl.NumberFormat('en-IN', {
-			style: 'currency',
-			currency: 'INR',
-			minimumFractionDigits: 2
-		}).format(value || 0);
-	}
-
-	function renderCards(apiResponse) {
-		const $container = $('.card-row');
-		$container.empty();
-
-		$container.append(`
-			<div class="number-card">
-				<div class="number-title">Grand Total</div>
-				<div class="number-value">${formatINR(apiResponse.grand_total)}</div>
-			</div>
-		`);
-
-		(apiResponse.number_cards || []).forEach(card => {
-			$container.append(`
-				<div class="number-card">
-					<div class="number-title">${card.label}</div>
-					<div class="number-value">${formatINR(card.total_budget)}</div>
-				</div>
-			`);
-		});
-	}
-
-	function loadNumberCards(fy) {
-		frappe.call({
-			method: 'annual_budget.api.phase_sheet.get_number_card_totals',
-			args: { financial_year: fy },
-			callback: function (r) {
-				if (r.message) renderCards(r.message);
-			}
-		});
-	}
-
-	// // ----------------------------- TABLE FUNCTIONS START -----------------------------
-
-	// // TABLE DATA FETCH
-	// function loadConsolidatedReport(fy) {
-	// 	frappe.call({
-	// 		method: 'annual_budget.api.finance_budget.get_consolidated_report',
-	// 		args: { financial_year: fy },
-	// 		freeze: true,
-	// 		freeze_message: 'Loading Consolidated Data...',
-	// 		callback: function (r) {
-	// 			const data = r.message?.entities || [];
-	// 			if (!data.length) {
-	// 				document.getElementById('table-body').innerHTML =
-	// 					"<tr><td colspan='99' style='text-align:center;'>No data found</td></tr>";
-	// 				document.getElementById('table-header').innerHTML = '';
-	// 				return;
-	// 			}
-	// 			renderExpenseTable(data);
-	// 		},
-	// 	});
-	// }
-
-	// // TABLE RENDER
-	// function renderExpenseTable(entities) {
-	// 	const header = document.getElementById('table-header');
-	// 	const body   = document.getElementById('table-body');
-	// 	header.innerHTML = '';
-	// 	body.innerHTML   = '';
-
-	// 	const visibleCols = ['Budget', 'Actuals', 'Previous Year'];
-
-	// 	// Row 1 – Entity names
-	// 	let entityRow = `<tr><th rowspan="3">Expenses</th>`;
-	// 	entities.forEach(e => {
-	// 		entityRow += `<th colspan="${e.cost_centers.length * visibleCols.length}">${e.name}</th>`;
-	// 	});
-	// 	entityRow += '</tr>';
-
-	// 	// Row 2 – Cost centres
-	// 	let ccRow = '<tr>';
-	// 	entities.forEach(e => {
-	// 		e.cost_centers.forEach(cc => {
-	// 			ccRow += `<th colspan="${visibleCols.length}">${cc.name} (₹)</th>`;
-	// 		});
-	// 	});
-	// 	ccRow += '</tr>';
-
-	// 	// Row 3 – Metric labels
-	// 	let metricRow = '<tr>';
-	// 	entities.forEach(e => {
-	// 		e.cost_centers.forEach(() => {
-	// 			visibleCols.forEach(v => metricRow += `<th>${v}</th>`);
-	// 		});
-	// 	});
-	// 	metricRow += '</tr>';
-
-	// 	header.innerHTML = entityRow + ccRow + metricRow;
-
-	// 	// Collect all unique expense types
-	// 	const allExpenses = new Set();
-	// 	entities.forEach(e =>
-	// 		e.cost_centers.forEach(cc =>
-	// 			cc.data.forEach(d => allExpenses.add(d.type_of_expense))
-	// 		)
-	// 	);
-
-	// 	// Data rows
-	// 	let bodyHTML = '';
-	// 	allExpenses.forEach(exp => {
-	// 		bodyHTML += `<tr><td>${exp}</td>`;
-	// 		entities.forEach(e => {
-	// 			e.cost_centers.forEach(cc => {
-	// 				const row = cc.data.find(d => d.type_of_expense === exp);
-	// 				visibleCols.forEach(metric => {
-	// 					const val =
-	// 						metric === 'Budget'        ? row?.budget        ?? 0 :
-	// 						metric === 'Actuals'       ? row?.actuals       ?? 0 :
-	// 						                             row?.previous_year ?? 0;
-	// 					bodyHTML += `<td>${(val || 0).toLocaleString()}</td>`;
-	// 				});
-	// 			});
-	// 		});
-	// 		bodyHTML += '</tr>';
-	// 	});
-
-	// 	// Grand Total row
-	// 	let grandRow = `<tr class="total-row"><td>Grand Total (₹)</td>`;
-	// 	entities.forEach(e => {
-	// 		e.cost_centers.forEach(cc => {
-	// 			visibleCols.forEach(metric => {
-	// 				const val =
-	// 					metric === 'Budget'  ? cc.data.reduce((a, d) => a + (d.budget        || 0), 0) :
-	// 					metric === 'Actuals' ? cc.data.reduce((a, d) => a + (d.actuals       || 0), 0) :
-	// 					                      cc.data.reduce((a, d) => a + (d.previous_year  || 0), 0);
-	// 				grandRow += `<td>${val.toLocaleString()}</td>`;
-	// 			});
-	// 		});
-	// 	});
-	// 	grandRow += '</tr>';
-
-	// 	body.innerHTML = bodyHTML + grandRow;
-	// }
-
-	// // SEARCH FILTER
-	// function filterTable() {
-	// 	const term = document.getElementById('search-input').value.toLowerCase();
-	// 	document.querySelectorAll('#table-body tr').forEach(row => {
-	// 		const firstCell = row.querySelector('td:first-child')?.innerText.toLowerCase();
-	// 		row.style.display =
-	// 			(firstCell && firstCell.includes(term)) || row.classList.contains('total-row')
-	// 				? ''
-	// 				: 'none';
-	// 	});
-	// }
-
-	// // ----------------------------- TABLE FUNCTIONS END -----------------------------
-
-}; // end on_page_load
+    const page = frappe.ui.make_app_page({
+        parent: wrapper,
+        title: 'Budget Dashboard',
+        single_column: true
+    });
+
+    /* ─────────────────────────────────────────
+       STYLES
+    ───────────────────────────────────────── */
+    $(`<style>
+        .cr-filter-row{padding:15px 20px;background:#fff;border-radius:6px;margin-top:10px;margin-left:0;margin-right:0;display:flex;flex-wrap:wrap;gap:12px;}
+        .cr-filter-field{width:280px;}
+        .cr-filter-field .form-control,.cr-filter-field select{width:100% !important;height:34px !important;font-size:13px !important;border-radius:6px !important;}
+        .cr-cards-section{padding:16px 24px;box-sizing:border-box;}
+        .cr-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+        .cr-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease;}
+        .cr-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.10);transform:translateY(-3px);border-color:#0076B6;}
+        .cr-card-label{font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;}
+        .cr-card-value{font-size:22px;font-weight:600;color:#111;line-height:1.2;word-break:break-word;}
+        @media(max-width:1280px){.cr-card-grid{grid-template-columns:repeat(3,1fr);}}
+        @media(max-width:1024px){.cr-card-grid{grid-template-columns:repeat(3,1fr);}.cr-cards-section{padding:12px 16px;}}
+        @media(max-width:768px){.cr-card-grid{grid-template-columns:repeat(2,1fr);}.cr-cards-section{padding:10px 12px;}.cr-card-value{font-size:18px;}.cr-filter-field{width:100%;}}
+        @media(max-width:480px){.cr-card-grid{grid-template-columns:repeat(2,1fr);gap:10px;}.cr-cards-section{padding:8px 10px;}.cr-card-value{font-size:16px;}.cr-card-label{font-size:11px;}}
+        @media(max-width:360px){.cr-card-grid{grid-template-columns:1fr;}}
+    </style>`).appendTo("head");
+
+    /* ─────────────────────────────────────────
+       ACCENT PALETTE
+    ───────────────────────────────────────── */
+
+
+    /* ─────────────────────────────────────────
+       LAYOUT
+    ───────────────────────────────────────── */
+    $(page.body).html(`
+        <div class="cr-filter-row" id="cr-filter-row"></div>
+        <div class="cr-cards-section">
+            <div class="cr-card-grid" id="card-row"></div>
+        </div>
+    `);
+
+    /* ─────────────────────────────────────────
+       FINANCIAL YEAR FILTER
+    ───────────────────────────────────────── */
+    const fyControl = frappe.ui.form.make_control({
+        parent: $('<div class="cr-filter-field"></div>').appendTo('#cr-filter-row'),
+        df: {
+            label: 'Financial Year', fieldtype: 'Select', fieldname: 'financial_year', reqd: 1,
+            change() {
+                const fy = this.get_value();
+                if (fy) loadNumberCards(fy);
+            }
+        },
+        render_input: true
+    });
+    fyControl.refresh();
+
+    frappe.call({
+        method: 'annual_budget.api.filter_options.get_financial_year_list',
+        callback(r) {
+            if (!r.message?.length) return;
+            const years = r.message.map(d => d.financial_year);
+            fyControl.df.options = years.join('\n');
+            fyControl.refresh();
+
+            const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
+            const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+            const def = years.includes(fy) ? fy : years[0];
+            fyControl.set_value(def);
+            loadNumberCards(def);
+        }
+    });
+
+    /* ─────────────────────────────────────────
+       HELPERS
+    ───────────────────────────────────────── */
+    const fmtINR = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+
+    /* ─────────────────────────────────────────
+       RENDER CARDS
+    ───────────────────────────────────────── */
+    function renderCards(apiResponse) {
+        const $row = $('#card-row');
+        $row.empty();
+
+        const items = [
+            { label: 'Grand Total', value: apiResponse.grand_total },
+            ...(apiResponse.number_cards || []).map(c => ({ label: c.label, value: c.total_budget }))
+        ];
+
+        items.forEach(item => {
+            $row.append(`
+                <div class="cr-card">
+                    <div class="cr-card-label">${item.label}</div>
+                    <div class="cr-card-value">${fmtINR(item.value)}</div>
+                </div>
+            `);
+        });
+    }
+
+    /* ─────────────────────────────────────────
+       LOAD CARDS
+    ───────────────────────────────────────── */
+    function loadNumberCards(fy) {
+        frappe.call({
+            method  : 'annual_budget.api.phase_sheet.get_number_card_totals',
+            args    : { financial_year: fy },
+            callback(r) { if (r.message) renderCards(r.message); }
+        });
+    }
+
+};

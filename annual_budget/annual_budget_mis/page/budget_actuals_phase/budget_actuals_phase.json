@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-02-18 09:41:25.873629",
+ "modified": "2026-03-25 21:31:41.398152",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "budget-actuals-phase",
@@ -15,5 +15,5 @@
  "standard": "Yes",
  "style": null,
  "system_page": 1,
- "title": "Budget vs Actuals Face Sheet"
+ "title": "Budget vs Actuals"
 }

@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-10-19 11:02:11.230188",
+ "modified": "2026-03-25 17:55:58.101981",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "consolidate-report",
@@ -14,5 +14,6 @@
  "script": null,
  "standard": "Yes",
  "style": null,
- "system_page": 1
+ "system_page": 1,
+ "title": "Budget Dashboard"
 }

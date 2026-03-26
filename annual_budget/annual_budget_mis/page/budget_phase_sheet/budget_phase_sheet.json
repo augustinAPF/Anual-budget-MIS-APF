@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-02-18 09:41:37.390283",
+ "modified": "2026-03-25 20:49:24.878909",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "budget-phase-sheet",
@@ -15,5 +15,5 @@
  "standard": "Yes",
  "style": null,
  "system_page": 1,
- "title": "Budget Face Sheet"
+ "title": "Budget Summary"
 }

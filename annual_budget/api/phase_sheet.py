@@ -2053,6 +2053,64 @@ def get_consolidated_report_ytd(
 
 #     return results
 
+
+#fainal
+# @frappe.whitelist(allow_guest=True)
+# def get_number_card_settings(set_group_id=None):
+
+#     results = []
+
+#     def parse_list(value):
+#         if not value:
+#             return []
+#         return [v.strip() for v in str(value).split(",") if v.strip()]
+
+#     set_group_ids = parse_list(set_group_id)
+
+#     or_filters = []
+
+#     if set_group_ids:
+#         for gid in set_group_ids:
+#             or_filters.extend([
+#                 ["set_group_id", "=", gid],
+#                 ["set_group_id", "like", f"{gid},%"],
+#                 ["set_group_id", "like", f"%,{gid},%"],
+#                 ["set_group_id", "like", f"%,{gid}"]
+#             ])
+
+#     settings_docs = frappe.get_all(
+#         "Overview number cards settings",
+#         or_filters=or_filters,
+#         fields=["name", "number_card_title"],
+#         order_by="creation desc"
+#     )
+
+#     for setting in settings_docs:
+
+#         doc = frappe.get_doc(
+#             "Overview number cards settings",
+#             setting.name
+#         )
+
+#         units = [d.unit for d in doc.select_units]
+#         cost_centers = [d.cost_center for d in doc.select_cost_centers]
+#         cost_centers_erp = [d.cost_center_erp for d in doc.select_cost_centers]
+#         locations = [d.location_code for d in doc.select_location_codes]
+#         locations_erp = [d.location_code_erp for d in doc.select_location_codes]
+
+#         results.append({
+#             "settings_doc": doc.name,
+#             "label": doc.number_card_title,
+#             "units": units,
+#             "cost_centers": cost_centers,
+#             "cost_centers_erp": cost_centers_erp,
+#             "locations": locations,
+#             "locations_erp": locations_erp
+#         })
+
+#     return results
+
+
 @frappe.whitelist(allow_guest=True)
 def get_number_card_settings(set_group_id=None):
 
@@ -2076,12 +2134,19 @@ def get_number_card_settings(set_group_id=None):
                 ["set_group_id", "like", f"%,{gid}"]
             ])
 
-    settings_docs = frappe.get_all(
-        "Overview number cards settings",
-        or_filters=or_filters,
-        fields=["name", "number_card_title"],
-        order_by="creation desc"
-    )
+    if or_filters:
+        settings_docs = frappe.get_all(
+            "Overview number cards settings",
+            or_filters=or_filters,
+            fields=["name", "number_card_title", "set_group_id"],
+            order_by="creation desc"
+        )
+    else:
+        settings_docs = frappe.get_all(
+            "Overview number cards settings",
+            fields=["name", "number_card_title", "set_group_id"],
+            order_by="creation desc"
+        )
 
     for setting in settings_docs:
 
@@ -2098,6 +2163,7 @@ def get_number_card_settings(set_group_id=None):
 
         results.append({
             "settings_doc": doc.name,
+            "set_group_id": doc.set_group_id,  # ✅ included
             "label": doc.number_card_title,
             "units": units,
             "cost_centers": cost_centers,
@@ -2109,7 +2175,7 @@ def get_number_card_settings(set_group_id=None):
     return results
 
 
-    
+
 @frappe.whitelist(allow_guest=True)
 def format_api(financial_year=None, month=None):
 
