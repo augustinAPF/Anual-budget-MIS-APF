@@ -2557,3 +2557,52 @@ def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
 #         }
 
 
+import frappe
+from frappe import _
+
+@frappe.whitelist(allow_guest=True)
+def get_monthly_adjustments(financial_year, month):
+
+    if not financial_year or not month:
+        frappe.throw(_("Financial Year and Month are required"))
+
+    parents = frappe.get_all(
+        "Monthly Adjustment",
+        filters={
+            "financial_year": financial_year,
+            "month": month
+        },
+        fields=["name", "financial_year", "month"],
+        order_by="creation desc"
+    )
+
+    result = []
+
+    for parent in parents:
+        doc = frappe.get_doc("Monthly Adjustment", parent.name)
+
+        child_items = []
+
+        for row in doc.adjustment_line_items:
+            child_items.append({
+                "unit": row.unit,
+                "cost_center": row.cost_center,
+                "cost_center_description": row.cost_center_description,
+                "location_code": row.location_code,
+                "location_code_description": row.location_code_description,
+                "gl_code": row.gl_code,
+                "type_of_expenses": row.type_of_expenses,
+                "adjustment_type": row.adjustment_type,
+                "adjustment_method": row.adjustment_method,
+                "adjustment_amount": row.adjustment_amount
+            })
+
+        # ✅ Parent added once, children nested
+        result.append({
+            "document": doc.name,
+            "financial_year": doc.financial_year,
+            "month": doc.month,
+            "items": child_items
+        })
+
+    return result

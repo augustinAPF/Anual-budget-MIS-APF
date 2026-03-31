@@ -940,3 +940,222 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
         })
 
     return {"message": result}
+
+
+# @frappe.whitelist(allow_guest=True)
+# def add_expense_totals(financial_year=None, month=None, set_group_id=None):
+
+#     # -------- SAFE PARAMS --------
+#     set_group_id = set_group_id or ""
+
+#     # -------- GET CURRENT DATA --------
+#     current_data = format_api(
+#         financial_year=financial_year,
+#         month=month,
+#         set_group_id=set_group_id
+#     )
+
+#     # -------- PREVIOUS FY --------
+#     start_year = int(financial_year.split("-")[0])
+#     prev_start = start_year - 1
+#     prev_end = str(prev_start + 1)[-2:]
+#     prev_fy = f"{prev_start}-{prev_end}"
+
+#     # -------- GET PREVIOUS DATA --------
+#     prev_data = format_api(
+#         financial_year=prev_fy,
+#         month=month,
+#         set_group_id=set_group_id
+#     )
+
+#     # -------- MAP PREVIOUS DATA --------
+#     prev_map = {
+#         str(r.get("settings_doc")): r
+#         for r in prev_data
+#     }
+
+#     # =========================================================
+#     # ✅ COMMON EXPENSE CALCULATION (FOUNDATION + EDUCATION)
+#     # =========================================================
+#     def get_expense_totals(actuals):
+#         capital_budget = 0.0
+#         capital_actual = 0.0
+#         operating_budget = 0.0
+#         operating_actual = 0.0
+
+#         for head in actuals:
+#             name = (head.get("name") or "").upper()
+
+#             budget = head.get("ytd") or 0.0
+#             actual = head.get("total_posted_amt_ytd") or 0.0
+
+#             if "CAPEX" in name or "CAPITAL" in name:
+#                 capital_budget += budget
+#                 capital_actual += actual
+
+#             elif "OPEX" in name or "OPERATING" in name:
+#                 operating_budget += budget
+#                 operating_actual += actual
+
+#             else:
+#                 # fallback → treat as OPEX
+#                 operating_budget += budget
+#                 operating_actual += actual
+
+#         return {
+#             "capital": {"budget": capital_budget, "actual": capital_actual},
+#             "operating": {"budget": operating_budget, "actual": operating_actual},
+#             "grand": {
+#                 "budget": capital_budget + operating_budget,
+#                 "actual": capital_actual + operating_actual
+#             }
+#         }
+
+#     # =========================================================
+#     # ✅ TABLE CONTAINERS
+#     # =========================================================
+#     foundation_current_rows = []
+#     foundation_previous_rows = []
+#     education_rows = []
+
+#     # =========================================================
+#     # 🔁 MAIN LOOP
+#     # =========================================================
+#     for record in current_data:
+
+#         settings_doc = str(record.get("settings_doc"))
+#         prev_record = prev_map.get(settings_doc, {})
+
+#         label = record.get("label")
+
+#         raw_group = record.get("set_group_id")
+#         group_ids = [
+#             g.strip() for g in str(raw_group or "").split(",") if g.strip()
+#         ]
+
+#         # ---------------- FOUNDATION ----------------
+#         if "4" in group_ids:
+
+#             curr_f = get_expense_totals(record.get("actuals", []))
+#             prev_f = get_expense_totals(prev_record.get("actuals", []))
+
+#             foundation_current_rows.append({
+#                 "unit": label,
+#                 "opex_budget": curr_f["operating"]["budget"],
+#                 "capex_budget": curr_f["capital"]["budget"],
+#                 "total_budget": curr_f["grand"]["budget"],
+#                 "opex_actual": curr_f["operating"]["actual"],
+#                 "capex_actual": curr_f["capital"]["actual"],
+#                 "total_actual": curr_f["grand"]["actual"]
+#             })
+
+#             foundation_previous_rows.append({
+#                 "unit": label,
+#                 "opex_budget": prev_f["operating"]["budget"],
+#                 "capex_budget": prev_f["capital"]["budget"],
+#                 "total_budget": prev_f["grand"]["budget"],
+#                 "opex_actual": prev_f["operating"]["actual"],
+#                 "capex_actual": prev_f["capital"]["actual"],
+#                 "total_actual": prev_f["grand"]["actual"]
+#             })
+
+#         # ---------------- EDUCATION ----------------
+#         if "5" in group_ids:
+
+#             curr_e = get_expense_totals(record.get("actuals", []))
+#             prev_e = get_expense_totals(prev_record.get("actuals", []))
+
+#             education_rows.append({
+#                 "unit": label,
+
+#                 "opex_budget": curr_e["operating"]["budget"],
+#                 "capex_budget": curr_e["capital"]["budget"],
+#                 "total_budget": curr_e["grand"]["budget"],
+
+#                 "opex_actual": curr_e["operating"]["actual"],
+#                 "capex_actual": curr_e["capital"]["actual"],
+#                 "total_actual": curr_e["grand"]["actual"],
+
+#                 "opex_budget_previous": prev_e["operating"]["budget"],
+#                 "capex_budget_previous": prev_e["capital"]["budget"],
+#                 "total_budget_previous": prev_e["grand"]["budget"],
+
+#                 "opex_actual_previous": prev_e["operating"]["actual"],
+#                 "capex_actual_previous": prev_e["capital"]["actual"],
+#                 "total_actual_previous": prev_e["grand"]["actual"]
+#             })
+
+#     # =========================================================
+#     # ➕ TOTAL FUNCTIONS
+#     # =========================================================
+#     def add_foundation_total_row(rows):
+#         if not rows:
+#             return rows
+
+#         total = {
+#             "unit": "Total",
+#             "opex_budget": sum(r.get("opex_budget", 0) for r in rows),
+#             "capex_budget": sum(r.get("capex_budget", 0) for r in rows),
+#             "total_budget": sum(r.get("total_budget", 0) for r in rows),
+#             "opex_actual": sum(r.get("opex_actual", 0) for r in rows),
+#             "capex_actual": sum(r.get("capex_actual", 0) for r in rows),
+#             "total_actual": sum(r.get("total_actual", 0) for r in rows),
+#         }
+
+#         rows.append(total)
+#         return rows
+
+#     def add_education_total_row(rows):
+#         if not rows:
+#             return rows
+
+#         total = {
+#             "unit": "Total",
+
+#             "opex_budget": sum(r.get("opex_budget", 0) for r in rows),
+#             "capex_budget": sum(r.get("capex_budget", 0) for r in rows),
+#             "total_budget": sum(r.get("total_budget", 0) for r in rows),
+
+#             "opex_actual": sum(r.get("opex_actual", 0) for r in rows),
+#             "capex_actual": sum(r.get("capex_actual", 0) for r in rows),
+#             "total_actual": sum(r.get("total_actual", 0) for r in rows),
+
+#             "opex_budget_previous": sum(r.get("opex_budget_previous", 0) for r in rows),
+#             "capex_budget_previous": sum(r.get("capex_budget_previous", 0) for r in rows),
+#             "total_budget_previous": sum(r.get("total_budget_previous", 0) for r in rows),
+
+#             "opex_actual_previous": sum(r.get("opex_actual_previous", 0) for r in rows),
+#             "capex_actual_previous": sum(r.get("capex_actual_previous", 0) for r in rows),
+#             "total_actual_previous": sum(r.get("total_actual_previous", 0) for r in rows),
+#         }
+
+#         rows.append(total)
+#         return rows
+
+#     # APPLY TOTALS
+#     foundation_current_rows = add_foundation_total_row(foundation_current_rows)
+#     foundation_previous_rows = add_foundation_total_row(foundation_previous_rows)
+#     education_rows = add_education_total_row(education_rows)
+
+#     # =========================================================
+#     # ✅ FINAL RESPONSE
+#     # =========================================================
+#     return {
+#         "message": {
+
+#             "overall_foundation_numbers": {
+#                 "title": f"OVERALL FOUNDATION NUMBERS - {financial_year} BUDGET VS. {prev_fy} EST",
+#                 "rows": foundation_current_rows
+#             },
+
+#             "overall_foundation_previous_year": {
+#                 "title": f"OVERALL FOUNDATION NUMBERS - {prev_fy} BUDGET VS. {prev_fy} EST",
+#                 "rows": foundation_previous_rows
+#             },
+
+#             "overall_education_numbers": {
+#                 "title": f"OVERALL EDUCATION NUMBERS - {financial_year} VS {prev_fy}",
+#                 "rows": education_rows
+#             }
+#         }
+#     }

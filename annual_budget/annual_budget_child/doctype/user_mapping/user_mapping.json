@@ -6,11 +6,11 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "unit",
-  "unit_description",
   "cost_center",
   "cost_center_erp",
   "cost_center_description",
+  "unit",
+  "unit_description",
   "column_break_umah",
   "location_code",
   "location_code_erp",
@@ -19,6 +19,7 @@
  ],
  "fields": [
   {
+   "fetch_from": "cost_center.set_id",
    "fieldname": "unit",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -107,7 +108,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-19 21:51:01.053772",
+ "modified": "2026-03-28 10:39:22.172642",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "User mapping",

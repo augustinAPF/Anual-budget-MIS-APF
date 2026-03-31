@@ -2993,6 +2993,598 @@
 // };
 
 
+// frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
+
+//     /* ─────────────────────────────────────────
+//        PAGE
+//     ───────────────────────────────────────── */
+//     let page = frappe.ui.make_app_page({
+//         parent: wrapper,
+//         title: 'Budget Summary',
+//         single_column: true
+//     });
+
+//     /* ─────────────────────────────────────────
+//        STYLES
+//     ───────────────────────────────────────── */
+//     $(`<style>
+//         /* ── Filters ── */
+//         .custom-filter-row{padding:15px 20px;background:#fff;border-radius:6px;margin-top:10px;margin-left:0;margin-right:0;}
+//         .custom-filter-row .col-md-4,.custom-filter-row .col-sm-12{padding-left:8px;padding-right:8px;}
+
+//         /* ── Cards section ── */
+//         .bps-cards-section{padding:16px 24px;box-sizing:border-box;}
+//         .bps-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#888;margin-bottom:12px;}
+
+//         /* Grand total hero card */
+//         .bps-grand-card{background:#fff;border:0.5px solid #d0d0d0;border-left:4px solid #1a3a6b;border-radius:6px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+//         .bps-grand-label{font-size:11px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:#666;margin-bottom:4px;}
+//         .bps-grand-value{font-size:26px;font-weight:500;color:#111;letter-spacing:-.5px;}
+//         .bps-grand-meta{font-size:12px;color:#999;text-align:right;}
+//         .bps-grand-badge{display:inline-block;font-size:11px;font-weight:500;background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:4px;margin-top:6px;}
+
+//         /* Expense head card grid */
+//         .bps-card-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+
+//         /* Expense head card */
+//         .bps-exp-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .15s ease;}
+//         .bps-exp-card:hover{border-color:#bbb;}
+//         .bps-exp-bar{position:absolute;top:0;left:0;width:3px;height:100%;}
+//         .bps-exp-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#666;margin-bottom:8px;padding-left:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+//         .bps-exp-value{font-size:20px;font-weight:500;color:#111;padding-left:10px;letter-spacing:-.3px;}
+//         .bps-exp-pct{font-size:11px;color:#999;padding-left:10px;margin-top:4px;}
+
+//         /* Sub-head group */
+//         .bps-sub-group{margin-bottom:16px;}
+//         .bps-group-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 8px 12px;border-left:3px solid;margin-bottom:8px;display:block;}
+//         .bps-sub-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+
+//         /* Sub-head card */
+//         .bps-sub-card{background:#f8f9fa;border:0.5px solid #e8e8e8;border-radius:6px;padding:13px 15px;position:relative;overflow:hidden;}
+//         .bps-sub-bar{position:absolute;top:0;left:0;width:2px;height:100%;}
+//         .bps-sub-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#777;margin-bottom:6px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+//         .bps-sub-value{font-size:16px;font-weight:500;color:#111;padding-left:8px;letter-spacing:-.2px;}
+
+//         /* Loading */
+//         .bps-loading{text-align:center;padding:40px;color:#888;font-size:14px;}
+//         .bps-table-section{display:none;}
+//         .bps-table-section.visible{display:block;}
+
+//         /* ── Table container ── */
+//         #tables-container{margin:0 24px 24px;background:#fff;border-radius:8px;padding:8px;}
+//         #controls-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 10px;background:#f7f9fb;border:1px solid #dcdcdc;border-radius:6px;}
+//         #global-search-box{width:260px;padding:7px 12px;border:1px solid #aaa;border-radius:6px;font-size:13px;}
+//         #checkbox-area{display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-size:13px;font-weight:500;color:#333;}
+//         #checkbox-area input{transform:scale(1.15);cursor:pointer;}
+
+//         /* ── Table ── */
+//         .scroll-wrapper{border:1px solid #ccc;border-radius:6px;overflow-x:auto;overflow-y:auto;max-height:70vh;background:#fff;}
+//         table.university-table{min-width:900px;width:100%;border-collapse:collapse;font-size:13px;color:#111;background:#fff;}
+//         table.university-table th,table.university-table td{border:1px solid #ddd;padding:8px 10px;white-space:nowrap;vertical-align:middle;text-align:center;background:#fff !important;}
+//         table.university-table th:first-child,table.university-table td:first-child,
+//         table.university-table th:nth-child(2),table.university-table td:nth-child(2){text-align:left !important;}
+//         table.university-table thead tr.main-row th{background:#0076B6 !important;color:#fff !important;position:sticky;top:0;z-index:25;cursor:pointer;}
+//         table.university-table thead tr.sub-row th{background:#f58020 !important;color:#fff !important;position:sticky;top:34px;z-index:24;}
+//         tr.expense-head{font-weight:700;cursor:pointer;}
+//         tr.expense-head:hover td{background:#F4F9FD !important;}
+//         tr.sub-head{background:#F0F4FF !important;font-weight:600;cursor:pointer;}
+//         tr.sub-head:hover td{background:#E0EAFF !important;}
+//         tr.line-item td:first-child{padding-left:35px !important;}
+//         tr.sub-head td:first-child{padding-left:20px !important;}
+//         .text-blue{color:#0076B6;font-weight:600;}
+//         td.gl-empty{color:#aaa;font-style:italic;}
+//         tr.grand-total-row td{background:#0b2e70 !important;color:#fff !important;font-weight:700 !important;border-top:2px solid #000 !important;}
+
+//         /* ── Responsive ── */
+//         @media(max-width:1280px){.bps-card-row,.bps-sub-row{grid-template-columns:repeat(3,1fr);}}
+//         @media(max-width:900px){.bps-card-row,.bps-sub-row{grid-template-columns:repeat(2,1fr);}}
+//         @media(max-width:768px){
+//             .bps-cards-section{padding:10px 12px;}
+//             #tables-container{margin:0 12px 12px;}
+//             .number-value{font-size:18px;}
+//             #global-search-box{width:100%;}
+//             #controls-row{flex-direction:column;align-items:flex-start;}
+//             .custom-filter-row .col-md-4{width:100%;margin-bottom:8px;}
+//         }
+//         @media(max-width:480px){
+//             .bps-card-row,.bps-sub-row{grid-template-columns:1fr;}
+//             .bps-cards-section{padding:8px 10px;}
+//             #tables-container{margin:0 10px 10px;}
+//         }
+//     </style>`).appendTo("head");
+
+//     /* ─────────────────────────────────────────
+//        ACCENT PALETTE — muted, professional
+//     ───────────────────────────────────────── */
+//     const ACCENTS = [
+//         '#3de046',
+//         '#2c71f1',
+//         '#f1d010',
+//         '#4a235a',
+//         '#0b5345',
+//         '#1a5276',
+//         '#6e2f1a',
+//         '#283747',
+//     ];
+//     const getAccent = i => ACCENTS[i % ACCENTS.length];
+
+//     /* ─────────────────────────────────────────
+//        FILTER SECTION
+//     ───────────────────────────────────────── */
+//     let filter_section = $(`<div class="frappe-control-group row custom-filter-row"></div>`).appendTo(page.body);
+//     const make_field = () => $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+
+//     function mergeSelectedOptions(ctrl, new_opts) {
+//         let selected = (ctrl.get_value() || []).map(String);
+//         let map = {};
+//         (ctrl.df.options || []).forEach(o => map[String(o.value)] = o);
+//         new_opts.forEach(o => map[String(o.value)] = o);
+//         selected.forEach(v => { if (!map[v]) map[v] = { label: v, value: v, description: "" }; });
+//         return Object.values(map);
+//     }
+
+//     /* ─────────────────────────────────────────
+//        FINANCIAL YEAR
+//     ───────────────────────────────────────── */
+//     let fiscal_year_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: {
+//             label: "Financial Year", fieldtype: "Select", fieldname: "financial_year", reqd: 1,
+//             change() {
+//                 let y = this.get_value();
+//                 if (!y) return;
+//                 page.set_title(`Budget Summary – ${y}`);
+//                 resetAndLoad();
+//             }
+//         },
+//         render_input: true
+//     });
+//     fiscal_year_filter.refresh();
+
+//     frappe.call({
+//         method: "annual_budget.api.filter_options.get_financial_year_list",
+//         callback(r) {
+//             if (!r.message?.length) return;
+//             let years = r.message.map(d => d.financial_year);
+//             fiscal_year_filter.df.options = years.join("\n");
+//             fiscal_year_filter.refresh();
+
+//             let now = new Date(), m = now.getMonth() + 1, y = now.getFullYear();
+//             let fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+//             let def = years.includes(fy) ? fy : years[0];
+
+//             fiscal_year_filter.set_value(def);
+//             page.set_title(`Budget Summary – ${def}`);
+//             loadData();
+//         }
+//     });
+
+//     /* ─────────────────────────────────────────
+//        UNIT
+//     ───────────────────────────────────────── */
+//     let unit_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: {
+//             label: "Unit", fieldtype: "MultiSelectList", fieldname: "unit", reqd: 1,
+//             get_data() {
+//                 return frappe.call({ method: "annual_budget.api.filter_options.get_units" })
+//                     .then(r => toOpts(r.message?.data));
+//             },
+//             change() {
+//                 let units = unit_filter.get_value().map(String);
+//                 cost_center_filter.set_value([]);
+//                 location_code_filter.set_value([]);
+//                 cost_center_filter.df.options = [];
+//                 location_code_filter.df.options = [];
+//                 cost_center_filter.refresh();
+//                 location_code_filter.refresh();
+//                 if (units.length) {
+//                     loadCostCenters(units);
+//                     loadLocationCodes(units);
+//                 }
+//                 loadData();
+//             }
+//         },
+//         render_input: true
+//     });
+
+//     /* ─────────────────────────────────────────
+//        COST CENTER
+//     ───────────────────────────────────────── */
+//     let cost_center_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: {
+//             label: "Cost Center", fieldtype: "MultiSelectList", fieldname: "cost_center", options: [],
+//             change() { loadData(); }
+//         },
+//         render_input: true
+//     });
+
+//     /* ─────────────────────────────────────────
+//        LOCATION CODE
+//     ───────────────────────────────────────── */
+//     let location_code_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: {
+//             label: "Location Code", fieldtype: "MultiSelectList", fieldname: "location_code", options: [],
+//             change() { loadData(); }
+//         },
+//         render_input: true
+//     });
+
+//     /* ─────────────────────────────────────────
+//        DEPENDENT FILTER LOADERS
+//     ───────────────────────────────────────── */
+//     function loadCostCenters(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
+//             args: { units: units.join(",") },
+//             callback(r) {
+//                 cost_center_filter.df.options = mergeSelectedOptions(cost_center_filter, toOpts(r.message?.data));
+//                 cost_center_filter.refresh();
+//             }
+//         });
+//     }
+
+//     function loadLocationCodes(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_location_codes_by_unit",
+//             args: { unit: units.join(",") },
+//             callback(r) {
+//                 location_code_filter.df.options = mergeSelectedOptions(location_code_filter, toOpts(r.message?.data));
+//                 location_code_filter.refresh();
+//             }
+//         });
+//     }
+
+//     function toOpts(data) {
+//         return (data || []).filter(d => d.value).map(d => ({ label: d.label, value: String(d.value), description: "" }));
+//     }
+
+//     /* ─────────────────────────────────────────
+//        EXPORT
+//     ───────────────────────────────────────── */
+//     page.set_primary_action(__('Export XLS'), export_phase_sheet);
+
+//     function export_phase_sheet() {
+//         let fy    = fiscal_year_filter.get_value();
+//         let units = unit_filter.get_value();
+//         if (!fy || !units.length) { frappe.msgprint(__('Please select Financial Year and Unit')); return; }
+//         let p = new URLSearchParams({
+//             financial_year: fy,
+//             units:          units.join(","),
+//             cost_center:    cost_center_filter.get_value() || "",
+//             location_code:  location_code_filter.get_value() || ""
+//         });
+//         frappe.dom.freeze(__('Preparing Excel file...'));
+//         window.open(`/api/method/annual_budget.api.export_reports.export_phase_sheet_excel?${p}`);
+//         setTimeout(() => frappe.dom.unfreeze(), 2000);
+//     }
+
+//     /* ─────────────────────────────────────────
+//        LAYOUT
+//     ───────────────────────────────────────── */
+//     let $cards_section = $('<div class="bps-cards-section"></div>').appendTo(page.body);
+//     let $loading       = $('<div class="bps-loading" style="display:none;">Loading data…</div>').appendTo(page.body);
+
+//     let $table_section = $(`
+//         <div class="bps-table-section">
+//             <div id="tables-container">
+//                 <div id="controls-row">
+//                     <input id="global-search-box" type="text" placeholder="Search Expense / Sub Head / Item / GL Code…">
+//                     <div id="checkbox-area">
+//                         <label><input type="checkbox" id="expand-quarters"> Expand Quarters</label>
+//                         <label><input type="checkbox" id="expand-items"> Expand Line Items</label>
+//                     </div>
+//                 </div>
+//                 <div class="scroll-wrapper">
+//                     <table class="university-table" id="phase-table"></table>
+//                 </div>
+//             </div>
+//         </div>
+//     `).appendTo(page.body);
+
+//     /* ─────────────────────────────────────────
+//        STATE
+//     ───────────────────────────────────────── */
+//     let expense_heads    = [];
+//     let expandedHeads    = [];
+//     let expandedSubHeads = [];
+//     let expandedQuarters = [];
+//     let searchText       = "";
+
+//     const quarters = {
+//         q1: { label: 'Quarter 1', months: ['April',   'May',      'June'     ] },
+//         q2: { label: 'Quarter 2', months: ['July',    'August',   'September'] },
+//         q3: { label: 'Quarter 3', months: ['October', 'November', 'December' ] },
+//         q4: { label: 'Quarter 4', months: ['January', 'February', 'March'    ] }
+//     };
+
+//     /* ─────────────────────────────────────────
+//        HELPERS
+//     ───────────────────────────────────────── */
+//     const sumQ   = arr => (arr || []).reduce((a, b) => a + (b || 0), 0);
+//     const sumAll = obj => ['q1','q2','q3','q4'].reduce((t, q) => t + sumQ(obj[q]), 0);
+//     const fmtNum = n   => Math.round(n || 0).toLocaleString('en-IN');
+//     const fmtINR = v   => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+//     const matches = (...vals) => vals.some(v => String(v || '').toLowerCase().includes(searchText.toLowerCase()));
+
+//     function toggleArr(arr, val) {
+//         let idx = arr.indexOf(val);
+//         idx === -1 ? arr.push(val) : arr.splice(idx, 1);
+//     }
+
+//     function resetAndLoad() {
+//         expandedHeads = []; expandedSubHeads = []; expandedQuarters = [];
+//         loadData();
+//     }
+
+//     /* ─────────────────────────────────────────
+//        LOAD DATA
+//     ───────────────────────────────────────── */
+//     function loadData() {
+//         let fy = fiscal_year_filter.get_value();
+//         if (!fy) return;
+
+//         let units = unit_filter.get_value() || [];
+
+//         $cards_section.empty();
+//         $table_section.removeClass('visible');
+//         $loading.show();
+
+//         frappe.call({
+//             method: "annual_budget.api.phase_sheet.get_consolidated_report",
+//             args: {
+//                 financial_year: fy,
+//                 units:          units.join(","),
+//                 cost_center:    cost_center_filter.get_value().join(","),
+//                 location_code:  location_code_filter.get_value().join(",")
+//             },
+//             callback(r) {
+//                 expense_heads = r.message || [];
+//                 $loading.hide();
+//                 renderCards(expense_heads);
+//                 renderTable();
+//                 $table_section.addClass('visible');
+//             }
+//         });
+//     }
+
+//     /* ─────────────────────────────────────────
+//        RENDER CARDS
+//     ───────────────────────────────────────── */
+//     function renderCards(data) {
+//         $cards_section.empty();
+//         if (!data.length) return;
+
+//         let grand     = data.reduce((t, h) => t + sumAll(h), 0);
+//         let fy        = fiscal_year_filter.get_value() || '';
+//         let units     = unit_filter.get_value() || [];
+//         let headCount = data.length;
+
+//         /* Grand Total hero card */
+//         $cards_section.append(`
+//             <div class="bps-section-label">Budget Summary</div>
+//             <div class="bps-grand-card">
+//                 <div>
+//                     <div class="bps-grand-label">Grand Total Budget</div>
+//                     <div class="bps-grand-value">${fmtINR(grand)}</div>
+//                 </div>
+//                 <div class="bps-grand-meta">
+//                     ${headCount} Expense Head${headCount !== 1 ? 's' : ''}
+//                     ${units.length ? '&nbsp;·&nbsp; ' + units.length + ' Unit' + (units.length > 1 ? 's' : '') : ''}
+//                     <br>
+//                     <span class="bps-grand-badge">${fy}</span>
+//                 </div>
+//             </div>
+//         `);
+
+//         /* Expense head cards */
+//         $cards_section.append(`<div class="bps-section-label">Expense Heads</div>`);
+//         let $mainRow = $(`<div class="bps-card-row"></div>`);
+
+//         data.forEach((head, i) => {
+//             let color = getAccent(i);
+//             let total = sumAll(head);
+//             let pct   = grand > 0 ? Math.round((total / grand) * 100) : 0;
+
+//             $mainRow.append(`
+//                 <div class="bps-exp-card">
+//                     <div class="bps-exp-bar" style="background:${color};"></div>
+//                     <div class="bps-exp-label" title="${head.name}">${head.name}</div>
+//                     <div class="bps-exp-value">${fmtINR(total)}</div>
+//                     <div class="bps-exp-pct">${pct}% of total</div>
+//                 </div>
+//             `);
+//         });
+//         $cards_section.append($mainRow);
+
+//         /* Sub-head cards grouped under each expense head */
+//         data.forEach((head, i) => {
+//             if (!head.sub_heads?.length) return;
+//             let color = getAccent(i);
+
+//             let $group = $(`<div class="bps-sub-group"></div>`);
+//             $group.append(`
+//                 <span class="bps-group-label" style="border-left-color:${color};color:${color};">
+//                     ${head.name}
+//                 </span>
+//             `);
+
+//             let $subRow = $(`<div class="bps-sub-row"></div>`);
+//             head.sub_heads.forEach(sub => {
+//                 $subRow.append(`
+//                     <div class="bps-sub-card">
+//                         <div class="bps-sub-bar" style="background:${color};"></div>
+//                         <div class="bps-sub-label" title="${sub.name}">${sub.name}</div>
+//                         <div class="bps-sub-value">${fmtINR(sumAll(sub))}</div>
+//                     </div>
+//                 `);
+//             });
+
+//             $group.append($subRow);
+//             $cards_section.append($group);
+//         });
+//     }
+
+//     /* ─────────────────────────────────────────
+//        RENDER TABLE
+//     ───────────────────────────────────────── */
+//     function renderTable() {
+//         let $table = $('#phase-table');
+//         $table.empty();
+
+//         let $thead   = $('<thead></thead>');
+//         let $mainRow = $('<tr class="main-row"></tr>');
+//         $mainRow.append('<th rowspan="2">Expense Head / Line Item</th><th rowspan="2">GL Code</th>');
+
+//         ['q1','q2','q3','q4'].forEach(q => {
+//             let exp = expandedQuarters.includes(q);
+//             $mainRow.append(`
+//                 <th class="expandable" data-quarter="${q}" colspan="3" rowspan="${exp ? 1 : 2}">
+//                     ${quarters[q].label} ${exp ? '▲' : '▼'}
+//                 </th>
+//             `);
+//         });
+//         $mainRow.append('<th rowspan="2">Total</th>');
+//         $thead.append($mainRow);
+
+//         if (expandedQuarters.length) {
+//             let $subRow = $('<tr class="sub-row"></tr>');
+//             ['q1','q2','q3','q4'].forEach(q => {
+//                 if (expandedQuarters.includes(q))
+//                     quarters[q].months.forEach(m => $subRow.append(`<th>${m}</th>`));
+//             });
+//             $thead.append($subRow);
+//         }
+//         $table.append($thead);
+
+//         let $tbody = $('<tbody></tbody>');
+
+//         expense_heads.forEach(head => {
+//             let visible = matches(head.name)
+//                 || (head.items || []).some(i => matches(i.name, i.gl_code))
+//                 || (head.sub_heads || []).some(s => matches(s.name) || (s.items || []).some(i => matches(i.name, i.gl_code)));
+//             if (!visible) return;
+
+//             $tbody.append(buildHeadRow(head));
+//             if (!expandedHeads.includes(head.name)) return;
+
+//             (head.items || []).filter(it => matches(it.name, it.gl_code))
+//                 .forEach(it => $tbody.append(buildItemRow(it)));
+
+//             (head.sub_heads || [])
+//                 .filter(s => matches(s.name) || (s.items || []).some(i => matches(i.name, i.gl_code)))
+//                 .forEach(sub => {
+//                     let key = `${head.name}__${sub.name}`;
+//                     $tbody.append(buildSubHeadRow(sub, key));
+//                     if (expandedSubHeads.includes(key))
+//                         (sub.items || []).filter(i => matches(i.name, i.gl_code))
+//                             .forEach(it => $tbody.append(buildItemRow(it)));
+//                 });
+//         });
+
+//         /* Grand Total row */
+//         let grand = getGrandTotals();
+//         let $gr   = $('<tr class="grand-total-row"></tr>');
+//         $gr.append('<td colspan="2" style="text-align:left;">GRAND TOTAL</td>');
+//         ['q1','q2','q3','q4'].forEach(q => {
+//             if (expandedQuarters.includes(q))
+//                 grand[q].forEach(v => $gr.append(`<td>${fmtNum(v)}</td>`));
+//             else
+//                 $gr.append(`<td colspan="3">${fmtNum(sumQ(grand[q]))}</td>`);
+//         });
+//         $gr.append(`<td>${fmtNum(grand.total)}</td>`);
+//         $tbody.append($gr);
+//         $table.append($tbody);
+
+//         /* ── Events ── */
+//         $table.find('th.expandable').off('click').on('click', function () {
+//             toggleArr(expandedQuarters, $(this).data('quarter'));
+//             $("#expand-quarters").prop("checked", expandedQuarters.length === 4);
+//             renderTable();
+//         });
+//         $table.find('.expense-head').off('click').on('click', function () {
+//             toggleArr(expandedHeads, $(this).data('head'));
+//             $("#expand-items").prop("checked", expandedHeads.length === expense_heads.length);
+//             renderTable();
+//         });
+//         $table.find('.sub-head').off('click').on('click', function () {
+//             toggleArr(expandedSubHeads, $(this).data('sub'));
+//             renderTable();
+//         });
+//     }
+
+//     /* ── Row builders ── */
+//     function qCells(obj) {
+//         return ['q1','q2','q3','q4'].map(q =>
+//             expandedQuarters.includes(q)
+//                 ? (obj[q] || []).map(v => `<td>${fmtNum(v)}</td>`).join('')
+//                 : `<td colspan="3">${fmtNum(sumQ(obj[q]))}</td>`
+//         ).join('');
+//     }
+
+//     function buildHeadRow(head) {
+//         return `<tr class="expense-head" data-head="${head.name}">
+//             <td>${expandedHeads.includes(head.name) ? '▼' : '▶'} ${head.name}</td>
+//             <td class="gl-empty">-</td>
+//             ${qCells(head)}
+//             <td class="text-blue">${fmtNum(sumAll(head))}</td>
+//         </tr>`;
+//     }
+
+//     function buildSubHeadRow(sub, key) {
+//         return `<tr class="sub-head" data-sub="${key}">
+//             <td>${expandedSubHeads.includes(key) ? '▼' : '▶'} ${sub.name}</td>
+//             <td class="gl-empty">-</td>
+//             ${qCells(sub)}
+//             <td class="text-blue">${fmtNum(sumAll(sub))}</td>
+//         </tr>`;
+//     }
+
+//     function buildItemRow(item) {
+//         return `<tr class="line-item">
+//             <td>${item.name}</td>
+//             <td>${item.gl_code}</td>
+//             ${qCells(item)}
+//             <td>${fmtNum(sumAll(item))}</td>
+//         </tr>`;
+//     }
+
+//     function getGrandTotals() {
+//         let t = { q1:[0,0,0], q2:[0,0,0], q3:[0,0,0], q4:[0,0,0], total:0 };
+//         expense_heads.forEach(h =>
+//             ['q1','q2','q3','q4'].forEach(q =>
+//                 (h[q] || []).forEach((v, i) => { t[q][i] += v||0; t.total += v||0; })
+//             )
+//         );
+//         return t;
+//     }
+
+//     /* ─────────────────────────────────────────
+//        CHECKBOX + SEARCH EVENTS
+//     ───────────────────────────────────────── */
+//     $(page.body).on("change", "#expand-quarters", function () {
+//         expandedQuarters = this.checked ? ['q1','q2','q3','q4'] : [];
+//         renderTable();
+//     });
+
+//     $(page.body).on("change", "#expand-items", function () {
+//         if (this.checked) {
+//             expandedHeads    = expense_heads.map(h => h.name);
+//             expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads || []).map(s => `${h.name}__${s.name}`));
+//         } else {
+//             expandedHeads = []; expandedSubHeads = [];
+//         }
+//         renderTable();
+//     });
+
+//     $(page.body).on("input", "#global-search-box", function () {
+//         searchText = this.value;
+//         renderTable();
+//     });
+// };
+
 frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
 
     /* ─────────────────────────────────────────
@@ -3008,42 +3600,53 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
        STYLES
     ───────────────────────────────────────── */
     $(`<style>
-        /* ── Filters ── */
         .custom-filter-row{padding:15px 20px;background:#fff;border-radius:6px;margin-top:10px;margin-left:0;margin-right:0;}
         .custom-filter-row .col-md-4,.custom-filter-row .col-sm-12{padding-left:8px;padding-right:8px;}
 
-        /* ── Cards section ── */
-        .bps-cards-section{padding:16px 24px;box-sizing:border-box;}
-        .bps-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#888;margin-bottom:12px;}
+        /* ── Top summary row: cards left, pie right ── */
+        .bps-summary-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 24px 0;box-sizing:border-box;}
 
-        /* Grand total hero card */
-        .bps-grand-card{background:#fff;border:0.5px solid #d0d0d0;border-left:4px solid #1a3a6b;border-radius:6px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-        .bps-grand-label{font-size:11px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:#666;margin-bottom:4px;}
-        .bps-grand-value{font-size:26px;font-weight:500;color:#111;letter-spacing:-.5px;}
-        .bps-grand-meta{font-size:12px;color:#999;text-align:right;}
-        .bps-grand-badge{display:inline-block;font-size:11px;font-weight:500;background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:4px;margin-top:6px;}
+        /* ── Left: cards section ── */
+        .bps-cards-section{display:flex;flex-direction:column;gap:0;}
+        .bps-section-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#888;margin-bottom:10px;}
+
+        /* Grand total card */
+        .bps-grand-card{background:#fff;border:0.5px solid #d0d0d0;border-left:4px solid #1a3a6b;border-radius:8px;padding:20px 24px;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+        .bps-grand-label{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#888;}
+        .bps-grand-value{font-size:26px;font-weight:500;color:#111;letter-spacing:-.5px;line-height:1.2;}
+        .bps-grand-meta{font-size:11px;color:#999;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+        .bps-grand-badge{display:inline-block;font-size:10px;font-weight:500;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;}
 
         /* Expense head card grid */
-        .bps-card-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-
-        /* Expense head card */
-        .bps-exp-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .15s ease;}
+        .bps-card-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+        .bps-exp-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;transition:border-color .15s ease;}
         .bps-exp-card:hover{border-color:#bbb;}
         .bps-exp-bar{position:absolute;top:0;left:0;width:3px;height:100%;}
-        .bps-exp-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#666;margin-bottom:8px;padding-left:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .bps-exp-value{font-size:20px;font-weight:500;color:#111;padding-left:10px;letter-spacing:-.3px;}
-        .bps-exp-pct{font-size:11px;color:#999;padding-left:10px;margin-top:4px;}
+        .bps-exp-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#666;margin-bottom:6px;padding-left:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .bps-exp-value{font-size:16px;font-weight:500;color:#111;padding-left:10px;letter-spacing:-.2px;}
+        .bps-exp-pct{font-size:10px;color:#999;padding-left:10px;margin-top:3px;}
 
         /* Sub-head group */
-        .bps-sub-group{margin-bottom:16px;}
-        .bps-group-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 8px 12px;border-left:3px solid;margin-bottom:8px;display:block;}
-        .bps-sub-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-
-        /* Sub-head card */
-        .bps-sub-card{background:#f8f9fa;border:0.5px solid #e8e8e8;border-radius:6px;padding:13px 15px;position:relative;overflow:hidden;}
+        .bps-sub-group{margin-bottom:14px;}
+        .bps-group-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:5px 0 7px 12px;border-left:3px solid;margin-bottom:8px;display:block;border-radius:0;}
+        .bps-sub-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+        .bps-sub-card{background:#f8f9fa;border:0.5px solid #e8e8e8;border-radius:6px;padding:11px 13px;position:relative;overflow:hidden;}
         .bps-sub-bar{position:absolute;top:0;left:0;width:2px;height:100%;}
-        .bps-sub-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#777;margin-bottom:6px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .bps-sub-value{font-size:16px;font-weight:500;color:#111;padding-left:8px;letter-spacing:-.2px;}
+        .bps-sub-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#777;margin-bottom:5px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .bps-sub-value{font-size:14px;font-weight:500;color:#111;padding-left:8px;letter-spacing:-.2px;}
+
+        /* ── Right: pie section ── */
+        .bps-pie-section{display:flex;flex-direction:column;}
+        .bps-pie-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:8px;padding:24px 20px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:100%;box-sizing:border-box;}
+        .bps-pie-card-title{font-size:16px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:#070707;margin-bottom:14px;text-align:center;}
+        .bps-pie-canvas-wrap{position:relative;width:250px;height:250px;flex-shrink:0;}
+        .bps-pie-total-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:14px;}
+        .bps-pie-total-val{font-size:26px;font-weight:500;color:#111;margin-top:4px;margin-bottom:14px;}
+        .bps-pie-legend-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center;}
+        .bps-pie-leg-item{display:flex;align-items:center;gap:6px;font-size:15px;color:#555;}
+        .bps-pie-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+        .bps-pie-leg-val{font-weight:600;color:#111;margin-left:3px;font-size:14px}
+        .bps-pie-leg-pct{color:#999;font-size:15px;margin-left:2px;}
 
         /* Loading */
         .bps-loading{text-align:center;padding:40px;color:#888;font-size:14px;}
@@ -3051,7 +3654,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         .bps-table-section.visible{display:block;}
 
         /* ── Table container ── */
-        #tables-container{margin:0 24px 24px;background:#fff;border-radius:8px;padding:8px;}
+        #tables-container{margin:16px 24px 24px;background:#fff;border-radius:8px;padding:8px;}
         #controls-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 10px;background:#f7f9fb;border:1px solid #dcdcdc;border-radius:6px;}
         #global-search-box{width:260px;padding:7px 12px;border:1px solid #aaa;border-radius:6px;font-size:13px;}
         #checkbox-area{display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-size:13px;font-weight:500;color:#333;}
@@ -3076,36 +3679,24 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         tr.grand-total-row td{background:#0b2e70 !important;color:#fff !important;font-weight:700 !important;border-top:2px solid #000 !important;}
 
         /* ── Responsive ── */
-        @media(max-width:1280px){.bps-card-row,.bps-sub-row{grid-template-columns:repeat(3,1fr);}}
-        @media(max-width:900px){.bps-card-row,.bps-sub-row{grid-template-columns:repeat(2,1fr);}}
+        @media(max-width:1100px){.bps-summary-row{grid-template-columns:1fr;}.bps-card-row,.bps-sub-row{grid-template-columns:repeat(3,1fr);}}
         @media(max-width:768px){
-            .bps-cards-section{padding:10px 12px;}
-            #tables-container{margin:0 12px 12px;}
-            .number-value{font-size:18px;}
+            .bps-summary-row{padding:10px 12px 0;}
+            .bps-card-row,.bps-sub-row{grid-template-columns:repeat(2,1fr);}
+            #tables-container{margin:12px 12px 12px;}
             #global-search-box{width:100%;}
             #controls-row{flex-direction:column;align-items:flex-start;}
             .custom-filter-row .col-md-4{width:100%;margin-bottom:8px;}
         }
         @media(max-width:480px){
             .bps-card-row,.bps-sub-row{grid-template-columns:1fr;}
-            .bps-cards-section{padding:8px 10px;}
-            #tables-container{margin:0 10px 10px;}
         }
     </style>`).appendTo("head");
 
     /* ─────────────────────────────────────────
-       ACCENT PALETTE — muted, professional
+       ACCENT PALETTE
     ───────────────────────────────────────── */
-    const ACCENTS = [
-        '#3de046',
-        '#2c71f1',
-        '#f1d010',
-        '#4a235a',
-        '#0b5345',
-        '#1a5276',
-        '#6e2f1a',
-        '#283747',
-    ];
+    const ACCENTS = ['#3de046','#2c71f1','#f1d010','#4a235a','#0b5345','#1a5276','#6e2f1a','#283747'];
     const getAccent = i => ACCENTS[i % ACCENTS.length];
 
     /* ─────────────────────────────────────────
@@ -3123,9 +3714,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         return Object.values(map);
     }
 
-    /* ─────────────────────────────────────────
-       FINANCIAL YEAR
-    ───────────────────────────────────────── */
+    /* ── Financial Year ── */
     let fiscal_year_filter = frappe.ui.form.make_control({
         parent: make_field(),
         df: {
@@ -3148,20 +3737,16 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
             let years = r.message.map(d => d.financial_year);
             fiscal_year_filter.df.options = years.join("\n");
             fiscal_year_filter.refresh();
-
             let now = new Date(), m = now.getMonth() + 1, y = now.getFullYear();
             let fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
             let def = years.includes(fy) ? fy : years[0];
-
             fiscal_year_filter.set_value(def);
             page.set_title(`Budget Summary – ${def}`);
             loadData();
         }
     });
 
-    /* ─────────────────────────────────────────
-       UNIT
-    ───────────────────────────────────────── */
+    /* ── Unit ── */
     let unit_filter = frappe.ui.form.make_control({
         parent: make_field(),
         df: {
@@ -3178,19 +3763,14 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
                 location_code_filter.df.options = [];
                 cost_center_filter.refresh();
                 location_code_filter.refresh();
-                if (units.length) {
-                    loadCostCenters(units);
-                    loadLocationCodes(units);
-                }
+                if (units.length) { loadCostCenters(units); loadLocationCodes(units); }
                 loadData();
             }
         },
         render_input: true
     });
 
-    /* ─────────────────────────────────────────
-       COST CENTER
-    ───────────────────────────────────────── */
+    /* ── Cost Center ── */
     let cost_center_filter = frappe.ui.form.make_control({
         parent: make_field(),
         df: {
@@ -3200,9 +3780,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         render_input: true
     });
 
-    /* ─────────────────────────────────────────
-       LOCATION CODE
-    ───────────────────────────────────────── */
+    /* ── Location Code ── */
     let location_code_filter = frappe.ui.form.make_control({
         parent: make_field(),
         df: {
@@ -3212,9 +3790,6 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         render_input: true
     });
 
-    /* ─────────────────────────────────────────
-       DEPENDENT FILTER LOADERS
-    ───────────────────────────────────────── */
     function loadCostCenters(units) {
         frappe.call({
             method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
@@ -3263,8 +3838,14 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
 
     /* ─────────────────────────────────────────
        LAYOUT
+       .bps-summary-row  (grid: left | right)
+         ├── .bps-cards-section   (left col)
+         └── .bps-pie-section     (right col)
     ───────────────────────────────────────── */
-    let $cards_section = $('<div class="bps-cards-section"></div>').appendTo(page.body);
+    let $summary_row   = $('<div class="bps-summary-row"></div>').appendTo(page.body);
+    let $cards_section = $('<div class="bps-cards-section"></div>').appendTo($summary_row);
+    let $pie_section   = $('<div class="bps-pie-section"></div>').appendTo($summary_row);
+
     let $loading       = $('<div class="bps-loading" style="display:none;">Loading data…</div>').appendTo(page.body);
 
     let $table_section = $(`
@@ -3307,6 +3888,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
     const sumAll = obj => ['q1','q2','q3','q4'].reduce((t, q) => t + sumQ(obj[q]), 0);
     const fmtNum = n   => Math.round(n || 0).toLocaleString('en-IN');
     const fmtINR = v   => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+    const fmtCr  = v   => '₹' + Math.round((v || 0) / 1e7).toLocaleString('en-IN') + ' Cr';
     const matches = (...vals) => vals.some(v => String(v || '').toLowerCase().includes(searchText.toLowerCase()));
 
     function toggleArr(arr, val) {
@@ -3327,8 +3909,8 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         if (!fy) return;
 
         let units = unit_filter.get_value() || [];
-
         $cards_section.empty();
+        $pie_section.empty();
         $table_section.removeClass('visible');
         $loading.show();
 
@@ -3344,6 +3926,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
                 expense_heads = r.message || [];
                 $loading.hide();
                 renderCards(expense_heads);
+                renderPieChart(expense_heads);
                 renderTable();
                 $table_section.addClass('visible');
             }
@@ -3351,7 +3934,7 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
     }
 
     /* ─────────────────────────────────────────
-       RENDER CARDS
+       RENDER CARDS  (left column)
     ───────────────────────────────────────── */
     function renderCards(data) {
         $cards_section.empty();
@@ -3362,32 +3945,27 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         let units     = unit_filter.get_value() || [];
         let headCount = data.length;
 
-        /* Grand Total hero card */
+        /* Grand total card */
         $cards_section.append(`
             <div class="bps-section-label">Budget Summary</div>
             <div class="bps-grand-card">
-                <div>
-                    <div class="bps-grand-label">Grand Total Budget</div>
-                    <div class="bps-grand-value">${fmtINR(grand)}</div>
-                </div>
+                <div class="bps-grand-label">Grand Total Budget</div>
+                <div class="bps-grand-value">${fmtINR(grand)}</div>
                 <div class="bps-grand-meta">
-                    ${headCount} Expense Head${headCount !== 1 ? 's' : ''}
-                    ${units.length ? '&nbsp;·&nbsp; ' + units.length + ' Unit' + (units.length > 1 ? 's' : '') : ''}
-                    <br>
+                    <span>${headCount} Expense Head${headCount !== 1 ? 's' : ''}</span>
+                    ${units.length ? '<span>·</span><span>' + units.length + ' Unit' + (units.length > 1 ? 's' : '') + '</span>' : ''}
                     <span class="bps-grand-badge">${fy}</span>
                 </div>
             </div>
         `);
 
-        /* Expense head cards */
+        /* Expense head cards — 2-col grid to fit the narrower left column */
         $cards_section.append(`<div class="bps-section-label">Expense Heads</div>`);
         let $mainRow = $(`<div class="bps-card-row"></div>`);
-
         data.forEach((head, i) => {
             let color = getAccent(i);
             let total = sumAll(head);
             let pct   = grand > 0 ? Math.round((total / grand) * 100) : 0;
-
             $mainRow.append(`
                 <div class="bps-exp-card">
                     <div class="bps-exp-bar" style="background:${color};"></div>
@@ -3399,18 +3977,12 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         });
         $cards_section.append($mainRow);
 
-        /* Sub-head cards grouped under each expense head */
+        /* Sub-head groups */
         data.forEach((head, i) => {
             if (!head.sub_heads?.length) return;
             let color = getAccent(i);
-
             let $group = $(`<div class="bps-sub-group"></div>`);
-            $group.append(`
-                <span class="bps-group-label" style="border-left-color:${color};color:${color};">
-                    ${head.name}
-                </span>
-            `);
-
+            $group.append(`<span class="bps-group-label" style="border-left-color:${color};color:${color};">${head.name}</span>`);
             let $subRow = $(`<div class="bps-sub-row"></div>`);
             head.sub_heads.forEach(sub => {
                 $subRow.append(`
@@ -3421,10 +3993,126 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
                     </div>
                 `);
             });
-
             $group.append($subRow);
             $cards_section.append($group);
         });
+    }
+
+    /* ─────────────────────────────────────────
+       RENDER PIE CHART  (right column)
+    ───────────────────────────────────────── */
+    function renderPieChart(data) {
+        $pie_section.empty();
+        if (!data.length) return;
+
+        let grand = 0, grants = 0;
+        data.forEach(head => {
+            grand += sumAll(head);
+            (head.items || []).forEach(item => {
+                if (item.name === 'Grants & Donations') grants += sumAll(item);
+            });
+            (head.sub_heads || []).forEach(sub => {
+                (sub.items || []).forEach(item => {
+                    if (item.name === 'Grants & Donations') grants += sumAll(item);
+                });
+            });
+        });
+
+        let direct    = grand - grants;
+        let directPct = grand > 0 ? Math.round((direct / grand) * 100) : 0;
+        let grantPct  = grand > 0 ? Math.round((grants / grand) * 100) : 0;
+        let fy        = fiscal_year_filter.get_value() || '';
+
+        $pie_section.html(`
+            <div class="bps-section-label">Grants vs Direct Work</div>
+            <div class="bps-pie-card">
+                <div class="bps-pie-card-title">FY ${fy} — Grants &amp; Donations vs Direct Work</div>
+                <div class="bps-pie-canvas-wrap">
+                    <canvas id="bps-pie-canvas" width="220" height="220"></canvas>
+                </div>
+                <div class="bps-pie-total-label">Total Budget</div>
+                <div class="bps-pie-total-val">${fmtCr(grand)}</div>
+                <div class="bps-pie-legend-row">
+                    <div class="bps-pie-leg-item">
+                        <span class="bps-pie-leg-dot" style="background:#185FA5;"></span>
+                        Direct Work
+                        <span class="bps-pie-leg-val">${fmtCr(direct)}</span>
+                        <span class="bps-pie-leg-pct">${directPct}%</span>
+                    </div>
+                    <div class="bps-pie-leg-item">
+                        <span class="bps-pie-leg-dot" style="background:#EF9F27;"></span>
+                        Grants &amp; Donations
+                        <span class="bps-pie-leg-val">${fmtCr(grants)}</span>
+                        <span class="bps-pie-leg-pct">${grantPct}%</span>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        if (window._bpsPieChart) { window._bpsPieChart.destroy(); window._bpsPieChart = null; }
+
+        function drawChart() {
+            requestAnimationFrame(() => {
+                let canvas = document.getElementById('bps-pie-canvas');
+                if (!canvas) return;
+                canvas.width = 220; canvas.height = 220;
+                if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+                window._bpsPieChart = new Chart(canvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Direct Work', 'Grants & Donations'],
+                        datasets: [{
+                            data: [direct > 0 ? direct : 0.001, grants > 0 ? grants : 0.001],
+                            backgroundColor: ['#185FA5', '#EF9F27'],
+                            borderColor:     ['#185FA5', '#EF9F27'],
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        animation: { duration: 600 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label(ctx) {
+                                        let v = ctx.raw || 0;
+                                        let pct = grand > 0 ? Math.round((v / grand) * 100) : 0;
+                                        return ' ' + fmtCr(v) + '  (' + pct + '%)';
+                                    }
+                                }
+                            },
+                            datalabels: window.ChartDataLabels ? {
+                                color: '#fff',
+                                font: { size: 16, weight: '500' },
+                                formatter(val) { return val < 1 ? '' : fmtCr(val); },
+                                textAlign: 'center',
+                                anchor: 'center',
+                                align: 'center'
+                            } : undefined
+                        }
+                    }
+                });
+            });
+        }
+
+        function loadAndDraw() {
+            if (window.ChartDataLabels) { drawChart(); return; }
+            let dl = document.createElement('script');
+            dl.src = 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js';
+            dl.onload = drawChart; dl.onerror = drawChart;
+            document.head.appendChild(dl);
+        }
+
+        if (window.Chart) {
+            loadAndDraw();
+        } else {
+            let s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+            s.onload = loadAndDraw;
+            document.head.appendChild(s);
+        }
     }
 
     /* ─────────────────────────────────────────
@@ -3484,7 +4172,6 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
                 });
         });
 
-        /* Grand Total row */
         let grand = getGrandTotals();
         let $gr   = $('<tr class="grand-total-row"></tr>');
         $gr.append('<td colspan="2" style="text-align:left;">GRAND TOTAL</td>');
@@ -3498,7 +4185,6 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         $tbody.append($gr);
         $table.append($tbody);
 
-        /* ── Events ── */
         $table.find('th.expandable').off('click').on('click', function () {
             toggleArr(expandedQuarters, $(this).data('quarter'));
             $("#expand-quarters").prop("checked", expandedQuarters.length === 4);
@@ -3515,7 +4201,6 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         });
     }
 
-    /* ── Row builders ── */
     function qCells(obj) {
         return ['q1','q2','q3','q4'].map(q =>
             expandedQuarters.includes(q)

@@ -1248,10 +1248,275 @@
 // }
 
 
+// frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
 
-// ---------------------------------------------------------------------------
-// CONSOLIDATED REPORT PAGE
-// ---------------------------------------------------------------------------
+//     const page = frappe.ui.make_app_page({
+//         parent: wrapper,
+//         title: 'Budget Dashboard',
+//         single_column: true
+//     });
+
+//     /* ── STYLES ── */
+//     $(`<style>
+//         .bd-wrap{padding:20px 24px;box-sizing:border-box;}
+//         .bd-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+//         .bd-title{font-size:20px;font-weight:600;color:#111;margin:0;}
+//         .bd-filter{width:220px;}
+//         .bd-filter .form-control,.bd-filter select{width:100%!important;height:34px!important;font-size:13px!important;border-radius:8px!important;border:1px solid #e2e8f0!important;}
+//         .bd-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+//         .bd-card{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:16px 18px;border-left:4px solid #378ADD;}
+//         .bd-card:first-child{border-left-color:#1D9E75;}
+//         .bd-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#888;margin-bottom:6px;}
+//         .bd-card-value{font-size:22px;font-weight:700;color:#111;line-height:1.2;}
+//         .bd-card-sub{font-size:12px;color:#888;margin-top:4px;}
+//         .bd-charts{display:grid;grid-template-columns:1fr 420px;gap:16px;}
+//         .bd-chart-box{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:20px 22px;}
+//         .bd-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+//         .bd-chart-title{font-size:14px;font-weight:600;color:#111;margin:0;}
+//         .bd-chart-sub{font-size:12px;color:#aaa;margin:0 0 14px;}
+//         .bd-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+//         .bd-legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#555;}
+//         .bd-legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+//         .bd-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+//         .bd-donut-center-val{font-size:22px;font-weight:700;color:#111;line-height:1.1;}
+//         .bd-donut-center-lbl{font-size:11px;color:#888;margin-top:2px;}
+//         @media(max-width:1100px){.bd-charts{grid-template-columns:1fr;}.bd-cards{grid-template-columns:repeat(2,1fr);}}
+//         @media(max-width:640px){.bd-cards{grid-template-columns:repeat(2,1fr);}.bd-filter{width:100%;}}
+//     </style>`).appendTo('head');
+
+//     /* ── PALETTE ── */
+//     const PALETTE = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#888780','#185FA5'];
+
+//     /* ── LAYOUT ── */
+//     $(page.body).html(`
+//         <div class="bd-wrap">
+//             <div class="bd-top">
+//                 <p class="bd-title">Budget Dashboard</p>
+//                 <div class="bd-filter" id="bd-fy-wrap"></div>
+//             </div>
+//             <div class="bd-cards" id="bd-cards"></div>
+//             <div class="bd-charts">
+//                 <div class="bd-chart-box">
+//                     <div class="bd-chart-header">
+//                         <p class="bd-chart-title">Budget by category</p>
+//                     </div>
+//                     <p class="bd-chart-sub">Total allocation per category</p>
+//                     <div style="position:relative;width:100%;height:300px;">
+//                         <canvas id="bd-bar"></canvas>
+//                     </div>
+//                     <div class="bd-legend" id="bd-bar-legend"></div>
+//                 </div>
+//                 <div class="bd-chart-box">
+//                     <div class="bd-chart-header">
+//                         <p class="bd-chart-title">Budget share</p>
+//                     </div>
+//                     <p class="bd-chart-sub">Percentage distribution</p>
+//                     <div style="position:relative;width:100%;height:260px;" id="bd-donut-wrap">
+//                         <canvas id="bd-donut"></canvas>
+//                         <div class="bd-donut-center" id="bd-donut-center">
+//                             <div class="bd-donut-center-val" id="bd-donut-total"></div>
+//                             <div class="bd-donut-center-lbl">Grand total</div>
+//                         </div>
+//                     </div>
+//                     <div class="bd-legend" id="bd-donut-legend"></div>
+//                 </div>
+//             </div>
+//         </div>
+//     `);
+
+//     /* ── FY FILTER ── */
+//     let barChart = null, donutChart = null;
+
+//     const fyControl = frappe.ui.form.make_control({
+//         parent: document.getElementById('bd-fy-wrap'),
+//         df: {
+//             label: 'Financial Year', fieldtype: 'Select', fieldname: 'financial_year', reqd: 1,
+//             change() { const fy = this.get_value(); if (fy) load(fy); }
+//         },
+//         render_input: true
+//     });
+//     fyControl.refresh();
+
+//     frappe.call({
+//         method: 'annual_budget.api.filter_options.get_financial_year_list',
+//         callback(r) {
+//             if (!r.message?.length) return;
+//             const years = r.message.map(d => d.financial_year);
+//             fyControl.df.options = years.join('\n');
+//             fyControl.refresh();
+//             const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
+//             const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+//             const def = years.includes(fy) ? fy : years[0];
+//             fyControl.set_value(def);
+//             load(def);
+//         }
+//     });
+
+//     /* ── HELPERS ── */
+//     const fmtINR  = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+//     const fmtCr   = v => { const cr = Math.round((v || 0) / 1e7); return cr >= 1 ? cr + ' Cr' : fmtINR(v); };
+
+//     /* ── RENDER CARDS ── */
+//     function renderCards(data) {
+//         const cards = data.number_cards || [];
+//         const grand = data.grand_total || 0;
+//         const $c    = $('#bd-cards').empty();
+
+//         // Grand total card
+//         $c.append(`
+//             <div class="bd-card" style="border-left-color:#1D9E75;">
+//                 <div class="bd-card-label">Grand Total</div>
+//                 <div class="bd-card-value">${fmtINR(grand)}</div>
+//                 <div class="bd-card-sub">${cards.length} categories</div>
+//             </div>
+//         `);
+
+//         cards.forEach((c, i) => {
+//             const pct = grand > 0 ? ((c.total_budget / grand) * 100).toFixed(1) : '0.0';
+//             $c.append(`
+//                 <div class="bd-card" style="border-left-color:${PALETTE[i % PALETTE.length]};">
+//                     <div class="bd-card-label">${c.label}</div>
+//                     <div class="bd-card-value">${fmtINR(c.total_budget)}</div>
+//                     <div class="bd-card-sub">${pct}% of total</div>
+//                 </div>
+//             `);
+//         });
+//     }
+
+//     /* ── RENDER BAR CHART ── */
+//     function renderBar(data) {
+//         const cards  = data.number_cards || [];
+//         const labels = cards.map(c => c.label);
+//         const values = cards.map(c => Math.round(c.total_budget || 0));
+//         const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+
+//         $('#bd-bar-legend').empty();
+//         labels.forEach((lbl, i) => {
+//             $('#bd-bar-legend').append(`
+//                 <span class="bd-legend-item">
+//                     <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+//                     ${lbl}
+//                 </span>
+//             `);
+//         });
+
+//         if (barChart) { barChart.destroy(); barChart = null; }
+
+//         barChart = new Chart(document.getElementById('bd-bar'), {
+//             type: 'bar',
+//             data: {
+//                 labels,
+//                 datasets: [{
+//                     data: values,
+//                     backgroundColor: colors,
+//                     borderRadius: 6,
+//                     borderSkipped: false,
+//                     barPercentage: 0.6,
+//                 }]
+//             },
+//             options: {
+//                 responsive: true,
+//                 maintainAspectRatio: false,
+//                 plugins: {
+//                     legend: { display: false },
+//                     tooltip: {
+//                         callbacks: {
+//                             label: ctx => ' ' + fmtINR(ctx.parsed.y)
+//                         }
+//                     }
+//                 },
+//                 scales: {
+//                     x: {
+//                         grid: { display: false },
+//                         border: { display: false },
+//                         ticks: { autoSkip: false, maxRotation: 35, font: { size: 11 }, color: '#888' }
+//                     },
+//                     y: {
+//                         grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+//                         border: { display: false, dash: [4,4] },
+//                         ticks: { font: { size: 11 }, color: '#888', callback: v => fmtCr(v) }
+//                     }
+//                 }
+//             }
+//         });
+//     }
+
+//     /* ── RENDER DONUT CHART ── */
+//     function renderDonut(data) {
+//         const cards  = data.number_cards || [];
+//         const grand  = data.grand_total  || 0;
+//         const labels = cards.map(c => c.label);
+//         const values = cards.map(c => Math.round(c.total_budget || 0));
+//         const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+
+//         $('#bd-donut-total').text(fmtCr(grand));
+
+//         const $leg = $('#bd-donut-legend').empty();
+//         labels.forEach((lbl, i) => {
+//             const pct = grand > 0 ? ((values[i] / grand) * 100).toFixed(1) : '0.0';
+//             $leg.append(`
+//                 <span class="bd-legend-item">
+//                     <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+//                     ${lbl} — ${pct}%
+//                 </span>
+//             `);
+//         });
+
+//         if (donutChart) { donutChart.destroy(); donutChart = null; }
+
+//         donutChart = new Chart(document.getElementById('bd-donut'), {
+//             type: 'doughnut',
+//             data: {
+//                 labels,
+//                 datasets: [{
+//                     data: values,
+//                     backgroundColor: colors,
+//                     borderWidth: 2,
+//                     borderColor: '#fff',
+//                     hoverOffset: 6,
+//                 }]
+//             },
+//             options: {
+//                 responsive: true,
+//                 maintainAspectRatio: false,
+//                 cutout: '68%',
+//                 plugins: {
+//                     legend: { display: false },
+//                     tooltip: {
+//                         callbacks: {
+//                             label: ctx => {
+//                                 const pct = grand > 0 ? ((ctx.parsed / grand) * 100).toFixed(1) : '0.0';
+//                                 return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         });
+//     }
+
+//     /* ── LOAD ── */
+//     function load(fy) {
+//         frappe.call({
+//             method: 'annual_budget.api.phase_sheet.get_number_card_totals',
+//             args: { financial_year: fy },
+//             callback(r) {
+//                 if (!r.message) return;
+//                 renderCards(r.message);
+//                 renderBar(r.message);
+//                 renderDonut(r.message);
+//             }
+//         });
+//     }
+
+//     /* ── LOAD CHART.JS ONCE ── */
+//     if (!window.Chart) {
+//         const s = document.createElement('script');
+//         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+//         document.head.appendChild(s);
+//     }
+// };
+
 frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
 
     const page = frappe.ui.make_app_page({
@@ -1260,52 +1525,287 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
         single_column: true
     });
 
-    /* ─────────────────────────────────────────
-       STYLES
-    ───────────────────────────────────────── */
+    /* ── STYLES ── */
     $(`<style>
-        .cr-filter-row{padding:15px 20px;background:#fff;border-radius:6px;margin-top:10px;margin-left:0;margin-right:0;display:flex;flex-wrap:wrap;gap:12px;}
-        .cr-filter-field{width:280px;}
-        .cr-filter-field .form-control,.cr-filter-field select{width:100% !important;height:34px !important;font-size:13px !important;border-radius:6px !important;}
-        .cr-cards-section{padding:16px 24px;box-sizing:border-box;}
-        .cr-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
-        .cr-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease;}
-        .cr-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.10);transform:translateY(-3px);border-color:#0076B6;}
-        .cr-card-label{font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;}
-        .cr-card-value{font-size:22px;font-weight:600;color:#111;line-height:1.2;word-break:break-word;}
-        @media(max-width:1280px){.cr-card-grid{grid-template-columns:repeat(3,1fr);}}
-        @media(max-width:1024px){.cr-card-grid{grid-template-columns:repeat(3,1fr);}.cr-cards-section{padding:12px 16px;}}
-        @media(max-width:768px){.cr-card-grid{grid-template-columns:repeat(2,1fr);}.cr-cards-section{padding:10px 12px;}.cr-card-value{font-size:18px;}.cr-filter-field{width:100%;}}
-        @media(max-width:480px){.cr-card-grid{grid-template-columns:repeat(2,1fr);gap:10px;}.cr-cards-section{padding:8px 10px;}.cr-card-value{font-size:16px;}.cr-card-label{font-size:11px;}}
-        @media(max-width:360px){.cr-card-grid{grid-template-columns:1fr;}}
-    </style>`).appendTo("head");
+        /* === BASE === */
+        .bd-wrap {
+            padding: 16px;
+            box-sizing: border-box;
+        }
 
-    /* ─────────────────────────────────────────
-       ACCENT PALETTE
-    ───────────────────────────────────────── */
+        /* === TOP BAR === */
+        .bd-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .bd-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111;
+            margin: 0;
+        }
+        .bd-filter { width: 200px; }
+        .bd-filter .form-control,
+        .bd-filter select {
+            width: 100% !important;
+            height: 34px !important;
+            font-size: 13px !important;
+            border-radius: 8px !important;
+            border: 1px solid #e2e8f0 !important;
+        }
 
+        /* === CARDS === */
+        .bd-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .bd-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border-left: 4px solid #378ADD;
+            min-width: 0;
+        }
+        .bd-card-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: #888;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bd-card-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bd-card-sub {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+        }
 
-    /* ─────────────────────────────────────────
-       LAYOUT
-    ───────────────────────────────────────── */
+        /* === BOTTOM ROW: hbar + donut side by side === */
+        .bd-bottom {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 14px;
+            align-items: start;
+        }
+
+        /* === HORIZONTAL BAR === */
+        .bd-hbar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 13px;
+        }
+        .bd-hbar-label {
+            font-size: 13px;
+            color: #444;
+            font-weight: 500;
+            width: 180px;
+            min-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+        }
+        .bd-hbar-track {
+            flex: 1;
+            height: 22px;
+            background: #f0f2f5;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .bd-hbar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width .5s ease;
+        }
+        .bd-hbar-val {
+            font-size: 13px;
+            color: #222;
+            font-weight: 700;
+            white-space: nowrap;
+            width: 72px;
+            min-width: 72px;
+        }
+
+        .bd-chart-box {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 12px;
+            padding: 16px 18px;
+            min-width: 0;
+        }
+        .bd-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .bd-chart-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111;
+            margin: 0;
+        }
+        .bd-chart-sub {
+            font-size: 12px;
+            color: #aaa;
+            margin: 0 0 12px;
+        }
+
+        /* === LEGEND === */
+        .bd-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .bd-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: #444;
+            font-weight: 500;
+        }
+        .bd-legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* === DONUT CENTER === */
+        .bd-donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+        .bd-donut-center-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.1;
+        }
+        .bd-donut-center-lbl {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* =====================
+           RESPONSIVE BREAKPOINTS
+           ===================== */
+        @media (min-width: 1400px) {
+            .bd-wrap { padding: 20px 28px; }
+            .bd-title { font-size: 20px; }
+            .bd-card-value { font-size: 20px; }
+            .bd-bottom { grid-template-columns: 1fr 440px; }
+        }
+        @media (max-width: 1200px) {
+            .bd-bottom { grid-template-columns: 1fr 360px; }
+        }
+        @media (max-width: 1024px) {
+            .bd-cards { grid-template-columns: repeat(4, 1fr); }
+            .bd-bottom { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .bd-wrap { padding: 12px; }
+            .bd-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .bd-filter { width: 180px; }
+            .bd-title { font-size: 16px; }
+            .bd-card-value { font-size: 16px; }
+            .bd-hbar-label { width: 130px; min-width: 130px; font-size: 12px; }
+            .bd-hbar-track { height: 18px; }
+            .bd-hbar-val   { font-size: 12px; width: 60px; min-width: 60px; }
+        }
+        @media (max-width: 600px) {
+            .bd-top { flex-direction: column; align-items: flex-start; }
+            .bd-filter { width: 100%; }
+            .bd-cards { grid-template-columns: repeat(2, 1fr); }
+            .bd-chart-box { padding: 12px 14px; }
+            .bd-hbar-label { width: 90px; min-width: 90px; font-size: 11px; }
+            .bd-hbar-track { height: 16px; }
+            .bd-hbar-val   { width: 52px; min-width: 52px; font-size: 11px; }
+            .bd-hbar-row   { gap: 8px; margin-bottom: 10px; }
+        }
+        @media (max-width: 420px) {
+            .bd-cards { grid-template-columns: 1fr; }
+            .bd-card-value { font-size: 15px; }
+            .bd-donut-center-val { font-size: 16px; }
+            .bd-hbar-label { width: 70px; min-width: 70px; }
+            .bd-hbar-val   { width: 46px; min-width: 46px; }
+        }
+    </style>`).appendTo('head');
+
+    /* ── PALETTE ── */
+    const PALETTE = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#888780','#185FA5'];
+
+    /* ── LAYOUT ── */
     $(page.body).html(`
-        <div class="cr-filter-row" id="cr-filter-row"></div>
-        <div class="cr-cards-section">
-            <div class="cr-card-grid" id="card-row"></div>
+        <div class="bd-wrap">
+                <div class="bd-filter" id="bd-fy-wrap"></div>
+            <div class="bd-cards" id="bd-cards"></div>
+            <div class="bd-bottom">
+                <!-- Horizontal bar -->
+                <div class="bd-chart-box">
+                    <div class="bd-chart-header">
+                        <p class="bd-chart-title">Top spenders by budget</p>
+                    </div>
+                    <p class="bd-chart-sub">All categories ranked highest to lowest</p>
+                    <div id="bd-hbar-body"></div>
+                </div>
+                <!-- Donut -->
+                <div class="bd-chart-box">
+                    <div class="bd-chart-header">
+                        <p class="bd-chart-title">Budget share</p>
+                    </div>
+                    <p class="bd-chart-sub">Percentage distribution</p>
+                    <div style="position:relative;width:100%;height:260px;" id="bd-donut-wrap">
+                        <canvas id="bd-donut"></canvas>
+                        <div class="bd-donut-center" id="bd-donut-center">
+                            <div class="bd-donut-center-val" id="bd-donut-total"></div>
+                            <div class="bd-donut-center-lbl">Grand total</div>
+                        </div>
+                    </div>
+                    <div class="bd-legend" id="bd-donut-legend"></div>
+                </div>
+            </div>
         </div>
     `);
 
-    /* ─────────────────────────────────────────
-       FINANCIAL YEAR FILTER
-    ───────────────────────────────────────── */
+    /* ── FY FILTER ── */
+    let donutChart = null;
+
     const fyControl = frappe.ui.form.make_control({
-        parent: $('<div class="cr-filter-field"></div>').appendTo('#cr-filter-row'),
+        parent: document.getElementById('bd-fy-wrap'),
         df: {
-            label: 'Financial Year', fieldtype: 'Select', fieldname: 'financial_year', reqd: 1,
-            change() {
-                const fy = this.get_value();
-                if (fy) loadNumberCards(fy);
-            }
+            label: 'Financial Year',
+            fieldtype: 'Select',
+            fieldname: 'financial_year',
+            reqd: 1,
+            change() { const fy = this.get_value(); if (fy) load(fy); }
         },
         render_input: true
     });
@@ -1318,51 +1818,155 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             const years = r.message.map(d => d.financial_year);
             fyControl.df.options = years.join('\n');
             fyControl.refresh();
-
             const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
             const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
             const def = years.includes(fy) ? fy : years[0];
             fyControl.set_value(def);
-            loadNumberCards(def);
+            load(def);
         }
     });
 
-    /* ─────────────────────────────────────────
-       HELPERS
-    ───────────────────────────────────────── */
+    /* ── HELPERS ── */
     const fmtINR = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+    const fmtCr  = v => { const cr = Math.round((v || 0) / 1e7); return cr >= 1 ? cr + ' Cr' : fmtINR(v); };
 
-    /* ─────────────────────────────────────────
-       RENDER CARDS
-    ───────────────────────────────────────── */
-    function renderCards(apiResponse) {
-        const $row = $('#card-row');
-        $row.empty();
+    /* ── RENDER CARDS ── */
+    function renderCards(data) {
+        const cards = data.number_cards || [];
+        const grand = data.grand_total  || 0;
+        const $c    = $('#bd-cards').empty();
 
-        const items = [
-            { label: 'Grand Total', value: apiResponse.grand_total },
-            ...(apiResponse.number_cards || []).map(c => ({ label: c.label, value: c.total_budget }))
-        ];
+        $c.append(`
+            <div class="bd-card" style="border-left-color:#1D9E75;">
+                <div class="bd-card-label">Grand Total</div>
+                <div class="bd-card-value">${fmtINR(grand)}</div>
+                <div class="bd-card-sub">${cards.length} categories</div>
+            </div>
+        `);
 
-        items.forEach(item => {
-            $row.append(`
-                <div class="cr-card">
-                    <div class="cr-card-label">${item.label}</div>
-                    <div class="cr-card-value">${fmtINR(item.value)}</div>
+        cards.forEach((c, i) => {
+            const pct = grand > 0 ? ((c.total_budget / grand) * 100).toFixed(1) : '0.0';
+            $c.append(`
+                <div class="bd-card" style="border-left-color:${PALETTE[i % PALETTE.length]};">
+                    <div class="bd-card-label">${c.label}</div>
+                    <div class="bd-card-value">${fmtINR(c.total_budget)}</div>
+                    <div class="bd-card-sub">${pct}% of total</div>
                 </div>
             `);
         });
     }
 
-    /* ─────────────────────────────────────────
-       LOAD CARDS
-    ───────────────────────────────────────── */
-    function loadNumberCards(fy) {
-        frappe.call({
-            method  : 'annual_budget.api.phase_sheet.get_number_card_totals',
-            args    : { financial_year: fy },
-            callback(r) { if (r.message) renderCards(r.message); }
+    /* ── RENDER HORIZONTAL BAR ── */
+    function renderHBar(data) {
+        const cards  = data.number_cards || [];
+        const sorted = [...cards].sort((a, b) => (b.total_budget || 0) - (a.total_budget || 0));
+        const max    = sorted[0]?.total_budget || 1;
+        const $body  = $('#bd-hbar-body').empty();
+
+        sorted.forEach((c, i) => {
+            const pct   = ((c.total_budget || 0) / max * 100).toFixed(1);
+            const color = PALETTE[i % PALETTE.length];
+            $body.append(`
+                <div class="bd-hbar-row">
+                    <div class="bd-hbar-label" title="${c.label}">${c.label}</div>
+                    <div class="bd-hbar-track">
+                        <div class="bd-hbar-fill" style="width:${pct}%;background:${color};"></div>
+                    </div>
+                    <div class="bd-hbar-val">${fmtCr(c.total_budget)}</div>
+                </div>
+            `);
         });
     }
 
+    /* ── RENDER DONUT CHART ── */
+    function renderDonut(data) {
+        const cards  = data.number_cards || [];
+        const grand  = data.grand_total  || 0;
+        const labels = cards.map(c => c.label);
+        const values = cards.map(c => Math.round(c.total_budget || 0));
+        const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+
+        $('#bd-donut-total').text(fmtCr(grand));
+
+        const $leg = $('#bd-donut-legend').empty();
+        labels.forEach((lbl, i) => {
+            const pct = grand > 0 ? ((values[i] / grand) * 100).toFixed(1) : '0.0';
+            $leg.append(`
+                <span class="bd-legend-item">
+                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+                    ${lbl} — ${pct}%
+                </span>
+            `);
+        });
+
+        if (donutChart) { donutChart.destroy(); donutChart = null; }
+
+        donutChart = new Chart(document.getElementById('bd-donut'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        bodyFont: { size: 13 },
+                        titleFont: { size: 13 },
+                        callbacks: {
+                            label: ctx => {
+                                const pct = grand > 0 ? ((ctx.parsed / grand) * 100).toFixed(1) : '0.0';
+                                return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── LOAD ── */
+    function load(fy) {
+        frappe.call({
+            method: 'annual_budget.api.phase_sheet.get_number_card_totals',
+            args: { financial_year: fy },
+            callback(r) {
+                if (!r.message) return;
+                renderCards(r.message);
+                renderHBar(r.message);
+                renderDonut(r.message);
+            }
+        });
+    }
+
+    /* ── RESIZE HANDLER ── */
+    let resizeTimer;
+    $(window).on('resize.bd', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const fy = fyControl.get_value();
+            if (fy) load(fy);
+        }, 300);
+    });
+
+    $(wrapper).on('hide', function () {
+        $(window).off('resize.bd');
+    });
+
+    /* ── LOAD CHART.JS ONCE ── */
+    if (!window.Chart) {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+        s.onload = () => { const fy = fyControl.get_value(); if (fy) load(fy); };
+        document.head.appendChild(s);
+    }
 };
