@@ -6,56 +6,6 @@ import re
 import traceback
 from decimal import Decimal
 
-@frappe.whitelist(allow_guest=True)
-def get_adjustment_items_by_fy(financial_year):
-
-    try:
-
-        parents = frappe.get_all(
-            "Monthly Adjustment",
-            filters={"financial_year": financial_year},
-            fields=["name", "month"]
-        )
-
-        result = []
-
-        for p in parents:
-
-            doc = frappe.get_doc("Monthly Adjustment", p.name)
-
-            for row in doc.adjustment_line_items:
-
-                result.append({
-                    "parent": p.name,
-                    "financial_year": financial_year,
-                    "month": p.month,
-                    "unit": row.unit,
-                    "cost_center": row.cost_center,
-                    "cost_center_description": row.cost_center_description,
-                    "location_code": row.location_code,
-                    "location_code_description": row.location_code_description,
-                    "gl_code": row.gl_code,
-                    "type_of_expenses": row.type_of_expenses,
-                    "adjustment_method": row.adjustment_method,
-                    "adjustment_type": row.adjustment_type,
-                    "adjustment_amount": row.adjustment_amount
-                })
-
-        return {
-            "status": "success",
-            "data": result
-        }
-
-    except Exception as e:
-
-        frappe.log_error(frappe.get_traceback(), "Adjustment API Error")
-
-        return {
-            "status": "error",
-            "message": str(e)
-        }
-    
-
 
 @frappe.whitelist(allow_guest=True)
 def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_period):

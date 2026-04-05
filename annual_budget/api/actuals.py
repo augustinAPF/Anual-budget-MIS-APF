@@ -309,7 +309,8 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 #             "error": "Unexpected server error"
 #         }
 # * ==============================================================  Actual API Prod with accounting period without opening balance  =====================================================================================
-
+def get_financial_year(year):
+    return f"{year}-{str(year + 1)[-2:]}"
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):
     try:
@@ -372,8 +373,9 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
         # --------------------------------------------
         # 4️⃣ Get Frappe Grouped Data
         # --------------------------------------------
+        print(get_financial_year(fiscal_year),"year")
         frappe_rows = get_monthly_adjustments(
-            financial_year="2025-26"
+            financial_year=get_financial_year(fiscal_year)
         )
 
         # --------------------------------------------
