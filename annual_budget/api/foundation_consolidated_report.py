@@ -324,6 +324,312 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
     
 
 
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_period):
+#     try:
+#         import re
+#         import traceback
+#         from decimal import Decimal
+
+#         def _num(x):
+#             try:
+#                 return float(Decimal(str(x or 0)))
+#             except:
+#                 return 0.0
+
+#         def normalize(text):
+#             return re.sub(r"\s+", " ", str(text or "")).strip().upper()
+
+#         # ✅ FIX: GL normalization
+#         def normalize_gl(gl):
+#             return str(gl or "").strip().replace(".0", "")
+
+#         def empty_months():
+#             return {str(i): 0.0 for i in range(1, 13)}
+
+#         def calculate_quarters(obj):
+#             m = obj["months"]
+#             obj["Q1"] = m["4"] + m["5"] + m["6"]
+#             obj["Q2"] = m["7"] + m["8"] + m["9"]
+#             obj["Q3"] = m["10"] + m["11"] + m["12"]
+#             obj["Q4"] = m["1"] + m["2"] + m["3"]
+
+#         # ============================================================
+#         # FETCH EXPENSE MASTER
+#         # ============================================================
+
+#         expense_rows = frappe.get_all(
+#             "Expenses",
+#             fields=[
+#                 "name",
+#                 "head_of_expense",
+#                 "sub_head_of_expense",
+#                 "type_of_expense",
+#                 "sequence_id"
+#             ],
+#             order_by="sequence_id asc"
+#         ) or []
+
+#         expense_lookup = {e["name"]: e for e in expense_rows}
+
+#         # ============================================================
+#         # FETCH GL MAPPING
+#         # ============================================================
+
+#         gl_rows = frappe.get_all(
+#             "GL code Mapping",
+#             fields=["parent", "gl_code_map"]
+#         ) or []
+
+#         gl_parent_map = {}
+
+#         for row in gl_rows:
+#             gl = normalize_gl(row.get("gl_code_map"))
+#             parent = str(row.get("parent") or "").strip()
+
+#             if gl and parent:
+#                 gl_parent_map[gl] = parent
+
+#         # ============================================================
+#         # BUILD STRUCTURE
+#         # ============================================================
+
+#         heads = {}
+
+#         MAIN_HEADS = [
+#             "CAPITAL EXPENSES",
+#             "OPERATING EXPENSES",
+#             "COVID SUPPORT"
+#         ]
+
+#         for e in expense_rows:
+
+#             raw_head = normalize(e.get("head_of_expense"))
+#             sub_head = normalize(e.get("sub_head_of_expense"))
+#             item_name = str(e.get("type_of_expense") or "UNKNOWN ITEM").strip()
+#             seq = int(e.get("sequence_id") or 9999)
+
+#             if raw_head in MAIN_HEADS:
+#                 parent_head = raw_head
+#             else:
+#                 parent_head = "OPERATING EXPENSES"
+#                 sub_head = raw_head
+
+#             if parent_head not in heads:
+#                 heads[parent_head] = {
+#                     "name": parent_head,
+#                     "sequence_id": seq,
+#                     "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0,
+#                     "months": empty_months(),
+#                     "items": {},
+#                     "sub_heads": {}
+#                 }
+
+#             if parent_head in ["CAPITAL EXPENSES", "COVID SUPPORT"]:
+
+#                 heads[parent_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0,
+#                     "months": empty_months()
+#                 }
+
+#             else:
+
+#                 if sub_head not in heads[parent_head]["sub_heads"]:
+#                     heads[parent_head]["sub_heads"][sub_head] = {
+#                         "name": sub_head,
+#                         "sequence_id": seq,
+#                         "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0,
+#                         "months": empty_months(),
+#                         "items": {}
+#                     }
+
+#                 heads[parent_head]["sub_heads"][sub_head]["items"][item_name] = {
+#                     "name": item_name,
+#                     "sequence_id": seq,
+#                     "gl_code": None,
+#                     "Q1": 0.0, "Q2": 0.0, "Q3": 0.0, "Q4": 0.0,
+#                     "months": empty_months()
+#                 }
+
+#         # ============================================================
+#         # FETCH ERP DATA
+#         # ============================================================
+
+#         response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
+
+#         if "message" in response:
+#             response = response["message"]
+
+#         erp_data = response.get("data") if response.get("status") == "success" else []
+
+#         # ============================================================
+#         # LOAD DATA → ITEM LEVEL ONLY + SKIP PERIOD 0
+#         # ============================================================
+
+#         for row in erp_data:
+#             try:
+#                 account = normalize_gl(row.get("account"))
+#                 amount = _num(row.get("posted_total_amt"))
+
+#                 try:
+#                     period = int(row.get("accounting_period") or 0)
+#                 except:
+#                     continue
+
+#                 # ✅ skip invalid period
+#                 if period <= 0:
+#                     continue
+
+#                 # ✅ debug missing GL mapping
+#                 if account not in gl_parent_map:
+#                     frappe.log_error(
+#                         f"Missing GL Mapping for account: {account}",
+#                         "GL Mapping Missing"
+#                     )
+#                     continue
+
+#                 month = str(period)
+
+#                 parent_expense_name = gl_parent_map.get(account)
+#                 expense = expense_lookup.get(parent_expense_name)
+
+#                 # ✅ debug missing expense
+#                 if not expense:
+#                     frappe.log_error(
+#                         f"Expense not found for mapping parent: {parent_expense_name}",
+#                         "Expense Missing"
+#                     )
+#                     continue
+
+#                 raw_head = normalize(expense.get("head_of_expense"))
+#                 sub_head = normalize(expense.get("sub_head_of_expense"))
+#                 item_name = str(expense.get("type_of_expense") or "").strip()
+
+#                 if raw_head in MAIN_HEADS:
+#                     parent_head = raw_head
+#                 else:
+#                     parent_head = "OPERATING EXPENSES"
+#                     sub_head = raw_head
+
+#                 # ONLY item level update
+#                 if parent_head in ["CAPITAL EXPENSES", "COVID SUPPORT"]:
+#                     if item_name in heads[parent_head]["items"]:
+#                         item = heads[parent_head]["items"][item_name]
+#                         item["months"][month] += amount
+#                         item["gl_code"] = account
+
+#                 else:
+#                     if sub_head in heads[parent_head]["sub_heads"]:
+#                         sub = heads[parent_head]["sub_heads"][sub_head]
+
+#                         if item_name in sub["items"]:
+#                             item = sub["items"][item_name]
+#                             item["months"][month] += amount
+#                             item["gl_code"] = account
+
+#             except:
+#                 continue
+
+#         # ============================================================
+#         # ROLL-UP: ITEM → SUB → HEAD
+#         # ============================================================
+
+#         for head in heads.values():
+
+#             head["months"] = empty_months()
+
+#             for sub in head["sub_heads"].values():
+
+#                 sub["months"] = empty_months()
+
+#                 for item in sub["items"].values():
+#                     for m in item["months"]:
+#                         sub["months"][m] += item["months"][m]
+
+#                 for m in sub["months"]:
+#                     head["months"][m] += sub["months"][m]
+
+#             for item in head["items"].values():
+#                 for m in item["months"]:
+#                     head["months"][m] += item["months"][m]
+
+#         # ============================================================
+#         # CALCULATE QUARTERS
+#         # ============================================================
+
+#         for head in heads.values():
+
+#             calculate_quarters(head)
+
+#             for sub in head["sub_heads"].values():
+
+#                 calculate_quarters(sub)
+
+#                 for item in sub["items"].values():
+#                     calculate_quarters(item)
+
+#             for item in head["items"].values():
+#                 calculate_quarters(item)
+
+#         # ============================================================
+#         # SORTING
+#         # ============================================================
+
+#         final = []
+
+#         for head in sorted(heads.values(), key=lambda x: x["sequence_id"]):
+
+#             head["items"] = sorted(
+#                 head["items"].values(),
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             sorted_subs = []
+
+#             for sub in head["sub_heads"].values():
+
+#                 sub["items"] = sorted(
+#                     sub["items"].values(),
+#                     key=lambda x: x["sequence_id"]
+#                 )
+
+#                 sorted_subs.append(sub)
+
+#             head["sub_heads"] = sorted(
+#                 sorted_subs,
+#                 key=lambda x: x["sequence_id"]
+#             )
+
+#             final.append(head)
+
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "data": final
+#         }
+
+#     except Exception as e:
+
+#         frappe.log_error(frappe.get_traceback(), "Actuals API Error")
+
+#         return {
+#             "status": "error",
+#             "message": str(e),
+#             "trace": traceback.format_exc()
+#         }
+
+
+
+
+
+
+
+
 # @frappe.whitelist(allow_guest=True)
 # def format_api(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
 

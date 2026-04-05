@@ -23,11 +23,11 @@
   },
   {
    "fieldname": "month",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Month",
-   "options": "\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nDec\nJan\nFeb\nMar"
+   "options": "Months List"
   },
   {
    "fieldname": "adjustment_line_items",
@@ -47,7 +47,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-06 15:35:01.631100",
+ "modified": "2026-04-05 14:52:18.896171",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Monthly Adjustment",

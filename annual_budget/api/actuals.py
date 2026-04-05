@@ -1,3 +1,4 @@
+from annual_budget.api.adjustments import get_monthly_adjustments
 import frappe
 import requests
 import xmltodict
@@ -308,10 +309,11 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 #             "error": "Unexpected server error"
 #         }
 # * ==============================================================  Actual API Prod with accounting period without opening balance  =====================================================================================
+
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):
     try:
-        username ="MISUSER"
+        username = "MISUSER"
         password = "[REDACTED-CREDENTIAL]"
 
         base_url = (
@@ -321,7 +323,9 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
             "Z_MIS_ACTUALS/XMLP/NONFILE"
         )
 
-        # Build with both fiscal year and accounting period
+        # --------------------------------------------
+        # 1️⃣ Build API URL
+        # --------------------------------------------
         api_url = (
             f"{base_url}"
             f"?isconnectedquery=N"
@@ -330,6 +334,9 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
         )
 
+        # --------------------------------------------
+        # 2️⃣ Call ERP API
+        # --------------------------------------------
         response = requests.get(
             api_url,
             headers={"Accept": "application/xml"},
@@ -338,29 +345,53 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
         )
 
         if response.status_code != 200:
-            return {
-                "status": "failed",
-                "status_code": response.status_code,
-                "error": response.text
-            }
+            frappe.log_error("ERP HTTP Error", response.text)
+            erp_rows = []
+        else:
+            # --------------------------------------------
+            # 3️⃣ Parse XML
+            # --------------------------------------------
+            try:
+                root = ET.fromstring(response.content)
+            except ET.ParseError:
+                frappe.log_error("XML Parse Error", response.text)
+                erp_rows = []
+            else:
+                erp_rows = []
 
-        root = ET.fromstring(response.content)
-        rows = []
+                for row_elem in root.iter():
+                    if row_elem.tag.lower().endswith("row"):
+                        row_data = {}
 
-        for row_elem in root.iter():
-            if row_elem.tag.lower().endswith("row"):
-                row_data = {}
-                for child in row_elem:
-                    tag = child.tag.split("}")[-1].lower()
-                    row_data[tag] = child.text
-                rows.append(row_data)
+                        for child in row_elem:
+                            tag = child.tag.split("}")[-1].lower()
+                            row_data[tag] = child.text
 
+                        erp_rows.append(row_data)
+
+        # --------------------------------------------
+        # 4️⃣ Get Frappe Grouped Data
+        # --------------------------------------------
+        frappe_rows = get_monthly_adjustments(
+            financial_year="2025-26"
+        )
+
+        # --------------------------------------------
+        # 5️⃣ Combine ERP + Frappe
+        # --------------------------------------------
+        combined_rows = []
+        combined_rows.extend(erp_rows)
+        combined_rows.extend(frappe_rows)
+
+        # --------------------------------------------
+        # 6️⃣ Final Response
+        # --------------------------------------------
         return {
             "status": "success",
             "fiscal_year": fiscal_year,
             "accounting_period": accounting_period,
-            "count": len(rows),
-            "data": rows
+            "count": len(combined_rows),
+            "data": combined_rows
         }
 
     except requests.exceptions.Timeout:
@@ -379,14 +410,204 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
             "error": "Unexpected server error"
         }
 
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_actuals_from_erp_prod(fiscal_year, accounting_period):
+#     try:
+#         username ="MISUSER"
+#         password = "[REDACTED-CREDENTIAL]"
+
+#         base_url = (
+#             "https://pserp.azimpremjifoundation.org:8053/"
+#             "PSIGW/RESTListeningConnector/"
+#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+#             "Z_MIS_ACTUALS/XMLP/NONFILE"
+#         )
+
+#         # Build with both fiscal year and accounting period
+#         api_url = (
+#             f"{base_url}"
+#             f"?isconnectedquery=N"
+#             f"&maxrows=100000"
+#             f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+#             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
+#         )
+
+#         response = requests.get(
+#             api_url,
+#             headers={"Accept": "application/xml"},
+#             auth=(username, password),
+#             timeout=120
+#         )
+
+#         if response.status_code != 200:
+#             return {
+#                 "status": "failed",
+#                 "status_code": response.status_code,
+#                 "error": response.text
+#             }
+
+#         root = ET.fromstring(response.content)
+#         rows = []
+
+#         for row_elem in root.iter():
+#             if row_elem.tag.lower().endswith("row"):
+#                 row_data = {}
+#                 for child in row_elem:
+#                     tag = child.tag.split("}")[-1].lower()
+#                     row_data[tag] = child.text
+#                 rows.append(row_data)
+
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "accounting_period": accounting_period,
+#             "count": len(rows),
+#             "data": rows
+#         }
+
+#     except requests.exceptions.Timeout:
+#         return {
+#             "status": "failed",
+#             "error": "Request timeout while connecting to ERP"
+#         }
+
+#     except Exception:
+#         frappe.log_error(
+#             title="PeopleSoft API Error",
+#             message=frappe.get_traceback()
+#         )
+#         return {
+#             "status": "failed",
+#             "error": "Unexpected server error"
+#         }
+
 # * ==============================================================  Actual API Prod With accounting period with openning balance=====================================================================================
+# @frappe.whitelist(allow_guest=True)
+# def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
+#     try:
+#         username ="MISUSER"
+#         password = "[REDACTED-CREDENTIAL]"
+#         if not username or not password:
+#             frappe.throw("ERP credentials are not configured in site_config.json")
+#         base_url = (
+#             "https://pserp.azimpremjifoundation.org:8053/"
+#             "PSIGW/RESTListeningConnector/"
+#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+#             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+#         )
+
+#         # -----------------------------------------------------
+#         # 3️⃣ Build URL With Parameters
+#         # -----------------------------------------------------
+#         api_url = (
+#             f"{base_url}"
+#             f"?isconnectedquery=N"
+#             f"&maxrows=100000"
+#             f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+#             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
+#         )
+
+#         # -----------------------------------------------------
+#         # 4️⃣ Call ERP API
+#         # -----------------------------------------------------
+#         response = requests.get(
+#             api_url,
+#             headers={"Accept": "application/xml"},
+#             auth=(username, password),
+#             timeout=120
+#         )
+
+#         # -----------------------------------------------------
+#         # 5️⃣ Handle HTTP Errors
+#         # -----------------------------------------------------
+#         if response.status_code != 200:
+#             frappe.log_error(
+#                 title="PeopleSoft API HTTP Error",
+#                 message=response.text
+#             )
+#             return {
+#                 "status": "failed",
+#                 "status_code": response.status_code,
+#                 "error": response.text
+#             }
+
+#         # -----------------------------------------------------
+#         # 6️⃣ Parse XML Response
+#         # -----------------------------------------------------
+#         try:
+#             root = ET.fromstring(response.content)
+#         except ET.ParseError:
+#             frappe.log_error(
+#                 title="PeopleSoft XML Parse Error",
+#                 message=response.text
+#             )
+#             return {
+#                 "status": "failed",
+#                 "error": "Invalid XML response from ERP"
+#             }
+
+#         rows = []
+
+#         for row_elem in root.iter():
+#             if row_elem.tag.lower().endswith("row"):
+#                 row_data = {}
+
+#                 for child in row_elem:
+#                     tag = child.tag.split("}")[-1].lower()
+#                     row_data[tag] = child.text
+
+#                 rows.append(row_data)
+
+#         # -----------------------------------------------------
+#         # 7️⃣ Success Response
+#         # -----------------------------------------------------
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "accounting_period": accounting_period,
+#             "count": len(rows),
+#             "data": rows
+#         }
+
+#     except requests.exceptions.Timeout:
+#         frappe.log_error(
+#             title="PeopleSoft Timeout",
+#             message="ERP request timed out"
+#         )
+#         return {
+#             "status": "failed",
+#             "error": "Request timeout while connecting to ERP"
+#         }
+
+#     except Exception:
+#         frappe.log_error(
+#             title="PeopleSoft API Unexpected Error",
+#             message=frappe.get_traceback()
+#         )
+#         return {
+#             "status": "failed",
+#             "error": "Unexpected server error"
+#         }
+
+
+
+import frappe
+import requests
+import xml.etree.ElementTree as ET
+
+
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
+
     try:
-        username ="MISUSER"
+        username = "MISUSER"
         password = "[REDACTED-CREDENTIAL]"
+
         if not username or not password:
-            frappe.throw("ERP credentials are not configured in site_config.json")
+            frappe.throw("ERP credentials are not configured")
+
         base_url = (
             "https://pserp.azimpremjifoundation.org:8053/"
             "PSIGW/RESTListeningConnector/"
@@ -394,9 +615,9 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
         )
 
-        # -----------------------------------------------------
-        # 3️⃣ Build URL With Parameters
-        # -----------------------------------------------------
+        # --------------------------------------------
+        # 1️⃣ Build URL
+        # --------------------------------------------
         api_url = (
             f"{base_url}"
             f"?isconnectedquery=N"
@@ -405,9 +626,9 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
         )
 
-        # -----------------------------------------------------
-        # 4️⃣ Call ERP API
-        # -----------------------------------------------------
+        # --------------------------------------------
+        # 2️⃣ Call ERP API
+        # --------------------------------------------
         response = requests.get(
             api_url,
             headers={"Accept": "application/xml"},
@@ -415,73 +636,65 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             timeout=120
         )
 
-        # -----------------------------------------------------
-        # 5️⃣ Handle HTTP Errors
-        # -----------------------------------------------------
         if response.status_code != 200:
-            frappe.log_error(
-                title="PeopleSoft API HTTP Error",
-                message=response.text
-            )
-            return {
-                "status": "failed",
-                "status_code": response.status_code,
-                "error": response.text
-            }
+            frappe.log_error("ERP HTTP Error", response.text)
+            erp_rows = []
+        else:
+            # --------------------------------------------
+            # 3️⃣ Parse XML
+            # --------------------------------------------
+            try:
+                root = ET.fromstring(response.content)
+            except ET.ParseError:
+                frappe.log_error("XML Parse Error", response.text)
+                erp_rows = []
+            else:
+                erp_rows = []
 
-        # -----------------------------------------------------
-        # 6️⃣ Parse XML Response
-        # -----------------------------------------------------
-        try:
-            root = ET.fromstring(response.content)
-        except ET.ParseError:
-            frappe.log_error(
-                title="PeopleSoft XML Parse Error",
-                message=response.text
-            )
-            return {
-                "status": "failed",
-                "error": "Invalid XML response from ERP"
-            }
+                for row_elem in root.iter():
+                    if row_elem.tag.lower().endswith("row"):
+                        row_data = {}
 
-        rows = []
+                        for child in row_elem:
+                            tag = child.tag.split("}")[-1].lower()
+                            row_data[tag] = child.text
 
-        for row_elem in root.iter():
-            if row_elem.tag.lower().endswith("row"):
-                row_data = {}
+                        erp_rows.append(row_data)
 
-                for child in row_elem:
-                    tag = child.tag.split("}")[-1].lower()
-                    row_data[tag] = child.text
+        # --------------------------------------------
+        # 4️⃣ Get Frappe Grouped Data
+        # --------------------------------------------
+        frappe_rows = get_monthly_adjustments(
+            financial_year="2025-26"
+        )
 
-                rows.append(row_data)
+        # --------------------------------------------
+        # 5️⃣ 🔥 COMBINE BOTH
+        # --------------------------------------------
+        combined_rows = []
+        combined_rows.extend(erp_rows)
+        combined_rows.extend(frappe_rows)
 
-        # -----------------------------------------------------
-        # 7️⃣ Success Response
-        # -----------------------------------------------------
+        # --------------------------------------------
+        # 6️⃣ Final Response
+        # --------------------------------------------
         return {
             "status": "success",
             "fiscal_year": fiscal_year,
             "accounting_period": accounting_period,
-            "count": len(rows),
-            "data": rows
+            "count": len(combined_rows),
+            "data": combined_rows
         }
 
     except requests.exceptions.Timeout:
-        frappe.log_error(
-            title="PeopleSoft Timeout",
-            message="ERP request timed out"
-        )
+        frappe.log_error("ERP Timeout", "Request timed out")
         return {
             "status": "failed",
             "error": "Request timeout while connecting to ERP"
         }
 
     except Exception:
-        frappe.log_error(
-            title="PeopleSoft API Unexpected Error",
-            message=frappe.get_traceback()
-        )
+        frappe.log_error("API Error", frappe.get_traceback())
         return {
             "status": "failed",
             "error": "Unexpected server error"
@@ -489,7 +702,7 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 
 
 
-        import frappe
+
 import requests
 import xml.etree.ElementTree as ET
 
@@ -2555,54 +2768,3 @@ def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
 #             "message":str(e),
 #             "trace":traceback.format_exc()
 #         }
-
-
-import frappe
-from frappe import _
-
-@frappe.whitelist(allow_guest=True)
-def get_monthly_adjustments(financial_year, month):
-
-    if not financial_year or not month:
-        frappe.throw(_("Financial Year and Month are required"))
-
-    parents = frappe.get_all(
-        "Monthly Adjustment",
-        filters={
-            "financial_year": financial_year,
-            "month": month
-        },
-        fields=["name", "financial_year", "month"],
-        order_by="creation desc"
-    )
-
-    result = []
-
-    for parent in parents:
-        doc = frappe.get_doc("Monthly Adjustment", parent.name)
-
-        child_items = []
-
-        for row in doc.adjustment_line_items:
-            child_items.append({
-                "unit": row.unit,
-                "cost_center": row.cost_center,
-                "cost_center_description": row.cost_center_description,
-                "location_code": row.location_code,
-                "location_code_description": row.location_code_description,
-                "gl_code": row.gl_code,
-                "type_of_expenses": row.type_of_expenses,
-                "adjustment_type": row.adjustment_type,
-                "adjustment_method": row.adjustment_method,
-                "adjustment_amount": row.adjustment_amount
-            })
-
-        # ✅ Parent added once, children nested
-        result.append({
-            "document": doc.name,
-            "financial_year": doc.financial_year,
-            "month": doc.month,
-            "items": child_items
-        })
-
-    return result

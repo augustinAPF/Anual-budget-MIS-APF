@@ -9,15 +9,18 @@
  "field_order": [
   "unit",
   "cost_center",
+  "cost_center_erp",
   "cost_center_description",
   "location_code",
+  "location_code_erp",
   "location_code_description",
   "column_break_hyto",
   "gl_code",
   "type_of_expenses",
   "adjustment_method",
   "adjustment_type",
-  "adjustment_amount"
+  "adjustment_amount",
+  "accounting_period"
  ],
  "fields": [
   {
@@ -105,13 +108,34 @@
    "non_negative": 1,
    "options": "IINR",
    "reqd": 1
+  },
+  {
+   "fetch_from": "cost_center.cost_center",
+   "fieldname": "cost_center_erp",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Cost Center ERP",
+   "options": "Cost Center"
+  },
+  {
+   "fetch_from": "location_code.location_code",
+   "fieldname": "location_code_erp",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Location Code ERP",
+   "options": "Location Code"
+  },
+  {
+   "fieldname": "accounting_period",
+   "fieldtype": "Int",
+   "label": "Accounting Period"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-30 15:02:28.124317",
+ "modified": "2026-04-05 14:58:06.930322",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "Adjustment Items",

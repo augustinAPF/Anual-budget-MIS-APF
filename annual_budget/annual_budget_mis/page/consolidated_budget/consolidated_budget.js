@@ -10663,7 +10663,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var page = frappe.ui.make_app_page({
 		parent       : wrapper,
-		title        : 'Foundation - Consolidated Budget - 2025-26',
+		title        : 'Foundation - Consolidated Budget',
 		single_column: true
 	});
 
@@ -11696,7 +11696,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function fetchAndRender(fy) {
 			data=[]; openH={}; openS={}; expandedQ=[];
 			$('#estimate-expand-quarters,#estimate-expand-items').prop('checked',false);
-			var year=(fy||'2025-26').split('-')[0];
+			var year=(getPrevFY(fy)||'2025-26').split('-')[0];
 			Loader.show('We\u2019re shaping your projections into a smart view');
 			frappe.call({
 				method  : 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
