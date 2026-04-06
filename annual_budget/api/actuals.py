@@ -375,7 +375,7 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
         # --------------------------------------------
         print(get_financial_year(fiscal_year),"year")
         frappe_rows = get_monthly_adjustments(
-            financial_year=get_financial_year(fiscal_year)
+            get_financial_year(fiscal_year),accounting_period
         )
 
         # --------------------------------------------

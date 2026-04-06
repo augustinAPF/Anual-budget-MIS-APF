@@ -162,11 +162,110 @@
 #     return result
 
 
+# import frappe
+# from collections import defaultdict
+
+# @frappe.whitelist(allow_guest=True)
+# def get_monthly_adjustments(financial_year=None):
+
+#     filters = {}
+#     if financial_year:
+#         filters["financial_year"] = financial_year
+
+#     docs = frappe.get_all(
+#         "Monthly Adjustment",
+#         filters=filters,
+#         fields=["name", "financial_year", "month"]
+#     )
+
+#     month_map = {
+#         "April": 1, "May": 2, "June": 3, "July": 4,
+#         "August": 5, "September": 6, "October": 7,
+#         "November": 8, "December": 9,
+#         "January": 10, "February": 11, "March": 12
+#     }
+
+#     temp_data = []
+
+#     # 🔹 Flatten data first
+#     for doc in docs:
+#         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
+#         period = month_map.get(doc.month, 0)
+
+#         for row in full_doc.adjustment_line_items:
+#             amount = row.adjustment_amount or 0
+#             if row.adjustment_type == "Minus":
+#                 amount = -amount
+
+#             temp_data.append({
+#                 "unit": row.unit,
+#                 "gl": row.gl_code,
+#                 "loc": getattr(row, "location_code_erp", row.location_code),
+#                 "cc": getattr(row, "cost_center_erp", row.cost_center),
+#                 "period": period,
+#                 "amount": amount
+#             })
+
+#     # 🔹 Sort by group + period
+#     temp_data.sort(key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"]))
+
+#     ytd_totals = defaultdict(float)
+#     result = []
+
+#     for row in temp_data:
+#         key = (row["unit"], row["gl"], row["loc"], row["cc"])
+
+#         # ✅ running total
+#         ytd_totals[key] += row["amount"]
+
+#         result.append({
+#             "business_unit": row["unit"],
+#             "ledger": "ACTUALS",
+#             "account": row["gl"],
+#             "deptid": row["cc"],
+#             "operating_unit": row["loc"],
+#             "accounting_period": str(row["period"]),
+#             "fiscal_year": (financial_year or "").split("-")[0],
+#             "is_adjustment": 1,
+#             "posted_total_amt": f"{ytd_totals[key]:.2f}"  # ✅ YTD value
+#         })
+
+#     return result
+
+
+
+
 import frappe
 from collections import defaultdict
 
 @frappe.whitelist(allow_guest=True)
-def get_monthly_adjustments(financial_year=None):
+def get_monthly_adjustments(financial_year=None, month=None):
+
+    month_map = {
+        "April": 1, "May": 2, "June": 3, "July": 4,
+        "August": 5, "September": 6, "October": 7,
+        "November": 8, "December": 9,
+        "January": 10, "February": 11, "March": 12
+    }
+
+    reverse_month_map = {v: k for k, v in month_map.items()}
+
+    # ✅ Validate & print month
+    if month is not None:
+        try:
+            month = int(month)
+
+            if month < 1 or month > 12:
+                frappe.throw("Month must be between 1 and 12")
+
+            month_name = reverse_month_map.get(month, "Invalid")
+
+            # 🔥 Print instead of logger
+            print(f"Selected Month -> Number: {month}, Name: {month_name}")
+
+        except Exception:
+            print(f"Invalid month input: {month}")
+            frappe.throw("Invalid month format. Must be integer 1–12")
 
     filters = {}
     if financial_year:
@@ -178,22 +277,21 @@ def get_monthly_adjustments(financial_year=None):
         fields=["name", "financial_year", "month"]
     )
 
-    month_map = {
-        "April": 1, "May": 2, "June": 3, "July": 4,
-        "August": 5, "September": 6, "October": 7,
-        "November": 8, "December": 9,
-        "January": 10, "February": 11, "March": 12
-    }
-
     temp_data = []
 
-    # 🔹 Flatten data first
+    # 🔹 Flatten data
     for doc in docs:
-        full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
         period = month_map.get(doc.month, 0)
+
+        # ✅ Apply month filter (YTD up to selected month)
+        if month and period > month:
+            continue
+
+        full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
 
         for row in full_doc.adjustment_line_items:
             amount = row.adjustment_amount or 0
+
             if row.adjustment_type == "Minus":
                 amount = -amount
 
@@ -206,8 +304,10 @@ def get_monthly_adjustments(financial_year=None):
                 "amount": amount
             })
 
-    # 🔹 Sort by group + period
-    temp_data.sort(key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"]))
+    # 🔹 Sort for YTD
+    temp_data.sort(
+        key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"])
+    )
 
     ytd_totals = defaultdict(float)
     result = []
@@ -215,7 +315,7 @@ def get_monthly_adjustments(financial_year=None):
     for row in temp_data:
         key = (row["unit"], row["gl"], row["loc"], row["cc"])
 
-        # ✅ running total
+        # ✅ Running total (YTD)
         ytd_totals[key] += row["amount"]
 
         result.append({
@@ -227,8 +327,10 @@ def get_monthly_adjustments(financial_year=None):
             "accounting_period": str(row["period"]),
             "fiscal_year": (financial_year or "").split("-")[0],
             "is_adjustment": 1,
-            "posted_total_amt": f"{ytd_totals[key]:.2f}"  # ✅ YTD value
+            "posted_total_amt": f"{ytd_totals[key]:.2f}"
         })
 
-    return result
+    # 🔥 Print total records
+    print(f"Total records returned: {len(result)}")
 
+    return result
