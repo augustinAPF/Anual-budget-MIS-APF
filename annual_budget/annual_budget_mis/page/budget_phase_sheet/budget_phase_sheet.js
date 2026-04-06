@@ -3936,6 +3936,68 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
     /* ─────────────────────────────────────────
        RENDER CARDS  (left column)
     ───────────────────────────────────────── */
+    // function renderCards(data) {
+    //     $cards_section.empty();
+    //     if (!data.length) return;
+
+    //     let grand     = data.reduce((t, h) => t + sumAll(h), 0);
+    //     let fy        = fiscal_year_filter.get_value() || '';
+    //     let units     = unit_filter.get_value() || [];
+    //     let headCount = data.length;
+
+    //     /* Grand total card */
+    //     $cards_section.append(`
+    //         <div class="bps-section-label">Budget Summary</div>
+    //         <div class="bps-grand-card">
+    //             <div class="bps-grand-label">Grand Total Budget</div>
+    //             <div class="bps-grand-value">${fmtINR(grand)}</div>
+    //             <div class="bps-grand-meta">
+    //                 <span>${headCount} Expense Head${headCount !== 1 ? 's' : ''}</span>
+    //                 ${units.length ? '<span>·</span><span>' + units.length + ' Unit' + (units.length > 1 ? 's' : '') + '</span>' : ''}
+    //                 <span class="bps-grand-badge">${fy}</span>
+    //             </div>
+    //         </div>
+    //     `);
+
+    //     /* Expense head cards — 2-col grid to fit the narrower left column */
+    //     $cards_section.append(`<div class="bps-section-label">Expense Heads</div>`);
+    //     let $mainRow = $(`<div class="bps-card-row"></div>`);
+    //     data.forEach((head, i) => {
+    //         let color = getAccent(i);
+    //         let total = sumAll(head);
+    //         let pct   = grand > 0 ? Math.round((total / grand) * 100) : 0;
+    //         $mainRow.append(`
+    //             <div class="bps-exp-card">
+    //                 <div class="bps-exp-bar" style="background:${color};"></div>
+    //                 <div class="bps-exp-label" title="${head.name}">${head.name}</div>
+    //                 <div class="bps-exp-value">${fmtINR(total)}</div>
+    //                 <div class="bps-exp-pct">${pct}% of total</div>
+    //             </div>
+    //         `);
+    //     });
+    //     $cards_section.append($mainRow);
+
+    //     /* Sub-head groups */
+    //     data.forEach((head, i) => {
+    //         if (!head.sub_heads?.length) return;
+    //         let color = getAccent(i);
+    //         let $group = $(`<div class="bps-sub-group"></div>`);
+    //         $group.append(`<span class="bps-group-label" style="border-left-color:${color};color:${color};">${head.name}</span>`);
+    //         let $subRow = $(`<div class="bps-sub-row"></div>`);
+    //         head.sub_heads.forEach(sub => {
+    //             $subRow.append(`
+    //                 <div class="bps-sub-card">
+    //                     <div class="bps-sub-bar" style="background:${color};"></div>
+    //                     <div class="bps-sub-label" title="${sub.name}">${sub.name}</div>
+    //                     <div class="bps-sub-value">${fmtINR(sumAll(sub))}</div>
+    //                 </div>
+    //             `);
+    //         });
+    //         $group.append($subRow);
+    //         $cards_section.append($group);
+    //     });
+    // }
+
     function renderCards(data) {
         $cards_section.empty();
         if (!data.length) return;
@@ -3959,12 +4021,14 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
             </div>
         `);
 
-        /* Expense head cards — 2-col grid to fit the narrower left column */
+        /* Expense head cards — skip if total is 0 */
         $cards_section.append(`<div class="bps-section-label">Expense Heads</div>`);
         let $mainRow = $(`<div class="bps-card-row"></div>`);
         data.forEach((head, i) => {
-            let color = getAccent(i);
             let total = sumAll(head);
+            if (!total) return;                          // ← skip zero cards
+
+            let color = getAccent(i);
             let pct   = grand > 0 ? Math.round((total / grand) * 100) : 0;
             $mainRow.append(`
                 <div class="bps-exp-card">
@@ -3977,27 +4041,37 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         });
         $cards_section.append($mainRow);
 
-        /* Sub-head groups */
+        /* Sub-head groups — skip entire group if head total is 0,
+           skip individual sub-head cards if their total is 0        */
         data.forEach((head, i) => {
             if (!head.sub_heads?.length) return;
-            let color = getAccent(i);
+            if (!sumAll(head)) return;                   // ← skip zero head group
+
+            let color  = getAccent(i);
             let $group = $(`<div class="bps-sub-group"></div>`);
             $group.append(`<span class="bps-group-label" style="border-left-color:${color};color:${color};">${head.name}</span>`);
             let $subRow = $(`<div class="bps-sub-row"></div>`);
+
             head.sub_heads.forEach(sub => {
+                let subTotal = sumAll(sub);
+                if (!subTotal) return;                   // ← skip zero sub-head cards
+
                 $subRow.append(`
                     <div class="bps-sub-card">
                         <div class="bps-sub-bar" style="background:${color};"></div>
                         <div class="bps-sub-label" title="${sub.name}">${sub.name}</div>
-                        <div class="bps-sub-value">${fmtINR(sumAll(sub))}</div>
+                        <div class="bps-sub-value">${fmtINR(subTotal)}</div>
                     </div>
                 `);
             });
-            $group.append($subRow);
-            $cards_section.append($group);
+
+            /* Only append the group if at least one sub-head had a non-zero value */
+            if ($subRow.children().length) {
+                $group.append($subRow);
+                $cards_section.append($group);
+            }
         });
     }
-
     /* ─────────────────────────────────────────
        RENDER PIE CHART  (right column)
     ───────────────────────────────────────── */
