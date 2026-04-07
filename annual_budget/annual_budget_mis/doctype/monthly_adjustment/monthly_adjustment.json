@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "format:AJMT-{financial_year}-{month}-{##}",
  "creation": "2026-03-06 12:37:21.937179",
@@ -47,7 +48,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-05 14:52:18.896171",
+ "modified": "2026-04-07 15:38:37.730232",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Monthly Adjustment",
