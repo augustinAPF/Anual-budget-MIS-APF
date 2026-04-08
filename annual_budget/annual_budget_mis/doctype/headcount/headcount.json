@@ -19,14 +19,14 @@
   {
    "fieldname": "headcount",
    "fieldtype": "Table",
-   "label": "Headcount",
-   "options": "Headcount cost center wise"
+   "label": "Headcount Operating Units",
+   "options": "Headcount Operating Units"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-05 20:22:57.008348",
+ "modified": "2026-04-08 11:43:27.892747",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Headcount",
