@@ -354,99 +354,93 @@ def get_adjustments_month_wise(financial_year=None, month=None):
 
     reverse_month_map = {v: k for k, v in month_map.items()}
 
-    # ✅ Validate month input
+    # ✅ Validate month
     if month is not None:
         try:
             month = int(month)
-
-            if month < 1 or month > 12:
+            if not (1 <= month <= 12):
                 frappe.throw("Month must be between 1 and 12")
 
-            month_name = reverse_month_map.get(month, "Invalid")
-            print(f"Selected Month -> Number: {month}, Name: {month_name}")
+            print(f"Selected Month: {month} ({reverse_month_map.get(month)})")
 
-        except Exception:
-            print(f"Invalid month input: {month}")
-            frappe.throw("Invalid month format. Must be integer 1–12")
+        except:
+            frappe.throw("Invalid month format. Must be 1–12")
 
-    # 🔹 Filters
     filters = {}
     if financial_year:
         filters["financial_year"] = financial_year
 
-    # 🔹 Fetch parent docs
     docs = frappe.get_all(
         "Monthly Adjustment",
         filters=filters,
-        fields=["name", "financial_year", "month"]
+        fields=["name", "month"]
     )
 
-    temp_data = []
+    grouped_data = defaultdict(list)
 
-    # 🔹 Flatten data
+    # 🔹 Step 1: Collect & group data
     for doc in docs:
 
-        # ✅ Robust period detection
+        # ✅ Normalize period
         if isinstance(doc.month, int):
             period = doc.month
         elif str(doc.month).isdigit():
             period = int(doc.month)
         else:
-            period = month_map.get(doc.month, 0)
+            period = month_map.get(doc.month)
 
-        # ❌ Skip invalid month mapping
-        if period == 0:
+        if not period:
             continue
 
-        # ✅ YTD filter (1 → selected month)
+        # ✅ YTD filter
         if month is not None and period > month:
             continue
 
         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
 
         for row in full_doc.adjustment_line_items:
-            amount = row.adjustment_amount or 0
 
+            amount = row.adjustment_amount or 0
             if row.adjustment_type == "Minus":
                 amount = -amount
 
-            temp_data.append({
-                "unit": row.unit,
-                "gl": row.gl_code,
-                "loc": getattr(row, "location_code_erp", row.location_code),
-                "cc": getattr(row, "cost_center_erp", row.cost_center),
+            key = (
+                row.unit,
+                row.gl_code,
+                getattr(row, "location_code_erp", row.location_code),
+                getattr(row, "cost_center_erp", row.cost_center)
+            )
+
+            grouped_data[key].append({
                 "period": period,
                 "amount": amount
             })
 
-    # 🔹 Sort for YTD calculation
-    temp_data.sort(
-        key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"])
-    )
-
-    ytd_totals = defaultdict(float)
+    # 🔹 Step 2: Calculate YTD properly
     result = []
 
-    # 🔹 Calculate running totals
-    for row in temp_data:
-        key = (row["unit"], row["gl"], row["loc"], row["cc"])
+    for key, entries in grouped_data.items():
 
-        # ✅ Running YTD total
-        ytd_totals[key] += row["amount"]
+        # ✅ Sort ONLY by period (critical fix)
+        entries.sort(key=lambda x: x["period"])
 
-        result.append({
-            "business_unit": row["unit"],
-            "ledger": "ACTUALS",
-            "account": row["gl"],
-            "deptid": row["cc"],
-            "operating_unit": row["loc"],
-            "accounting_period": str(row["period"]),
-            "fiscal_year": (financial_year or "").split("-")[0],
-            "is_adjustment": 1,
-            "posted_total_amt": f"{ytd_totals[key]:.2f}"
-        })
+        running_total = 0
 
-    # 🔥 Debug prints
+        for entry in entries:
+            running_total += entry["amount"]
+
+            result.append({
+                "business_unit": key[0],
+                "ledger": "ACTUALS",
+                "account": key[1],
+                "deptid": key[3],
+                "operating_unit": key[2],
+                "accounting_period": str(entry["period"]),
+                "fiscal_year": (financial_year or "").split("-")[0],
+                "is_adjustment": 1,
+                "posted_total_amt": f"{running_total:.2f}"
+            })
+
     print(f"Total records returned: {len(result)}")
 
     return result

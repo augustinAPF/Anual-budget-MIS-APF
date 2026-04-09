@@ -1683,15 +1683,144 @@ def get_combined_actuals(
 #     }
 
     
+# @frappe.whitelist(allow_guest=True)
+# def get_number_card_totals(financial_year=None, set_group_id="3"):
+
+#     results = []
+
+#     conditions = []
+#     values = []
+
+#     # ✅ Handle comma-separated matching
+#     if set_group_id:
+#         if isinstance(set_group_id, str):
+#             group_ids = [x.strip() for x in set_group_id.split(",") if x.strip()]
+#         else:
+#             group_ids = set_group_id
+
+#         like_conditions = []
+#         for gid in group_ids:
+#             like_conditions.append("set_group_id LIKE %s")
+#             values.append(f"%{gid}%")
+
+#         conditions.append("(" + " OR ".join(like_conditions) + ")")
+
+#     where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+#     # ✅ Fetch settings using SQL (NOT frappe.get_all)
+#     settings_docs = frappe.db.sql(f"""
+#         SELECT name, number_card_title
+#         FROM `tabOverview number cards settings`
+#         WHERE {where_clause}
+#         ORDER BY creation DESC
+#     """, values, as_dict=True)
+
+#     for setting in settings_docs:
+
+#         doc = frappe.get_doc(
+#             "Overview number cards settings",
+#             setting.name
+#         )
+
+#         units = [d.unit for d in doc.select_units if d.unit]
+#         cost_centers = [d.cost_center for d in doc.select_cost_centers if d.cost_center]
+#         locations = [d.location_code for d in doc.select_location_codes if d.location_code]
+
+#         label = doc.number_card_title
+
+#         if not units or not financial_year:
+#             results.append({
+#                 "settings_doc": doc.name,
+#                 "label": label,
+#                 "total_budget": 0,
+#                 "error": "unit and financial_year are mandatory"
+#             })
+#             continue
+
+#         conditions = []
+#         values = []
+
+#         conditions.append(
+#             f"fb.set_id IN ({', '.join(['%s'] * len(units))})"
+#         )
+#         values.extend(units)
+
+#         conditions.append("fb.financial_year = %s")
+#         values.append(financial_year)
+
+#         if cost_centers:
+#             conditions.append(
+#                 f"fb.cost_center IN ({', '.join(['%s'] * len(cost_centers))})"
+#             )
+#             values.extend(cost_centers)
+
+#         if locations:
+#             conditions.append(
+#                 f"fb.location_code IN ({', '.join(['%s'] * len(locations))})"
+#             )
+#             values.extend(locations)
+
+#         query = f"""
+#             SELECT
+#                 SUM(fba.year) AS total_budget
+#             FROM
+#                 `tabFinance Budget` fb
+#             JOIN
+#                 `tabFinance Budget Amounts` fba
+#                 ON fba.parent = fb.name
+#             WHERE
+#                 fb.docstatus < 2
+#                 AND {' AND '.join(conditions)}
+#         """
+
+#         data = frappe.db.sql(query, values, as_dict=True)
+#         total = data[0].total_budget or 0
+
+#         results.append({
+#             "settings_doc": doc.name,
+#             "label": label,
+#             "total_budget": total
+#         })
+
+#     # ✅ Grand Total
+#     if financial_year:
+#         grand_total_data = frappe.db.sql("""
+#             SELECT
+#                 SUM(fba.year) AS grand_total
+#             FROM
+#                 `tabFinance Budget Amounts` fba
+#             JOIN
+#                 `tabFinance Budget` fb
+#                 ON fba.parent = fb.name
+#             WHERE
+#                 fb.docstatus < 2
+#                 AND fb.financial_year = %s
+#         """, (financial_year,), as_dict=True)
+
+#         grand_total = grand_total_data[0].grand_total or 0
+#     else:
+#         grand_total = 0
+
+#     return {
+#         "number_cards": results,
+#         "grand_total": grand_total
+#     }
+
+
+
+
+
 @frappe.whitelist(allow_guest=True)
 def get_number_card_totals(financial_year=None, set_group_id="3"):
 
     results = []
 
+    # -----------------------------
+    # 1. FILTER SETTINGS DOCUMENTS
+    # -----------------------------
     conditions = []
     values = []
 
-    # ✅ Handle comma-separated matching
     if set_group_id:
         if isinstance(set_group_id, str):
             group_ids = [x.strip() for x in set_group_id.split(",") if x.strip()]
@@ -1707,7 +1836,6 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
 
     where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-    # ✅ Fetch settings using SQL (NOT frappe.get_all)
     settings_docs = frappe.db.sql(f"""
         SELECT name, number_card_title
         FROM `tabOverview number cards settings`
@@ -1715,6 +1843,9 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         ORDER BY creation DESC
     """, values, as_dict=True)
 
+    # -----------------------------
+    # 2. LOOP EACH CARD
+    # -----------------------------
     for setting in settings_docs:
 
         doc = frappe.get_doc(
@@ -1740,20 +1871,24 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         conditions = []
         values = []
 
+        # Units
         conditions.append(
             f"fb.set_id IN ({', '.join(['%s'] * len(units))})"
         )
         values.extend(units)
 
+        # Financial Year
         conditions.append("fb.financial_year = %s")
         values.append(financial_year)
 
+        # Cost Centers
         if cost_centers:
             conditions.append(
                 f"fb.cost_center IN ({', '.join(['%s'] * len(cost_centers))})"
             )
             values.extend(cost_centers)
 
+        # Locations
         if locations:
             conditions.append(
                 f"fb.location_code IN ({', '.join(['%s'] * len(locations))})"
@@ -1782,14 +1917,16 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
             "total_budget": total
         })
 
-    # ✅ Grand Total
+    # -----------------------------
+    # 3. GRAND TOTAL (CHILD TABLE)
+    # -----------------------------
     if financial_year:
         grand_total_data = frappe.db.sql("""
             SELECT
                 SUM(fba.year) AS grand_total
             FROM
                 `tabFinance Budget Amounts` fba
-            JOIN
+            INNER JOIN
                 `tabFinance Budget` fb
                 ON fba.parent = fb.name
             WHERE
@@ -1801,10 +1938,14 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
     else:
         grand_total = 0
 
+    # -----------------------------
+    # 4. FINAL RESPONSE
+    # -----------------------------
     return {
         "number_cards": results,
         "grand_total": grand_total
     }
+
 # ! =======================================================  Consolidated report Line item wise Grouping YTD =============================================================================
 def _num(x):
     """Safe numeric conversion"""

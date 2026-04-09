@@ -7,6 +7,7 @@
  "field_order": [
   "number_card_title",
   "set_group_id",
+  "combination_table_settings",
   "select_units",
   "select_cost_centers",
   "select_location_codes"
@@ -44,12 +45,19 @@
    "fieldtype": "Table",
    "label": "Select Location Codes",
    "options": "Location code Link"
+  },
+  {
+   "default": "0",
+   "fieldname": "combination_table_settings",
+   "fieldtype": "Table",
+   "label": "Combination of unit  Table settings",
+   "options": "Combination of unit settings"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-08 16:02:29.214215",
+ "modified": "2026-04-09 10:15:21.492566",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Overview number cards settings",

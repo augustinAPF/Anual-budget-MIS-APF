@@ -1418,6 +1418,79 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
 
 
 
+@frappe.whitelist(allow_guest=True)
+def get_number_card_settings_1(table_name_filter=None):
+
+    results = []
+
+    def parse_list(value):
+        if not value:
+            return []
+        return [v.strip() for v in str(value).split(",") if v.strip()]
+
+    # ✅ HANDLE MULTIPLE TABLE NAMES
+    table_filters = parse_list(table_name_filter)
+    table_filters = [t.lower() for t in table_filters]
+
+    # ✅ FETCH ALL SETTINGS (NO FILTER)
+    settings_docs = frappe.get_all(
+        "Overview number cards settings",
+        fields=["name", "number_card_title"],
+        order_by="creation desc"
+    )
+
+    for setting in settings_docs:
+
+        doc = frappe.get_doc(
+            "Overview number cards settings",
+            setting.name
+        )
+
+        # -------- EXISTING FIELDS --------
+        units = [d.unit for d in doc.select_units]
+        cost_centers = [d.cost_center for d in doc.select_cost_centers]
+        cost_centers_erp = [d.cost_center_erp for d in doc.select_cost_centers]
+        locations = [d.location_code for d in doc.select_location_codes]
+        locations_erp = [d.location_code_erp for d in doc.select_location_codes]
+
+        # -------- CHILD TABLE FILTER --------
+        combination_settings = []
+
+        for row in doc.combination_table_settings:
+
+            row_table_name = (row.table_name or "").strip().lower()
+
+            # ✅ APPLY FILTER
+            if table_filters and row_table_name not in table_filters:
+                continue
+
+            combination_settings.append({
+                "table_name": row.table_name,
+                "sequence_id": row.sequence_id,
+                "is_this_sub_item": row.is_this_sub_item
+            })
+
+        # ❗ Skip if no matching child rows
+        if table_filters and not combination_settings:
+            continue
+
+        # -------- FINAL RESULT --------
+        results.append({
+            "settings_doc": doc.name,
+            "label": doc.number_card_title,
+            "units": units,
+            "cost_centers": cost_centers,
+            "cost_centers_erp": cost_centers_erp,
+            "locations": locations,
+            "locations_erp": locations_erp,
+            "combination_settings": combination_settings
+        })
+
+    return results
+
+
+
+
 
 @frappe.whitelist(allow_guest=True)
 def get_headcount(financial_year=None):
