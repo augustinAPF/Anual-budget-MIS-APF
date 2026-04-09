@@ -1415,3 +1415,27 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
 #             }
 #         }
 #     }
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_headcount(financial_year=None):
+    filters = {}
+    if financial_year:
+        filters["financial_year"] = financial_year
+
+    docs = frappe.get_all(
+        "Headcount",
+        filters=filters,
+        fields=["name", "financial_year", "total_head_count"]
+    )
+
+    for doc in docs:
+        doc["units"] = frappe.get_all(
+            "Headcount Operating Units",
+            filters={"parent": doc["name"]},
+            fields=["unit", "total_headcount", "unit_description"]
+        )
+
+    return docs

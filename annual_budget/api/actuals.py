@@ -1,4 +1,4 @@
-from annual_budget.api.adjustments import get_monthly_adjustments, get_monthly_adjustments_month_wise
+from annual_budget.api.adjustments import get_adjustments_month_wise, get_monthly_adjustments
 import frappe
 import requests
 import xmltodict
@@ -666,7 +666,7 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
         # --------------------------------------------
         # 4️⃣ Get Frappe Grouped Data
         # --------------------------------------------
-        frappe_rows = get_monthly_adjustments_month_wise(
+        frappe_rows = get_adjustments_month_wise(
             fiscal_year,accounting_period
         )
 

@@ -235,11 +235,115 @@
 
 
 
+# import frappe
+# from collections import defaultdict
+
+# @frappe.whitelist(allow_guest=True)
+# def get_monthly_adjustments_month_wise(financial_year=None, month=None):
+
+#     month_map = {
+#         "April": 1, "May": 2, "June": 3, "July": 4,
+#         "August": 5, "September": 6, "October": 7,
+#         "November": 8, "December": 9,
+#         "January": 10, "February": 11, "March": 12
+#     }
+
+#     reverse_month_map = {v: k for k, v in month_map.items()}
+
+#     # ✅ Validate & print month
+#     if month is not None:
+#         try:
+#             month = int(month)
+
+#             if month < 1 or month > 12:
+#                 frappe.throw("Month must be between 1 and 12")
+
+#             month_name = reverse_month_map.get(month, "Invalid")
+
+#             # 🔥 Print instead of logger
+#             print(f"Selected Month -> Number: {month}, Name: {month_name}")
+
+#         except Exception:
+#             print(f"Invalid month input: {month}")
+#             frappe.throw("Invalid month format. Must be integer 1–12")
+
+#     filters = {}
+#     if financial_year:
+#         filters["financial_year"] = financial_year
+
+#     docs = frappe.get_all(
+#         "Monthly Adjustment",
+#         filters=filters,
+#         fields=["name", "financial_year", "month"]
+#     )
+
+#     temp_data = []
+
+#     # 🔹 Flatten data
+#     for doc in docs:
+#         period = month_map.get(doc.month, 0)
+
+#         # ✅ Apply month filter (YTD up to selected month)
+#         if month and period > month:
+#             continue
+
+#         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
+
+#         for row in full_doc.adjustment_line_items:
+#             amount = row.adjustment_amount or 0
+
+#             if row.adjustment_type == "Minus":
+#                 amount = -amount
+
+#             temp_data.append({
+#                 "unit": row.unit,
+#                 "gl": row.gl_code,
+#                 "loc": getattr(row, "location_code_erp", row.location_code),
+#                 "cc": getattr(row, "cost_center_erp", row.cost_center),
+#                 "period": period,
+#                 "amount": amount
+#             })
+
+#     # 🔹 Sort for YTD
+#     temp_data.sort(
+#         key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"])
+#     )
+
+#     ytd_totals = defaultdict(float)
+#     result = []
+
+#     for row in temp_data:
+#         key = (row["unit"], row["gl"], row["loc"], row["cc"])
+
+#         # ✅ Running total (YTD)
+#         ytd_totals[key] += row["amount"]
+#         frappe.log_error(title="Grand Total Debug", message=f"Grand Total Pre-Tax Return: {ytd_totals}")
+#         print(f"Total records returned: {ytd_totals}")
+
+#         result.append({
+#             "business_unit": row["unit"],
+#             "ledger": "ACTUALS",
+#             "account": row["gl"],
+#             "deptid": row["cc"],
+#             "operating_unit": row["loc"],
+#             "accounting_period": str(row["period"]),
+#             "fiscal_year": (financial_year or "").split("-")[0],
+#             "is_adjustment": 1,
+#             "posted_total_amt": f"{ytd_totals[key]:.2f}"
+#         })
+#         frappe.log_error(title="Grand Total Debug", message=f"Grand Total Pre-Tax Return: {ytd_totals}")
+
+
+#     # 🔥 Print total records
+#     print(f"Total records returned: {result}")
+
+#     return result
+
 import frappe
 from collections import defaultdict
 
 @frappe.whitelist(allow_guest=True)
-def get_monthly_adjustments_month_wise(financial_year=None, month=None):
+def get_adjustments_month_wise(financial_year=None, month=None):
 
     month_map = {
         "April": 1, "May": 2, "June": 3, "July": 4,
@@ -250,7 +354,7 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
 
     reverse_month_map = {v: k for k, v in month_map.items()}
 
-    # ✅ Validate & print month
+    # ✅ Validate month input
     if month is not None:
         try:
             month = int(month)
@@ -259,18 +363,18 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
                 frappe.throw("Month must be between 1 and 12")
 
             month_name = reverse_month_map.get(month, "Invalid")
-
-            # 🔥 Print instead of logger
             print(f"Selected Month -> Number: {month}, Name: {month_name}")
 
         except Exception:
             print(f"Invalid month input: {month}")
             frappe.throw("Invalid month format. Must be integer 1–12")
 
+    # 🔹 Filters
     filters = {}
     if financial_year:
         filters["financial_year"] = financial_year
 
+    # 🔹 Fetch parent docs
     docs = frappe.get_all(
         "Monthly Adjustment",
         filters=filters,
@@ -281,10 +385,21 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
 
     # 🔹 Flatten data
     for doc in docs:
-        period = month_map.get(doc.month, 0)
 
-        # ✅ Apply month filter (YTD up to selected month)
-        if month and period > month:
+        # ✅ Robust period detection
+        if isinstance(doc.month, int):
+            period = doc.month
+        elif str(doc.month).isdigit():
+            period = int(doc.month)
+        else:
+            period = month_map.get(doc.month, 0)
+
+        # ❌ Skip invalid month mapping
+        if period == 0:
+            continue
+
+        # ✅ YTD filter (1 → selected month)
+        if month is not None and period > month:
             continue
 
         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
@@ -304,7 +419,7 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
                 "amount": amount
             })
 
-    # 🔹 Sort for YTD
+    # 🔹 Sort for YTD calculation
     temp_data.sort(
         key=lambda x: (x["unit"], x["gl"], x["loc"], x["cc"], x["period"])
     )
@@ -312,13 +427,12 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
     ytd_totals = defaultdict(float)
     result = []
 
+    # 🔹 Calculate running totals
     for row in temp_data:
         key = (row["unit"], row["gl"], row["loc"], row["cc"])
 
-        # ✅ Running total (YTD)
+        # ✅ Running YTD total
         ytd_totals[key] += row["amount"]
-        frappe.log_error(title="Grand Total Debug", message=f"Grand Total Pre-Tax Return: {ytd_totals}")
-        print(f"Total records returned: {ytd_totals}")
 
         result.append({
             "business_unit": row["unit"],
@@ -331,15 +445,11 @@ def get_monthly_adjustments_month_wise(financial_year=None, month=None):
             "is_adjustment": 1,
             "posted_total_amt": f"{ytd_totals[key]:.2f}"
         })
-        frappe.log_error(title="Grand Total Debug", message=f"Grand Total Pre-Tax Return: {ytd_totals}")
 
-
-    # 🔥 Print total records
-    print(f"Total records returned: {result}")
+    # 🔥 Debug prints
+    print(f"Total records returned: {len(result)}")
 
     return result
-
-
 
 import frappe
 from collections import defaultdict

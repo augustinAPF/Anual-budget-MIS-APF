@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "financial_year",
-  "headcount"
+  "headcount",
+  "total_head_count"
  ],
  "fields": [
   {
@@ -21,12 +22,17 @@
    "fieldtype": "Table",
    "label": "Headcount Operating Units",
    "options": "Headcount Operating Units"
+  },
+  {
+   "fieldname": "total_head_count",
+   "fieldtype": "Int",
+   "label": "Total Head count"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-08 11:43:27.892747",
+ "modified": "2026-04-08 15:57:11.861626",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
  "name": "Headcount",
