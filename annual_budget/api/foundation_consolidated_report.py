@@ -1489,7 +1489,83 @@ def get_number_card_settings_1(table_name_filter=None):
     return results
 
 
+@frappe.whitelist(allow_guest=True)
+def get_number_card_actuals(financial_year, month, table_name_filter=None):
 
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    # ✅ Previous FY
+    previous_financial_year = get_previous_financial_year(financial_year)
+
+    # ✅ Get settings (NEW METHOD)
+    settings = get_number_card_settings_1(table_name_filter)
+
+    # ✅ Sort settings
+    settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
+
+    final_results = []
+
+    # ✅ Get accounting period + fiscal year
+    formatted = get_accounting_period_from_month(
+        month,
+        previous_financial_year
+    )
+
+    accounting_period = formatted.get("accounting_period")
+    fiscal_year = formatted.get("fiscal_year")
+
+    # ✅ CALL ONLY ONCE (Performance optimized)
+    grouped_actuals_response = get_grouped_actuals(
+        fiscal_year=fiscal_year,
+        accounting_period=accounting_period
+    )
+
+    grouped_actuals_data = grouped_actuals_response.get("data", [])
+
+    # ✅ MAIN LOOP
+    for s in settings:
+
+        # 🔹 Prepare filters
+        units = safe_join(s.get("units"))
+        cost_centers = safe_join(s.get("cost_centers"))
+        locations = safe_join(s.get("locations"))
+        cost_centers_erp = safe_join(s.get("cost_centers_erp"))
+        locations_erp = safe_join(s.get("locations_erp"))
+
+        # ✅ LOOP combination_settings
+        for combo in s.get("combination_settings", []):
+
+            actuals_data = get_combined_actuals(
+                financial_year=financial_year,
+                month=month,
+                unit=units,
+                cost_center=cost_centers,
+                location_code=locations,
+                erp_cost_center_value=cost_centers_erp,
+                erp_loc_value=locations_erp,
+                grouped_actuals_data=grouped_actuals_data,
+                table_name=combo.get("table_name")  # ✅ important
+            )
+
+            final_results.append({
+                "settings_doc": s.get("settings_doc"),
+                "label": s.get("label"),
+                "table_name": combo.get("table_name"),
+                "sequence_id": combo.get("sequence_id"),
+                "is_this_sub_item": combo.get("is_this_sub_item"),
+                "units": units,
+                "cost_centers": cost_centers,
+                "locations": locations,
+                "cost_centers_erp": cost_centers_erp,
+                "locations_erp": locations_erp,
+                "actuals": actuals_data,
+            })
+
+    # ✅ Optional: sort by sequence
+    final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
+
+    return final_results
 
 
 @frappe.whitelist(allow_guest=True)

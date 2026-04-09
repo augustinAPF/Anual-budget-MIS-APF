@@ -1807,8 +1807,6 @@ def get_combined_actuals(
 #     }
 
 
-import frappe
-
 @frappe.whitelist(allow_guest=True)
 def get_number_card_totals(financial_year=None, set_group_id="3"):
 
@@ -1818,6 +1816,7 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
     # 1. FILTER SETTINGS DOCUMENTS
     # -----------------------------
     filters = {}
+    or_filters = []
 
     if set_group_id:
         if isinstance(set_group_id, str):
@@ -1825,14 +1824,27 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         else:
             group_ids = set_group_id
 
-        filters["set_group_id"] = ["like", f"%{'%'.join(group_ids)}%"]
+        for gid in group_ids:
+            or_filters.append(["set_group_id", "like", f"%{gid}%"])
 
     settings_docs = frappe.get_all(
         "Overview number cards settings",
         filters=filters,
+        or_filters=or_filters,
         fields=["name", "number_card_title"],
         order_by="creation desc"
     )
+
+    # -----------------------------
+    # HELPER → MONTHLY SUM
+    # -----------------------------
+    def get_row_total(r):
+        return (
+            (r.april or 0) + (r.may or 0) + (r.june or 0) +
+            (r.july or 0) + (r.august or 0) + (r.september or 0) +
+            (r.october or 0) + (r.november or 0) + (r.december or 0) +
+            (r.january or 0) + (r.february or 0) + (r.march or 0)
+        )
 
     # -----------------------------
     # 2. LOOP EACH CARD
@@ -1860,7 +1872,7 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
             continue
 
         # -----------------------------
-        # BUILD FILTERS
+        # 3. GET BUDGETS
         # -----------------------------
         budget_filters = {
             "docstatus": ["<", 2],
@@ -1874,9 +1886,6 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         if locations:
             budget_filters["location_code"] = ["in", locations]
 
-        # -----------------------------
-        # GET BUDGET DOCS
-        # -----------------------------
         budgets = frappe.get_all(
             "Finance Budget",
             filters=budget_filters,
@@ -1889,15 +1898,23 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
             budget_names = [b.name for b in budgets]
 
             # -----------------------------
-            # SUM CHILD TABLE
+            # 4. GET CHILD ROWS
             # -----------------------------
-            amounts = frappe.get_all(
+            rows = frappe.get_all(
                 "Finance Budget Amounts",
                 filters={"parent": ["in", budget_names]},
-                fields=["year"]
+                fields=[
+                    "april", "may", "june",
+                    "july", "august", "september",
+                    "october", "november", "december",
+                    "january", "february", "march"
+                ]
             )
 
-            total = sum([a.year or 0 for a in amounts])
+            # -----------------------------
+            # 5. SUM MONTHLY (FIXED)
+            # -----------------------------
+            total = sum(get_row_total(r) for r in rows)
 
         results.append({
             "settings_doc": doc.name,
@@ -1906,7 +1923,7 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         })
 
     # -----------------------------
-    # 3. GRAND TOTAL
+    # 6. GRAND TOTAL (NO SQL)
     # -----------------------------
     if financial_year:
 
@@ -1922,26 +1939,31 @@ def get_number_card_totals(financial_year=None, set_group_id="3"):
         if budgets:
             budget_names = [b.name for b in budgets]
 
-            amounts = frappe.get_all(
+            rows = frappe.get_all(
                 "Finance Budget Amounts",
                 filters={"parent": ["in", budget_names]},
-                fields=["year"]
+                fields=[
+                    "april", "may", "june",
+                    "july", "august", "september",
+                    "october", "november", "december",
+                    "january", "february", "march"
+                ]
             )
 
-            grand_total = sum([a.year or 0 for a in amounts])
+            grand_total = sum(get_row_total(r) for r in rows)
         else:
             grand_total = 0
+
     else:
         grand_total = 0
 
     # -----------------------------
-    # 4. FINAL RESPONSE
+    # 7. FINAL RESPONSE
     # -----------------------------
     return {
         "number_cards": results,
         "grand_total": grand_total
     }
-
 
 # @frappe.whitelist(allow_guest=True)
 # def get_number_card_totals(financial_year=None, set_group_id="3"):
