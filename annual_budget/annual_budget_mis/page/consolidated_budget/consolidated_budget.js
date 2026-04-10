@@ -16073,11 +16073,16 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 				else         { normalRows.push(row); }
 			});
 
+			// Total sums only main items (is_this_sub_item === 0), skipping sub-items
 			var normalTotal = zeroA();
-			normalRows.forEach(function (r) { normalTotal = addA(normalTotal, r.vals); });
+			normalRows.forEach(function (r) {
+				if (!r.isSub) { normalTotal = addA(normalTotal, r.vals); }
+			});
 
 			var covidTotal = zeroA();
-			covidRows.forEach(function (r) { covidTotal = addA(covidTotal, r.vals); });
+			covidRows.forEach(function (r) {
+				if (!r.isSub) { covidTotal = addA(covidTotal, r.vals); }
+			});
 
 			var out = [];
 			normalRows.forEach(function (r) { out.push(r); });
