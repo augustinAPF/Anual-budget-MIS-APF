@@ -1839,6 +1839,9 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None):
     final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
 
     return final_results
+
+
+
 # @frappe.whitelist(allow_guest=True)
 # def get_(financial_year, month, table_name_filter=None):
 

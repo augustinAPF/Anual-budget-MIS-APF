@@ -16364,12 +16364,15 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			Loader.show('Building Summary in INR\u2026');
 
 			// Derive column labels from FY
-			// e.g. "2025-26" → planLabel = "2026-27 Budget" | actLabel = "2025-26 Est"
-			var fyParts   = (fy || '2025-26').split('-');
-			var fyStart   = parseInt(fyParts[0] || '2025', 10);
-			var fyEndYY   = parseInt(fyParts[1] || '26',   10);
-			var planLabel = (fyStart + 1) + '-' + String(fyEndYY + 1).slice(-2) + ' Budget';
-			var actLabel  = fy + ' Est';
+			// ytd                  = current selected FY plan  → e.g. "2025-26 Budget"
+			// total_posted_amt_ytd = previous FY actuals/est   → e.g. "2024-25 Est"
+			var fyParts    = (fy || '2025-26').split('-');
+			var fyStart    = parseInt(fyParts[0] || '2025', 10);
+			var fyEndYY    = parseInt(fyParts[1] || '26',   10);
+			var planLabel  = fy + ' Budget';
+			var prevStart  = fyStart - 1;
+			var prevEndYY  = String(fyEndYY - 1).padStart(2, '0');
+			var actLabel   = prevStart + '-' + prevEndYY + ' Est';
 
 			frappe.call({
 				method   : 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
