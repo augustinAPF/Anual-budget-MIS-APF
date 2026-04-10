@@ -1445,7 +1445,6 @@ def get_number_card_settings_1(table_name_filter=None):
             "Overview number cards settings",
             setting.name
         )
-
         # -------- EXISTING FIELDS --------
         units = [d.unit for d in doc.select_units]
         cost_centers = [d.cost_center for d in doc.select_cost_centers]
@@ -1755,7 +1754,7 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None):
 
     # ✅ Get settings
     settings = get_number_card_settings_1(table_name_filter)
-
+    print(settings,"master settings")
     # ✅ Sort settings
     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
 
