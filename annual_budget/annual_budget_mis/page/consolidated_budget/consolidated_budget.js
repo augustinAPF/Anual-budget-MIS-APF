@@ -15243,7 +15243,6 @@
 
 // };
 
-
 frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	// =============================================================================
@@ -15609,7 +15608,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 			'<ul id="cb-tab-nav">' +
 				'<li><a class="cb-tab-link active" data-tab="ppt">Foundation level/Overall metrics</a></li>' +
-				'<li><a class="cb-tab-link" data-tab="summary_inr">Unit wise</a></li>' +
+				'<li><a class="cb-tab-link" data-tab="summary_inr">Summary in INR</a></li>' +
 				'<li><a class="cb-tab-link" data-tab="headcount">Headcount</a></li>' +
 				'<li><a class="cb-tab-link" data-tab="annual_budget">Annual Budget Consolidated</a></li>' +
 				'<li><a class="cb-tab-link" data-tab="estimate">Estimate Consolidated</a></li>' +
@@ -16357,7 +16356,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			$tab.html(
 				'<div style="padding:20px;text-align:center;color:#aaa;">Loading\u2026</div>'
 			);
-			Loader.show('Building unit wise summary\u2026');
+			Loader.show('Building Summary in INR\u2026');
 
 			// Derive column labels from FY
 			// e.g. "2025-26" → planLabel = "2026-27 Budget" | actLabel = "2025-26 Est"
@@ -16434,7 +16433,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					Loader.hide();
 					$tab.html(
 						'<div style="padding:40px;text-align:center;color:red;">' +
-						'Error loading  Unit wise Summary .</div>'
+						'Error loading Summary in INR data.</div>'
 					);
 				}
 			});
@@ -16450,235 +16449,349 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 	var Headcount = (function () {
 
-		var SUMMARY = [
-			{ unit:'Field',                       avgHC_24:843,  avgHC_25:1343, pct_avg:59,   fy_est:2137.5, fy_plan:3834.9, pct_plan:43,   opex_est:205.1, opex_plan:null },
-			{ unit:'Schools',                     avgHC_24:177,  avgHC_25:185,  pct_avg:30,   fy_est:162.7,  fy_plan:236.8,  pct_plan:45,   opex_est:26.8,  opex_plan:null },
-			{ unit:'University - Bangalore',      avgHC_24:198,  avgHC_25:185,  pct_avg:30,   fy_est:107.2,  fy_plan:144.5,  pct_plan:35,   opex_est:null,  opex_plan:null },
-			{ unit:'University - Bhopal',         avgHC_24:45,   avgHC_25:100,  pct_avg:23,   fy_est:49.3,   fy_plan:57.0,   pct_plan:95,   opex_est:null,  opex_plan:null },
-			{ unit:'University - Jharkhand',      avgHC_24:null, avgHC_25:null, pct_avg:null, fy_est:0.3,    fy_plan:1.9,    pct_plan:539,  opex_est:null,  opex_plan:null },
-			{ unit:'Philanthropy',                avgHC_24:59,   avgHC_25:120,  pct_avg:null, fy_est:1083.6, fy_plan:1414.6, pct_plan:30,   opex_est:null,  opex_plan:null },
-			{ unit:'Health',                      avgHC_24:15,   avgHC_25:33,   pct_avg:179,  fy_est:166.2,  fy_plan:191.1,  pct_plan:14,   opex_est:null,  opex_plan:null },
-			{ unit:'Livelihoods',                 avgHC_24:30,   avgHC_25:71,   pct_avg:109,  fy_est:5.9,    fy_plan:5.0,    pct_plan:-15,  opex_est:null,  opex_plan:null },
-			{ unit:'New Initiatives',             avgHC_24:1,    avgHC_25:12,   pct_avg:23,   fy_est:385.9,  fy_plan:3625.1, pct_plan:327,  opex_est:null,  opex_plan:null },
-			{ unit:'Enablers & Education Grants', avgHC_24:56,   avgHC_25:122,  pct_avg:null, fy_est:null,   fy_plan:null,   pct_plan:null, opex_est:null,  opex_plan:null },
-			{ unit:'Total',                       avgHC_24:null, avgHC_25:2387, pct_avg:29,   fy_est:2137.5, fy_plan:3834.9, pct_plan:79,   opex_est:null,  opex_plan:null, isTotal:true }
-		];
-
-		var CLOSING = [
-			{ unit:'Field',                       d24:1286, d25:1399, d26:1999 },
-			{ unit:'Schools',                     d24:177,  d25:193,  d26:289  },
-			{ unit:'University - Bangalore',      d24:396,  d25:408,  d26:543  },
-			{ unit:'University - Bhopal',         d24:90,   d25:109,  d26:140  },
-			{ unit:'University - Jharkhand',      d24:null, d25:null, d26:5    },
-			{ unit:'Philanthropy',                d24:117,  d25:123,  d26:184  },
-			{ unit:'Health',                      d24:60,   d25:82,   d26:229  },
-			{ unit:'Livelihoods',                 d24:30,   d25:36,   d26:59   },
-			{ unit:'New Initiatives',             d24:1,    d25:23,   d26:144  },
-			{ unit:'Enablers',                    d24:112,  d25:131,  d26:169  },
-			{ unit:'Total',                       d24:2269, d25:2504, d26:3661, isTotal:true }
-		];
-
-		var AVERAGE = [
-			{ unit:'Field',                       d24:843,  d25:1343, d26:1649 },
-			{ unit:'Schools',                     d24:88,   d25:185,  d26:241  },
-			{ unit:'University - Bangalore',      d24:198,  d25:402,  d26:476  },
-			{ unit:'University - Bhopal',         d24:45,   d25:100,  d26:125  },
-			{ unit:'University - Jharkhand',      d24:null, d25:null, d26:3    },
-			{ unit:'Philanthropy',                d24:59,   d25:120,  d26:154  },
-			{ unit:'Health',                      d24:30,   d25:71,   d26:156  },
-			{ unit:'Livelihoods',                 d24:15,   d25:33,   d26:48   },
-			{ unit:'New Initiatives',             d24:1,    d25:12,   d26:84   },
-			{ unit:'Enablers & Education Grants', d24:56,   d25:122,  d26:150  },
-			{ unit:'Total',                       d24:null, d25:2387, d26:3083, isTotal:true }
-		];
-
-		var CLOSING_PCT = [
-			{ unit:'Field',                       p1:'8.8%',    p2:'35.7%'  },
-			{ unit:'Schools',                     p1:'9.0%',    p2:'49.7%'  },
-			{ unit:'University - Bangalore',      p1:'3.0%',    p2:'33.1%'  },
-			{ unit:'University - Bhopal',         p1:'21.1%',   p2:'28.4%'  },
-			{ unit:'University - Jharkhand',      p1:'-',       p2:'-'      },
-			{ unit:'Philanthropy',                p1:'5.1%',    p2:'49.6%'  },
-			{ unit:'Health',                      p1:'36.7%',   p2:'179.3%' },
-			{ unit:'Livelihoods',                 p1:'20.0%',   p2:'63.9%'  },
-			{ unit:'New Initiatives',             p1:'2200.0%', p2:'526.1%' },
-			{ unit:'Enablers & Education Grants', p1:'17.0%',   p2:'29.0%'  },
-			{ unit:'Total',                       p1:'10.4%',   p2:'46.2%', isTotal:true }
-		];
-
-		var AVERAGE_PCT = [
-			{ unit:'Field',                       p1:'108.0%',  p2:'22.8%'  },
-			{ unit:'Schools',                     p1:'109.0%',  p2:'30.3%'  },
-			{ unit:'University - Bangalore',      p1:'103.0%',  p2:'18.3%'  },
-			{ unit:'University - Bhopal',         p1:'121.1%',  p2:'25.1%'  },
-			{ unit:'University - Jharkhand',      p1:'-',       p2:'-'      },
-			{ unit:'Philanthropy',                p1:'105.1%',  p2:'27.9%'  },
-			{ unit:'Health',                      p1:'136.7%',  p2:'119.0%' },
-			{ unit:'Livelihoods',                 p1:'120.0%',  p2:'43.9%'  },
-			{ unit:'New Initiatives',             p1:'2300.0%', p2:'395.8%' },
-			{ unit:'Enablers & Education Grants', p1:'117.0%',  p2:'23.5%'  },
-			{ unit:'Total',                       p1:'110.4%',  p2:'29.2%', isTotal:true }
-		];
-
-		function dash(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
+		// ── Helpers ───────────────────────────────────────────────────────────────
 		function fmtNum(v) {
 			if (v === null || v === undefined) { return '-'; }
 			var n = Math.round(parseFloat(v));
 			return isNaN(n) ? '-' : n.toLocaleString('en-IN');
 		}
-		function fmtDec(v) {
-			if (v === null || v === undefined) { return '-'; }
-			var n = parseFloat(v);
-			return isNaN(n) ? '-' : n.toFixed(1);
+		// IFERROR(b/a - 1, 0)
+		function fmtPct(a, b) {
+			a = parseFloat(a); b = parseFloat(b);
+			if (isNaN(a) || isNaN(b) || a === 0) { return '0%'; }
+			var p = ((b / a) - 1) * 100;
+			return (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
 		}
 		function hcSection(text) {
 			return '<div class="hc-section-title">' + text + '</div>';
 		}
+		// Scroll wrapper only for the first summary table
 		function scrollWrap(inner) {
 			return '<div class="cb-scroll-wrapper" style="margin-bottom:20px;">' + inner + '</div>';
 		}
-
-		function renderStats() {
-			var stats = [
-				{ label:'Total Closing H/C (Mar-26 Plan)',  value:'3,661' },
-				{ label:'Total Average H/C (FY25-26 Plan)', value:'3,083' },
-				{ label:'YoY Growth \u2014 Closing',         value:'46.2%' },
-				{ label:'YoY Growth \u2014 Average',         value:'29.2%' }
-			];
-			return '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">' +
-				stats.map(function (s) {
-					return '<div class="hc-kpi-card"><div class="hc-kpi-label">' + s.label +
-						'</div><div class="hc-kpi-value">' + s.value + '</div></div>';
-				}).join('') +
-			'</div>';
+		// Plain wrapper — no scroll, no max-width — for tables 2-5
+		function plainWrap(inner) {
+			return '<div style="margin-bottom:20px;overflow:visible;">' + inner + '</div>';
 		}
 
-		function renderSummary() {
-			var rows = '';
-			SUMMARY.forEach(function (r) {
-				var cls = r.isTotal ? 'cb-row-grand' : '';
-				rows += '<tr class="' + cls + '">' +
-					'<td style="text-align:left;">' + r.unit + '</td>' +
-					'<td>' + fmtNum(r.avgHC_24)  + '</td>' +
-					'<td>' + fmtNum(r.avgHC_25)  + '</td>' +
-					'<td>' + dash(r.pct_avg  !== null ? r.pct_avg  + '%' : null) + '</td>' +
-					'<td>' + fmtDec(r.fy_est)    + '</td>' +
-					'<td>' + fmtDec(r.fy_plan)   + '</td>' +
-					'<td>' + dash(r.pct_plan !== null ? r.pct_plan + '%' : null) + '</td>' +
-					'<td>' + fmtDec(r.opex_est)  + '</td>' +
-					'<td>' + fmtDec(r.opex_plan) + '</td>' +
-					'</tr>';
+		// ── Transform API records ─────────────────────────────────────────────────
+		function transformData(records) {
+			var sorted = (records || []).slice().sort(function (a, b) {
+				return (a.financial_year || '').localeCompare(b.financial_year || '');
 			});
+			var yrs = sorted.map(function (r) { return r.financial_year || ''; });
+
+			var unitMap = {};
+			sorted.forEach(function (rec) {
+				(rec.units || []).forEach(function (u) {
+					var id = String(u.unit);
+					if (!unitMap[id]) { unitMap[id] = { id: id, description: '', hc: {} }; }
+					unitMap[id].hc[rec.financial_year] = u.total_headcount || 0;
+					if (rec.financial_year === yrs[yrs.length - 1]) {
+						unitMap[id].description = (u.unit_description || '').trim();
+					}
+				});
+			});
+
+			var units = Object.keys(unitMap)
+				.sort(function (a, b) { return parseInt(a, 10) - parseInt(b, 10); })
+				.map(function (id) { return unitMap[id]; });
+
+			var totals = {};
+			sorted.forEach(function (rec) { totals[rec.financial_year] = rec.total_head_count || 0; });
+
+			return { yrs: yrs, units: units, totals: totals };
+		}
+
+		// ── Label helpers ─────────────────────────────────────────────────────────
+		function fyToDate(fy) {
+			var p = (fy || '').split('-');
+			var endYear = String(parseInt(p[0] || '2024', 10) + 1);
+			return '3/31/' + endYear;
+		}
+		function fyToMar(fy) {
+			var p = (fy || '').split('-');
+			return '31-Mar-' + (p[1] || p[0].slice(-2));
+		}
+		function fyLabel(fy) {
+			var p = (fy || '').split('-');
+			return 'FY' + (p[0] || '').slice(-2) + '-' + (p[1] || '');
+		}
+
+		// ── Average H/C ───────────────────────────────────────────────────────────
+		// avgHC[idx] = (closing[idx-1] + closing[idx]) / 2
+		function avgHC(unit, yrs, idx) {
+			if (idx === 0) {
+				var v = unit.hc[yrs[0]];
+				return (v !== undefined) ? v : null;
+			}
+			var prev = unit.hc[yrs[idx - 1]], curr = unit.hc[yrs[idx]];
+			if (prev === undefined || curr === undefined) { return null; }
+			return (prev + curr) / 2;
+		}
+		function avgTotal(totals, yrs, idx) {
+			if (idx === 0) { return totals[yrs[0]] || null; }
+			var p = totals[yrs[idx - 1]], c = totals[yrs[idx]];
+			return (p && c) ? (p + c) / 2 : null;
+		}
+
+		// ─────────────────────────────────────────────────────────────────────────
+		// TABLE 1 — Headcount Summary  (with scroll wrapper)
+		// ─────────────────────────────────────────────────────────────────────────
+		function renderSummary(t) {
+			var yrs = t.yrs, units = t.units, totals = t.totals;
+			var y1idx = yrs.length - 2, y2idx = yrs.length - 1;
+			var y1 = yrs[y1idx] || yrs[0], y2 = yrs[y2idx] || yrs[0];
+
+			var rows = '';
+			units.forEach(function (u) {
+				var a1 = avgHC(u, yrs, y1idx), a2 = avgHC(u, yrs, y2idx);
+				rows += (
+					'<tr>' +
+					'<td style="text-align:left;">' + u.description + '</td>' +
+					'<td>' + (a1 !== null ? Math.round(a1).toLocaleString('en-IN') : '-') + '</td>' +
+					'<td>' + (a2 !== null ? Math.round(a2).toLocaleString('en-IN') : '-') + '</td>' +
+					'<td>' + fmtPct(a1, a2) + '</td>' +
+					'<td>-</td><td>-</td><td>-</td>' +
+					'</tr>'
+				);
+			});
+
+			var ta1 = avgTotal(totals, yrs, y1idx), ta2 = avgTotal(totals, yrs, y2idx);
+			rows += (
+				'<tr class="cb-row-grand">' +
+				'<td style="text-align:left;">Total</td>' +
+				'<td>' + (ta1 !== null ? Math.round(ta1).toLocaleString('en-IN') : '-') + '</td>' +
+				'<td>' + (ta2 !== null ? Math.round(ta2).toLocaleString('en-IN') : '-') + '</td>' +
+				'<td>' + fmtPct(ta1, ta2) + '</td>' +
+				'<td>-</td><td>-</td><td>-</td>' +
+				'</tr>'
+			);
+
 			return scrollWrap(
 				'<table class="cb-table" style="width:100%;">' +
 				'<thead>' +
-				'<tr class="cb-thead-main">' +
-				'<th rowspan="2" style="text-align:left !important;min-width:200px;">Unit</th>' +
-				'<th colspan="3" style="text-align:center !important;">Average H/C</th>' +
-				'<th colspan="3" style="text-align:center !important;">Opex Spend (&#8377; Cr.)</th>' +
-				'<th colspan="2" style="text-align:center !important;">Opex Spend (&#8377; Cr.)</th>' +
-				'</tr>' +
-				'<tr class="cb-thead-sub">' +
-				'<th>31-Mar-25</th><th>31-Mar-26 Plan</th><th>% Increase</th>' +
-				'<th>FY24-25 Est</th><th>FY25-26 Plan</th><th>% Increase</th>' +
-				'<th>FY24-25 Est</th><th>FY25-26 Plan</th>' +
-				'</tr></thead><tbody>' + rows + '</tbody></table>'
+					'<tr class="cb-thead-main">' +
+						'<th rowspan="2" style="text-align:left !important;min-width:200px;">Unit</th>' +
+						'<th colspan="3" style="text-align:center !important;">Average H/C</th>' +
+						'<th colspan="3" style="text-align:center !important;">Opex Spend (&#8377; Cr.)</th>' +
+					'</tr>' +
+					'<tr class="cb-thead-sub">' +
+						'<th>' + fyToDate(y1) + '</th>' +
+						'<th>' + fyToDate(y2) + '</th>' +
+						'<th>% Increase</th>' +
+						'<th>' + fyLabel(y1) + ' Est</th>' +
+						'<th>' + fyLabel(y2) + ' Plan</th>' +
+						'<th>% Increase</th>' +
+					'</tr>' +
+				'</thead>' +
+				'<tbody>' + rows + '</tbody>' +
+				'</table>'
 			);
 		}
 
-		function renderClosing() {
+		// ─────────────────────────────────────────────────────────────────────────
+		// TABLE 2 — Closing H/C  (no scroll, no max-width, all black)
+		// ─────────────────────────────────────────────────────────────────────────
+		function renderClosing(t) {
+			var yrs = t.yrs, units = t.units, totals = t.totals;
+			var hdrCols = yrs.map(function (y) { return '<th>' + fyToMar(y) + '</th>'; }).join('');
+
 			var rows = '';
-			CLOSING.forEach(function (r) {
-				var cls    = r.isTotal ? 'cb-row-grand' : '';
-				var d24val = r.isTotal ? fmtNum(r.d24)
-					: '<span style="color:#C0392B;font-weight:600;">' + fmtNum(r.d24) + '</span>';
-				rows += '<tr class="' + cls + '"><td style="text-align:left;">' + r.unit + '</td>' +
-					'<td>' + d24val + '</td><td>' + fmtNum(r.d25) + '</td><td>' + fmtNum(r.d26) + '</td></tr>';
+			units.forEach(function (u) {
+				var cells = yrs.map(function (y) {
+					var v = (u.hc[y] !== undefined) ? u.hc[y] : null;
+					return '<td>' + fmtNum(v) + '</td>';
+				}).join('');
+				rows += '<tr><td style="text-align:left;">' + u.description + '</td>' + cells + '</tr>';
 			});
-			return scrollWrap(
-				'<table class="cb-table" style="width:100%;max-width:620px;">' +
+
+			var totalCells = yrs.map(function (y) {
+				return '<td>' + fmtNum(totals[y] || 0) + '</td>';
+			}).join('');
+			rows += '<tr class="cb-row-grand"><td style="text-align:left;">Total</td>' + totalCells + '</tr>';
+
+			return plainWrap(
+				'<table class="cb-table" style="width:100%;">' +
 				'<thead><tr class="cb-thead-main">' +
-				'<th style="text-align:left !important;min-width:220px;">Unit</th>' +
-				'<th>31-Mar-24</th><th>31-Mar-25</th><th>31-Mar-26</th>' +
+				'<th style="text-align:left !important;min-width:220px;">Unit</th>' + hdrCols +
 				'</tr></thead><tbody>' + rows + '</tbody></table>'
 			);
 		}
 
-		function renderAverage() {
+		// ─────────────────────────────────────────────────────────────────────────
+		// TABLE 3 — Average H/C  (no scroll, no max-width, all black)
+		// ─────────────────────────────────────────────────────────────────────────
+		function renderAverage(t) {
+			var yrs = t.yrs, units = t.units, totals = t.totals;
+			var hdrCols = yrs.map(function (y) { return '<th>' + fyToMar(y) + '</th>'; }).join('');
+
 			var rows = '';
-			AVERAGE.forEach(function (r) {
-				var cls    = r.isTotal ? 'cb-row-grand' : '';
-				var d24val = r.isTotal ? fmtNum(r.d24)
-					: '<span style="color:#C0392B;font-weight:600;">' + fmtNum(r.d24) + '</span>';
-				rows += '<tr class="' + cls + '"><td style="text-align:left;">' + r.unit + '</td>' +
-					'<td>' + d24val + '</td><td>' + fmtNum(r.d25) + '</td><td>' + fmtNum(r.d26) + '</td></tr>';
+			units.forEach(function (u) {
+				var cells = yrs.map(function (y, idx) {
+					var v = avgHC(u, yrs, idx);
+					return '<td>' + (v !== null ? Math.round(v).toLocaleString('en-IN') : '-') + '</td>';
+				}).join('');
+				rows += '<tr><td style="text-align:left;">' + u.description + '</td>' + cells + '</tr>';
 			});
-			return scrollWrap(
-				'<table class="cb-table" style="width:100%;max-width:620px;">' +
+
+			var totalCells = yrs.map(function (y, idx) {
+				var v = avgTotal(totals, yrs, idx);
+				return '<td>' + (v !== null ? Math.round(v).toLocaleString('en-IN') : '-') + '</td>';
+			}).join('');
+			rows += '<tr class="cb-row-grand"><td style="text-align:left;">Total</td>' + totalCells + '</tr>';
+
+			return plainWrap(
+				'<table class="cb-table" style="width:100%;">' +
 				'<thead><tr class="cb-thead-main">' +
-				'<th style="text-align:left !important;min-width:220px;">Unit</th>' +
-				'<th>31-Mar-24</th><th>31-Mar-25</th><th>31-Mar-26</th>' +
+				'<th style="text-align:left !important;min-width:220px;">Unit</th>' + hdrCols +
 				'</tr></thead><tbody>' + rows + '</tbody></table>'
 			);
 		}
 
-		function renderClosingPct() {
+		// ─────────────────────────────────────────────────────────────────────────
+		// TABLE 4 — Increase in Closing H/C (%)  (no scroll, no max-width)
+		// formula: closing[n] / closing[n-1] - 1
+		// ─────────────────────────────────────────────────────────────────────────
+		function renderClosingPct(t) {
+			var yrs = t.yrs, units = t.units, totals = t.totals;
+			if (yrs.length < 2) { return ''; }
+
+			var pairs = [];
+			for (var i = 1; i < yrs.length; i++) {
+				pairs.push({ from: yrs[i - 1], to: yrs[i] });
+			}
+
+			var hdrCols = pairs.map(function (p) {
+				return '<th>' + fyToMar(p.from) + ' &#8594; ' + fyToMar(p.to) + '</th>';
+			}).join('');
+
 			var rows = '';
-			CLOSING_PCT.forEach(function (r) {
-				var cls = r.isTotal ? 'cb-row-grand' : '';
-				rows += '<tr class="' + cls + '"><td style="text-align:left;">' + r.unit + '</td>' +
-					'<td>' + r.p1 + '</td><td>' + r.p2 + '</td></tr>';
+			units.forEach(function (u) {
+				var cells = pairs.map(function (p) {
+					return '<td>' + fmtPct(u.hc[p.from], u.hc[p.to]) + '</td>';
+				}).join('');
+				rows += '<tr><td style="text-align:left;">' + u.description + '</td>' + cells + '</tr>';
 			});
-			return scrollWrap(
-				'<table class="cb-table" style="width:100%;max-width:520px;">' +
+
+			var totalCells = pairs.map(function (p) {
+				return '<td>' + fmtPct(totals[p.from], totals[p.to]) + '</td>';
+			}).join('');
+			rows += '<tr class="cb-row-grand"><td style="text-align:left;">Total</td>' + totalCells + '</tr>';
+
+			return plainWrap(
+				'<table class="cb-table" style="width:100%;">' +
 				'<thead><tr class="cb-thead-main">' +
-				'<th style="text-align:left !important;min-width:220px;">Unit</th>' +
-				'<th>Mar-24 &#8594; Mar-25</th><th>Mar-25 &#8594; Mar-26</th>' +
+				'<th style="text-align:left !important;min-width:220px;">Unit</th>' + hdrCols +
 				'</tr></thead><tbody>' + rows + '</tbody></table>'
 			);
 		}
 
-		function renderAveragePct() {
+		// ─────────────────────────────────────────────────────────────────────────
+		// TABLE 5 — Increase in Average H/C (%)  (no scroll, no max-width)
+		// formula: avgHC[n] / avgHC[n-1] - 1
+		// ─────────────────────────────────────────────────────────────────────────
+		function renderAveragePct(t) {
+			var yrs = t.yrs, units = t.units, totals = t.totals;
+			if (yrs.length < 2) { return ''; }
+
+			var pairs = [];
+			for (var i = 1; i < yrs.length; i++) {
+				pairs.push({ from: yrs[i - 1], to: yrs[i], fromIdx: i - 1, toIdx: i });
+			}
+
+			var hdrCols = pairs.map(function (p) {
+				return '<th>' + fyLabel(p.from) + ' &#8594; ' + fyLabel(p.to) + '</th>';
+			}).join('');
+
 			var rows = '';
-			AVERAGE_PCT.forEach(function (r) {
-				var cls = r.isTotal ? 'cb-row-grand' : '';
-				rows += '<tr class="' + cls + '"><td style="text-align:left;">' + r.unit + '</td>' +
-					'<td>' + r.p1 + '</td><td>' + r.p2 + '</td></tr>';
+			units.forEach(function (u) {
+				var cells = pairs.map(function (p) {
+					return '<td>' + fmtPct(avgHC(u, yrs, p.fromIdx), avgHC(u, yrs, p.toIdx)) + '</td>';
+				}).join('');
+				rows += '<tr><td style="text-align:left;">' + u.description + '</td>' + cells + '</tr>';
 			});
-			return scrollWrap(
-				'<table class="cb-table" style="width:100%;max-width:520px;">' +
+
+			var totalCells = pairs.map(function (p) {
+				return '<td>' + fmtPct(avgTotal(totals, yrs, p.fromIdx), avgTotal(totals, yrs, p.toIdx)) + '</td>';
+			}).join('');
+			rows += '<tr class="cb-row-grand"><td style="text-align:left;">Total</td>' + totalCells + '</tr>';
+
+			return plainWrap(
+				'<table class="cb-table" style="width:100%;">' +
 				'<thead><tr class="cb-thead-main">' +
-				'<th style="text-align:left !important;min-width:220px;">Unit</th>' +
-				'<th>FY23-24 &#8594; FY24-25</th><th>FY24-25 &#8594; FY25-26</th>' +
+				'<th style="text-align:left !important;min-width:220px;">Unit</th>' + hdrCols +
 				'</tr></thead><tbody>' + rows + '</tbody></table>'
 			);
 		}
 
-		function render() {
-			$('#tab-headcount').html(
-				'<div style="padding:4px 0 10px;">' +
-					'<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' +
-						xlBtn('xl-headcount', 'Export to Excel') +
-					'</div>' +
-					renderStats() +
-					hcSection('Headcount Summary') +
-					'<div class="ppt-currency-label" style="text-align:left;margin-bottom:6px;">' +
-						'H/C numbers &nbsp;|&nbsp; Opex in &#8377; <strong>Cr.</strong>' +
-					'</div>' +
-					renderSummary() +
-					hcSection('Closing H/C') +
-					renderClosing() +
-					hcSection('Average H/C') +
-					renderAverage() +
-					hcSection('Increase in Closing H/C (%)') +
-					renderClosingPct() +
-					hcSection('Increase in Average H/C (%)') +
-					renderAveragePct() +
-				'</div>'
-			);
+		// ── Fetch & Render ────────────────────────────────────────────────────────
+		function fetchAndRender(fy) {
+			var $tab = $('#tab-headcount');
+			$tab.html('<div style="padding:20px;text-align:center;color:#aaa;">Loading\u2026</div>');
+			Loader.show('Building Headcount data\u2026');
+
+			frappe.call({
+				method  : 'annual_budget.api.foundation_consolidated_report.get_headcount',
+				args    : { financial_year: fy },
+				callback: function (r) {
+					Loader.hide();
+
+					var records = null;
+					if (r.message && r.message.status === 'success') {
+						records = r.message.data;
+					} else if (r.message && Array.isArray(r.message)) {
+						records = r.message;
+					}
+
+					if (!records || !records.length) {
+						$tab.html('<div style="padding:40px;text-align:center;color:#aaa;">No headcount data available.</div>');
+						return;
+					}
+
+					var t = transformData(records);
+
+					$tab.html(
+						'<div style="padding:4px 0 10px;">' +
+							'<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' +
+								xlBtn('xl-headcount', 'Export to Excel') +
+							'</div>' +
+
+							// Table 1 — Summary (scrollable)
+							hcSection('Headcount Summary') +
+							'<div class="ppt-currency-label" style="text-align:left;margin-bottom:6px;">' +
+								'H/C numbers &nbsp;|&nbsp; Opex in &#8377; <strong>Cr.</strong>' +
+							'</div>' +
+							renderSummary(t) +
+
+							// Table 2 — Closing H/C
+							hcSection('Closing H/C') +
+							renderClosing(t) +
+
+							// Table 3 — Average H/C
+							hcSection('Average H/C') +
+							renderAverage(t) +
+
+							// Table 4 — Increase in Closing H/C (%)
+							hcSection('Increase in Closing H/C (%)') +
+							renderClosingPct(t) +
+
+							// Table 5 — Increase in Average H/C (%)
+							hcSection('Increase in Average H/C (%)') +
+							renderAveragePct(t) +
+						'</div>'
+					);
+				},
+				error: function () {
+					Loader.hide();
+					$('#tab-headcount').html(
+						'<div style="padding:40px;text-align:center;color:red;">Error loading headcount data.</div>'
+					);
+				}
+			});
 		}
 
-		function load(/* fy */) { render(); }
+		function load(fy) { fetchAndRender(fy || '2026-27'); }
 		return { load: load };
 	})();
 
