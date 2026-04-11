@@ -1690,153 +1690,153 @@ def get_combinations_settings(table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
-def get_unit_wise_plan(financial_year, month, table_name_filter=None):
+# @frappe.whitelist(allow_guest=True)
+# def get_unit_wise_plan(financial_year, month, table_name_filter=None):
 
-    def safe_join(arr):
-        return ",".join([str(x).strip() for x in (arr or []) if x])
+#     def safe_join(arr):
+#         return ",".join([str(x).strip() for x in (arr or []) if x])
 
-    # ✅ Calculate sub-head & head totals
-    def calculate_totals(actuals):
+#     # ✅ Calculate sub-head & head totals
+#     def calculate_totals(actuals):
 
-        for head in actuals:
+#         for head in actuals:
 
-            total_ytd = 0
-            total_actual = 0
+#             total_ytd = 0
+#             total_actual = 0
 
-            # 🔹 CASE 1: sub_heads exist
-            if head.get("sub_heads"):
+#             # 🔹 CASE 1: sub_heads exist
+#             if head.get("sub_heads"):
 
-                for sub in head.get("sub_heads", []):
+#                 for sub in head.get("sub_heads", []):
 
-                    sub_ytd = 0
-                    sub_actual = 0
+#                     sub_ytd = 0
+#                     sub_actual = 0
 
-                    for item in sub.get("items", []):
-                        sub_ytd += item.get("ytd", 0) or 0
-                        sub_actual += item.get("total_posted_amt", 0) or 0
+#                     for item in sub.get("items", []):
+#                         sub_ytd += item.get("ytd", 0) or 0
+#                         sub_actual += item.get("total_posted_amt", 0) or 0
 
-                    sub["ytd"] = round(sub_ytd, 2)
-                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+#                     sub["ytd"] = round(sub_ytd, 2)
+#                     sub["total_posted_amt_ytd"] = round(sub_actual, 2)
 
-                    total_ytd += sub_ytd
-                    total_actual += sub_actual
+#                     total_ytd += sub_ytd
+#                     total_actual += sub_actual
 
-            # 🔹 CASE 2: only items
-            else:
-                for item in head.get("items", []):
-                    total_ytd += item.get("ytd", 0) or 0
-                    total_actual += item.get("total_posted_amt", 0) or 0
+#             # 🔹 CASE 2: only items
+#             else:
+#                 for item in head.get("items", []):
+#                     total_ytd += item.get("ytd", 0) or 0
+#                     total_actual += item.get("total_posted_amt", 0) or 0
 
-            head["ytd"] = round(total_ytd, 2)
-            head["total_posted_amt_ytd"] = round(total_actual, 2)
+#             head["ytd"] = round(total_ytd, 2)
+#             head["total_posted_amt_ytd"] = round(total_actual, 2)
 
-        return actuals
+#         return actuals
 
-    # ✅ Calculate grand totals
-    def calculate_grand_total(actuals):
+#     # ✅ Calculate grand totals
+#     def calculate_grand_total(actuals):
 
-        grand_ytd = 0
-        grand_actual = 0
+#         grand_ytd = 0
+#         grand_actual = 0
 
-        for head in actuals:
-            grand_ytd += head.get("ytd", 0) or 0
-            grand_actual += head.get("total_posted_amt_ytd", 0) or 0
+#         for head in actuals:
+#             grand_ytd += head.get("ytd", 0) or 0
+#             grand_actual += head.get("total_posted_amt_ytd", 0) or 0
 
-        return {
-            "grand_total_ytd": round(grand_ytd, 2),
-            "grand_total_actual": round(grand_actual, 2)
-        }
+#         return {
+#             "grand_total_ytd": round(grand_ytd, 2),
+#             "grand_total_actual": round(grand_actual, 2)
+#         }
 
-    # ✅ Previous FY
-    previous_financial_year = get_previous_financial_year(financial_year)
+#     # ✅ Previous FY
+#     previous_financial_year = get_previous_financial_year(financial_year)
 
-    # ✅ Get settings
-    settings = get_combinations_settings(table_name_filter)
-    print(settings,"master settings")
-    # ✅ Sort settings
-    settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
+#     # ✅ Get settings
+#     settings = get_combinations_settings(table_name_filter)
+#     print(settings,"master settings")
+#     # ✅ Sort settings
+#     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
 
-    final_results = []
+#     final_results = []
 
-    # ✅ Accounting period
-    formatted = get_accounting_period_from_month(
-        month,
-        previous_financial_year
-    )
+#     # ✅ Accounting period
+#     formatted = get_accounting_period_from_month(
+#         month,
+#         previous_financial_year
+#     )
 
-    accounting_period = formatted.get("accounting_period")
-    fiscal_year = formatted.get("fiscal_year")
+#     accounting_period = formatted.get("accounting_period")
+#     fiscal_year = formatted.get("fiscal_year")
 
-    # ✅ Fetch grouped actuals once
-    grouped_actuals_response = get_grouped_actuals(
-        fiscal_year=fiscal_year,
-        accounting_period=accounting_period
-    )
+#     # ✅ Fetch grouped actuals once
+#     grouped_actuals_response = get_grouped_actuals(
+#         fiscal_year=fiscal_year,
+#         accounting_period=accounting_period
+#     )
 
-    grouped_actuals_data = grouped_actuals_response.get("data", [])
+#     grouped_actuals_data = grouped_actuals_response.get("data", [])
 
-    # ✅ MAIN LOOP
-    for s in settings:
+#     # ✅ MAIN LOOP
+#     for s in settings:
 
-        units = safe_join(s.get("units"))
-        cost_centers = safe_join(s.get("cost_centers"))
-        locations = safe_join(s.get("locations"))
-        cost_centers_erp = safe_join(s.get("cost_centers_erp"))
-        locations_erp = safe_join(s.get("locations_erp"))
+#         units = safe_join(s.get("units"))
+#         cost_centers = safe_join(s.get("cost_centers"))
+#         locations = safe_join(s.get("locations"))
+#         cost_centers_erp = safe_join(s.get("cost_centers_erp"))
+#         locations_erp = safe_join(s.get("locations_erp"))
 
-        # 🔁 Loop combination settings
-        for combo in s.get("combination_settings", []):
+#         # 🔁 Loop combination settings
+#         for combo in s.get("combination_settings", []):
 
-            actuals_data = get_combined_actuals(
-                financial_year=financial_year,
-                month=month,
-                unit=units,
-                cost_center=cost_centers,
-                location_code=locations,
-                erp_cost_center_value=cost_centers_erp,
-                erp_loc_value=locations_erp,
-                grouped_actuals_data=grouped_actuals_data
-            )
+#             actuals_data = get_combined_actuals(
+#                 financial_year=financial_year,
+#                 month=month,
+#                 unit=units,
+#                 cost_center=cost_centers,
+#                 location_code=locations,
+#                 erp_cost_center_value=cost_centers_erp,
+#                 erp_loc_value=locations_erp,
+#                 grouped_actuals_data=grouped_actuals_data
+#             )
 
-            # ✅ Fix totals
-            actuals_data = calculate_totals(actuals_data)
+#             # ✅ Fix totals
+#             actuals_data = calculate_totals(actuals_data)
 
-            # ✅ Calculate grand total
-            totals = calculate_grand_total(actuals_data)
+#             # ✅ Calculate grand total
+#             totals = calculate_grand_total(actuals_data)
 
-            # ✅ PUSH GRAND TOTAL INSIDE actuals
-            actuals_data.append({
-                "name": "GRAND TOTAL",
-                "sequence_id": 9999,
-                "sub_heads": [],
-                "items": [],
-                "ytd": totals["grand_total_ytd"],
-                "total_posted_amt_ytd": totals["grand_total_actual"]
-            })
+#             # ✅ PUSH GRAND TOTAL INSIDE actuals
+#             actuals_data.append({
+#                 "name": "GRAND TOTAL",
+#                 "sequence_id": 9999,
+#                 "sub_heads": [],
+#                 "items": [],
+#                 "ytd": totals["grand_total_ytd"],
+#                 "total_posted_amt_ytd": totals["grand_total_actual"]
+#             })
 
-            # ✅ Final append (NO root totals)
-            final_results.append({
-                "settings_doc": s.get("settings_doc"),
-                "label": s.get("label"),
+#             # ✅ Final append (NO root totals)
+#             final_results.append({
+#                 "settings_doc": s.get("settings_doc"),
+#                 "label": s.get("label"),
 
-                "table_name": combo.get("table_name"),
-                "sequence_id": combo.get("sequence_id"),
-                "is_this_sub_item": combo.get("is_this_sub_item"),
+#                 "table_name": combo.get("table_name"),
+#                 "sequence_id": combo.get("sequence_id"),
+#                 "is_this_sub_item": combo.get("is_this_sub_item"),
 
-                "units": units,
-                "cost_centers": cost_centers,
-                "locations": locations,
-                "cost_centers_erp": cost_centers_erp,
-                "locations_erp": locations_erp,
+#                 "units": units,
+#                 "cost_centers": cost_centers,
+#                 "locations": locations,
+#                 "cost_centers_erp": cost_centers_erp,
+#                 "locations_erp": locations_erp,
 
-                "actuals": actuals_data
-            })
+#                 "actuals": actuals_data
+#             })
 
-    # ✅ Sort final results
-    final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
+#     # ✅ Sort final results
+#     final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
 
-    return final_results
+#     return final_results
 
 
 # @frappe.whitelist(allow_guest=True)
@@ -2018,6 +2018,176 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None):
 
 #     return sorted(final_results, key=lambda x: x.get("sequence_id", 0))
 
+@frappe.whitelist(allow_guest=True)
+def get_unit_wise_plan(financial_year, month, table_name_filter=None):
+
+    from collections import defaultdict
+
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    # ✅ Calculate sub-head & head totals
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+            total_actual = 0
+
+            if head.get("sub_heads"):
+
+                for sub in head.get("sub_heads", []):
+
+                    sub_ytd = 0
+                    sub_actual = 0
+
+                    for item in sub.get("items", []):
+                        sub_ytd += item.get("ytd", 0) or 0
+                        sub_actual += item.get("total_posted_amt", 0) or 0
+
+                    sub["ytd"] = round(sub_ytd, 2)
+                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+
+            else:
+                for item in head.get("items", []):
+                    total_ytd += item.get("ytd", 0) or 0
+                    total_actual += item.get("total_posted_amt", 0) or 0
+
+            head["ytd"] = round(total_ytd, 2)
+            head["total_posted_amt_ytd"] = round(total_actual, 2)
+
+        return actuals
+
+    # ✅ Calculate grand totals
+    def calculate_grand_total(actuals):
+
+        grand_ytd = 0
+        grand_actual = 0
+
+        for head in actuals:
+            grand_ytd += head.get("ytd", 0) or 0
+            grand_actual += head.get("total_posted_amt_ytd", 0) or 0
+
+        return {
+            "grand_total_ytd": round(grand_ytd, 2),
+            "grand_total_actual": round(grand_actual, 2)
+        }
+
+    # ✅ Previous FY
+    previous_financial_year = get_previous_financial_year(financial_year)
+
+    # ✅ Get settings
+    settings = get_combinations_settings(table_name_filter)
+    settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
+
+    final_results = []
+
+    # ✅ Accounting period
+    formatted = get_accounting_period_from_month(
+        month,
+        previous_financial_year
+    )
+
+    accounting_period = formatted.get("accounting_period")
+    fiscal_year = formatted.get("fiscal_year")
+
+    # ✅ Fetch grouped actuals once
+    grouped_actuals_response = get_grouped_actuals(
+        fiscal_year=fiscal_year,
+        accounting_period=accounting_period
+    )
+
+    grouped_actuals_data = grouped_actuals_response.get("data", [])
+
+    # ✅ MAIN LOOP
+    for s in settings:
+
+        cost_centers = safe_join(s.get("cost_centers"))
+        locations = safe_join(s.get("locations"))
+        cost_centers_erp = safe_join(s.get("cost_centers_erp"))
+
+        # 🔥 UNIT → LOCATION MAP (FIX)
+        unit_location_map = defaultdict(list)
+
+        for row in s.get("unit_location_mapping", []):
+            unit = row.get("unit")
+            loc = str(row.get("location_code"))
+
+            if unit:
+                unit_location_map[unit].append(loc)
+
+        # fallback if mapping not present
+        if not unit_location_map:
+            for u in (s.get("units") or []):
+                unit_location_map[u] = []
+
+        # 🔁 Loop combination settings
+        for combo in s.get("combination_settings", []):
+
+            combined_actuals = []
+
+            # 🔥 LOOP PER UNIT (KEY FIX)
+            for unit, locs in unit_location_map.items():
+
+                unit_data = get_combined_actuals(
+                    financial_year=financial_year,
+                    month=month,
+                    unit=unit,  # ✅ SINGLE UNIT
+                    cost_center=cost_centers,
+                    location_code=locations,  # keep budget intact
+                    erp_cost_center_value=cost_centers_erp,
+                    erp_loc_value=",".join(locs) if locs else None,  # ✅ FIX
+                    grouped_actuals_data=grouped_actuals_data
+                ) or []
+
+                # 🔥 MERGE (avoid duplicates)
+                if not combined_actuals:
+                    combined_actuals = unit_data
+                else:
+                    for i, head in enumerate(unit_data):
+                        combined_actuals[i]["ytd"] += head.get("ytd", 0) or 0
+                        combined_actuals[i]["total_posted_amt_ytd"] += head.get("total_posted_amt_ytd", 0) or 0
+
+            # ✅ Fix totals AFTER merge
+            combined_actuals = calculate_totals(combined_actuals)
+
+            totals = calculate_grand_total(combined_actuals)
+
+            # ✅ GRAND TOTAL
+            combined_actuals.append({
+                "name": "GRAND TOTAL",
+                "sequence_id": 9999,
+                "sub_heads": [],
+                "items": [],
+                "ytd": totals["grand_total_ytd"],
+                "total_posted_amt_ytd": totals["grand_total_actual"]
+            })
+
+            # ✅ Final append
+            final_results.append({
+                "settings_doc": s.get("settings_doc"),
+                "label": s.get("label"),
+
+                "table_name": combo.get("table_name"),
+                "sequence_id": combo.get("sequence_id"),
+                "is_this_sub_item": combo.get("is_this_sub_item"),
+
+                "units": ",".join(unit_location_map.keys()),
+                "cost_centers": cost_centers,
+                "locations": locations,
+                "cost_centers_erp": cost_centers_erp,
+                "locations_erp": ",".join(sum(unit_location_map.values(), [])),
+
+                "actuals": combined_actuals
+            })
+
+    # ✅ Sort final results
+    final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
+
+    return final_results
 
 # @frappe.whitelist(allow_guest=True)
 # def get_(financial_year, month, table_name_filter=None):
