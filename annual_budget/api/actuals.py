@@ -595,10 +595,117 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
 
 
 
+# import frappe
+# import requests
+# import xml.etree.ElementTree as ET
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
+
+#     try:
+        # username = "MISUSER"
+        # password = "[REDACTED-CREDENTIAL]"
+
+#         if not username or not password:
+#             frappe.throw("ERP credentials are not configured")
+
+#         base_url = (
+#             "https://pserp.azimpremjifoundation.org:8053/"
+#             "PSIGW/RESTListeningConnector/"
+#             "PSFT_EP/ExecuteQuery.v1/PUBLIC/"
+#             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
+#         )
+
+#         # --------------------------------------------
+#         # 1️⃣ Build URL
+#         # --------------------------------------------
+#         api_url = (
+#             f"{base_url}"
+#             f"?isconnectedquery=N"
+#             f"&maxrows=100000"
+#             f"&prompt_uniquepromptname=FISCAL_YEAR,ACCOUNTING_PERIOD"
+#             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
+#         )
+
+#         # --------------------------------------------
+#         # 2️⃣ Call ERP API
+#         # --------------------------------------------
+#         response = requests.get(
+#             api_url,
+#             headers={"Accept": "application/xml"},
+#             auth=(username, password),
+#             timeout=120
+#         )
+
+#         if response.status_code != 200:
+#             frappe.log_error("ERP HTTP Error", response.text)
+#             erp_rows = []
+#         else:
+#             # --------------------------------------------
+#             # 3️⃣ Parse XML
+#             # --------------------------------------------
+#             try:
+#                 root = ET.fromstring(response.content)
+#             except ET.ParseError:
+#                 frappe.log_error("XML Parse Error", response.text)
+#                 erp_rows = []
+#             else:
+#                 erp_rows = []
+
+#                 for row_elem in root.iter():
+#                     if row_elem.tag.lower().endswith("row"):
+#                         row_data = {}
+
+#                         for child in row_elem:
+#                             tag = child.tag.split("}")[-1].lower()
+#                             row_data[tag] = child.text
+
+#                         erp_rows.append(row_data)
+
+#         # --------------------------------------------
+#         # 4️⃣ Get Frappe Grouped Data
+#         # --------------------------------------------
+#         frappe_rows = get_adjustments_month_wise(
+#             fiscal_year,accounting_period
+#         )
+
+#         # --------------------------------------------
+#         # 5️⃣ 🔥 COMBINE BOTH
+#         # --------------------------------------------
+#         combined_rows = []
+#         combined_rows.extend(erp_rows)
+#         combined_rows.extend(frappe_rows)
+
+#         # --------------------------------------------
+#         # 6️⃣ Final Response
+#         # --------------------------------------------
+#         return {
+#             "status": "success",
+#             "fiscal_year": fiscal_year,
+#             "accounting_period": accounting_period,
+#             "count": len(combined_rows),
+#             "data": combined_rows
+#         }
+
+#     except requests.exceptions.Timeout:
+#         frappe.log_error("ERP Timeout", "Request timed out")
+#         return {
+#             "status": "failed",
+#             "error": "Request timeout while connecting to ERP"
+#         }
+
+#     except Exception:
+#         frappe.log_error("API Error", frappe.get_traceback())
+#         return {
+#             "status": "failed",
+#             "error": "Unexpected server error"
+#         }
+
+
 import frappe
 import requests
 import xml.etree.ElementTree as ET
-
 
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
@@ -617,9 +724,6 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             "Z_MIS_ACTUALS_BY_PERIOD/XMLP/NONFILE"
         )
 
-        # --------------------------------------------
-        # 1️⃣ Build URL
-        # --------------------------------------------
         api_url = (
             f"{base_url}"
             f"?isconnectedquery=N"
@@ -628,9 +732,8 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             f"&prompt_fieldvalue={fiscal_year},{accounting_period}"
         )
 
-        # --------------------------------------------
-        # 2️⃣ Call ERP API
-        # --------------------------------------------
+        erp_rows = []  # ← initialize once, here
+
         response = requests.get(
             api_url,
             headers={"Accept": "application/xml"},
@@ -640,46 +743,24 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 
         if response.status_code != 200:
             frappe.log_error("ERP HTTP Error", response.text)
-            erp_rows = []
         else:
-            # --------------------------------------------
-            # 3️⃣ Parse XML
-            # --------------------------------------------
             try:
                 root = ET.fromstring(response.content)
             except ET.ParseError:
                 frappe.log_error("XML Parse Error", response.text)
-                erp_rows = []
             else:
-                erp_rows = []
-
                 for row_elem in root.iter():
                     if row_elem.tag.lower().endswith("row"):
-                        row_data = {}
-
-                        for child in row_elem:
-                            tag = child.tag.split("}")[-1].lower()
-                            row_data[tag] = child.text
-
+                        row_data = {
+                            child.tag.split("}")[-1].lower(): child.text
+                            for child in row_elem
+                        }
                         erp_rows.append(row_data)
 
-        # --------------------------------------------
-        # 4️⃣ Get Frappe Grouped Data
-        # --------------------------------------------
-        frappe_rows = get_adjustments_month_wise(
-            fiscal_year,accounting_period
-        )
+        frappe_rows = get_adjustments_month_wise(fiscal_year, accounting_period)
 
-        # --------------------------------------------
-        # 5️⃣ 🔥 COMBINE BOTH
-        # --------------------------------------------
-        combined_rows = []
-        combined_rows.extend(erp_rows)
-        combined_rows.extend(frappe_rows)
+        combined_rows = erp_rows + frappe_rows
 
-        # --------------------------------------------
-        # 6️⃣ Final Response
-        # --------------------------------------------
         return {
             "status": "success",
             "fiscal_year": fiscal_year,
@@ -701,8 +782,6 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
             "status": "failed",
             "error": "Unexpected server error"
         }
-
-
 
 
 import requests
