@@ -196,11 +196,11 @@
    "options": "Expenses"
   }
  ],
- "grid_page_length": 50,
+ "grid_page_length": 100,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-19 10:37:01.728409",
+ "modified": "2026-04-13 21:41:53.880896",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "Finance Budget Amounts",
@@ -208,6 +208,7 @@
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 100,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

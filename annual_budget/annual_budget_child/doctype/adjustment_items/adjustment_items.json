@@ -131,11 +131,11 @@
    "label": "Accounting Period"
   }
  ],
- "grid_page_length": 50,
+ "grid_page_length": 100,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-05 14:58:06.930322",
+ "modified": "2026-04-13 21:40:26.864074",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "Adjustment Items",
@@ -143,7 +143,7 @@
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
+ "rows_threshold_for_grid_search": 100,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
