@@ -2309,6 +2309,7 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
     # ---------------- MAIN LOGIC ----------------
 
     previous_financial_year = get_previous_financial_year(financial_year)
+    last_previous_financial_year = get_previous_financial_year(previous_financial_year)
 
     settings = get_combination_table_settings(table_name_filter)
     settings = sorted(settings, key=lambda x: x.get("settings_doc", ""))
@@ -2316,8 +2317,8 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
     final_results = []
 
     # periods
-    current_formatted = get_accounting_period_from_month(month, financial_year)
-    prev_formatted = get_accounting_period_from_month(month, previous_financial_year)
+    current_formatted = get_accounting_period_from_month(month, previous_financial_year)
+    prev_formatted = get_accounting_period_from_month(month, last_previous_financial_year)
 
     current_grouped = get_grouped_actuals(
         fiscal_year=current_formatted.get("fiscal_year"),
