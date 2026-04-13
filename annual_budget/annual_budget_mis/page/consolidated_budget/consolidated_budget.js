@@ -19816,7 +19816,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					'<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">' +
 						xlBtn('xl-ppt', 'Export to Excel') +
 					'</div>' +
-					'<div class="ppt-title-bar"><div class="ppt-main-title" id="ppt-main-title">Overall Foundation - Budget vs. Estimate</div></div>' +
+					'<div class="ppt-title-bar"><div class="ppt-main-title" id="ppt-main-title">Overall Foundation - Budget vs. Actual</div></div>' +
 					'<div class="ppt-currency-label">&#8377; <strong>Cr.</strong></div>' +
 					'<div class="cb-scroll-wrapper" style="margin-bottom:20px;">' +
 						'<table id="ppt-table" class="ppt-table-wrap">' +
@@ -19834,7 +19834,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 							'<tbody id="ppt-tbody"></tbody>' +
 						'</table>' +
 					'</div>' +
-					'<div class="ppt-title-bar"><div class="ppt-main-title" id="ppt-prev-title">Overall Foundation - Previous Year Budget vs. Estimate</div></div>' +
+					'<div class="ppt-title-bar"><div class="ppt-main-title" id="ppt-prev-title">Overall Foundation - Previous Year Budget vs. Actual</div></div>' +
 					'<div class="ppt-currency-label">&#8377; <strong>Cr.</strong></div>' +
 					'<div class="cb-scroll-wrapper">' +
 						'<table id="ppt-prev-table" class="ppt-table-wrap">' +
@@ -20071,47 +20071,48 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 				   (normSecName(sec.name) === 'GRAND TOTAL');
 		}
 
-		// ── Extract Opex + Capex from an actuals array ────────────────────────────
-		// Budget = section.ytd, Est = section.total_posted_amt_ytd
-		function extractOpexCapex(actuals) {
-			var opex = 0, capex = 0, opexE = 0, capexE = 0;
+		// ── Extract values from a sections array ───────────────────────────────────
+		// field = 'ytd' (Budget) or 'total_posted_amt_ytd' (Estimate)
+		function extractVals(actuals, field) {
+			var opex = 0, capex = 0;
 			(actuals || []).forEach(function (sec) {
 				if (isGrandTotalSec(sec)) { return; }
 				var nm = normSecName(sec.name);
 				if (nm === 'OPERATING EXPENSES' || nm === 'OPERATING  EXPENSES') {
-					opex  += parseFloat(sec.ytd || 0);
-					opexE += parseFloat(sec.total_posted_amt_ytd || 0);
+					opex  += parseFloat(sec[field] || 0);
 				}
 				if (nm === 'CAPITAL EXPENSES' || nm === 'CAPITAL  EXPENSES') {
-					capex  += parseFloat(sec.ytd || 0);
-					capexE += parseFloat(sec.total_posted_amt_ytd || 0);
+					capex += parseFloat(sec[field] || 0);
 				}
 			});
-			return { bOpex: toCr(opex), bCapex: toCr(capex), eOpex: toCr(opexE), eCapex: toCr(capexE) };
+			return { opex: toCr(opex), capex: toCr(capex) };
 		}
 
-		// ── Build display rows from API data for one table ────────────────────────
-		// actualsKey = 'actuals' for current FY table, 'previous_actuals' for prev FY table
-		function buildRows(apiData, actualsKey) {
-			// Sort by sequence_id; keep all entries (both sub and main)
+		// ── Build display rows ────────────────────────────────────────────────────
+		// budgetKey = entry key whose .ytd        is the Budget column
+		// estKey    = entry key whose .total_posted_amt_ytd is the Estimate column
+		// Table 1: budgetKey='actuals',          estKey='previous_actuals'
+		// Table 2: budgetKey='previous_actuals', estKey='previous_actuals'
+		function buildRows(apiData, budgetKey, estKey) {
 			var sorted = (apiData || []).slice().sort(function (a, b) {
 				return (a.sequence_id || 0) - (b.sequence_id || 0);
 			});
 
-			var mainRows  = [];  // is_this_sub_item === 0
-			var subRows   = [];  // is_this_sub_item === 1  (shown indented under their parent)
-			var covidRows = [];  // entries whose label contains 'covid'
+			var mainRows  = [];
+			var subRows   = [];
+			var covidRows = [];
 
 			sorted.forEach(function (entry) {
 				var label   = (entry.label || '').trim();
 				var isCovid = label.toLowerCase().indexOf('covid') !== -1;
 				var isSub   = entry.is_this_sub_item === 1;
-				var vals    = extractOpexCapex(entry[actualsKey] || []);
+				var bVals   = extractVals(entry[budgetKey] || [], 'ytd');
+				var eVals   = extractVals(entry[estKey]    || [], 'total_posted_amt_ytd');
 				var row     = { label: label, isSub: isSub, isCovid: isCovid,
-				                bOpex: vals.bOpex, bCapex: vals.bCapex,
-				                eOpex: vals.eOpex, eCapex: vals.eCapex };
+				                bOpex: bVals.opex, bCapex: bVals.capex,
+				                eOpex: eVals.opex, eCapex: eVals.capex };
 
-				if (isCovid)    { covidRows.push(row); }
+								if (isCovid)    { covidRows.push(row); }
 				else if (isSub) { subRows.push(row);   }
 				else            { mainRows.push(row);  }
 			});
@@ -20202,23 +20203,32 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		}
 
 		// ── Derive column labels from FY ──────────────────────────────────────────
-		// actuals          = current FY estimate  (ytd = Budget, total_posted_amt_ytd = Estimate)
-		// previous_actuals = last FY estimate     (ytd = Budget, total_posted_amt_ytd = Estimate)
-		// e.g. fy='2025-26' => Table1: "2025-26 Budget | 2025-26 Estimate"
-		//                    => Table2: "2024-25 Budget | 2024-25 Estimate"
+		// actuals[]          = Table 1 — current FY  (ytd = Budget, total_posted_amt_ytd = Actual)
+		// previous_actuals[] = Table 2 — previous FY (ytd = Budget, total_posted_amt_ytd = Actual)
+		// e.g. fy='2025-26' => Table1: "FY25-26 Budget | FY25-26 Actual"
+		//                   => Table2: "FY24-25 Budget | FY24-25 Actual"
 		function getLabels(fy) {
+			// Selected FY = fy (e.g. "2025-26")
+			// Table 1: Budget col = fy Budget        (actuals.ytd)
+			//          Est col    = (fy-1) Estimate   (actuals.total_posted_amt_ytd)
+			// Table 2: Budget col = (fy-1) Budget     (previous_actuals.ytd)
+			//          Est col    = (fy-1) Estimate   (previous_actuals.total_posted_amt_ytd)
 			var parts        = (fy || '2025-26').split('-');
-			var curStart     = parts[0] || '2025';
-			var curEnd       = parts[1] || '26';
-			var curFY        = curStart + '-' + curEnd;
-			var prevStartNum = parseInt(curStart, 10) - 1;
-			var prevEndNum   = parseInt(curEnd,   10) - 1;
-			var prevFY       = String(prevStartNum) + '-' + String(prevEndNum).padStart(2, '0');
+			var curStart     = parseInt(parts[0] || '2025', 10);
+			var curEnd       = parseInt(parts[1] || '26',   10);
+			var curEndYY     = String(curEnd).padStart(2, '0');
+			var prevStartNum = curStart - 1;
+			var prevEndNum   = curEnd   - 1;
+			var prevEndYY    = String(prevEndNum).padStart(2, '0');
+			var curFY        = curStart      + '-' + curEndYY;
+			var prevFY       = prevStartNum  + '-' + prevEndYY;
 			return {
-				curBudget : curFY  + ' Budget',
-				curEst    : curFY  + ' Estimate',
-				prevBudget: prevFY + ' Budget',
-				prevEst   : prevFY + ' Estimate'
+				curBudget  : curFY  + ' Budget',    // Table 1 Budget  → actuals.ytd
+				curEst     : prevFY + ' Estimate',  // Table 1 Est     → actuals.total_posted_amt_ytd
+				prevBudget : prevFY + ' Budget',    // Table 2 Budget  → previous_actuals.ytd
+				prevEst    : prevFY + ' Estimate',  // Table 2 Est     → previous_actuals.total_posted_amt_ytd
+				curFYFull  : curFY,
+				prevFYFull : prevFY
 			};
 		}
 
@@ -20255,15 +20265,15 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 					var labels = getLabels(fy);
 
-					// Table 1 — current FY estimate: actuals[] (Budget=ytd plan, Est=total_posted_amt_ytd actuals)
-					var rows0 = buildRows(apiData, 'actuals');
+					// Table 1 — current FY: actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
+					var rows0 = buildRows(apiData, 'actuals', 'actuals');
 					renderTable(rows0,
 						'ppt-tbody', 'ppt-budget-hdr', 'ppt-est-hdr', 'ppt-table',
 						labels.curBudget, labels.curEst
 					);
 
-					// Table 2 — previous FY estimate: previous_actuals[] (Budget=ytd plan, Est=total_posted_amt_ytd actuals)
-					var rows1 = buildRows(apiData, 'previous_actuals');
+					// Table 2 — previous FY: previous_actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
+					var rows1 = buildRows(apiData, 'previous_actuals', 'actuals');
 					renderTable(rows1,
 						'ppt-prev-tbody', 'ppt-prev-budget-hdr', 'ppt-prev-est-hdr', 'ppt-prev-table',
 						labels.prevBudget, labels.prevEst
@@ -20274,8 +20284,8 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					var prevStart2 = String(parseInt(fyParts2[0], 10) - 1);
 					var prevEnd2   = String(parseInt(fyParts2[1] || '26', 10) - 1).padStart(2, '0');
 					var prevFYStr2 = prevStart2 + '-' + prevEnd2;
-					$('#ppt-main-title').text('Overall Foundation - ' + fy + ' Budget vs. Estimate');
-					$('#ppt-prev-title').text('Overall Foundation - ' + prevFYStr2 + ' Budget vs. Estimate');
+					$('#ppt-main-title').text('Overall Foundation - ' + labels.curFYFull + ' Budget vs. ' + labels.curEst);
+					$('#ppt-prev-title').text('Overall Foundation - ' + labels.prevFYFull + ' Budget vs. ' + labels.prevEst);
 
 					// Store for export
 					function toExportRows(rows) {
