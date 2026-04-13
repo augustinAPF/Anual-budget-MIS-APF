@@ -1490,8 +1490,6 @@ def get_combination_table_settings(table_name_filter=None):
 
 
 
-
-
 @frappe.whitelist(allow_guest=True)
 def get_combination_table_settings_1(table_name_filter=None):
 
@@ -1816,7 +1814,7 @@ def get_combination_table_settings_1(table_name_filter=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_unit_wise_plan(financial_year, month, table_name_filter=None):
+def get_unit_wise_plan_1(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
         return ",".join([str(x).strip() for x in (arr or []) if x])
@@ -1961,6 +1959,214 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None):
 
     # ✅ Sort final results
     final_results = sorted(final_results, key=lambda x: x.get("sequence_id", 0))
+
+    return final_results
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_unit_wise_plan(financial_year, month, table_name_filter=None):
+
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    # ---------------- TOTAL CALCULATIONS ----------------
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+            total_actual = 0
+
+            if head.get("sub_heads"):
+
+                for sub in head.get("sub_heads", []):
+
+                    sub_ytd = 0
+                    sub_actual = 0
+
+                    for item in sub.get("items", []):
+                        sub_ytd += item.get("ytd", 0) or 0
+                        sub_actual += item.get("total_posted_amt", 0) or 0
+
+                    sub["ytd"] = round(sub_ytd, 2)
+                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+
+            else:
+                for item in head.get("items", []):
+                    total_ytd += item.get("ytd", 0) or 0
+                    total_actual += item.get("total_posted_amt", 0) or 0
+
+            head["ytd"] = round(total_ytd, 2)
+            head["total_posted_amt_ytd"] = round(total_actual, 2)
+
+        return actuals
+
+    def calculate_grand_total(actuals):
+
+        grand_ytd = 0
+        grand_actual = 0
+
+        for head in actuals:
+            grand_ytd += head.get("ytd", 0) or 0
+            grand_actual += head.get("total_posted_amt_ytd", 0) or 0
+
+        return {
+            "grand_total_ytd": round(grand_ytd, 2),
+            "grand_total_actual": round(grand_actual, 2)
+        }
+
+    # ---------------- CONSOLIDATION ----------------
+    def consolidate_actuals(all_unit_actuals):
+
+        head_map = {}
+
+        for unit_data in all_unit_actuals:
+
+            for head in unit_data:
+
+                key = head["name"]
+
+                if key not in head_map:
+                    head_map[key] = {
+                        "name": head["name"],
+                        "sequence_id": head["sequence_id"],
+                        "sub_heads": [],
+                        "items": [],
+                        "ytd": 0,
+                        "total_posted_amt_ytd": 0
+                    }
+
+                head_map[key]["ytd"] += head.get("ytd", 0)
+                head_map[key]["total_posted_amt_ytd"] += head.get("total_posted_amt_ytd", 0)
+
+                # ---- SUB HEADS ----
+                if head.get("sub_heads"):
+
+                    sub_map = {s["name"]: s for s in head_map[key]["sub_heads"]}
+
+                    for sub in head.get("sub_heads", []):
+
+                        if sub["name"] not in sub_map:
+                            new_sub = {
+                                "name": sub["name"],
+                                "sequence_id": sub["sequence_id"],
+                                "items": [],
+                                "ytd": 0,
+                                "total_posted_amt_ytd": 0
+                            }
+                            head_map[key]["sub_heads"].append(new_sub)
+                            sub_map[sub["name"]] = new_sub
+
+                        sub_map[sub["name"]]["ytd"] += sub.get("ytd", 0)
+                        sub_map[sub["name"]]["total_posted_amt_ytd"] += sub.get("total_posted_amt_ytd", 0)
+
+                        # ---- ITEMS ----
+                        item_map = {i["name"]: i for i in sub_map[sub["name"]]["items"]}
+
+                        for item in sub.get("items", []):
+
+                            if item["name"] not in item_map:
+                                new_item = {
+                                    "name": item["name"],
+                                    "sequence_id": item["sequence_id"],
+                                    "gl_code": item.get("gl_code"),
+                                    "ytd": 0,
+                                    "total_posted_amt": 0
+                                }
+                                sub_map[sub["name"]]["items"].append(new_item)
+                                item_map[item["name"]] = new_item
+
+                            item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                            item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+
+                # ---- DIRECT ITEMS ----
+                else:
+                    item_map = {i["name"]: i for i in head_map[key]["items"]}
+
+                    for item in head.get("items", []):
+
+                        if item["name"] not in item_map:
+                            new_item = {
+                                "name": item["name"],
+                                "sequence_id": item["sequence_id"],
+                                "gl_code": item.get("gl_code"),
+                                "ytd": 0,
+                                "total_posted_amt": 0
+                            }
+                            head_map[key]["items"].append(new_item)
+                            item_map[item["name"]] = new_item
+
+                        item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                        item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+
+        return list(head_map.values())
+
+    # ---------------- MAIN LOGIC ----------------
+
+    previous_financial_year = get_previous_financial_year(financial_year)
+
+    settings = get_combination_table_settings_1(table_name_filter)
+
+    formatted = get_accounting_period_from_month(month, previous_financial_year)
+
+    grouped_actuals_data = get_grouped_actuals(
+        fiscal_year=formatted.get("fiscal_year"),
+        accounting_period=formatted.get("accounting_period")
+    ).get("data", [])
+
+    final_results = []
+
+    for s in settings:
+
+        for combo in s.get("combination_settings", []):
+
+            all_unit_actuals = []
+
+            # 🔁 LOOP EACH UNIT
+            for gu in s.get("grouped_units", []):
+
+                actuals = get_combined_actuals(
+                    financial_year=financial_year,
+                    month=month,
+                    unit=gu.get("unit"),
+                    cost_center=safe_join(gu.get("cost_centers")),
+                    location_code=safe_join(gu.get("locations")),
+                    erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),
+                    erp_loc_value=safe_join(gu.get("locations_erp")),
+                    grouped_actuals_data=grouped_actuals_data
+                )
+
+                actuals = calculate_totals(actuals)
+                all_unit_actuals.append(actuals)
+
+            # ✅ CONSOLIDATE ALL UNITS
+            consolidated = consolidate_actuals(all_unit_actuals)
+
+            totals = calculate_grand_total(consolidated)
+
+            consolidated.append({
+                "name": "GRAND TOTAL",
+                "sequence_id": 9999,
+                "sub_heads": [],
+                "items": [],
+                "ytd": totals["grand_total_ytd"],
+                "total_posted_amt_ytd": totals["grand_total_actual"]
+            })
+
+            final_results.append({
+                "settings_doc": s.get("settings_doc"),
+                "label": s.get("label"),
+
+                "table_name": combo.get("table_name"),
+                "sequence_id": combo.get("sequence_id"),
+                "is_this_sub_item": combo.get("is_this_sub_item"),
+
+                "actuals": consolidated
+            })
 
     return final_results
 
