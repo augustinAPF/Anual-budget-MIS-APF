@@ -1490,6 +1490,127 @@ def get_combination_table_settings(table_name_filter=None):
 
 
 
+# @frappe.whitelist(allow_guest=True)
+# def get_combination_table_settings_1(table_name_filter=None):
+
+#     results = []
+
+#     def parse_list(value):
+#         if not value:
+#             return []
+#         return [v.strip() for v in str(value).split(",") if v.strip()]
+
+#     # ✅ HANDLE MULTIPLE TABLE NAMES
+#     table_filters = parse_list(table_name_filter)
+#     table_filters = [t.lower() for t in table_filters]
+
+#     # ✅ FETCH ALL SETTINGS
+#     settings_docs = frappe.get_all(
+#         "Overview number cards settings",
+#         fields=["name", "number_card_title"],
+#         order_by="creation desc"
+#     )
+
+#     for setting in settings_docs:
+
+#         doc = frappe.get_doc(
+#             "Overview number cards settings",
+#             setting.name
+#         )
+
+#         # -------- GROUPING BY UNIT --------
+#         unit_map = {}
+
+#         # Initialize units
+#         for d in doc.select_units:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#         # Map cost centers to units
+#         for d in doc.select_cost_centers:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#             if d.cost_center:
+#                 unit_map[d.unit]["cost_centers"].append(d.cost_center)
+
+#             if d.cost_center_erp:
+#                 unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
+
+#         # Map locations to units
+#         for d in doc.select_location_codes:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#             if d.location_code:
+#                 unit_map[d.unit]["locations"].append(d.location_code)
+
+#             if d.location_code_erp:
+#                 unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
+
+#         # Convert to list
+#         grouped_units = list(unit_map.values())
+
+#         # -------- CHILD TABLE FILTER --------
+#         combination_settings = []
+
+#         for row in doc.combination_table_settings:
+
+#             row_table_name = (row.table_name or "").strip().lower()
+
+#             # ✅ APPLY FILTER
+#             if table_filters and row_table_name not in table_filters:
+#                 continue
+
+#             combination_settings.append({
+#                 "table_name": row.table_name,
+#                 "sequence_id": row.sequence_id,
+#                 "is_this_sub_item": row.is_this_sub_item
+#             })
+
+#         # ❗ Skip if no matching child rows
+#         if table_filters and not combination_settings:
+#             continue
+
+#         # -------- FINAL RESULT --------
+#         results.append({
+#             "settings_doc": doc.name,
+#             "label": doc.number_card_title,
+#             "grouped_units": grouped_units,
+#             "combination_settings": combination_settings
+#         })
+
+#     return results
+
+
+
 @frappe.whitelist(allow_guest=True)
 def get_combination_table_settings_1(table_name_filter=None):
 
@@ -1521,7 +1642,7 @@ def get_combination_table_settings_1(table_name_filter=None):
         # -------- GROUPING BY UNIT --------
         unit_map = {}
 
-        # Initialize units
+        # ✅ Initialize units
         for d in doc.select_units:
             if not d.unit:
                 continue
@@ -1535,7 +1656,7 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-        # Map cost centers to units
+        # -------- COST CENTERS (WITH reference_for LOGIC) --------
         for d in doc.select_cost_centers:
             if not d.unit:
                 continue
@@ -1549,13 +1670,19 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-            if d.cost_center:
-                unit_map[d.unit]["cost_centers"].append(d.cost_center)
+            ref = (d.reference_for or "Both").strip()
 
-            if d.cost_center_erp:
-                unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
+            # ✅ Budget → normal cost center
+            if ref in ["Budget", "Both"]:
+                if d.cost_center:
+                    unit_map[d.unit]["cost_centers"].append(d.cost_center)
 
-        # Map locations to units
+            # ✅ Actual → ERP cost center
+            if ref in ["Actual", "Both"]:
+                if d.cost_center_erp:
+                    unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
+
+        # -------- LOCATIONS (WITH reference_for LOGIC) --------
         for d in doc.select_location_codes:
             if not d.unit:
                 continue
@@ -1569,11 +1696,24 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-            if d.location_code:
-                unit_map[d.unit]["locations"].append(d.location_code)
+            ref = (d.reference_for or "Both").strip()
 
-            if d.location_code_erp:
-                unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
+            # ✅ Budget → normal location
+            if ref in ["Budget", "Both"]:
+                if d.location_code:
+                    unit_map[d.unit]["locations"].append(d.location_code)
+
+            # ✅ Actual → ERP location
+            if ref in ["Actual", "Both"]:
+                if d.location_code_erp:
+                    unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
+
+        # -------- REMOVE DUPLICATES (OPTIONAL BUT RECOMMENDED) --------
+        for unit in unit_map.values():
+            unit["cost_centers"] = list(set(unit["cost_centers"]))
+            unit["cost_centers_erp"] = list(set(unit["cost_centers_erp"]))
+            unit["locations"] = list(set(unit["locations"]))
+            unit["locations_erp"] = list(set(unit["locations_erp"]))
 
         # Convert to list
         grouped_units = list(unit_map.values())
@@ -1608,6 +1748,7 @@ def get_combination_table_settings_1(table_name_filter=None):
         })
 
     return results
+
 
 
 # @frappe.whitelist(allow_guest=True)
@@ -2423,7 +2564,251 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
     return final_results
 
 
+@frappe.whitelist(allow_guest=True)
+def get_unit_wise_plan(financial_year, month, table_name_filter=None):
 
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    # ---------------- TOTAL CALCULATIONS ----------------
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+            total_actual = 0
+
+            if head.get("sub_heads"):
+
+                for sub in head.get("sub_heads", []):
+
+                    sub_ytd = 0
+                    sub_actual = 0
+
+                    for item in sub.get("items", []):
+                        sub_ytd += item.get("ytd", 0) or 0
+                        sub_actual += item.get("total_posted_amt", 0) or 0
+
+                    sub["ytd"] = round(sub_ytd, 2)
+                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+
+            else:
+                for item in head.get("items", []):
+                    total_ytd += item.get("ytd", 0) or 0
+                    total_actual += item.get("total_posted_amt", 0) or 0
+
+            head["ytd"] = round(total_ytd, 2)
+            head["total_posted_amt_ytd"] = round(total_actual, 2)
+
+        return actuals
+
+    def calculate_grand_total(actuals):
+
+        grand_ytd = 0
+        grand_actual = 0
+
+        for head in actuals:
+            grand_ytd += head.get("ytd", 0) or 0
+            grand_actual += head.get("total_posted_amt_ytd", 0) or 0
+
+        return {
+            "grand_total_ytd": round(grand_ytd, 2),
+            "grand_total_actual": round(grand_actual, 2)
+        }
+
+    # ---------------- BUDGET FETCH ----------------
+    def get_budget_data(financial_year):
+
+        budget_map = {}
+
+        data = frappe.db.get_all(
+            "Budget Account",
+            filters={"financial_year": financial_year},
+            fields=["account", "budget_amount"]
+        )
+
+        for d in data:
+            budget_map[d["account"]] = d["budget_amount"]
+
+        return budget_map
+
+    # ---------------- MERGE BUDGET ----------------
+    def attach_budget(actuals, budget_map):
+
+        for head in actuals:
+
+            if head.get("sub_heads"):
+
+                for sub in head.get("sub_heads", []):
+
+                    for item in sub.get("items", []):
+
+                        gl = item.get("gl_code")
+                        item["budget"] = budget_map.get(gl, 0)
+
+            else:
+                for item in head.get("items", []):
+
+                    gl = item.get("gl_code")
+                    item["budget"] = budget_map.get(gl, 0)
+
+        return actuals
+
+    # ---------------- CONSOLIDATION ----------------
+    def consolidate_actuals(all_unit_actuals):
+
+        head_map = {}
+
+        for unit_data in all_unit_actuals:
+
+            for head in unit_data:
+
+                key = head["name"]
+
+                if key not in head_map:
+                    head_map[key] = {
+                        "name": head["name"],
+                        "sequence_id": head["sequence_id"],
+                        "sub_heads": [],
+                        "items": [],
+                        "ytd": 0,
+                        "total_posted_amt_ytd": 0
+                    }
+
+                head_map[key]["ytd"] += head.get("ytd", 0)
+                head_map[key]["total_posted_amt_ytd"] += head.get("total_posted_amt_ytd", 0)
+
+                if head.get("sub_heads"):
+
+                    sub_map = {s["name"]: s for s in head_map[key]["sub_heads"]}
+
+                    for sub in head.get("sub_heads", []):
+
+                        if sub["name"] not in sub_map:
+                            new_sub = {
+                                "name": sub["name"],
+                                "sequence_id": sub["sequence_id"],
+                                "items": [],
+                                "ytd": 0,
+                                "total_posted_amt_ytd": 0
+                            }
+                            head_map[key]["sub_heads"].append(new_sub)
+                            sub_map[sub["name"]] = new_sub
+
+                        sub_map[sub["name"]]["ytd"] += sub.get("ytd", 0)
+                        sub_map[sub["name"]]["total_posted_amt_ytd"] += sub.get("total_posted_amt_ytd", 0)
+
+                        item_map = {i["name"]: i for i in sub_map[sub["name"]]["items"]}
+
+                        for item in sub.get("items", []):
+
+                            if item["name"] not in item_map:
+                                new_item = {
+                                    "name": item["name"],
+                                    "sequence_id": item["sequence_id"],
+                                    "gl_code": item.get("gl_code"),
+                                    "ytd": 0,
+                                    "total_posted_amt": 0,
+                                    "budget": 0
+                                }
+                                sub_map[sub["name"]]["items"].append(new_item)
+                                item_map[item["name"]] = new_item
+
+                            item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                            item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+                            item_map[item["name"]]["budget"] += item.get("budget", 0)
+
+                else:
+                    item_map = {i["name"]: i for i in head_map[key]["items"]}
+
+                    for item in head.get("items", []):
+
+                        if item["name"] not in item_map:
+                            new_item = {
+                                "name": item["name"],
+                                "sequence_id": item["sequence_id"],
+                                "gl_code": item.get("gl_code"),
+                                "ytd": 0,
+                                "total_posted_amt": 0,
+                                "budget": 0
+                            }
+                            head_map[key]["items"].append(new_item)
+                            item_map[item["name"]] = new_item
+
+                        item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                        item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+                        item_map[item["name"]]["budget"] += item.get("budget", 0)
+
+        return list(head_map.values())
+
+    # ---------------- MAIN ----------------
+
+    settings = get_combination_table_settings_1(table_name_filter)
+
+    formatted = get_accounting_period_from_month(month, financial_year)
+
+    current_grouped_actuals_data = get_grouped_actuals(
+        fiscal_year=formatted.get("fiscal_year"),
+        accounting_period=formatted.get("accounting_period")
+    ).get("data", [])
+
+    # ✅ GET BUDGET
+    budget_map = get_budget_data(financial_year)
+
+    final_results = []
+
+    for s in settings:
+
+        for combo in s.get("combination_settings", []):
+
+            all_unit_actuals = []
+
+            for gu in s.get("grouped_units", []):
+
+                actuals = get_combined_actuals(
+                    financial_year=financial_year,
+                    month=month,
+                    unit=gu.get("unit"),
+                    cost_center=safe_join(gu.get("cost_centers")),
+                    location_code=safe_join(gu.get("locations")),
+                    erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),
+                    erp_loc_value=safe_join(gu.get("locations_erp")),
+                    grouped_actuals_data=current_grouped_actuals_data
+                )
+
+                # ✅ attach budget here
+                actuals = attach_budget(actuals, budget_map)
+
+                actuals = calculate_totals(actuals)
+
+                all_unit_actuals.append(actuals)
+
+            consolidated = consolidate_actuals(all_unit_actuals)
+
+            totals = calculate_grand_total(consolidated)
+
+            consolidated.append({
+                "name": "GRAND TOTAL",
+                "sequence_id": 9999,
+                "sub_heads": [],
+                "items": [],
+                "ytd": totals["grand_total_ytd"],
+                "total_posted_amt_ytd": totals["grand_total_actual"]
+            })
+
+            final_results.append({
+                "settings_doc": s.get("settings_doc"),
+                "label": s.get("label"),
+                "table_name": combo.get("table_name"),
+                "sequence_id": combo.get("sequence_id"),
+                "is_this_sub_item": combo.get("is_this_sub_item"),
+                "actuals": consolidated
+            })
+
+    return final_results
 
 # @frappe.whitelist(allow_guest=True)
 # def get_(financial_year, month, table_name_filter=None):
