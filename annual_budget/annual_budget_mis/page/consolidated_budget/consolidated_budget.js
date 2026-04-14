@@ -20041,285 +20041,547 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	// Table 2 (prev FY):     Budget = previous_actuals[].ytd, Est = previous_actuals[].total_posted_amt_ytd
 	// =============================================================================
 
-	var PPT = (function () {
+	// var PPT = (function () {
 
-		var currentFY = '';
+	// 	var currentFY = '';
 
-		// ── Format helpers ────────────────────────────────────────────────────────
-		function toCr(v) { return (parseFloat(v) || 0) / 10000000; }
+	// 	// ── Format helpers ────────────────────────────────────────────────────────
+	// 	function toCr(v) { return (parseFloat(v) || 0) / 10000000; }
 
-		function fmt(v) {
-			var n = parseFloat(v) || 0;
-			if (n === 0) { return '<span class="ppt-dash">-</span>'; }
-			var neg = n < 0;
-			var abs = Math.abs(n).toFixed(2);
-			var pts = abs.split('.');
-			var ip  = pts[0], dp = pts[1];
-			if (ip.length > 3) {
-				var l3 = ip.slice(-3);
-				var rs = ip.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-				ip = rs + ',' + l3;
-			}
-			return (neg ? '-' : '') + ip + '.' + dp;
-		}
+	// 	function fmt(v) {
+	// 		var n = parseFloat(v) || 0;
+	// 		if (n === 0) { return '<span class="ppt-dash">-</span>'; }
+	// 		var neg = n < 0;
+	// 		var abs = Math.abs(n).toFixed(2);
+	// 		var pts = abs.split('.');
+	// 		var ip  = pts[0], dp = pts[1];
+	// 		if (ip.length > 3) {
+	// 			var l3 = ip.slice(-3);
+	// 			var rs = ip.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+	// 			ip = rs + ',' + l3;
+	// 		}
+	// 		return (neg ? '-' : '') + ip + '.' + dp;
+	// 	}
 
-		// ── Section name normaliser ───────────────────────────────────────────────
-		function normSecName(s) { return (s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
+	// 	// ── Section name normaliser ───────────────────────────────────────────────
+	// 	function normSecName(s) { return (s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
 
-		function isGrandTotalSec(sec) {
-			return (sec.sequence_id === 9999) ||
-				   (normSecName(sec.name) === 'GRAND TOTAL');
-		}
+	// 	function isGrandTotalSec(sec) {
+	// 		return (sec.sequence_id === 9999) ||
+	// 			   (normSecName(sec.name) === 'GRAND TOTAL');
+	// 	}
 
-		// ── Extract values from a sections array ───────────────────────────────────
-		// field = 'ytd' (Budget) or 'total_posted_amt_ytd' (Estimate)
-		function extractVals(actuals, field) {
-			var opex = 0, capex = 0;
-			(actuals || []).forEach(function (sec) {
-				if (isGrandTotalSec(sec)) { return; }
-				var nm = normSecName(sec.name);
-				if (nm === 'OPERATING EXPENSES' || nm === 'OPERATING  EXPENSES') {
-					opex  += parseFloat(sec[field] || 0);
-				}
-				if (nm === 'CAPITAL EXPENSES' || nm === 'CAPITAL  EXPENSES') {
-					capex += parseFloat(sec[field] || 0);
-				}
-			});
-			return { opex: toCr(opex), capex: toCr(capex) };
-		}
+	// 	// ── Extract values from a sections array ───────────────────────────────────
+	// 	// field = 'ytd' (Budget) or 'total_posted_amt_ytd' (Estimate)
+	// 	function extractVals(actuals, field) {
+	// 		var opex = 0, capex = 0;
+	// 		(actuals || []).forEach(function (sec) {
+	// 			if (isGrandTotalSec(sec)) { return; }
+	// 			var nm = normSecName(sec.name);
+	// 			if (nm === 'OPERATING EXPENSES' || nm === 'OPERATING  EXPENSES') {
+	// 				opex  += parseFloat(sec[field] || 0);
+	// 			}
+	// 			if (nm === 'CAPITAL EXPENSES' || nm === 'CAPITAL  EXPENSES') {
+	// 				capex += parseFloat(sec[field] || 0);
+	// 			}
+	// 		});
+	// 		return { opex: toCr(opex), capex: toCr(capex) };
+	// 	}
 
-		// ── Build display rows ────────────────────────────────────────────────────
-		// budgetKey = entry key whose .ytd        is the Budget column
-		// estKey    = entry key whose .total_posted_amt_ytd is the Estimate column
-		// Table 1: budgetKey='actuals',          estKey='previous_actuals'
-		// Table 2: budgetKey='previous_actuals', estKey='previous_actuals'
-		function buildRows(apiData, budgetKey, estKey) {
-			var sorted = (apiData || []).slice().sort(function (a, b) {
-				return (a.sequence_id || 0) - (b.sequence_id || 0);
-			});
+	// 	// ── Build display rows ────────────────────────────────────────────────────
+	// 	// budgetKey = entry key whose .ytd        is the Budget column
+	// 	// estKey    = entry key whose .total_posted_amt_ytd is the Estimate column
+	// 	// Table 1: budgetKey='actuals',          estKey='previous_actuals'
+	// 	// Table 2: budgetKey='previous_actuals', estKey='previous_actuals'
+	// 	function buildRows(apiData, budgetKey, estKey) {
+	// 		var sorted = (apiData || []).slice().sort(function (a, b) {
+	// 			return (a.sequence_id || 0) - (b.sequence_id || 0);
+	// 		});
 
-			var mainRows  = [];
-			var subRows   = [];
-			var covidRows = [];
+	// 		var mainRows  = [];
+	// 		var subRows   = [];
+	// 		var covidRows = [];
 
-			sorted.forEach(function (entry) {
-				var label   = (entry.label || '').trim();
-				var isCovid = label.toLowerCase().indexOf('covid') !== -1;
-				var isSub   = entry.is_this_sub_item === 1;
-				var bVals   = extractVals(entry[budgetKey] || [], 'ytd');
-				var eVals   = extractVals(entry[estKey]    || [], 'total_posted_amt_ytd');
-				var row     = { label: label, isSub: isSub, isCovid: isCovid,
-				                bOpex: bVals.opex, bCapex: bVals.capex,
-				                eOpex: eVals.opex, eCapex: eVals.capex };
+	// 		sorted.forEach(function (entry) {
+	// 			var label   = (entry.label || '').trim();
+	// 			var isCovid = label.toLowerCase().indexOf('covid') !== -1;
+	// 			var isSub   = entry.is_this_sub_item === 1;
+	// 			var bVals   = extractVals(entry[budgetKey] || [], 'ytd');
+	// 			var eVals   = extractVals(entry[estKey]    || [], 'total_posted_amt_ytd');
+	// 			var row     = { label: label, isSub: isSub, isCovid: isCovid,
+	// 			                bOpex: bVals.opex, bCapex: bVals.capex,
+	// 			                eOpex: eVals.opex, eCapex: eVals.capex };
 
-								if (isCovid)    { covidRows.push(row); }
-				else if (isSub) { subRows.push(row);   }
-				else            { mainRows.push(row);  }
-			});
+	// 							if (isCovid)    { covidRows.push(row); }
+	// 			else if (isSub) { subRows.push(row);   }
+	// 			else            { mainRows.push(row);  }
+	// 		});
 
-			// Subtotal for main (non-covid, non-sub) rows
-			var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
-			mainRows.forEach(function (r) {
-				sub.bOpex  += r.bOpex;  sub.bCapex += r.bCapex;
-				sub.eOpex  += r.eOpex;  sub.eCapex += r.eCapex;
-			});
+	// 		// Subtotal for main (non-covid, non-sub) rows
+	// 		var sub = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+	// 		mainRows.forEach(function (r) {
+	// 			sub.bOpex  += r.bOpex;  sub.bCapex += r.bCapex;
+	// 			sub.eOpex  += r.eOpex;  sub.eCapex += r.eCapex;
+	// 		});
 
-			// Subtotal for covid rows
-			var cov = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
-			covidRows.forEach(function (r) {
-				cov.bOpex  += r.bOpex;  cov.bCapex += r.bCapex;
-				cov.eOpex  += r.eOpex;  cov.eCapex += r.eCapex;
-			});
+	// 		// Subtotal for covid rows
+	// 		var cov = { bOpex:0, bCapex:0, eOpex:0, eCapex:0 };
+	// 		covidRows.forEach(function (r) {
+	// 			cov.bOpex  += r.bOpex;  cov.bCapex += r.bCapex;
+	// 			cov.eOpex  += r.eOpex;  cov.eCapex += r.eCapex;
+	// 		});
 
-			var grand = {
-				bOpex : sub.bOpex  + cov.bOpex,  bCapex: sub.bCapex + cov.bCapex,
-				eOpex : sub.eOpex  + cov.eOpex,  eCapex: sub.eCapex + cov.eCapex
-			};
+	// 		var grand = {
+	// 			bOpex : sub.bOpex  + cov.bOpex,  bCapex: sub.bCapex + cov.bCapex,
+	// 			eOpex : sub.eOpex  + cov.eOpex,  eCapex: sub.eCapex + cov.eCapex
+	// 		};
 
-			// Assemble output: main rows (with sub-items interspersed after their parent)
-			// Since we don't have explicit parent-child linking, sub-items are shown
-			// after all main rows as an indented group before the Total row
-			var out = [];
+	// 		// Assemble output: main rows (with sub-items interspersed after their parent)
+	// 		// Since we don't have explicit parent-child linking, sub-items are shown
+	// 		// after all main rows as an indented group before the Total row
+	// 		var out = [];
 
-			mainRows.forEach(function (r) {
-				out.push(r);
-				// Attach any sub-rows that logically belong here
-				// (sub-items share similar labels — show them indented immediately after)
-				subRows.forEach(function (sr) {
-					out.push(sr);
-				});
-				// Only push sub-rows once (after the first main row that has them)
-				subRows = [];
-			});
+	// 		mainRows.forEach(function (r) {
+	// 			out.push(r);
+	// 			// Attach any sub-rows that logically belong here
+	// 			// (sub-items share similar labels — show them indented immediately after)
+	// 			subRows.forEach(function (sr) {
+	// 				out.push(sr);
+	// 			});
+	// 			// Only push sub-rows once (after the first main row that has them)
+	// 			subRows = [];
+	// 		});
 
-			// Remaining sub-rows (if no main rows)
-			subRows.forEach(function (sr) { out.push(sr); });
+	// 		// Remaining sub-rows (if no main rows)
+	// 		subRows.forEach(function (sr) { out.push(sr); });
 
-			// Total for main + sub
-			out.push({ isSubTotal: true, label: 'Total',
-				bOpex: sub.bOpex, bCapex: sub.bCapex, eOpex: sub.eOpex, eCapex: sub.eCapex });
+	// 		// Total for main + sub
+	// 		out.push({ isSubTotal: true, label: 'Total',
+	// 			bOpex: sub.bOpex, bCapex: sub.bCapex, eOpex: sub.eOpex, eCapex: sub.eCapex });
 
-			// Covid rows + grand total
-			if (covidRows.length) {
-				covidRows.forEach(function (r) { out.push(r); });
-				out.push({ isGrand: true, label: 'Total',
-					bOpex: grand.bOpex, bCapex: grand.bCapex,
-					eOpex: grand.eOpex, eCapex: grand.eCapex });
-			}
+	// 		// Covid rows + grand total
+	// 		if (covidRows.length) {
+	// 			covidRows.forEach(function (r) { out.push(r); });
+	// 			out.push({ isGrand: true, label: 'Total',
+	// 				bOpex: grand.bOpex, bCapex: grand.bCapex,
+	// 				eOpex: grand.eOpex, eCapex: grand.eCapex });
+	// 		}
 
-			return out;
-		}
+	// 		return out;
+	// 	}
 
-		// ── Render one table ──────────────────────────────────────────────────────
-		function renderTable(rows, tbodyId, budgetHdrId, estHdrId, tableId, budgetLabel, estLabel) {
-			$('#' + budgetHdrId).text(budgetLabel);
-			$('#' + estHdrId).text(estLabel);
-			var $tb = $('#' + tbodyId).empty();
+	// 	// ── Render one table ──────────────────────────────────────────────────────
+	// 	function renderTable(rows, tbodyId, budgetHdrId, estHdrId, tableId, budgetLabel, estLabel) {
+	// 		$('#' + budgetHdrId).text(budgetLabel);
+	// 		$('#' + estHdrId).text(estLabel);
+	// 		var $tb = $('#' + tbodyId).empty();
 
-			rows.forEach(function (row) {
-				var cls     = '';
-				var indent  = '';
-				if (row.isSubTotal || row.isGrand) {
-					cls = 'ppt-total-row';
-				} else if (row.isSub) {
-					indent = 'padding-left:28px;font-style:italic;color:#555;';
-				}
+	// 		rows.forEach(function (row) {
+	// 			var cls     = '';
+	// 			var indent  = '';
+	// 			if (row.isSubTotal || row.isGrand) {
+	// 				cls = 'ppt-total-row';
+	// 			} else if (row.isSub) {
+	// 				indent = 'padding-left:28px;font-style:italic;color:#555;';
+	// 			}
 
-				var bO = row.bOpex, bC = row.bCapex, eO = row.eOpex, eC = row.eCapex;
-				$tb.append(
-					'<tr class="' + cls + '">' +
-					'<td style="' + indent + '">' + row.label + '</td>' +
-					'<td>' + fmt(bO) + '</td>' +
-					'<td>' + fmt(bC) + '</td>' +
-					'<td>' + fmt(bO + bC) + '</td>' +
-					'<td>' + fmt(eO) + '</td>' +
-					'<td>' + fmt(eC) + '</td>' +
-					'<td>' + fmt(eO + eC) + '</td>' +
-					'</tr>'
-				);
-			});
+	// 			var bO = row.bOpex, bC = row.bCapex, eO = row.eOpex, eC = row.eCapex;
+	// 			$tb.append(
+	// 				'<tr class="' + cls + '">' +
+	// 				'<td style="' + indent + '">' + row.label + '</td>' +
+	// 				'<td>' + fmt(bO) + '</td>' +
+	// 				'<td>' + fmt(bC) + '</td>' +
+	// 				'<td>' + fmt(bO + bC) + '</td>' +
+	// 				'<td>' + fmt(eO) + '</td>' +
+	// 				'<td>' + fmt(eC) + '</td>' +
+	// 				'<td>' + fmt(eO + eC) + '</td>' +
+	// 				'</tr>'
+	// 			);
+	// 		});
 
-			fixStickySubHeader('#' + tableId);
-		}
+	// 		fixStickySubHeader('#' + tableId);
+	// 	}
 
-		// ── Derive column labels from FY ──────────────────────────────────────────
-		// actuals[]          = Table 1 — current FY  (ytd = Budget, total_posted_amt_ytd = Actual)
-		// previous_actuals[] = Table 2 — previous FY (ytd = Budget, total_posted_amt_ytd = Actual)
-		// e.g. fy='2025-26' => Table1: "FY25-26 Budget | FY25-26 Actual"
-		//                   => Table2: "FY24-25 Budget | FY24-25 Actual"
-		function getLabels(fy) {
-			// Selected FY = fy (e.g. "2025-26")
-			// Table 1: Budget col = fy Budget        (actuals.ytd)
-			//          Est col    = (fy-1) Estimate   (actuals.total_posted_amt_ytd)
-			// Table 2: Budget col = (fy-1) Budget     (previous_actuals.ytd)
-			//          Est col    = (fy-1) Estimate   (previous_actuals.total_posted_amt_ytd)
-			var parts        = (fy || '2025-26').split('-');
-			var curStart     = parseInt(parts[0] || '2025', 10);
-			var curEnd       = parseInt(parts[1] || '26',   10);
-			var curEndYY     = String(curEnd).padStart(2, '0');
-			var prevStartNum = curStart - 1;
-			var prevEndNum   = curEnd   - 1;
-			var prevEndYY    = String(prevEndNum).padStart(2, '0');
-			var curFY        = curStart      + '-' + curEndYY;
-			var prevFY       = prevStartNum  + '-' + prevEndYY;
-			return {
-				curBudget  : curFY  + ' Budget',    // Table 1 Budget  → actuals.ytd
-				curEst     : prevFY + ' Estimate',  // Table 1 Est     → actuals.total_posted_amt_ytd
-				prevBudget : prevFY + ' Budget',    // Table 2 Budget  → previous_actuals.ytd
-				prevEst    : prevFY + ' Estimate',  // Table 2 Est     → previous_actuals.total_posted_amt_ytd
-				curFYFull  : curFY,
-				prevFYFull : prevFY
-			};
-		}
+	// 	// ── Derive column labels from FY ──────────────────────────────────────────
+	// 	// actuals[]          = Table 1 — current FY  (ytd = Budget, total_posted_amt_ytd = Actual)
+	// 	// previous_actuals[] = Table 2 — previous FY (ytd = Budget, total_posted_amt_ytd = Actual)
+	// 	// e.g. fy='2025-26' => Table1: "FY25-26 Budget | FY25-26 Actual"
+	// 	//                   => Table2: "FY24-25 Budget | FY24-25 Actual"
+	// 	function getLabels(fy) {
+	// 		// Selected FY = fy (e.g. "2025-26")
+	// 		// Table 1: Budget col = fy Budget        (actuals.ytd)
+	// 		//          Est col    = (fy-1) Estimate   (actuals.total_posted_amt_ytd)
+	// 		// Table 2: Budget col = (fy-1) Budget     (previous_actuals.ytd)
+	// 		//          Est col    = (fy-1) Estimate   (previous_actuals.total_posted_amt_ytd)
+	// 		var parts        = (fy || '2025-26').split('-');
+	// 		var curStart     = parseInt(parts[0] || '2025', 10);
+	// 		var curEnd       = parseInt(parts[1] || '26',   10);
+	// 		var curEndYY     = String(curEnd).padStart(2, '0');
+	// 		var prevStartNum = curStart - 1;
+	// 		var prevEndNum   = curEnd   - 1;
+	// 		var prevEndYY    = String(prevEndNum).padStart(2, '0');
+	// 		var curFY        = curStart      + '-' + curEndYY;
+	// 		var prevFY       = prevStartNum  + '-' + prevEndYY;
+	// 		return {
+	// 			curBudget  : curFY  + ' Budget',    // Table 1 Budget  → actuals.ytd
+	// 			curEst     : prevFY + ' Estimate',  // Table 1 Est     → actuals.total_posted_amt_ytd
+	// 			prevBudget : prevFY + ' Budget',    // Table 2 Budget  → previous_actuals.ytd
+	// 			prevEst    : prevFY + ' Estimate',  // Table 2 Est     → previous_actuals.total_posted_amt_ytd
+	// 			curFYFull  : curFY,
+	// 			prevFYFull : prevFY
+	// 		};
+	// 	}
 
-		// ── Fetch & render ────────────────────────────────────────────────────────
-		function fetchAndRender(fy) {
-			$('#ppt-tbody,#ppt-prev-tbody').html(
-				'<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">Loading\u2026</td></tr>'
-			);
-			Loader.show('Building your foundation metrics');
+	// 	// ── Fetch & render ────────────────────────────────────────────────────────
+	// 	function fetchAndRender(fy) {
+	// 		$('#ppt-tbody,#ppt-prev-tbody').html(
+	// 			'<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">Loading\u2026</td></tr>'
+	// 		);
+	// 		Loader.show('Building your foundation metrics');
 
-			frappe.call({
-				method: 'annual_budget.api.foundation_consolidated_report.get_foundation_overall',
-				args  : {
-					financial_year    : fy,
-					month             : 'March',
-					table_name_filter : 'Foundation Overall'
-				},
-				callback: function (r) {
-					Loader.hide();
+	// 		frappe.call({
+	// 			method: 'annual_budget.api.foundation_consolidated_report.get_foundation_overall',
+	// 			args  : {
+	// 				financial_year    : fy,
+	// 				month             : 'March',
+	// 				table_name_filter : 'Foundation Overall'
+	// 			},
+	// 			callback: function (r) {
+	// 				Loader.hide();
 
-					var apiData = null;
-					if (r.message && Array.isArray(r.message)) {
-						apiData = r.message;
-					} else if (r.message && Array.isArray(r.message.message)) {
-						apiData = r.message.message;
-					}
+	// 				var apiData = null;
+	// 				if (r.message && Array.isArray(r.message)) {
+	// 					apiData = r.message;
+	// 				} else if (r.message && Array.isArray(r.message.message)) {
+	// 					apiData = r.message.message;
+	// 				}
 
-					if (!apiData || !apiData.length) {
-						$('#ppt-tbody,#ppt-prev-tbody').html(
-							'<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">No data.</td></tr>'
-						);
-						return;
-					}
+	// 				if (!apiData || !apiData.length) {
+	// 					$('#ppt-tbody,#ppt-prev-tbody').html(
+	// 						'<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;">No data.</td></tr>'
+	// 					);
+	// 					return;
+	// 				}
 
-					var labels = getLabels(fy);
+	// 				var labels = getLabels(fy);
 
-					// Table 1 — current FY: actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
-					var rows0 = buildRows(apiData, 'actuals', 'actuals');
-					renderTable(rows0,
-						'ppt-tbody', 'ppt-budget-hdr', 'ppt-est-hdr', 'ppt-table',
-						labels.curBudget, labels.curEst
-					);
+	// 				// Table 1 — current FY: actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
+	// 				var rows0 = buildRows(apiData, 'actuals', 'actuals');
+	// 				renderTable(rows0,
+	// 					'ppt-tbody', 'ppt-budget-hdr', 'ppt-est-hdr', 'ppt-table',
+	// 					labels.curBudget, labels.curEst
+	// 				);
 
-					// Table 2 — previous FY: previous_actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
-					var rows1 = buildRows(apiData, 'previous_actuals', 'actuals');
-					renderTable(rows1,
-						'ppt-prev-tbody', 'ppt-prev-budget-hdr', 'ppt-prev-est-hdr', 'ppt-prev-table',
-						labels.prevBudget, labels.prevEst
-					);
+	// 				// Table 2 — previous FY: previous_actuals[] (Budget = ytd, Actual = total_posted_amt_ytd)
+	// 				var rows1 = buildRows(apiData, 'previous_actuals', 'actuals');
+	// 				renderTable(rows1,
+	// 					'ppt-prev-tbody', 'ppt-prev-budget-hdr', 'ppt-prev-est-hdr', 'ppt-prev-table',
+	// 					labels.prevBudget, labels.prevEst
+	// 				);
 
-					// Update table titles
-					var fyParts2   = (fy || '2025-26').split('-');
-					var prevStart2 = String(parseInt(fyParts2[0], 10) - 1);
-					var prevEnd2   = String(parseInt(fyParts2[1] || '26', 10) - 1).padStart(2, '0');
-					var prevFYStr2 = prevStart2 + '-' + prevEnd2;
-					$('#ppt-main-title').text('Overall Foundation - ' + labels.curFYFull + ' Budget vs. ' + labels.curEst);
-					$('#ppt-prev-title').text('Overall Foundation - ' + labels.prevFYFull + ' Budget vs. ' + labels.prevEst);
+	// 				// Update table titles
+	// 				var fyParts2   = (fy || '2025-26').split('-');
+	// 				var prevStart2 = String(parseInt(fyParts2[0], 10) - 1);
+	// 				var prevEnd2   = String(parseInt(fyParts2[1] || '26', 10) - 1).padStart(2, '0');
+	// 				var prevFYStr2 = prevStart2 + '-' + prevEnd2;
+	// 				$('#ppt-main-title').text('Overall Foundation - ' + labels.curFYFull + ' Budget vs. ' + labels.curEst);
+	// 				$('#ppt-prev-title').text('Overall Foundation - ' + labels.prevFYFull + ' Budget vs. ' + labels.prevEst);
 
-					// Store for export
-					function toExportRows(rows) {
-						return rows.map(function (row) {
-							return {
-								label   : row.label,
-								bOpex   : row.bOpex,
-								bCapex  : row.bCapex,
-								eOpex   : row.eOpex,
-								eCapex  : row.eCapex,
-								is_total: (row.isSubTotal === true || row.isGrand === true)
-							};
-						});
-					}
-					Store.ppt.rows            = toExportRows(rows0);
-					Store.ppt.prevRows        = toExportRows(rows1);
-					Store.ppt.budgetLabel     = labels.curBudget;
-					Store.ppt.estLabel        = labels.curEst;
-					Store.ppt.prevBudgetLabel = labels.prevBudget;
-					Store.ppt.prevEstLabel    = labels.prevEst;
-				},
-				error: function () {
-					Loader.hide();
-					$('#ppt-tbody,#ppt-prev-tbody').html(
-						'<tr><td colspan="7" style="text-align:center;padding:24px;color:red;">Error loading data.</td></tr>'
-					);
-				}
-			});
-		}
+	// 				// Store for export
+	// 				function toExportRows(rows) {
+	// 					return rows.map(function (row) {
+	// 						return {
+	// 							label   : row.label,
+	// 							bOpex   : row.bOpex,
+	// 							bCapex  : row.bCapex,
+	// 							eOpex   : row.eOpex,
+	// 							eCapex  : row.eCapex,
+	// 							is_total: (row.isSubTotal === true || row.isGrand === true)
+	// 						};
+	// 					});
+	// 				}
+	// 				Store.ppt.rows            = toExportRows(rows0);
+	// 				Store.ppt.prevRows        = toExportRows(rows1);
+	// 				Store.ppt.budgetLabel     = labels.curBudget;
+	// 				Store.ppt.estLabel        = labels.curEst;
+	// 				Store.ppt.prevBudgetLabel = labels.prevBudget;
+	// 				Store.ppt.prevEstLabel    = labels.prevEst;
+	// 			},
+	// 			error: function () {
+	// 				Loader.hide();
+	// 				$('#ppt-tbody,#ppt-prev-tbody').html(
+	// 					'<tr><td colspan="7" style="text-align:center;padding:24px;color:red;">Error loading data.</td></tr>'
+	// 				);
+	// 			}
+	// 		});
+	// 	}
 
-		function load(fy) { currentFY = fy || '2025-26'; fetchAndRender(currentFY); }
-		return { load: load };
-	})();
+	// 	function load(fy) { currentFY = fy || '2025-26'; fetchAndRender(currentFY); }
+	// 	return { load: load };
+	// })();
 
+
+var PPT = (function () {
+
+    var currentFY = '';
+
+    // ── Helpers ─────────────────────────────────────────────
+    function toCr(v) { return (parseFloat(v) || 0) / 10000000; }
+
+    function fmt(v) {
+        var n = parseFloat(v) || 0;
+        if (n === 0) return '<span class="ppt-dash">-</span>';
+
+        var neg = n < 0;
+        var abs = Math.abs(n).toFixed(2);
+        var parts = abs.split('.');
+        var ip = parts[0], dp = parts[1];
+
+        if (ip.length > 3) {
+            var last3 = ip.slice(-3);
+            var rest = ip.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+            ip = rest + ',' + last3;
+        }
+
+        return (neg ? '-' : '') + ip + '.' + dp;
+    }
+
+    function normSecName(s) {
+        return (s || '').replace(/\s+/g, ' ').trim().toUpperCase();
+    }
+
+    function isGrandTotalSec(sec) {
+        return sec.sequence_id === 9999 || normSecName(sec.name) === 'GRAND TOTAL';
+    }
+
+    // ── Extract Values ───────────────────────────────────────
+    function extractVals(sections, field) {
+
+        var opex = 0, capex = 0;
+
+        (sections || []).forEach(function (sec) {
+
+            if (isGrandTotalSec(sec)) return;
+
+            var nm = normSecName(sec.name);
+
+            if (nm.includes('OPERATING')) {
+                opex += parseFloat(sec[field] || 0);
+            }
+
+            if (nm.includes('CAPITAL')) {
+                capex += parseFloat(sec[field] || 0);
+            }
+        });
+
+        return {
+            opex: toCr(opex),
+            capex: toCr(capex)
+        };
+    }
+
+    // ── Build Rows ───────────────────────────────────────────
+    function buildRows(apiData, config) {
+
+        var sorted = (apiData || []).slice().sort(function (a, b) {
+            return (a.sequence_id || 0) - (b.sequence_id || 0);
+        });
+
+        var rows = [];
+
+        sorted.forEach(function (entry) {
+
+            var sections = entry[config.key] || [];
+
+            var bVals = extractVals(sections, config.budgetField);
+            var eVals = extractVals(sections, config.actualField);
+
+            rows.push({
+                label: entry.label || '',
+                bOpex: bVals.opex,
+                bCapex: bVals.capex,
+                eOpex: eVals.opex,
+                eCapex: eVals.capex
+            });
+        });
+
+        // TOTAL ROW
+        var total = { bOpex: 0, bCapex: 0, eOpex: 0, eCapex: 0 };
+
+        rows.forEach(function (r) {
+            total.bOpex += r.bOpex;
+            total.bCapex += r.bCapex;
+            total.eOpex += r.eOpex;
+            total.eCapex += r.eCapex;
+        });
+
+        rows.push({
+            label: 'Total',
+            isTotal: true,
+            bOpex: total.bOpex,
+            bCapex: total.bCapex,
+            eOpex: total.eOpex,
+            eCapex: total.eCapex
+        });
+
+        return rows;
+    }
+
+    // ── Render Table ─────────────────────────────────────────
+    function renderTable(rows, tbodyId, budgetHdrId, estHdrId, tableId, budgetLabel, estLabel) {
+
+        $('#' + budgetHdrId).text(budgetLabel);
+        $('#' + estHdrId).text(estLabel);
+
+        var $tb = $('#' + tbodyId).empty();
+
+        rows.forEach(function (row) {
+
+            var cls = row.isTotal ? 'ppt-total-row' : '';
+
+            $tb.append(
+                '<tr class="' + cls + '">' +
+                '<td>' + row.label + '</td>' +
+                '<td>' + fmt(row.bOpex) + '</td>' +
+                '<td>' + fmt(row.bCapex) + '</td>' +
+                '<td>' + fmt(row.bOpex + row.bCapex) + '</td>' +
+                '<td>' + fmt(row.eOpex) + '</td>' +
+                '<td>' + fmt(row.eCapex) + '</td>' +
+                '<td>' + fmt(row.eOpex + row.eCapex) + '</td>' +
+                '</tr>'
+            );
+        });
+
+        fixStickySubHeader('#' + tableId);
+    }
+
+    // ── Labels + FY Logic ────────────────────────────────────
+    function getLabels(fy) {
+
+        var parts = (fy || '2025-26').split('-');
+
+        var curStart = parseInt(parts[0], 10);
+        var curEnd = parseInt(parts[1], 10);
+
+        var prevStart = curStart - 1;
+        var prevEnd = curEnd - 1;
+
+        var curFY = curStart + '-' + curEnd;
+        var prevFY = prevStart + '-' + prevEnd;
+
+        return {
+            curFY: curFY,
+            prevFY: prevFY,
+
+            curBudget: curFY + ' Budget',
+            curActual: prevFY + ' Actual',
+
+            prevBudget: prevFY + ' Budget',
+            prevActual: prevFY + ' Actual'
+        };
+    }
+
+    // ── Fetch & Render ───────────────────────────────────────
+    function fetchAndRender(fy) {
+
+        $('#ppt-tbody,#ppt-prev-tbody').html(
+            '<tr><td colspan="7" style="text-align:center;padding:24px;">Loading…</td></tr>'
+        );
+
+        Loader.show('Loading data...');
+
+        frappe.call({
+            method: 'annual_budget.api.foundation_consolidated_report.get_foundation_overall',
+            args: {
+                financial_year: fy,
+                month: 'March',
+                table_name_filter: 'Unit Wise Plan'
+            },
+
+            callback: function (r) {
+
+                Loader.hide();
+
+                var apiData = r.message || [];
+
+                if (!apiData.length) {
+                    $('#ppt-tbody,#ppt-prev-tbody').html(
+                        '<tr><td colspan="7">No data</td></tr>'
+                    );
+                    return;
+                }
+
+                var labels = getLabels(fy);
+
+                // ── FIXED TITLES ✅
+                $('#ppt-main-title').text(
+                    'Overall Foundation - ' +
+                    labels.curFY + ' Budget vs ' +
+                    labels.prevFY + ' Actual'
+                );
+
+                $('#ppt-prev-title').text(
+                    'Overall Foundation - ' +
+                    labels.prevFY + ' Budget vs ' +
+                    labels.prevFY + ' Actual'
+                );
+
+                // CONFIGS
+                var currentConfig = {
+                    key: 'current_year',
+                    budgetField: 'ytd',
+                    actualField: 'total_posted_amt_ytd'
+                };
+
+                var previousConfig = {
+                    key: 'previous_year',
+                    budgetField: 'ytd',
+                    actualField: 'total_posted_amt_ytd'
+                };
+
+                // BUILD
+                var rows0 = buildRows(apiData, currentConfig);
+                var rows1 = buildRows(apiData, previousConfig);
+
+                // RENDER
+                renderTable(
+                    rows0,
+                    'ppt-tbody',
+                    'ppt-budget-hdr',
+                    'ppt-est-hdr',
+                    'ppt-table',
+                    labels.curBudget,
+                    labels.curActual
+                );
+
+                renderTable(
+                    rows1,
+                    'ppt-prev-tbody',
+                    'ppt-prev-budget-hdr',
+                    'ppt-prev-est-hdr',
+                    'ppt-prev-table',
+                    labels.prevBudget,
+                    labels.prevActual
+                );
+            },
+
+            error: function () {
+                Loader.hide();
+                $('#ppt-tbody,#ppt-prev-tbody').html(
+                    '<tr><td colspan="7">Error loading data</td></tr>'
+                );
+            }
+        });
+    }
+
+    function load(fy) {
+        currentFY = fy || '2025-26';
+        fetchAndRender(currentFY);
+    }
+
+    return { load: load };
+
+})();
 	// =============================================================================
 	// SUMMARY IN INR MODULE
 	// =============================================================================
