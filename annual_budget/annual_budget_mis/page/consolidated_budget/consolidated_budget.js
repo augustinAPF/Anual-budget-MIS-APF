@@ -20588,21 +20588,30 @@ var PPT = (function () {
 
 	var SummaryINR = (function () {
 
-		function fmtCr(v) {
-			var n = parseFloat(v) || 0;
-			if (n === 0) { return '-'; }
-			var cr  = n / 10000000;
-			var neg = cr < 0;
-			var abs = Math.abs(cr).toFixed(2);
-			var pts = abs.split('.');
-			var ip  = pts[0], dp = pts[1];
-			if (ip.length > 3) {
-				var l3 = ip.slice(-3);
-				var rs = ip.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-				ip = rs + ',' + l3;
-			}
-			return (neg ? '-' : '') + ip + '.' + dp;
-		}
+        function fmtCr(v) {
+        let n = Number(v);
+
+        if (!isFinite(n) || n === 0) return '-';
+
+        // Convert to Crores (1 Cr = 10,000,000)
+        let cr = n / 1e7;
+
+        // Keep precision BEFORE formatting
+        let rounded = Math.round(cr * 100) / 100;
+
+        let neg = rounded < 0;
+        let abs = Math.abs(rounded);
+
+        // Indian number format
+        let parts = abs.toString().split('.');
+        let intPart = parts[0];
+        let decPart = (parts[1] || '').padEnd(2, '0').slice(0, 2);
+
+        // Indian grouping (lakhs/crores)
+        intPart = intPart.replace(/(\d)(?=(\d{2})+\d{3}$)/g, '$1,');
+
+        return (neg ? '-' : '') + intPart + '.' + decPart;
+        }
 
 		function normName(s) { return (s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
 

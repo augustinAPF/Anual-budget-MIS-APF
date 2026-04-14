@@ -2590,9 +2590,7 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #     return final_results
 
 
-
-# fainal
-
+# Fainal
 # @frappe.whitelist(allow_guest=True)
 # def get_foundation_overall(financial_year, month, table_name_filter=None):
 
@@ -2615,7 +2613,6 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #         head_map = {}
 
 #         for data in all_unit_actuals:
-
 #             for head in normalize_data(data):
 
 #                 key = head.get("name")
@@ -2638,7 +2635,6 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 
 #     # ---------------- GRAND TOTAL ----------------
 #     def calculate_grand_total(data):
-
 #         return {
 #             "name": "GRAND TOTAL",
 #             "sequence_id": 9999,
@@ -2646,21 +2642,37 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #             "total_posted_amt_ytd": round(sum(d.get("total_posted_amt_ytd", 0) for d in data), 2)
 #         }
 
-#     # ---------------- BUILD MAP ----------------
+#     # ---------------- BUILD ACTUAL MAP (FIXED) ----------------
 #     def build_actual_map(data):
 #         m = {}
+
 #         for head in normalize_data(data):
+
+#             # ✅ FIX: handle heads without sub_heads (CAPEX case)
+#             if not head.get("sub_heads"):
+#                 m[head.get("name")] = head.get("total_posted_amt_ytd", 0)
+
+#             # Existing logic for OPEX (items inside sub_heads)
 #             for sub in head.get("sub_heads", []):
 #                 for item in sub.get("items", []):
 #                     m[item.get("name")] = item.get("total_posted_amt", 0)
+
 #         return m
 
-#     # ---------------- APPLY ACTUAL ----------------
+#     # ---------------- APPLY ACTUAL (FIXED) ----------------
 #     def apply_actual(data, actual_map):
 
 #         for head in normalize_data(data):
+
 #             total_actual = 0
 
+#             # ✅ FIX: if no sub_heads → directly assign (CAPEX)
+#             if not head.get("sub_heads"):
+#                 actual_val = actual_map.get(head.get("name"), 0)
+#                 head["total_posted_amt_ytd"] = actual_val
+#                 continue
+
+#             # Existing logic for OPEX
 #             for sub in head.get("sub_heads", []):
 #                 sub_total = 0
 
@@ -2682,7 +2694,6 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #     previous_financial_year = get_previous_financial_year(financial_year)
 #     settings = get_combination_table_settings_1(table_name_filter)
 
-#     # ✅ ONLY ONE ACTUAL SOURCE
 #     current_formatted = get_accounting_period_from_month(month, previous_financial_year)
 
 #     current_grouped = get_grouped_actuals(
@@ -2701,7 +2712,7 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 
 #             for gu in s.get("grouped_units", []):
 
-#                 # ✅ CURRENT YEAR BUDGET
+#                 # CURRENT YEAR BUDGET
 #                 current_budget = get_combined_actuals(
 #                     financial_year=financial_year,
 #                     month=month,
@@ -2713,7 +2724,7 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #                     grouped_actuals_data=current_grouped
 #                 )
 
-#                 # ✅ PREVIOUS YEAR BUDGET
+#                 # PREVIOUS YEAR BUDGET
 #                 previous_budget = get_combined_actuals(
 #                     financial_year=previous_financial_year,
 #                     month=month,
@@ -2728,18 +2739,18 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #                 # ✅ BUILD ACTUAL MAP (ONCE)
 #                 actual_map = build_actual_map(current_budget)
 
-#                 # ✅ APPLY SAME ACTUAL TO BOTH
+#                 # ✅ APPLY TO BOTH
 #                 current_year = apply_actual(current_budget, actual_map)
 #                 previous_year = apply_actual(previous_budget, actual_map)
 
 #                 current_all.extend(normalize_data(current_year))
 #                 previous_all.extend(normalize_data(previous_year))
 
-#             # ✅ CONSOLIDATE
+#             # CONSOLIDATE
 #             current_final = consolidate_actuals(current_all)
 #             previous_final = consolidate_actuals(previous_all)
 
-#             # ✅ GRAND TOTAL
+#             # GRAND TOTAL
 #             current_final.append(calculate_grand_total(current_final))
 #             previous_final.append(calculate_grand_total(previous_final))
 
@@ -2756,41 +2767,64 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #     return final_results
 
 
-
-
 @frappe.whitelist(allow_guest=True)
 def get_foundation_overall(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
         return ",".join([str(x).strip() for x in (arr or []) if x])
 
-    # ---------------- NORMALIZER ----------------
-    def normalize_data(data):
-        if not data:
-            return []
-        if isinstance(data, dict):
-            return [data]
-        if isinstance(data, list):
-            return [d for d in data if isinstance(d, dict)]
-        return []
+    # ---------------- TOTAL CALCULATION (MATCH WORKING API) ----------------
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+            total_actual = 0
+
+            if head.get("sub_heads"):
+
+                for sub in head.get("sub_heads", []):
+
+                    sub_ytd = 0
+                    sub_actual = 0
+
+                    for item in sub.get("items", []):
+                        sub_ytd += item.get("ytd", 0) or 0
+                        sub_actual += item.get("total_posted_amt", 0) or 0
+
+                    sub["ytd"] = round(sub_ytd, 2)
+                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+
+            else:
+                for item in head.get("items", []):
+                    total_ytd += item.get("ytd", 0) or 0
+                    total_actual += item.get("total_posted_amt", 0) or 0
+
+            head["ytd"] = round(total_ytd, 2)
+            head["total_posted_amt_ytd"] = round(total_actual, 2)
+
+        return actuals
 
     # ---------------- CONSOLIDATION ----------------
     def consolidate_actuals(all_unit_actuals):
 
         head_map = {}
 
-        for data in all_unit_actuals:
-            for head in normalize_data(data):
+        for unit_data in all_unit_actuals:
 
-                key = head.get("name")
-                if not key:
-                    continue
+            for head in unit_data:
+
+                key = head["name"]
 
                 if key not in head_map:
                     head_map[key] = {
-                        "name": key,
-                        "sequence_id": head.get("sequence_id"),
+                        "name": head["name"],
+                        "sequence_id": head["sequence_id"],
                         "sub_heads": [],
+                        "items": [],
                         "ytd": 0,
                         "total_posted_amt_ytd": 0
                     }
@@ -2802,6 +2836,7 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 
     # ---------------- GRAND TOTAL ----------------
     def calculate_grand_total(data):
+
         return {
             "name": "GRAND TOTAL",
             "sequence_id": 9999,
@@ -2809,63 +2844,16 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
             "total_posted_amt_ytd": round(sum(d.get("total_posted_amt_ytd", 0) for d in data), 2)
         }
 
-    # ---------------- BUILD ACTUAL MAP (FIXED) ----------------
-    def build_actual_map(data):
-        m = {}
-
-        for head in normalize_data(data):
-
-            # ✅ FIX: handle heads without sub_heads (CAPEX case)
-            if not head.get("sub_heads"):
-                m[head.get("name")] = head.get("total_posted_amt_ytd", 0)
-
-            # Existing logic for OPEX (items inside sub_heads)
-            for sub in head.get("sub_heads", []):
-                for item in sub.get("items", []):
-                    m[item.get("name")] = item.get("total_posted_amt", 0)
-
-        return m
-
-    # ---------------- APPLY ACTUAL (FIXED) ----------------
-    def apply_actual(data, actual_map):
-
-        for head in normalize_data(data):
-
-            total_actual = 0
-
-            # ✅ FIX: if no sub_heads → directly assign (CAPEX)
-            if not head.get("sub_heads"):
-                actual_val = actual_map.get(head.get("name"), 0)
-                head["total_posted_amt_ytd"] = actual_val
-                continue
-
-            # Existing logic for OPEX
-            for sub in head.get("sub_heads", []):
-                sub_total = 0
-
-                for item in sub.get("items", []):
-                    actual_val = actual_map.get(item.get("name"), 0)
-
-                    item["total_posted_amt"] = actual_val
-                    sub_total += actual_val
-
-                sub["total_posted_amt_ytd"] = sub_total
-                total_actual += sub_total
-
-            head["total_posted_amt_ytd"] = total_actual
-
-        return data
-
     # ---------------- MAIN ----------------
 
     previous_financial_year = get_previous_financial_year(financial_year)
     settings = get_combination_table_settings_1(table_name_filter)
 
-    current_formatted = get_accounting_period_from_month(month, previous_financial_year)
+    formatted = get_accounting_period_from_month(month, previous_financial_year)
 
-    current_grouped = get_grouped_actuals(
-        fiscal_year=current_formatted.get("fiscal_year"),
-        accounting_period=current_formatted.get("accounting_period")
+    grouped_actuals_data = get_grouped_actuals(
+        fiscal_year=formatted.get("fiscal_year"),
+        accounting_period=formatted.get("accounting_period")
     ).get("data", [])
 
     final_results = []
@@ -2879,8 +2867,8 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 
             for gu in s.get("grouped_units", []):
 
-                # CURRENT YEAR BUDGET
-                current_budget = get_combined_actuals(
+                # CURRENT FY
+                current_actuals = get_combined_actuals(
                     financial_year=financial_year,
                     month=month,
                     unit=gu.get("unit"),
@@ -2888,11 +2876,11 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
                     location_code=safe_join(gu.get("locations")),
                     erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),
                     erp_loc_value=safe_join(gu.get("locations_erp")),
-                    grouped_actuals_data=current_grouped
+                    grouped_actuals_data=grouped_actuals_data
                 )
 
-                # PREVIOUS YEAR BUDGET
-                previous_budget = get_combined_actuals(
+                # PREVIOUS FY
+                previous_actuals = get_combined_actuals(
                     financial_year=previous_financial_year,
                     month=month,
                     unit=gu.get("unit"),
@@ -2900,24 +2888,21 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
                     location_code=safe_join(gu.get("locations")),
                     erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),
                     erp_loc_value=safe_join(gu.get("locations_erp")),
-                    grouped_actuals_data=current_grouped
+                    grouped_actuals_data=grouped_actuals_data
                 )
 
-                # ✅ BUILD ACTUAL MAP (ONCE)
-                actual_map = build_actual_map(current_budget)
+                # ✅ CRITICAL FIX: calculate totals BEFORE consolidation
+                current_actuals = calculate_totals(current_actuals)
+                previous_actuals = calculate_totals(previous_actuals)
 
-                # ✅ APPLY TO BOTH
-                current_year = apply_actual(current_budget, actual_map)
-                previous_year = apply_actual(previous_budget, actual_map)
+                current_all.append(current_actuals)
+                previous_all.append(previous_actuals)
 
-                current_all.extend(normalize_data(current_year))
-                previous_all.extend(normalize_data(previous_year))
-
-            # CONSOLIDATE
+            # ✅ CONSOLIDATE AFTER totals
             current_final = consolidate_actuals(current_all)
             previous_final = consolidate_actuals(previous_all)
 
-            # GRAND TOTAL
+            # ✅ GRAND TOTAL
             current_final.append(calculate_grand_total(current_final))
             previous_final.append(calculate_grand_total(previous_final))
 
@@ -2932,6 +2917,10 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
             })
 
     return final_results
+
+
+
+
 
 # @frappe.whitelist(allow_guest=True)
 # def get_unit_wise_plan(financial_year, month, table_name_filter=None):
