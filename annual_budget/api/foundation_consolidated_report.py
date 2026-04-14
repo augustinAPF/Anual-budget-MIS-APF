@@ -1490,127 +1490,6 @@ def get_combination_table_settings(table_name_filter=None):
 
 
 
-# @frappe.whitelist(allow_guest=True)
-# def get_combination_table_settings_1(table_name_filter=None):
-
-#     results = []
-
-#     def parse_list(value):
-#         if not value:
-#             return []
-#         return [v.strip() for v in str(value).split(",") if v.strip()]
-
-#     # ✅ HANDLE MULTIPLE TABLE NAMES
-#     table_filters = parse_list(table_name_filter)
-#     table_filters = [t.lower() for t in table_filters]
-
-#     # ✅ FETCH ALL SETTINGS
-#     settings_docs = frappe.get_all(
-#         "Overview number cards settings",
-#         fields=["name", "number_card_title"],
-#         order_by="creation desc"
-#     )
-
-#     for setting in settings_docs:
-
-#         doc = frappe.get_doc(
-#             "Overview number cards settings",
-#             setting.name
-#         )
-
-#         # -------- GROUPING BY UNIT --------
-#         unit_map = {}
-
-#         # Initialize units
-#         for d in doc.select_units:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#         # Map cost centers to units
-#         for d in doc.select_cost_centers:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#             if d.cost_center:
-#                 unit_map[d.unit]["cost_centers"].append(d.cost_center)
-
-#             if d.cost_center_erp:
-#                 unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
-
-#         # Map locations to units
-#         for d in doc.select_location_codes:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#             if d.location_code:
-#                 unit_map[d.unit]["locations"].append(d.location_code)
-
-#             if d.location_code_erp:
-#                 unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
-
-#         # Convert to list
-#         grouped_units = list(unit_map.values())
-
-#         # -------- CHILD TABLE FILTER --------
-#         combination_settings = []
-
-#         for row in doc.combination_table_settings:
-
-#             row_table_name = (row.table_name or "").strip().lower()
-
-#             # ✅ APPLY FILTER
-#             if table_filters and row_table_name not in table_filters:
-#                 continue
-
-#             combination_settings.append({
-#                 "table_name": row.table_name,
-#                 "sequence_id": row.sequence_id,
-#                 "is_this_sub_item": row.is_this_sub_item
-#             })
-
-#         # ❗ Skip if no matching child rows
-#         if table_filters and not combination_settings:
-#             continue
-
-#         # -------- FINAL RESULT --------
-#         results.append({
-#             "settings_doc": doc.name,
-#             "label": doc.number_card_title,
-#             "grouped_units": grouped_units,
-#             "combination_settings": combination_settings
-#         })
-
-#     return results
-
-
-
 @frappe.whitelist(allow_guest=True)
 def get_combination_table_settings_1(table_name_filter=None):
 
@@ -1642,7 +1521,7 @@ def get_combination_table_settings_1(table_name_filter=None):
         # -------- GROUPING BY UNIT --------
         unit_map = {}
 
-        # ✅ Initialize units
+        # Initialize units
         for d in doc.select_units:
             if not d.unit:
                 continue
@@ -1656,7 +1535,7 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-        # -------- COST CENTERS (WITH reference_for LOGIC) --------
+        # Map cost centers to units
         for d in doc.select_cost_centers:
             if not d.unit:
                 continue
@@ -1670,19 +1549,13 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-            ref = (d.reference_for or "Both").strip()
+            if d.cost_center:
+                unit_map[d.unit]["cost_centers"].append(d.cost_center)
 
-            # ✅ Budget → normal cost center
-            if ref in ["Budget", "Both"]:
-                if d.cost_center:
-                    unit_map[d.unit]["cost_centers"].append(d.cost_center)
+            if d.cost_center_erp:
+                unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
 
-            # ✅ Actual → ERP cost center
-            if ref in ["Actual", "Both"]:
-                if d.cost_center_erp:
-                    unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
-
-        # -------- LOCATIONS (WITH reference_for LOGIC) --------
+        # Map locations to units
         for d in doc.select_location_codes:
             if not d.unit:
                 continue
@@ -1696,24 +1569,11 @@ def get_combination_table_settings_1(table_name_filter=None):
                     "locations_erp": []
                 }
 
-            ref = (d.reference_for or "Both").strip()
+            if d.location_code:
+                unit_map[d.unit]["locations"].append(d.location_code)
 
-            # ✅ Budget → normal location
-            if ref in ["Budget", "Both"]:
-                if d.location_code:
-                    unit_map[d.unit]["locations"].append(d.location_code)
-
-            # ✅ Actual → ERP location
-            if ref in ["Actual", "Both"]:
-                if d.location_code_erp:
-                    unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
-
-        # -------- REMOVE DUPLICATES (OPTIONAL BUT RECOMMENDED) --------
-        for unit in unit_map.values():
-            unit["cost_centers"] = list(set(unit["cost_centers"]))
-            unit["cost_centers_erp"] = list(set(unit["cost_centers_erp"]))
-            unit["locations"] = list(set(unit["locations"]))
-            unit["locations_erp"] = list(set(unit["locations_erp"]))
+            if d.location_code_erp:
+                unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
 
         # Convert to list
         grouped_units = list(unit_map.values())
@@ -1748,6 +1608,146 @@ def get_combination_table_settings_1(table_name_filter=None):
         })
 
     return results
+
+
+
+# @frappe.whitelist(allow_guest=True)
+# def get_combination_table_settings_1(table_name_filter=None):
+
+#     results = []
+
+#     def parse_list(value):
+#         if not value:
+#             return []
+#         return [v.strip() for v in str(value).split(",") if v.strip()]
+
+#     # ✅ HANDLE MULTIPLE TABLE NAMES
+#     table_filters = parse_list(table_name_filter)
+#     table_filters = [t.lower() for t in table_filters]
+
+#     # ✅ FETCH ALL SETTINGS
+#     settings_docs = frappe.get_all(
+#         "Overview number cards settings",
+#         fields=["name", "number_card_title"],
+#         order_by="creation desc"
+#     )
+
+#     for setting in settings_docs:
+
+#         doc = frappe.get_doc(
+#             "Overview number cards settings",
+#             setting.name
+#         )
+
+#         # -------- GROUPING BY UNIT --------
+#         unit_map = {}
+
+#         # ✅ Initialize units
+#         for d in doc.select_units:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#         # -------- COST CENTERS (WITH reference_for LOGIC) --------
+#         for d in doc.select_cost_centers:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#             ref = (d.reference_for or "Both").strip()
+
+#             # ✅ Budget → normal cost center
+#             if ref in ["Budget", "Both"]:
+#                 if d.cost_center:
+#                     unit_map[d.unit]["cost_centers"].append(d.cost_center)
+
+#             # ✅ Actual → ERP cost center
+#             if ref in ["Actual", "Both"]:
+#                 if d.cost_center_erp:
+#                     unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
+
+#         # -------- LOCATIONS (WITH reference_for LOGIC) --------
+#         for d in doc.select_location_codes:
+#             if not d.unit:
+#                 continue
+
+#             if d.unit not in unit_map:
+#                 unit_map[d.unit] = {
+#                     "unit": d.unit,
+#                     "cost_centers": [],
+#                     "cost_centers_erp": [],
+#                     "locations": [],
+#                     "locations_erp": []
+#                 }
+
+#             ref = (d.reference_for or "Both").strip()
+
+#             # ✅ Budget → normal location
+#             if ref in ["Budget", "Both"]:
+#                 if d.location_code:
+#                     unit_map[d.unit]["locations"].append(d.location_code)
+
+#             # ✅ Actual → ERP location
+#             if ref in ["Actual", "Both"]:
+#                 if d.location_code_erp:
+#                     unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
+
+#         # -------- REMOVE DUPLICATES (OPTIONAL BUT RECOMMENDED) --------
+#         for unit in unit_map.values():
+#             unit["cost_centers"] = list(set(unit["cost_centers"]))
+#             unit["cost_centers_erp"] = list(set(unit["cost_centers_erp"]))
+#             unit["locations"] = list(set(unit["locations"]))
+#             unit["locations_erp"] = list(set(unit["locations_erp"]))
+
+#         # Convert to list
+#         grouped_units = list(unit_map.values())
+
+#         # -------- CHILD TABLE FILTER --------
+#         combination_settings = []
+
+#         for row in doc.combination_table_settings:
+
+#             row_table_name = (row.table_name or "").strip().lower()
+
+#             # ✅ APPLY FILTER
+#             if table_filters and row_table_name not in table_filters:
+#                 continue
+
+#             combination_settings.append({
+#                 "table_name": row.table_name,
+#                 "sequence_id": row.sequence_id,
+#                 "is_this_sub_item": row.is_this_sub_item
+#             })
+
+#         # ❗ Skip if no matching child rows
+#         if table_filters and not combination_settings:
+#             continue
+
+#         # -------- FINAL RESULT --------
+#         results.append({
+#             "settings_doc": doc.name,
+#             "label": doc.number_card_title,
+#             "grouped_units": grouped_units,
+#             "combination_settings": combination_settings
+#         })
+
+#     return results
 
 
 
