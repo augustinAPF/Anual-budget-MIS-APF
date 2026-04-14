@@ -20488,14 +20488,14 @@ var PPT = (function () {
             '<tr><td colspan="7" style="text-align:center;padding:24px;">Loading…</td></tr>'
         );
 
-        Loader.show('Loading data...');
+		Loader.show('Building your foundation metrics');
 
         frappe.call({
             method: 'annual_budget.api.foundation_consolidated_report.get_foundation_overall',
             args: {
                 financial_year: fy,
                 month: 'March',
-                table_name_filter: 'Unit Wise Plan'
+                table_name_filter: 'Foundation Overall'
             },
 
             callback: function (r) {
