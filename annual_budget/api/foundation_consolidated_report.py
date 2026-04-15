@@ -3325,65 +3325,132 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 #     return final_results
 
 
-
 import frappe
 
-@frappe.whitelist(allow_guest=True)
-def get_headcount(financial_year=None):
-    filters = {}
 
-    if financial_year:
-        try:
-            # Step 1: Get last 3 financial years including selected one
+@frappe.whitelist(allow_guest=True)
+def get_headcount(financial_year=None, month=None, table_name_filter=None):
+    try:
+        filters = {}
+
+        # ✅ Financial Year Filter Logic
+        if financial_year:
             fy_list = frappe.get_all(
                 "Financial Year List",
                 fields=["name"],
                 order_by="creation desc"
             )
 
-            # Step 2: Find index of selected FY
             fy_names_all = [fy["name"] for fy in fy_list]
 
             if financial_year in fy_names_all:
                 index = fy_names_all.index(financial_year)
-
-                # Get selected + previous 2
                 fy_names = fy_names_all[index:index+3]
             else:
                 fy_names = [financial_year]
 
-            # Apply filter
             filters["financial_year"] = ["in", fy_names]
 
-        except Exception as e:
-            frappe.log_error(frappe.get_traceback(), "Headcount API Error")
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-
-    # Step 3: Fetch Headcount records
-    docs = frappe.get_all(
-        "Headcount",
-        filters=filters,
-        fields=["name", "financial_year", "total_head_count"],
-        order_by="creation desc"
-    )
-
-    # Step 4: Fetch child table data
-    for doc in docs:
-        units = frappe.get_all(
-            "Headcount Operating Units",
-            filters={
-                "parent": doc["name"],
-                "parenttype": "Headcount"
-            },
-            fields=["unit", "total_headcount", "unit_description"]
+        # ✅ Fetch Headcount Docs
+        docs = frappe.get_all(
+            "Headcount",
+            filters=filters,
+            fields=["name", "financial_year", "total_head_count"],
+            order_by="creation desc"
         )
 
-        doc["units"] = units
+        # ✅ Fetch Units for each Headcount
+        for doc in docs:
+            units = frappe.get_all(
+                "Headcount Operating Units",
+                filters={
+                    "parent": doc["name"],
+                    "parenttype": "Headcount"
+                },
+                fields=["unit", "total_headcount", "unit_description"]
+            )
 
-    return {
-        "status": "success",
-        "data": docs
-    }
+            doc["units"] = units
+
+        # ✅ Call Plan Function (Direct Response)
+        plan_data = []
+        if financial_year and month:
+            plan_data = get_unit_wise_plan(
+                financial_year,
+                month,
+                table_name_filter
+            )
+
+        # ✅ Final Response (NO merging)
+        return {
+            "status": "success",
+            "headcount_data": docs,
+            "plan_data": plan_data
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Headcount API Error")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    
+# @frappe.whitelist(allow_guest=True)
+# def get_headcount(financial_year=None):
+#     filters = {}
+
+#     if financial_year:
+#         try:
+#             # Step 1: Get last 3 financial years including selected one
+#             fy_list = frappe.get_all(
+#                 "Financial Year List",
+#                 fields=["name"],
+#                 order_by="creation desc"
+#             )
+
+#             # Step 2: Find index of selected FY
+#             fy_names_all = [fy["name"] for fy in fy_list]
+
+#             if financial_year in fy_names_all:
+#                 index = fy_names_all.index(financial_year)
+
+#                 # Get selected + previous 2
+#                 fy_names = fy_names_all[index:index+3]
+#             else:
+#                 fy_names = [financial_year]
+
+#             # Apply filter
+#             filters["financial_year"] = ["in", fy_names]
+
+#         except Exception as e:
+#             frappe.log_error(frappe.get_traceback(), "Headcount API Error")
+#             return {
+#                 "status": "error",
+#                 "message": str(e)
+#             }
+
+#     # Step 3: Fetch Headcount records
+#     docs = frappe.get_all(
+#         "Headcount",
+#         filters=filters,
+#         fields=["name", "financial_year", "total_head_count"],
+#         order_by="creation desc"
+#     )
+
+#     # Step 4: Fetch child table data
+#     for doc in docs:
+#         units = frappe.get_all(
+#             "Headcount Operating Units",
+#             filters={
+#                 "parent": doc["name"],
+#                 "parenttype": "Headcount"
+#             },
+#             fields=["unit", "total_headcount", "unit_description"]
+#         )
+
+#         doc["units"] = units
+
+#     return {
+#         "status": "success",
+#         "data": docs
+#     }
