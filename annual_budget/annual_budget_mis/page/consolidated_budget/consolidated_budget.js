@@ -25584,265 +25584,260 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	// 	return { load: load };
 	// })();
 
-    var SummaryINR = (function () {
+var SummaryINR = (function () {
 
-        // ✅ FINAL FIXED CR FORMATTER (bulletproof)
-        function fmtCr(v) {
-            var n = parseFloat(v) || 0;
+    // ✅ FINAL: STRICT INR → CR (NO GUESSING, NO DOUBLE CONVERSION)
+    function fmtCr(v) {
+        var n = parseFloat(v);
 
-            if (!isFinite(n) || n === 0) {
-                return '-';
-            }
-
-            var cr;
-
-            // ✅ Prevent double conversion
-            if (n < 1000) {
-                cr = n; // already in Cr
-            } else {
-                cr = n / 10000000; // INR → Cr
-            }
-
-            // ✅ Proper rounding (fixes 0.04 issue)
-            cr = Math.round(cr * 100) / 100;
-
-            var neg = cr < 0;
-            var abs = Math.abs(cr);
-
-            var str = abs.toFixed(2)
-                .replace(/\.00$/, '')
-                .replace(/(\.\d)0$/, '$1');
-
-            var parts = str.split('.');
-            var intPart = parts[0];
-            var decPart = parts[1] ? '.' + parts[1] : '';
-
-            // Indian format
-            if (intPart.length > 3) {
-                var last3 = intPart.slice(-3);
-                var rest = intPart
-                    .slice(0, -3)
-                    .replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-
-                intPart = rest + ',' + last3;
-            }
-
-            return (neg ? '-' : '') + intPart + decPart;
+        if (!isFinite(n) || n === 0) {
+            return '-';
         }
 
-        function normName(s) {
-            return (s || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        // 🔥 ALWAYS treat value as INR (based on your API: 3959428)
+        var cr = n / 10000000;
+
+        // ✅ correct rounding
+        cr = Math.round(cr * 100) / 100;
+
+        var neg = cr < 0;
+        var abs = Math.abs(cr);
+
+        var str = abs.toFixed(2)
+            .replace(/\.00$/, '')
+            .replace(/(\.\d)0$/, '$1');
+
+        // optional Indian formatting (not really needed for small numbers)
+        var parts = str.split('.');
+        var intPart = parts[0];
+        var decPart = parts[1] ? '.' + parts[1] : '';
+
+        if (intPart.length > 3) {
+            var last3 = intPart.slice(-3);
+            var rest = intPart.slice(0, -3)
+                .replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+            intPart = rest + ',' + last3;
         }
 
-        function zeroA() {
-            return {
-                opex_plan: 0,
-                opex_act: 0,
-                capex_plan: 0,
-                capex_act: 0,
-                total_plan: 0,
-                total_act: 0
+        return (neg ? '-' : '') + intPart + decPart;
+    }
+
+    function normName(s) {
+        return (s || '').replace(/\s+/g, ' ').trim().toUpperCase();
+    }
+
+    function zeroA() {
+        return {
+            opex_plan: 0,
+            opex_act: 0,
+            capex_plan: 0,
+            capex_act: 0,
+            total_plan: 0,
+            total_act: 0
+        };
+    }
+
+    function addA(a, b) {
+        return {
+            opex_plan: a.opex_plan + b.opex_plan,
+            opex_act: a.opex_act + b.opex_act,
+            capex_plan: a.capex_plan + b.capex_plan,
+            capex_act: a.capex_act + b.capex_act,
+            total_plan: a.total_plan + b.total_plan,
+            total_act: a.total_act + b.total_act
+        };
+    }
+
+    function extractA(actuals) {
+        var r = zeroA();
+
+        (actuals || []).forEach(function (sec) {
+            var nm = normName(sec.name);
+
+            if (nm.indexOf('OPERATING') !== -1) {
+                r.opex_plan += parseFloat(sec.ytd || 0);
+                r.opex_act += parseFloat(sec.total_posted_amt_ytd || 0);
+            }
+
+            if (nm.indexOf('CAPITAL') !== -1) {
+                r.capex_plan += parseFloat(sec.ytd || 0);
+                r.capex_act += parseFloat(sec.total_posted_amt_ytd || 0);
+            }
+        });
+
+        r.total_plan = r.opex_plan + r.capex_plan;
+        r.total_act = r.opex_act + r.capex_act;
+
+        return r;
+    }
+
+    function buildRowsA(apiData) {
+        var sorted = (apiData || []).slice().sort(function (a, b) {
+            return (a.sequence_id || 0) - (b.sequence_id || 0);
+        });
+
+        var normalRows = [], covidRows = [];
+
+        sorted.forEach(function (entry) {
+            var label = (entry.label || '').trim();
+            var isCovid = label.toLowerCase().indexOf('covid') !== -1;
+            var isSub = entry.is_this_sub_item === 1;
+            var vals = extractA(entry.actuals);
+
+            var row = {
+                display: label,
+                isSub: isSub,
+                isCovid: isCovid,
+                vals: vals
             };
+
+            if (isCovid) covidRows.push(row);
+            else normalRows.push(row);
+        });
+
+        var normalTotal = zeroA();
+        normalRows.forEach(function (r) {
+            if (!r.isSub) normalTotal = addA(normalTotal, r.vals);
+        });
+
+        var covidTotal = zeroA();
+        covidRows.forEach(function (r) {
+            if (!r.isSub) covidTotal = addA(covidTotal, r.vals);
+        });
+
+        var out = [];
+
+        normalRows.forEach(function (r) { out.push(r); });
+
+        out.push({ display: 'Total', isTotal: true, vals: normalTotal });
+
+        if (covidRows.length) {
+            covidRows.forEach(function (r) { out.push(r); });
+            out.push({
+                display: 'Total',
+                isTotal: true,
+                vals: addA(normalTotal, covidTotal)
+            });
         }
 
-        function addA(a, b) {
-            return {
-                opex_plan: a.opex_plan + b.opex_plan,
-                opex_act: a.opex_act + b.opex_act,
-                capex_plan: a.capex_plan + b.capex_plan,
-                capex_act: a.capex_act + b.capex_act,
-                total_plan: a.total_plan + b.total_plan,
-                total_act: a.total_act + b.total_act
-            };
-        }
+        return out;
+    }
 
-        function extractA(actuals) {
-            var r = zeroA();
+    function rowHtmlA(row) {
+        var trCls = '';
+        var tdStyle = 'text-align:left;';
 
-            (actuals || []).forEach(function (sec) {
-                var nm = normName(sec.name);
+        if (row.isTotal) trCls = 'sinr-total-row';
+        else if (row.isSub) tdStyle += 'padding-left:28px;color:#555;';
+        else if (row.isCovid) trCls = 'sinr-covid-row';
 
-                if (nm.indexOf('OPERATING') !== -1) {
-                    r.opex_plan += parseFloat(sec.ytd || 0);
-                    r.opex_act += parseFloat(sec.total_posted_amt_ytd || 0);
+        var v = row.vals;
+
+        // 🔥 DEBUG (remove later if needed)
+        // console.log("RAW VALUE:", v.total_act);
+
+        return (
+            '<tr class="' + trCls + '">' +
+            '<td style="' + tdStyle + '">' + row.display + '</td>' +
+            '<td>' + fmtCr(v.opex_plan) + '</td>' +
+            '<td>' + fmtCr(v.capex_plan) + '</td>' +
+            '<td>' + fmtCr(v.total_plan) + '</td>' +
+            '<td>' + fmtCr(v.opex_act) + '</td>' +
+            '<td>' + fmtCr(v.capex_act) + '</td>' +
+            '<td>' + fmtCr(v.total_act) + '</td>' +
+            '</tr>'
+        );
+    }
+
+    function tableHtmlA(rows, planLabel, actLabel) {
+        return (
+            '<div class="sinr-currency-note" style="margin-bottom:6px;">₹ <strong>Cr.</strong></div>' +
+            '<div class="cb-scroll-wrapper" style="margin-bottom:28px;">' +
+            '<table class="cb-table sinr-table" id="sinr-table-a">' +
+            '<thead>' +
+            '<tr class="cb-thead-main">' +
+            '<th rowspan="2" style="text-align:left !important;">Unit / Function</th>' +
+            '<th colspan="3">' + planLabel + '</th>' +
+            '<th colspan="3">' + actLabel + '</th>' +
+            '</tr>' +
+            '<tr class="cb-thead-sub">' +
+            '<th>Opex</th><th>Capex</th><th>Total</th>' +
+            '<th>Opex</th><th>Capex</th><th>Total</th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody>' + rows.map(rowHtmlA).join('') + '</tbody>' +
+            '</table>' +
+            '</div>'
+        );
+    }
+
+    function fetchAndRender(fy) {
+        var $tab = $('#tab-summary_inr');
+
+        $tab.html('<div style="padding:20px;text-align:center;color:#aaa;">Loading…</div>');
+        Loader.show('Building Summary in INR…');
+
+        var fyParts = (fy || '2025-26').split('-');
+        var fyStart = parseInt(fyParts[0] || '2025', 10);
+        var fyEndYY = parseInt(fyParts[1] || '26', 10);
+
+        var planLabel = fy + ' Budget';
+        var actLabel = (fyStart - 1) + '-' + String(fyEndYY - 1).padStart(2, '0') + ' Est';
+
+        frappe.call({
+            method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
+            args: {
+                financial_year: fy,
+                month: 'March',
+                table_name_filter: 'Unit Wise Plan'
+            },
+            callback: function (r) {
+
+                Loader.hide();
+
+                var apiData = r.message || [];
+
+                if (Array.isArray(r.message)) {
+                    apiData = r.message;
+                } else if (r.message && Array.isArray(r.message.message)) {
+                    apiData = r.message.message;
                 }
 
-                if (nm.indexOf('CAPITAL') !== -1) {
-                    r.capex_plan += parseFloat(sec.ytd || 0);
-                    r.capex_act += parseFloat(sec.total_posted_amt_ytd || 0);
+                if (!apiData || !apiData.length) {
+                    $tab.html('<div style="padding:40px;text-align:center;color:#aaa;">No data available.</div>');
+                    return;
                 }
-            });
 
-            r.total_plan = r.opex_plan + r.capex_plan;
-            r.total_act = r.opex_act + r.capex_act;
+                Store.summaryInr = apiData;
 
-            return r;
-        }
+                var rowsA = buildRowsA(apiData);
+                var htmlA = tableHtmlA(rowsA, planLabel, actLabel);
 
-        function buildRowsA(apiData) {
-            var sorted = (apiData || []).slice().sort(function (a, b) {
-                return (a.sequence_id || 0) - (b.sequence_id || 0);
-            });
+                $tab.html(
+                    '<div style="padding:4px 0 10px;">' +
+                    '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' +
+                    xlBtn('xl-summary-inr', 'Export to Excel') +
+                    '</div>' +
+                    '<div class="sinr-section-label">A. Unit Wise Plan</div>' +
+                    htmlA +
+                    '</div>'
+                );
+            },
 
-            var normalRows = [], covidRows = [];
-
-            sorted.forEach(function (entry) {
-                var label = (entry.label || '').trim();
-                var isCovid = label.toLowerCase().indexOf('covid') !== -1;
-                var isSub = entry.is_this_sub_item === 1;
-                var vals = extractA(entry.actuals);
-
-                var row = {
-                    display: label,
-                    isSub: isSub,
-                    isCovid: isCovid,
-                    vals: vals
-                };
-
-                if (isCovid) covidRows.push(row);
-                else normalRows.push(row);
-            });
-
-            var normalTotal = zeroA();
-            normalRows.forEach(function (r) {
-                if (!r.isSub) normalTotal = addA(normalTotal, r.vals);
-            });
-
-            var covidTotal = zeroA();
-            covidRows.forEach(function (r) {
-                if (!r.isSub) covidTotal = addA(covidTotal, r.vals);
-            });
-
-            var out = [];
-
-            normalRows.forEach(function (r) { out.push(r); });
-
-            out.push({ display: 'Total', isTotal: true, vals: normalTotal });
-
-            if (covidRows.length) {
-                covidRows.forEach(function (r) { out.push(r); });
-                out.push({
-                    display: 'Total',
-                    isTotal: true,
-                    vals: addA(normalTotal, covidTotal)
-                });
+            error: function () {
+                Loader.hide();
+                $tab.html('<div style="padding:40px;text-align:center;color:red;">Error loading Summary in INR data.</div>');
             }
+        });
+    }
 
-            return out;
-        }
+    function load(fy) {
+        fetchAndRender(fy);
+    }
 
-        function rowHtmlA(row) {
-            var trCls = '';
-            var tdStyle = 'text-align:left;';
+    return { load: load };
 
-            if (row.isTotal) trCls = 'sinr-total-row';
-            else if (row.isSub) tdStyle += 'padding-left:28px;color:#555;';
-            else if (row.isCovid) trCls = 'sinr-covid-row';
-
-            var v = row.vals;
-
-            return (
-                '<tr class="' + trCls + '">' +
-                '<td style="' + tdStyle + '">' + row.display + '</td>' +
-                '<td>' + fmtCr(v.opex_plan) + '</td>' +
-                '<td>' + fmtCr(v.capex_plan) + '</td>' +
-                '<td>' + fmtCr(v.total_plan) + '</td>' +
-                '<td>' + fmtCr(v.opex_act) + '</td>' +
-                '<td>' + fmtCr(v.capex_act) + '</td>' +
-                '<td>' + fmtCr(v.total_act) + '</td>' +
-                '</tr>'
-            );
-        }
-
-        function tableHtmlA(rows, planLabel, actLabel) {
-            return (
-                '<div class="sinr-currency-note" style="margin-bottom:6px;">₹ <strong>Cr.</strong></div>' +
-                '<div class="cb-scroll-wrapper" style="margin-bottom:28px;">' +
-                '<table class="cb-table sinr-table" id="sinr-table-a">' +
-                '<thead>' +
-                '<tr class="cb-thead-main">' +
-                '<th rowspan="2" style="text-align:left !important;">Unit / Function</th>' +
-                '<th colspan="3">' + planLabel + '</th>' +
-                '<th colspan="3">' + actLabel + '</th>' +
-                '</tr>' +
-                '<tr class="cb-thead-sub">' +
-                '<th>Opex</th><th>Capex</th><th>Total</th>' +
-                '<th>Opex</th><th>Capex</th><th>Total</th>' +
-                '</tr>' +
-                '</thead>' +
-                '<tbody>' + rows.map(rowHtmlA).join('') + '</tbody>' +
-                '</table>' +
-                '</div>'
-            );
-        }
-
-        function fetchAndRender(fy) {
-            var $tab = $('#tab-summary_inr');
-
-            $tab.html('<div style="padding:20px;text-align:center;color:#aaa;">Loading…</div>');
-            Loader.show('Building Summary in INR…');
-
-            var fyParts = (fy || '2025-26').split('-');
-            var fyStart = parseInt(fyParts[0] || '2025', 10);
-            var fyEndYY = parseInt(fyParts[1] || '26', 10);
-
-            var planLabel = fy + ' Budget';
-            var actLabel = (fyStart - 1) + '-' + String(fyEndYY - 1).padStart(2, '0') + ' Est';
-
-            frappe.call({
-                method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
-                args: {
-                    financial_year: fy,
-                    month: 'March',
-                    table_name_filter: 'Unit Wise Plan'
-                },
-                callback: function (r) {
-
-                    Loader.hide();
-
-                    var apiData = r.message || [];
-
-                    if (Array.isArray(r.message)) {
-                        apiData = r.message;
-                    } else if (r.message && Array.isArray(r.message.message)) {
-                        apiData = r.message.message;
-                    }
-
-                    if (!apiData || !apiData.length) {
-                        $tab.html('<div style="padding:40px;text-align:center;color:#aaa;">No data available.</div>');
-                        return;
-                    }
-
-                    Store.summaryInr = apiData;
-
-                    var rowsA = buildRowsA(apiData);
-                    var htmlA = tableHtmlA(rowsA, planLabel, actLabel);
-
-                    $tab.html(
-                        '<div style="padding:4px 0 10px;">' +
-                        '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' +
-                        xlBtn('xl-summary-inr', 'Export to Excel') +
-                        '</div>' +
-                        '<div class="sinr-section-label">A. Unit Wise Plan</div>' +
-                        htmlA +
-                        '</div>'
-                    );
-                },
-
-                error: function () {
-                    Loader.hide();
-                    $tab.html('<div style="padding:40px;text-align:center;color:red;">Error loading Summary in INR data.</div>');
-                }
-            });
-        }
-
-        function load(fy) {
-            fetchAndRender(fy);
-        }
-
-        return { load: load };
-
-    })();
+})();
 	// =============================================================================
 	// HEADCOUNT MODULE
 	// New API shape: r.message = { headcount_data: [...], plan_data: [...] }
