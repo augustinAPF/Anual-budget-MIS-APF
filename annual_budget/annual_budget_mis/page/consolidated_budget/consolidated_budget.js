@@ -25585,6 +25585,8 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	// })();
 
     var SummaryINR = (function () {
+
+        // ✅ FINAL FIXED CR FORMATTER (bulletproof)
         function fmtCr(v) {
             var n = parseFloat(v) || 0;
 
@@ -25592,16 +25594,21 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
                 return '-';
             }
 
-            // ✅ Always assume value is in INR (rupees)
-            var cr = n / 10000000;
+            var cr;
 
-            // ✅ Round to 2 decimals properly
+            // ✅ Prevent double conversion
+            if (n < 1000) {
+                cr = n; // already in Cr
+            } else {
+                cr = n / 10000000; // INR → Cr
+            }
+
+            // ✅ Proper rounding (fixes 0.04 issue)
             cr = Math.round(cr * 100) / 100;
 
             var neg = cr < 0;
             var abs = Math.abs(cr);
 
-            // clean decimals
             var str = abs.toFixed(2)
                 .replace(/\.00$/, '')
                 .replace(/(\.\d)0$/, '$1');
@@ -25610,10 +25617,13 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
             var intPart = parts[0];
             var decPart = parts[1] ? '.' + parts[1] : '';
 
-            // Indian number format
+            // Indian format
             if (intPart.length > 3) {
                 var last3 = intPart.slice(-3);
-                var rest  = intPart.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+                var rest = intPart
+                    .slice(0, -3)
+                    .replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+
                 intPart = rest + ',' + last3;
             }
 
@@ -25637,12 +25647,12 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
         function addA(a, b) {
             return {
-                opex_plan : a.opex_plan  + b.opex_plan,
-                opex_act  : a.opex_act   + b.opex_act,
+                opex_plan: a.opex_plan + b.opex_plan,
+                opex_act: a.opex_act + b.opex_act,
                 capex_plan: a.capex_plan + b.capex_plan,
-                capex_act : a.capex_act  + b.capex_act,
+                capex_act: a.capex_act + b.capex_act,
                 total_plan: a.total_plan + b.total_plan,
-                total_act : a.total_act  + b.total_act
+                total_act: a.total_act + b.total_act
             };
         }
 
@@ -25654,17 +25664,17 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
                 if (nm.indexOf('OPERATING') !== -1) {
                     r.opex_plan += parseFloat(sec.ytd || 0);
-                    r.opex_act  += parseFloat(sec.total_posted_amt_ytd || 0);
+                    r.opex_act += parseFloat(sec.total_posted_amt_ytd || 0);
                 }
 
                 if (nm.indexOf('CAPITAL') !== -1) {
                     r.capex_plan += parseFloat(sec.ytd || 0);
-                    r.capex_act  += parseFloat(sec.total_posted_amt_ytd || 0);
+                    r.capex_act += parseFloat(sec.total_posted_amt_ytd || 0);
                 }
             });
 
             r.total_plan = r.opex_plan + r.capex_plan;
-            r.total_act  = r.opex_act  + r.capex_act;
+            r.total_act = r.opex_act + r.capex_act;
 
             return r;
         }
@@ -25677,10 +25687,10 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
             var normalRows = [], covidRows = [];
 
             sorted.forEach(function (entry) {
-                var label   = (entry.label || '').trim();
+                var label = (entry.label || '').trim();
                 var isCovid = label.toLowerCase().indexOf('covid') !== -1;
-                var isSub   = entry.is_this_sub_item === 1;
-                var vals    = extractA(entry.actuals);
+                var isSub = entry.is_this_sub_item === 1;
+                var vals = extractA(entry.actuals);
 
                 var row = {
                     display: label,
@@ -25772,12 +25782,12 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
             $tab.html('<div style="padding:20px;text-align:center;color:#aaa;">Loading…</div>');
             Loader.show('Building Summary in INR…');
 
-            var fyParts   = (fy || '2025-26').split('-');
-            var fyStart   = parseInt(fyParts[0] || '2025', 10);
-            var fyEndYY   = parseInt(fyParts[1] || '26', 10);
+            var fyParts = (fy || '2025-26').split('-');
+            var fyStart = parseInt(fyParts[0] || '2025', 10);
+            var fyEndYY = parseInt(fyParts[1] || '26', 10);
 
             var planLabel = fy + ' Budget';
-            var actLabel  = (fyStart - 1) + '-' + String(fyEndYY - 1).padStart(2, '0') + ' Est';
+            var actLabel = (fyStart - 1) + '-' + String(fyEndYY - 1).padStart(2, '0') + ' Est';
 
             frappe.call({
                 method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
