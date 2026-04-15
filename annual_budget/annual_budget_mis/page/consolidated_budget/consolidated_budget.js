@@ -26055,7 +26055,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 			frappe.call({
 				method  : 'annual_budget.api.foundation_consolidated_report.get_headcount',
-				args    : { financial_year: fy, month: 'March', table_name_filter: 'Unit Wise Plan' },
+				args    : { financial_year: fy, month: 'March', table_name_filter: 'Headcount' },
 				callback: function (r) {
 					Loader.hide();
 
