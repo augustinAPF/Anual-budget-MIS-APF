@@ -23594,7 +23594,12 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	var Headcount = (function () {
 		function fmtHC(v) { if (v === null || v === undefined) { return '-'; } var n = parseFloat(v); return isNaN(n) ? '-' : Math.round(n).toLocaleString('en-IN'); }
 		function fmtOpex(v) { if (v === null || v === undefined) { return '-'; } var n = parseFloat(v); return isNaN(n) ? '-' : fmtCr(n * 10000000); }
-		function fmtPct(a, b) { a = parseFloat(a); b = parseFloat(b); return (!a || isNaN(a) || isNaN(b)) ? '-' : (((b / a) - 1) * 100).toFixed(1) + '%'; }
+		function fmtPct(a, b) {
+			a = parseFloat(a); b = parseFloat(b);
+			if (!a || isNaN(a) || isNaN(b)) { return '-'; }
+			// Match Excel =+G/F-1 format: always round to nearest whole percent
+			return Math.round(((b / a) - 1) * 100) + '%';
+		}
 		function norm(s) { return (s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 		function hcSec(txt) { return '<div class="hc-section-title">' + txt + '</div>'; }
 		function swrap(inner) { return '<div class="cb-scroll-wrapper" style="margin-bottom:20px;">' + inner + '</div>'; }
@@ -23607,15 +23612,58 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			return map;
 		}
 		function transform(records) {
+			// Sort records chronologically by financial_year
 			var sorted = (records || []).slice().sort(function (a, b) { return (a.financial_year || '').localeCompare(b.financial_year || ''); });
-			var yrs = sorted.map(function (r) { return r.financial_year || ''; }), um = {};
-			sorted.forEach(function (rec) { (rec.units || []).forEach(function (u) { var id = String(u.unit); if (!um[id]) { um[id] = { description: '', hc: {} }; } um[id].hc[rec.financial_year] = u.total_headcount || 0; if (rec.financial_year === yrs[yrs.length - 1]) { um[id].description = (u.unit_description || '').trim(); } }); });
-			var units = Object.keys(um).sort(function (a, b) { return parseInt(a, 10) - parseInt(b, 10); }).map(function (id) { return um[id]; });
-			var totals = {}; sorted.forEach(function (r) { totals[r.financial_year] = r.total_head_count || 0; });
+			var yrs = sorted.map(function (r) { return r.financial_year || ''; });
+
+			// Build unit map: unit_id -> { description, hc: { fy: total_headcount } }
+			// Closing H/C is straight from API: u.total_headcount per unit per year
+			var um = {};
+			sorted.forEach(function (rec) {
+				(rec.units || []).forEach(function (u) {
+					var id = String(u.unit || u.unit_id || '');
+					if (!um[id]) { um[id] = { description: '', hc: {}, seq: parseInt(id, 10) || 0 }; }
+					// Straight from API — no calculation
+					um[id].hc[rec.financial_year] = parseFloat(u.total_headcount) || 0;
+					// Use the latest year's description
+					if (rec.financial_year === yrs[yrs.length - 1]) {
+						um[id].description = (u.unit_description || u.description || '').trim();
+					}
+				});
+			});
+
+			// Sort units by unit id (numeric)
+			var units = Object.keys(um)
+				.sort(function (a, b) { return (um[a].seq || 0) - (um[b].seq || 0); })
+				.map(function (id) { return um[id]; });
+
+			// Total H/C per year — straight from API record level
+			var totals = {};
+			sorted.forEach(function (r) {
+				totals[r.financial_year] = parseFloat(r.total_head_count || r.total_headcount || 0);
+			});
+
 			return { yrs: yrs, units: units, totals: totals };
 		}
-		function avgHC(u, yrs, i) { var c = u.hc[yrs[i]], p = u.hc[yrs[i - 1]]; if (i === 0) { return c !== undefined ? c : null; } return (p !== undefined && c !== undefined) ? (p + c) / 2 : null; }
-		function avgTot(tot, yrs, i) { if (i === 0) { return tot[yrs[0]] !== undefined ? tot[yrs[0]] : null; } var p = tot[yrs[i - 1]], c = tot[yrs[i]]; return (p !== undefined && c !== undefined) ? (p + c) / 2 : null; }
+		// Average H/C = (prev year closing + curr year closing) / 2
+		// For i=0 (first year): treat prev year as 0, so avg = hc[yrs[0]] / 2
+		// This matches Excel formula =+F34/E34-1 where E34 is the first-year avg
+		function avgHC(u, yrs, i) {
+			if (i === 0) {
+				var c = u.hc[yrs[0]];
+				return c !== undefined ? c / 2 : null;
+			}
+			var p = u.hc[yrs[i - 1]], c = u.hc[yrs[i]];
+			return (p !== undefined && c !== undefined) ? (p + c) / 2 : null;
+		}
+		function avgTot(tot, yrs, i) {
+			if (i === 0) {
+				var c = tot[yrs[0]];
+				return c !== undefined ? c / 2 : null;
+			}
+			var p = tot[yrs[i - 1]], c = tot[yrs[i]];
+			return (p !== undefined && c !== undefined) ? (p + c) / 2 : null;
+		}
 		function gtable(hdrs, rows) {
 			return swrap('<table class="cb-table" style="width:100%;"><thead><tr class="cb-thead-main"><th style="text-align:left !important;min-width:220px;">Unit</th>' +
 				hdrs.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table>');
@@ -23829,7 +23877,18 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function secVal(e, sn, f) { var v = 0; (e.actuals || []).forEach(function (s) { if (isGT(s) || s.name !== sn) { return; } v += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); }); return v; }
 		function subVal(e, sn, subn, f) { var v = 0; (e.actuals || []).forEach(function (s) { if (isGT(s) || s.name !== sn) { return; } (s.sub_heads || []).forEach(function (sub) { if (sub.name !== subn) { return; } v += parseFloat(f === 'plan' ? (sub.ytd || 0) : (sub.total_posted_amt_ytd || 0)); }); }); return v; }
 		function itemVal(e, nm, f) { var v = 0; (e.actuals || []).forEach(function (s) { if (isGT(s)) { return; } (s.items || []).forEach(function (i) { if (i.name === nm) { v += parseFloat(f === 'plan' ? (i.ytd || 0) : (i.total_posted_amt || 0)); } }); (s.sub_heads || []).forEach(function (sub) { (sub.items || []).forEach(function (i) { if (i.name === nm) { v += parseFloat(f === 'plan' ? (i.ytd || 0) : (i.total_posted_amt || 0)); } }); }); }); return v; }
-		function grandVal(e, f) { var v = 0; (e.actuals || []).forEach(function (s) { if (isGT(s)) { return; } v += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); }); return v; }
+		function grandVal(e, f) {
+			// Use the GRAND TOTAL section (seq 9999) directly as the authoritative total
+			var gt = 0, found = false;
+			(e.actuals || []).forEach(function (s) {
+				if (isGT(s)) { gt += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); found = true; }
+			});
+			// Fallback: sum all sections if no GT section present
+			if (!found) {
+				(e.actuals || []).forEach(function (s) { gt += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); });
+			}
+			return gt;
+		}
 		function secTP(sn) { var v = 0; rawData.forEach(function (e) { v += secVal(e, sn, 'plan'); }); return v; }
 		function secTE(sn) { var v = 0; rawData.forEach(function (e) { v += secVal(e, sn, 'est'); }); return v; }
 		function subTP(sn, subn) { var v = 0; rawData.forEach(function (e) { v += subVal(e, sn, subn, 'plan'); }); return v; }
@@ -23903,7 +23962,12 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					Loader.hide();
 					var d = Array.isArray(r.message) ? r.message : ((r.message && Array.isArray(r.message.message)) ? r.message.message : null);
 					if (!d || !d.length) { frappe.msgprint('No data returned for Budget & Estimate.'); renderTable(); return; }
-					rawData = d.filter(function (e) { return e.is_this_sub_item === 0; }).sort(function (a, b) { return (a.sequence_id || 0) - (b.sequence_id || 0); });
+					rawData = d.filter(function (e) {
+						// Exclude sub-items AND the CONSOLIDATED TOTAL entry (seq 9999 / table CONSOLIDATED)
+						return e.is_this_sub_item === 0
+							&& e.sequence_id !== 9999
+							&& (e.table_name || '').toUpperCase() !== 'CONSOLIDATED';
+					}).sort(function (a, b) { return (a.sequence_id || 0) - (b.sequence_id || 0); });
 					Store.budgetEstimate = rawData; renderTable();
 				},
 				error: function () { Loader.hide(); frappe.msgprint('Server error loading Budget & Estimate data.'); }
