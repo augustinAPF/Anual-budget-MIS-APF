@@ -23459,22 +23459,48 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 			r.total_plan = r.opex_plan + r.capex_plan; r.total_act = r.opex_act + r.capex_act;
 			return r;
 		}
+		// Extract CONSOLIDATED TOTAL entry (sequence_id 9999, table_name CONSOLIDATED)
+		function getConsolidatedTotals(data) {
+			var ct = null;
+			(data || []).forEach(function (e) {
+				if (e.sequence_id === 9999 || (e.table_name || '').toUpperCase() === 'CONSOLIDATED') { ct = e; }
+			});
+			if (!ct) { return null; }
+			var r = zero();
+			(ct.actuals || []).forEach(function (a) {
+				var nm = (a.name || '').toUpperCase().replace(/\s+/g, ' ').trim();
+				if (nm === 'OPEX TOTAL')         { r.opex_plan += parseFloat(a.ytd || 0); r.opex_act += parseFloat(a.total_posted_amt_ytd || 0); }
+				if (nm === 'CAPEX TOTAL')         { r.capex_plan += parseFloat(a.ytd || 0); r.capex_act += parseFloat(a.total_posted_amt_ytd || 0); }
+				if (nm === 'OVERALL GRAND TOTAL') { r.total_plan = parseFloat(a.ytd || 0); r.total_act = parseFloat(a.total_posted_amt_ytd || 0); }
+			});
+			// Fallback: compute total if OVERALL GRAND TOTAL not present
+			if (!r.total_plan && !r.total_act) { r.total_plan = r.opex_plan + r.capex_plan; r.total_act = r.opex_act + r.capex_act; }
+			return r;
+		}
 		function buildRowsA(data) {
 			var sorted = (data || []).slice().sort(function (a, b) { return (a.sequence_id || 0) - (b.sequence_id || 0); });
 			var norm = [], covid = [];
 			sorted.forEach(function (e) {
+				// Skip the CONSOLIDATED TOTAL entry — it's used only for the Grand Total row
+				if (e.sequence_id === 9999 || (e.table_name || '').toUpperCase() === 'CONSOLIDATED') { return; }
 				var lbl = (e.label || '').trim();
 				var row = { display: lbl, isSub: e.is_this_sub_item === 1, isCovid: lbl.toLowerCase().indexOf('covid') !== -1, vals: extractA(e.actuals) };
 				(row.isCovid ? covid : norm).push(row);
 			});
-			var nTot = zero(); norm.forEach(function (r) { if (!r.isSub) { nTot = addV(nTot, r.vals); } });
-			var cTot = zero(); covid.forEach(function (r) { if (!r.isSub) { cTot = addV(cTot, r.vals); } });
-			var out = norm.concat([{ display: 'Total', isTotal: true, vals: nTot }]);
-			if (covid.length) { out = out.concat(covid, [{ display: 'Total', isTotal: true, vals: addV(nTot, cTot) }]); }
+			// Use CONSOLIDATED TOTAL if available, otherwise fall back to summing rows
+			var gtVals = getConsolidatedTotals(data);
+			if (!gtVals) {
+				gtVals = zero();
+				norm.forEach(function (r) { if (!r.isSub) { gtVals = addV(gtVals, r.vals); } });
+				covid.forEach(function (r) { if (!r.isSub) { gtVals = addV(gtVals, r.vals); } });
+			}
+			var out = norm.slice();
+			if (covid.length) { out = out.concat(covid); }
+			out.push({ display: 'Grand Total', isTotal: true, isGrandTotal: true, vals: gtVals });
 			return out;
 		}
 		function rowHtmlA(r) {
-			var cls = r.isTotal ? 'sinr-total-row' : (r.isCovid ? 'sinr-covid-row' : '');
+			var cls = r.isGrandTotal ? 'cb-row-grand' : (r.isTotal ? 'sinr-total-row' : (r.isCovid ? 'sinr-covid-row' : ''));
 			var sty = 'text-align:left;' + (r.isSub ? 'padding-left:28px;color:#555;' : '');
 			var v = r.vals;
 			return '<tr class="' + cls + '"><td style="' + sty + '">' + r.display + '</td><td>' + fmtCr(v.opex_plan) + '</td><td>' + fmtCr(v.capex_plan) + '</td><td>' + fmtCr(v.total_plan) + '</td><td>' + fmtCr(v.opex_act) + '</td><td>' + fmtCr(v.capex_act) + '</td><td>' + fmtCr(v.total_act) + '</td></tr>';
@@ -23494,7 +23520,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function shVal(actuals, name, field) { var v = 0; (actuals || []).forEach(function (sec) { if (normN(sec.name).indexOf('OPERATING') === -1) { return; } (sec.sub_heads || []).forEach(function (sh) { if ((sh.name || '').trim() === name) { v += parseFloat(field === 'plan' ? (sh.ytd || 0) : (sh.total_posted_amt_ytd || 0)); } }); }); return v; }
 		function opT(a, f) { var v = 0; (a || []).forEach(function (s) { if (normN(s.name).indexOf('OPERATING') === -1) { return; } v += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); }); return v; }
 		function caT(a, f) { var v = 0; (a || []).forEach(function (s) { if (normN(s.name).indexOf('CAPITAL') === -1) { return; } v += parseFloat(f === 'plan' ? (s.ytd || 0) : (s.total_posted_amt_ytd || 0)); }); return v; }
-		function tableHtmlB(entries, shNames, pLbl, aLbl) {
+		function tableHtmlB(entries, shNames, pLbl, aLbl, consolidatedVals) {
 			var cc = 1 + shNames.length + 3;
 			var hdr = '<tr class="cb-thead-main"><th rowspan="2" style="text-align:left !important;min-width:210px;">Unit / Function</th><th colspan="' + (shNames.length + 1) + '" style="text-align:center !important;">Operating Expenses</th><th rowspan="2" style="text-align:center !important;min-width:110px;">Capex</th><th rowspan="2" style="text-align:center !important;min-width:110px;">Total</th></tr>' +
 				'<tr class="cb-thead-sub">' + shNames.map(function (n) { return '<th style="min-width:110px;">' + n + '</th>'; }).join('') + '<th style="min-width:110px;">Total</th></tr>';
@@ -23511,9 +23537,16 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 				body += '<tr class="sinr-brkdwn-act"><td style="padding-left:18px;color:#555;">- ' + aLbl + '</td>' + shNames.map(function (n) { return '<td>' + fmtCr(sA[n]) + '</td>'; }).join('') + '<td>' + fmtCr(oA) + '</td><td>' + fmtCr(cA) + '</td><td>' + fmtCr(oA + cA) + '</td></tr>';
 				body += '<tr class="sinr-spacer"><td colspan="' + cc + '"></td></tr>';
 			});
-			body += '<tr class="sinr-total-row"><td>Grand Total</td><td colspan="' + (shNames.length + 3) + '"></td></tr>';
-			body += '<tr class="sinr-gt-plan"><td style="padding-left:18px;">- ' + pLbl + '</td>' + shNames.map(function (n) { return '<td>' + fmtCr(gtP[n]) + '</td>'; }).join('') + '<td>' + fmtCr(gtOP) + '</td><td>' + fmtCr(gtCP) + '</td><td>' + fmtCr(gtOP + gtCP) + '</td></tr>';
-			body += '<tr class="sinr-gt-act"><td style="padding-left:18px;">- ' + aLbl + '</td>' + shNames.map(function (n) { return '<td>' + fmtCr(gtA[n]) + '</td>'; }).join('') + '<td>' + fmtCr(gtOA) + '</td><td>' + fmtCr(gtCA) + '</td><td>' + fmtCr(gtOA + gtCA) + '</td></tr>';
+			// Use CONSOLIDATED TOTAL values for Grand Total row if available
+			var finalOP = (consolidatedVals && consolidatedVals.opex_plan)  ? consolidatedVals.opex_plan  : gtOP;
+			var finalOA = (consolidatedVals && consolidatedVals.opex_act)   ? consolidatedVals.opex_act   : gtOA;
+			var finalCP = (consolidatedVals && consolidatedVals.capex_plan) ? consolidatedVals.capex_plan : gtCP;
+			var finalCA = (consolidatedVals && consolidatedVals.capex_act)  ? consolidatedVals.capex_act  : gtCA;
+			var finalTP = (consolidatedVals && consolidatedVals.total_plan) ? consolidatedVals.total_plan : (gtOP + gtCP);
+			var finalTA = (consolidatedVals && consolidatedVals.total_act)  ? consolidatedVals.total_act  : (gtOA + gtCA);
+			body += '<tr class="cb-row-grand"><td>Grand Total</td><td colspan="' + (shNames.length + 3) + '"></td></tr>';
+			body += '<tr class="sinr-gt-plan"><td style="padding-left:18px;">- ' + pLbl + '</td>' + shNames.map(function (n) { return '<td>' + fmtCr(gtP[n]) + '</td>'; }).join('') + '<td>' + fmtCr(finalOP) + '</td><td>' + fmtCr(finalCP) + '</td><td>' + fmtCr(finalTP) + '</td></tr>';
+			body += '<tr class="sinr-gt-act"><td style="padding-left:18px;">- ' + aLbl + '</td>' + shNames.map(function (n) { return '<td>' + fmtCr(gtA[n]) + '</td>'; }).join('') + '<td>' + fmtCr(finalOA) + '</td><td>' + fmtCr(finalCA) + '</td><td>' + fmtCr(finalTA) + '</td></tr>';
 			return '<div class="cb-scroll-wrapper" style="margin-bottom:24px;"><table id="sinr-table-b" style="width:100%;border-collapse:collapse;"><thead>' + hdr + '</thead><tbody>' + body + '</tbody></table></div>';
 		}
 		function load(fy) {
@@ -23530,12 +23563,14 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 					var d = Array.isArray(r.message) ? r.message : ((r.message && Array.isArray(r.message.message)) ? r.message.message : null);
 					if (!d || !d.length) { $tab.html('<div style="padding:40px;text-align:center;color:#aaa;">No data available.</div>'); return; }
 					Store.summaryInr = d;
-					var eB = d.filter(function (e) { return e.is_this_sub_item === 0; }).sort(function (a, b) { return (a.sequence_id || 0) - (b.sequence_id || 0); });
+					// Filter out CONSOLIDATED TOTAL from unit rows; keep it for grand total reference
+				var eB = d.filter(function (e) { return e.is_this_sub_item === 0 && e.sequence_id !== 9999 && (e.table_name || '').toUpperCase() !== 'CONSOLIDATED'; }).sort(function (a, b) { return (a.sequence_id || 0) - (b.sequence_id || 0); });
+				var ctVals = getConsolidatedTotals(d);
 					$tab.html('<div style="padding:4px 0 10px;"><div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' + xlBtn('xl-summary-inr', 'Export to Excel') + '</div>' +
 						'<div class="sinr-section-label">A. Unit Wise Plan</div>' + tableHtmlA(buildRowsA(d), pLbl, aLbl) +
 						'<div class="sinr-section-label" style="margin-top:24px;">B. Breakdown of Unit Wise Plan</div>' +
 						'<div class="sinr-currency-note" style="margin-bottom:6px;">&#8377; <strong>Cr.</strong></div>' +
-						tableHtmlB(eB, getSubNames(eB), pLbl, aLbl) + '</div>');
+						tableHtmlB(eB, getSubNames(eB), pLbl, aLbl, ctVals) + '</div>');
 					fixStickySubHeader('#sinr-table-a');
 					(function retrySinrB(n) {
 						var $b = $('#sinr-table-b'); if (!$b.length) { return; }
@@ -23907,8 +23942,6 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	if (fyControl.get_value()) { TabLoader.trigger('ppt'); }
 
 };
-
-
 
 
 
