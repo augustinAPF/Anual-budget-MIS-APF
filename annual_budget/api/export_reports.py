@@ -5061,7 +5061,6 @@ def _sheet_be(wb, sheet_name, be_data, fy, plan_label, est_label,
 
 
 
-
 import io
 import base64
 import json
@@ -5072,124 +5071,67 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHARED STYLE CONSTANTS
+# SHARED STYLE CONSTANTS  — colours match JS CSS variables exactly
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_CENTER  = Alignment(horizontal="center", vertical="center", wrap_text=False)
-_LEFT    = Alignment(horizontal="left",   vertical="center")
-_RIGHT   = Alignment(horizontal="right",  vertical="center")
-_WRAP_L  = Alignment(horizontal="left",   vertical="center", wrap_text=True)
+_CENTER = Alignment(horizontal="center", vertical="center", wrap_text=False)
+_LEFT   = Alignment(horizontal="left",   vertical="center", wrap_text=True)
+_RIGHT  = Alignment(horizontal="right",  vertical="center")
 
 _BOLD       = Font(bold=True,  name="Calibri", size=10)
-_WHITE_BOLD = Font(bold=True,  color="FFFFFF", name="Calibri", size=10)
 _NORMAL     = Font(bold=False, name="Calibri", size=10)
-_ITALIC     = Font(bold=False, italic=True, name="Calibri", size=9, color="444444")
+_WHITE_BOLD = Font(bold=True,  color="FFFFFF", name="Calibri", size=10)
+_ITALIC     = Font(bold=False, italic=True,    name="Calibri", size=9, color="555555")
 
-_FILL_HDR      = PatternFill("solid", fgColor="0076B6")   # Blue  — main header
-_FILL_HDR2     = PatternFill("solid", fgColor="F26B21")   # Orange — sub-header
-_FILL_HEAD     = PatternFill("solid", fgColor="E9F4FB")   # Light blue  — section rows
-_FILL_SUBHEAD  = PatternFill("solid", fgColor="FFF3E6")   # Light orange — sub-head rows
-_FILL_SUBTOTAL = PatternFill("solid", fgColor="EBF5FB")   # Pale blue   — sub-total rows
-_FILL_HTOTAL   = PatternFill("solid", fgColor="D4E6F1")   # Mid blue    — head total rows
-_FILL_GRAND    = PatternFill("solid", fgColor="0076B6")   # Blue grand total (white text)
-_FILL_WHITE    = PatternFill("solid", fgColor="FFFFFF")
-_FILL_GT       = PatternFill("solid", fgColor="DDEAF7")   # gt-plan / gt-act rows
-_FILL_FAFAFA   = PatternFill("solid", fgColor="FAFAFA")
+# Exact colours from JS --blue-mid, --orange, --blue-light, --orange-light, --blue-dark
+_FILL_BLUE_MID    = PatternFill("solid", fgColor="0076B6")   # main header
+_FILL_ORANGE      = PatternFill("solid", fgColor="F26B21")   # sub-header
+_FILL_BLUE_LIGHT  = PatternFill("solid", fgColor="E9F4FB")   # cb-row-head
+_FILL_ORANGE_LIGHT= PatternFill("solid", fgColor="FFF3E6")   # cb-row-sub
+_FILL_BLUE_DARK   = PatternFill("solid", fgColor="003B63")   # cb-row-grand
+_FILL_HTOTAL      = PatternFill("solid", fgColor="E8F0FA")   # ppt-total-row / sinr-total-row
+_FILL_GT          = PatternFill("solid", fgColor="DDEAF7")   # sinr-gt-plan / sinr-gt-act
+_FILL_WHITE       = PatternFill("solid", fgColor="FFFFFF")
+_FILL_FAFAFA      = PatternFill("solid", fgColor="FAFAFA")   # sinr-brkdwn-act
+_FILL_SPACER      = PatternFill("solid", fgColor="F4F6F8")   # sinr-spacer
 
-_THIN      = Side(style="thin")
-_MEDIUM    = Side(style="medium")
-_BORDER    = Border(left=_THIN, right=_THIN, top=_THIN, bottom=_THIN)
-_THICK_TOP = Border(left=_THIN, right=_THIN, top=_MEDIUM, bottom=_THIN)
+_THIN   = Side(style="thin")
+_MEDIUM = Side(style="medium")
+_BORDER = Border(left=_THIN, right=_THIN, top=_THIN, bottom=_THIN)
+_THICK  = Border(left=_THIN, right=_THIN, top=_MEDIUM, bottom=_THIN)
 
-# ── Number formats ──────────────────────────────────────────────────────────
-# JS fmtCr now rounds to 1 decimal → use #,##0.0 to match display exactly
-NUM_FMT_CR  = "#,##0.0"    # Crore values  (1-decimal, matches JS fmtCr)
-NUM_FMT_INT = "#,##0"      # Headcount     (whole numbers)
-NUM_FMT_PCT = '+0.0%;-0.0%;0.0%'   # percentage
-
-# ─── Annual / Estimate / B&E sheet column layout (1-based) ──────────────────
-COL_SI    = 2   # Sl #
-COL_HEAD  = 3   # HEAD OF EXPENSE
-COL_TYPE  = 4   # TYPE OF EXPENSE
-COL_START = 5   # Apr  (first data column)
-COL_END   = 21  # YEAR total
-# Cols 5-7  = Apr May Jun   (Q1)
-# Cols 8-10 = Jul Aug Sep   (Q2)
-# Cols 11-13= Oct Nov Dec   (Q3)
-# Cols 14-16= Jan Feb Mar   (Q4)
-# Cols 17-20= QTR-1..4
-# Col  21   = YEAR total
+# Number formats — JS fmtCr divides by 1e7 and shows 2dp
+NUM_FMT_CR  = '#,##0.00'   # Crore values
+NUM_FMT_INT = '#,##0'      # Headcount whole numbers
+NUM_FMT_PCT = '0.0%'       # percentage (stored as decimal, e.g. 0.357)
+NUM_FMT_RAW = '#,##0.00'   # Annual/Estimate raw rupees
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOW-LEVEL HELPERS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _merge(ws, r1, c1, r2, c2):
-    ws.merge_cells(start_row=r1, start_column=c1, end_row=r2, end_column=c2)
+def _to_cr(v):
+    """Raw rupees → Crores (÷ 1,00,00,000), matching JS fmtCr."""
+    return round(float(v or 0) / 1e7, 2)
 
 
-def _to_roman(num):
-    vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
-    syms = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
-    out, i = "", 0
-    while num > 0:
-        for _ in range(num // vals[i]):
-            out += syms[i]; num -= vals[i]
-        i += 1
-    return out
+def _fv(v):
+    return float(v or 0)
 
 
-def _qtr_formulas(r):
-    return [
-        f"=SUM(E{r}:G{r})",
-        f"=SUM(H{r}:J{r})",
-        f"=SUM(K{r}:M{r})",
-        f"=SUM(N{r}:P{r})",
-        f"=SUM(Q{r}:T{r})",
-    ]
+def _norm(s):
+    return (s or "").replace("  ", " ").strip().upper()
 
 
-def _build_formula(col_letter, rows):
-    if not rows: return 0
-    return "=" + "+".join(f"{col_letter}{r}" for r in rows)
+def _is_gt(sec):
+    nm = _norm(sec.get("name", ""))
+    return sec.get("sequence_id") == 9999 or nm == "GRAND TOTAL"
 
 
-def _totals_from_rows(rows):
-    return [_build_formula(c, rows) for c in list("EFGHIJKLMNOPQRSTU")]
-
-
-def _style_row(ws, row, fill=None, font=None, is_header=False):
-    for col in range(COL_SI, COL_END + 1):
-        cell = ws.cell(row=row, column=col)
-        cell.border = _BORDER
-        if is_header:
-            cell.alignment = _CENTER
-        else:
-            if col == COL_SI:       cell.alignment = _CENTER
-            elif col in (COL_HEAD, COL_TYPE): cell.alignment = _WRAP_L
-            else:                   cell.alignment = _RIGHT
-        if fill: cell.fill = fill
-        if font: cell.font = font
-
-
-def _fmt_numeric(ws, row, start_col=COL_START, end_col=COL_END, fmt=None):
-    f = fmt or "#,##0.00"   # Annual/Estimate keep 2dp (raw rupee values)
-    for col in range(start_col, end_col + 1):
-        ws.cell(row=row, column=col).number_format = f
-
-
-def _auto_col_widths(ws):
-    for col in range(1, ws.max_column + 1):
-        letter = get_column_letter(col)
-        max_len = 0
-        for row in range(1, ws.max_row + 1):
-            val = ws.cell(row=row, column=col).value
-            if val:
-                s = str(val)
-                if s.startswith("="): s = "999,999,999.00"
-                max_len = max(max_len, len(s))
-        ws.column_dimensions[letter].width = min(max(max_len + 3, 10), 60)
+def _is_consolidated(entry):
+    return (entry.get("sequence_id") == 9999
+            or (entry.get("table_name") or "").upper() == "CONSOLIDATED")
 
 
 def _wb_to_b64(wb):
@@ -5199,385 +5141,526 @@ def _wb_to_b64(wb):
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
-def _is_grand_total_section(sec):
-    name = (sec.get("name") or "").upper().replace("  ", " ").strip()
-    return sec.get("sequence_id") == 9999 or name == "GRAND TOTAL"
+def _auto_widths(ws, min_w=8, max_w=55):
+    for col in range(1, ws.max_column + 1):
+        best = min_w
+        for row in range(1, ws.max_row + 1):
+            v = ws.cell(row, col).value
+            if v is not None:
+                s = str(v)
+                if s.startswith("="):
+                    s = "999,999,999.00"
+                best = max(best, len(s))
+        ws.column_dimensions[get_column_letter(col)].width = min(best + 2, max_w)
 
 
-def _to_cr(v):
-    """Convert raw rupee value to crores (÷ 1,00,00,000)."""
-    return float(v or 0) / 1e7
+def _cell(ws, row, col, value=None, fill=None, font=None, align=None, border=None, fmt=None):
+    c = ws.cell(row=row, column=col, value=value)
+    if fill:   c.fill   = fill
+    if font:   c.font   = font
+    if align:  c.alignment = align
+    if border: c.border = border
+    if fmt:    c.number_format = fmt
+    return c
+
+
+def _row_style(ws, row, cols, fill=None, font=None, align=_RIGHT, border=_BORDER):
+    for col in cols:
+        c = ws.cell(row, col)
+        if fill:  c.fill  = fill
+        if font:  c.font  = font
+        if align: c.alignment = align
+        c.border = border
+
+
+def _merge(ws, r1, c1, r2, c2):
+    ws.merge_cells(start_row=r1, start_column=c1, end_row=r2, end_column=c2)
+
+
+def _fy_labels(fy):
+    p  = (fy or "2025-26").split("-")
+    sY = (p[0] or "2025")[-2:]
+    eY = (p[1] if len(p) > 1 else "26")[-2:]
+    ps = str(int(sY) - 1).zfill(2)
+    pe = str(int(eY) - 1).zfill(2)
+    return {"plan": f"FY{sY}-{eY} Plan", "est": f"FY{ps}-{pe} Estimate"}
+
+
+def _prev_fy(fy):
+    p = (fy or "2025-26").split("-")
+    s = int(p[0] or 2025) - 1
+    e = int(p[1] or 26) - 1
+    return f"{s}-{str(e).zfill(2)}"
+
+
+def _sheet_title(ws, org, subtitle, last_col):
+    """Write 2 title rows at top of sheet."""
+    c = ws.cell(1, 2, org)
+    c.font = Font(size=13, bold=True, name="Calibri", color="003B63")
+    c.alignment = _LEFT
+    _merge(ws, 1, 2, 1, last_col)
+    c2 = ws.cell(2, 2, subtitle)
+    c2.font = Font(size=11, bold=True, name="Calibri")
+    c2.alignment = _LEFT
+    _merge(ws, 2, 2, 2, last_col)
+    ws.append([])
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: PPT — Foundation Level / Overall Metrics
+# SHEET 1 — Foundation Level / Overall Metrics  (PPT tab)
+#
+# JS display:
+#   Two tables stacked: current FY and previous FY
+#   Columns: Unit | Budget(Opex Capex Total) | Actual(Opex Capex Total)
+#   Total uses GRAND TOTAL section (seq 9999) directly for the Total column
+#   Opex / Capex come from OPERATING/CAPITAL named sections
+#   Last row = "Total" with blue background
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _sheet_ppt_combined(wb, sheet_name,
-                        rows, budget_label, est_label,
-                        prev_rows, prev_budget_label, prev_est_label,
-                        fy="2025-26", prev_fy="2024-25",
-                        org_name="Azim Premji Foundation"):
-    ws = wb.create_sheet(title=sheet_name[:31])
-    brd = _BORDER
+def _extract_opex_capex(sections, field):
+    """
+    Match JS extractVals: sum OPERATING→opex, CAPITAL→capex.
+    Fallback to GRAND TOTAL section if no breakdown found.
+    """
+    opex = capex = 0.0
+    has_breakdown = False
+    for sec in (sections or []):
+        nm = _norm(sec.get("name", ""))
+        if sec.get("sequence_id") == 9999 or nm == "GRAND TOTAL":
+            continue
+        if "OPERATING" in nm:
+            opex += _fv(sec.get(field)); has_breakdown = True
+        elif "CAPITAL" in nm:
+            capex += _fv(sec.get(field)); has_breakdown = True
+    if not has_breakdown:
+        for sec in (sections or []):
+            nm = _norm(sec.get("name", ""))
+            if sec.get("sequence_id") == 9999 or nm == "GRAND TOTAL":
+                opex += _fv(sec.get(field))
+        if not opex:
+            for sec in (sections or []):
+                nm = _norm(sec.get("name", ""))
+                if sec.get("sequence_id") != 9999 and nm != "GRAND TOTAL":
+                    opex += _fv(sec.get(field))
+    return opex, capex
 
-    def _write_block(start_row, block_rows, b_label, e_label, title):
+
+def _extract_total(sections, field):
+    """
+    Match JS extractTotal: use GRAND TOTAL section (seq 9999) directly.
+    Fallback: sum all sections.
+    """
+    gt = 0.0
+    found = False
+    for sec in (sections or []):
+        nm = _norm(sec.get("name", ""))
+        if sec.get("sequence_id") == 9999 or nm == "GRAND TOTAL":
+            gt += _fv(sec.get(field)); found = True
+    if not found:
+        for sec in (sections or []):
+            gt += _fv(sec.get(field))
+    return gt
+
+
+def _sheet_ppt(wb, ppt_rows, budget_label, est_label,
+               prev_rows, prev_budget_label, prev_est_label, fy, prev_fy,
+               org="Azim Premji Foundation"):
+    ws = wb.create_sheet("Foundation Metrics")
+    COLS = list(range(2, 9))   # B–H  (7 data cols)
+
+    _sheet_title(ws, org, f"Foundation Level / Overall Metrics – {fy}", 8)
+
+    def _write_block(start_row, rows, b_lbl, e_lbl, title):
         # Title bar
-        for col in range(2, 9):
-            c = ws.cell(start_row, col)
-            c.fill = _FILL_HEAD; c.font = Font(bold=True, name="Calibri", size=11, color="003B63")
-            c.border = brd; c.alignment = _LEFT
         ws.cell(start_row, 2, title)
+        for col in COLS:
+            c = ws.cell(start_row, col)
+            c.fill = _FILL_BLUE_LIGHT
+            c.font = Font(bold=True, name="Calibri", size=11, color="003B63")
+            c.border = _BORDER
+            c.alignment = _LEFT
         _merge(ws, start_row, 2, start_row, 8)
 
-        h1 = start_row + 1
-        h2 = start_row + 2
-        # Style all header cells BEFORE merging
-        for col in range(2, 9):
-            for hr in (h1, h2):
-                c = ws.cell(hr, col)
-                c.fill = _FILL_HDR; c.font = _WHITE_BOLD
-                c.border = brd; c.alignment = _CENTER
+        # Currency note
+        nr = start_row + 1
+        ws.cell(nr, 8, "₹ Cr.").font = _ITALIC
+        ws.cell(nr, 8).alignment = Alignment(horizontal="right")
 
+        # Header row 1 (blue)
+        h1 = start_row + 2
+        for col in COLS:
+            c = ws.cell(h1, col)
+            c.fill = _FILL_BLUE_MID; c.font = _WHITE_BOLD
+            c.border = _BORDER; c.alignment = _CENTER
         ws.cell(h1, 2, "Unit")
-        ws.cell(h1, 3, b_label); ws.cell(h1, 6, e_label)
-        for col, lbl in zip(range(3, 9), ["Opex","Capex","Total","Opex","Capex","Total"]):
-            ws.cell(h2, col, lbl)
-        _merge(ws, h1, 2, h2, 2)
+        ws.cell(h1, 3, b_lbl)
+        ws.cell(h1, 6, e_lbl)
+        _merge(ws, h1, 2, h1 + 1, 2)
         _merge(ws, h1, 3, h1, 5)
         _merge(ws, h1, 6, h1, 8)
 
-        # Currency note
-        note_r = h2 + 1
-        ws.cell(note_r, 8, "₹ Cr.")
-        ws.cell(note_r, 8).font = _ITALIC; ws.cell(note_r, 8).alignment = _RIGHT
-        _merge(ws, note_r, 2, note_r, 8)
+        # Header row 2 (orange)
+        h2 = start_row + 3
+        for col in COLS:
+            c = ws.cell(h2, col)
+            c.fill = _FILL_ORANGE; c.font = _WHITE_BOLD
+            c.border = _BORDER; c.alignment = _CENTER
+        for col, lbl in zip(range(3, 9), ["Opex", "Capex", "Total", "Opex", "Capex", "Total"]):
+            ws.cell(h2, col, lbl)
 
-        next_row = note_r + 1
-        for row in block_rows:
+        # Data rows
+        dr = start_row + 4
+        for row in rows:
             is_total = row.get("is_total", False)
-            bO = float(row.get("bOpex",  0) or 0)
-            bC = float(row.get("bCapex", 0) or 0)
-            eO = float(row.get("eOpex",  0) or 0)
-            eC = float(row.get("eCapex", 0) or 0)
             fill = _FILL_HTOTAL if is_total else _FILL_WHITE
-            font = _BOLD        if is_total else _NORMAL
-            for col, val in enumerate([row.get("label",""), bO, bC, bO+bC, eO, eC, eO+eC], start=2):
-                c = ws.cell(next_row, col, val if (val != 0 or col == 2) else None)
-                c.fill = fill; c.font = font; c.border = brd
-                c.alignment = _RIGHT if col > 2 else _LEFT
-                if col > 2: c.number_format = NUM_FMT_CR
-            next_row += 1
-        return next_row
+            font = _BOLD if is_total else _NORMAL
+            bO = _to_cr(row.get("bOpex",  0))
+            bC = _to_cr(row.get("bCapex", 0))
+            bT = _to_cr(row.get("bTotal", 0)) if row.get("bTotal") else _to_cr(_fv(row.get("bOpex", 0)) + _fv(row.get("bCapex", 0)))
+            eO = _to_cr(row.get("eOpex",  0))
+            eC = _to_cr(row.get("eCapex", 0))
+            eT = _to_cr(row.get("eTotal", 0)) if row.get("eTotal") else _to_cr(_fv(row.get("eOpex", 0)) + _fv(row.get("eCapex", 0)))
+            for col, val in enumerate([row.get("label", ""), bO or None, bC or None, bT or None,
+                                        eO or None, eC or None, eT or None], start=2):
+                c = ws.cell(dr, col, val)
+                c.fill = fill; c.font = font; c.border = _BORDER
+                c.alignment = _LEFT if col == 2 else _RIGHT
+                if col > 2:
+                    c.number_format = NUM_FMT_CR
+            dr += 1
+        return dr
 
-    ws.append(["", org_name])
-    _merge(ws, 1, 2, 1, 8)
-    ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63")
-    ws["B1"].alignment = _LEFT
-    ws.append(["", f"Foundation Level Metrics – {fy}"])
-    _merge(ws, 2, 2, 2, 8)
-    ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-    ws.append([])
+    next_r = _write_block(4, ppt_rows, budget_label, est_label,
+                          f"Overall Foundation – {fy} Budget vs {prev_fy} Actual")
+    _write_block(next_r + 1, prev_rows, prev_budget_label, prev_est_label,
+                 f"Overall Foundation – {prev_fy} Budget vs {prev_fy} Actual")
 
-    next_r = _write_block(4, rows, budget_label, est_label,
-                          f"Overall Foundation – Budget vs. Actual ({fy})")
-    next_r += 1
-    _write_block(next_r, prev_rows, prev_budget_label, prev_est_label,
-                 f"Overall Foundation – Previous Year Budget vs. Actual ({prev_fy})")
-
-    _auto_col_widths(ws)
+    _auto_widths(ws)
     return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: Summary in INR — Table A + Table B
+# SHEET 2 — Summary in INR  (SummaryINR tab)
+#
+# JS display:
+#   Table A: Unit / Function | Plan(Opex Capex Total) | Act(Opex Capex Total)
+#     - Each unit row from API
+#     - "Grand Total" row from CONSOLIDATED TOTAL entry (seq 9999)
+#     - Values in Crores (÷ 1e7)
+#
+#   Table B: Breakdown — rows per unit, plan + actual rows
+#     - Columns: Unit | Opex sub-heads… | Opex Total | Capex | Total
+#     - Grand Total uses CONSOLIDATED TOTAL values
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _sheet_summary_inr(wb, sheet_name, api_data, fy, org_name="Azim Premji Foundation"):
-    ws = wb.create_sheet(title=sheet_name[:31])
-    brd = _BORDER
+def _sinr_extract_a(actuals):
+    """Match JS extractA: sum OPERATING→opex_plan/act, CAPITAL→capex_plan/act."""
+    op_p = cp_p = op_a = cp_a = 0.0
+    for sec in (actuals or []):
+        nm = _norm(sec.get("name", ""))
+        if "OPERATING" in nm:
+            op_p += _fv(sec.get("ytd"))
+            op_a += _fv(sec.get("total_posted_amt_ytd"))
+        elif "CAPITAL" in nm:
+            cp_p += _fv(sec.get("ytd"))
+            cp_a += _fv(sec.get("total_posted_amt_ytd"))
+    return op_p, cp_p, op_a, cp_a
 
-    fy_parts   = (fy or "2025-26").split("-")
-    fy_start   = int(fy_parts[0] or "2025")
-    fy_end_yy  = int(fy_parts[1] or "26")
-    plan_label = f"{fy} Budget"
-    prev_start = fy_start - 1
-    prev_end   = str(fy_end_yy - 1).zfill(2)
-    act_label  = f"{prev_start}-{prev_end} Est"
 
-    def _norm(s): return (s or "").replace("  ", " ").strip().upper()
-    def _fv(v):   return float(v or 0)
+def _sinr_get_consolidated(data):
+    """
+    Match JS getConsolidatedTotals: find seq_id 9999 / table CONSOLIDATED entry.
+    Returns dict with opex_plan, capex_plan, total_plan, opex_act, capex_act, total_act.
+    """
+    for e in (data or []):
+        if _is_consolidated(e):
+            r = {"opex_plan": 0, "capex_plan": 0, "total_plan": 0,
+                 "opex_act":  0, "capex_act":  0, "total_act":  0}
+            for a in (e.get("actuals") or []):
+                nm = _norm(a.get("name", ""))
+                if nm == "OPEX TOTAL":
+                    r["opex_plan"] += _fv(a.get("ytd"))
+                    r["opex_act"]  += _fv(a.get("total_posted_amt_ytd"))
+                elif nm == "CAPEX TOTAL":
+                    r["capex_plan"] += _fv(a.get("ytd"))
+                    r["capex_act"]  += _fv(a.get("total_posted_amt_ytd"))
+                elif nm == "OVERALL GRAND TOTAL":
+                    r["total_plan"] = _fv(a.get("ytd"))
+                    r["total_act"]  = _fv(a.get("total_posted_amt_ytd"))
+            if not r["total_plan"] and not r["total_act"]:
+                r["total_plan"] = r["opex_plan"] + r["capex_plan"]
+                r["total_act"]  = r["opex_act"]  + r["capex_act"]
+            return r
+    return None
 
-    def _extract_a(actuals):
-        op = cp = oa = ca = 0.0
-        for sec in (actuals or []):
-            nm = _norm(sec.get("name",""))
-            if "OPERATING" in nm:
-                op += _fv(sec.get("ytd")); oa += _fv(sec.get("total_posted_amt_ytd"))
-            elif "CAPITAL" in nm:
-                cp += _fv(sec.get("ytd")); ca += _fv(sec.get("total_posted_amt_ytd"))
-        return op, cp, oa, ca
 
-    # Sheet header
-    ws.append(["", org_name])
-    _merge(ws, 1, 2, 1, 8)
-    ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63"); ws["B1"].alignment = _LEFT
-    ws.append(["", f"Summary in INR – {fy}"])
-    _merge(ws, 2, 2, 2, 8)
-    ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-    ws.append([])
+def _sheet_summary_inr(wb, api_data, fy, org="Azim Premji Foundation"):
+    ws = wb.create_sheet("Summary in INR")
+    fp = (fy or "2025-26").split("-")
+    p_lbl = f"{fy} Budget"
+    a_lbl = f"{int(fp[0])-1}-{str(int(fp[1])-1).zfill(2)} Est"
 
-    # ── TABLE A ──────────────────────────────────────────────────────────────
-    cur_row = 4
-    ws.cell(cur_row, 2, "A. Unit Wise Plan")
-    ws.cell(cur_row, 2).font = Font(bold=True, name="Calibri", size=11, underline="single")
-    cur_row += 1
-    ws.cell(cur_row, 8, "₹ Cr."); ws.cell(cur_row, 8).font = _ITALIC
-    ws.cell(cur_row, 8).alignment = _RIGHT; cur_row += 1
+    _sheet_title(ws, org, f"Summary in INR – {fy}", 8)
 
-    h1 = cur_row
+    sorted_data = sorted((api_data or []), key=lambda e: e.get("sequence_id", 0))
+    # Exclude consolidated total entry from unit rows
+    unit_rows  = [e for e in sorted_data if not _is_consolidated(e)]
+    normal     = [e for e in unit_rows if "covid" not in (e.get("label") or "").lower()]
+    covid_rows = [e for e in unit_rows if "covid"     in (e.get("label") or "").lower()]
+    ct         = _sinr_get_consolidated(api_data)
+
+    cur = 4  # current row
+
+    # ── Table A header ──────────────────────────────────────────────────────
+    ws.cell(cur, 2, "A. Unit Wise Plan")
+    ws.cell(cur, 2).font = Font(bold=True, name="Calibri", size=11, underline="single")
+    cur += 1
+    ws.cell(cur, 8, "₹ Cr."); ws.cell(cur, 8).font = _ITALIC
+    ws.cell(cur, 8).alignment = Alignment(horizontal="right"); cur += 1
+
+    h1 = cur
     for col in range(2, 9):
-        c = ws.cell(h1, col); c.fill = _FILL_HDR; c.font = _WHITE_BOLD
-        c.border = brd; c.alignment = _CENTER
-    ws.cell(h1, 2, "Unit / Function")
-    ws.cell(h1, 3, plan_label); ws.cell(h1, 6, act_label)
-    _merge(ws, h1, 2, h1+1, 2); _merge(ws, h1, 3, h1, 5); _merge(ws, h1, 6, h1, 8)
-    cur_row += 1
+        c = ws.cell(h1, col)
+        c.fill = _FILL_BLUE_MID; c.font = _WHITE_BOLD; c.border = _BORDER; c.alignment = _CENTER
+    ws.cell(h1, 2, "Unit / Function"); ws.cell(h1, 3, p_lbl); ws.cell(h1, 6, a_lbl)
+    _merge(ws, h1, 2, h1 + 1, 2); _merge(ws, h1, 3, h1, 5); _merge(ws, h1, 6, h1, 8)
+    cur += 1
 
-    h2 = cur_row
+    h2 = cur
     for col in range(2, 9):
-        c = ws.cell(h2, col); c.fill = _FILL_HDR2; c.font = _WHITE_BOLD
-        c.border = brd; c.alignment = _CENTER
-    for col, lbl in zip(range(3,9), ["Opex","Capex","Total","Opex","Capex","Total"]):
+        c = ws.cell(h2, col)
+        c.fill = _FILL_ORANGE; c.font = _WHITE_BOLD; c.border = _BORDER; c.alignment = _CENTER
+    for col, lbl in zip(range(3, 9), ["Opex", "Capex", "Total", "Opex", "Capex", "Total"]):
         ws.cell(h2, col, lbl)
-    cur_row += 1
+    cur += 1
 
-    sorted_data  = sorted((api_data or []), key=lambda e: e.get("sequence_id", 0))
-    normal_rows  = [e for e in sorted_data if "covid" not in (e.get("label","")).lower()]
-    covid_rows   = [e for e in sorted_data if "covid"     in (e.get("label","")).lower()]
-    tot_op = tot_cp = tot_oa = tot_ca = 0.0
-
-    for entry in normal_rows:
-        op, cp, oa, ca = _extract_a(entry.get("actuals",[]))
+    def _write_unit_row_a(entry, fill=_FILL_WHITE, font=_NORMAL, label_override=None):
+        nonlocal cur
+        op_p, cp_p, op_a, cp_a = _sinr_extract_a(entry.get("actuals", []))
         is_sub = entry.get("is_this_sub_item") == 1
+        lbl    = label_override or (entry.get("label") or "").strip()
         indent = "    " if is_sub else ""
-        for col, val in enumerate(
-            [indent + (entry.get("label") or "").strip(),
-             _to_cr(op), _to_cr(cp), _to_cr(op+cp),
-             _to_cr(oa), _to_cr(ca), _to_cr(oa+ca)], start=2):
-            c = ws.cell(cur_row, col, val)
-            c.fill = _FILL_WHITE; c.font = _NORMAL; c.border = brd
+        for col, val in enumerate([indent + lbl,
+                                    _to_cr(op_p), _to_cr(cp_p), _to_cr(op_p + cp_p),
+                                    _to_cr(op_a), _to_cr(cp_a), _to_cr(op_a + cp_a)], start=2):
+            c = ws.cell(cur, col, val if (col == 2 or val != 0.0) else None)
+            c.fill = fill; c.font = font; c.border = _BORDER
             c.alignment = _LEFT if col == 2 else _RIGHT
             if col > 2: c.number_format = NUM_FMT_CR
-        if not is_sub:
-            tot_op += op; tot_cp += cp; tot_oa += oa; tot_ca += ca
-        cur_row += 1
+        cur += 1
 
-    # Total row
-    for col, val in enumerate(
-        ["Total", _to_cr(tot_op), _to_cr(tot_cp), _to_cr(tot_op+tot_cp),
-         _to_cr(tot_oa), _to_cr(tot_ca), _to_cr(tot_oa+tot_ca)], start=2):
-        c = ws.cell(cur_row, col, val)
-        c.fill = _FILL_HTOTAL; c.font = _BOLD; c.border = _THICK_TOP
+    for e in normal:
+        _write_unit_row_a(e)
+
+    for e in covid_rows:
+        _write_unit_row_a(e)
+
+    # Grand Total row (from CONSOLIDATED TOTAL entry)
+    if ct:
+        op_p = ct["opex_plan"]; cp_p = ct["capex_plan"]; tp = ct["total_plan"]
+        op_a = ct["opex_act"];  cp_a = ct["capex_act"];  ta = ct["total_act"]
+    else:
+        op_p = cp_p = op_a = cp_a = 0.0
+        for e in unit_rows:
+            if e.get("is_this_sub_item") != 1:
+                o, c2, oa, ca = _sinr_extract_a(e.get("actuals", []))
+                op_p += o; cp_p += c2; op_a += oa; cp_a += ca
+        tp = op_p + cp_p; ta = op_a + cp_a
+
+    for col, val in enumerate(["Grand Total",
+                                _to_cr(op_p), _to_cr(cp_p), _to_cr(tp),
+                                _to_cr(op_a), _to_cr(cp_a), _to_cr(ta)], start=2):
+        c = ws.cell(cur, col, val)
+        c.fill = _FILL_BLUE_DARK
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
+        c.border = _BORDER
         c.alignment = _LEFT if col == 2 else _RIGHT
         if col > 2: c.number_format = NUM_FMT_CR
-    cur_row += 1
+    cur += 2
 
-    cov_op = cov_cp = cov_oa = cov_ca = 0.0
-    for entry in covid_rows:
-        op, cp, oa, ca = _extract_a(entry.get("actuals",[]))
-        for col, val in enumerate(
-            [(entry.get("label") or "").strip(),
-             _to_cr(op), _to_cr(cp), _to_cr(op+cp),
-             _to_cr(oa), _to_cr(ca), _to_cr(oa+ca)], start=2):
-            c = ws.cell(cur_row, col, val)
-            c.fill = _FILL_WHITE; c.font = _NORMAL; c.border = brd
-            c.alignment = _LEFT if col == 2 else _RIGHT
-            if col > 2: c.number_format = NUM_FMT_CR
-        cov_op += op; cov_cp += cp; cov_oa += oa; cov_ca += ca
-        cur_row += 1
+    # ── Table B header ──────────────────────────────────────────────────────
+    ws.cell(cur, 2, "B. Breakdown of Unit Wise Plan")
+    ws.cell(cur, 2).font = Font(bold=True, name="Calibri", size=11, underline="single")
+    cur += 1
+    ws.cell(cur, 8, "₹ Cr."); ws.cell(cur, 8).font = _ITALIC
+    ws.cell(cur, 8).alignment = Alignment(horizontal="right"); cur += 1
 
-    if covid_rows:
-        g_op = tot_op+cov_op; g_cp = tot_cp+cov_cp
-        g_oa = tot_oa+cov_oa; g_ca = tot_ca+cov_ca
-        for col, val in enumerate(
-            ["Grand Total", _to_cr(g_op), _to_cr(g_cp), _to_cr(g_op+g_cp),
-             _to_cr(g_oa), _to_cr(g_ca), _to_cr(g_oa+g_ca)], start=2):
-            c = ws.cell(cur_row, col, val)
-            c.fill = _FILL_GRAND; c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
-            c.border = brd; c.alignment = _LEFT if col == 2 else _RIGHT
-            if col > 2: c.number_format = NUM_FMT_CR
-        cur_row += 1
-
-    cur_row += 1  # spacer
-
-    # ── TABLE B ──────────────────────────────────────────────────────────────
-    ws.cell(cur_row, 2, "B. Breakdown of Unit Wise Plan")
-    ws.cell(cur_row, 2).font = Font(bold=True, name="Calibri", size=11, underline="single")
-    cur_row += 1
-    ws.cell(cur_row, 8, "₹ Cr."); ws.cell(cur_row, 8).font = _ITALIC
-    ws.cell(cur_row, 8).alignment = _RIGHT; cur_row += 1
-
+    # Collect sub-head names from OPERATING section (match JS getSubNames)
+    main_entries = [e for e in unit_rows if e.get("is_this_sub_item") != 1]
     seen_sh = {}; sub_head_names = []
-    main_entries = [e for e in sorted_data if e.get("is_this_sub_item") != 1]
-    for entry in main_entries:
-        for sec in (entry.get("actuals") or []):
-            if "OPERATING" not in _norm(sec.get("name","")): continue
+    for e in main_entries:
+        for sec in (e.get("actuals") or []):
+            if "OPERATING" not in _norm(sec.get("name", "")): continue
             for sh in (sec.get("sub_heads") or []):
                 n = (sh.get("name") or "").strip()
                 if n and n not in seen_sh: seen_sh[n] = True; sub_head_names.append(n)
 
-    n_sh       = len(sub_head_names)
-    c_sh_start = 3
-    c_opex_tot = c_sh_start + n_sh
-    c_capex    = c_opex_tot + 1
-    c_total    = c_capex    + 1
-    last_col   = c_total
+    n_sh    = len(sub_head_names)
+    c_start = 3                     # first sub-head col
+    c_opx_t = c_start + n_sh        # Opex Total col
+    c_capex = c_opx_t + 1           # Capex col
+    c_total = c_capex + 1           # Total col
+    last_c  = c_total
+
+    # Header row 1
+    bh1 = cur
+    for col in range(2, last_c + 1):
+        c = ws.cell(bh1, col)
+        c.fill = _FILL_BLUE_MID; c.font = _WHITE_BOLD; c.border = _BORDER; c.alignment = _CENTER
+    ws.cell(bh1, 2, "Unit / Function"); _merge(ws, bh1, 2, bh1 + 1, 2)
+    ws.cell(bh1, c_start, "Operating Expenses")
+    _merge(ws, bh1, c_start, bh1, c_opx_t)
+    ws.cell(bh1, c_capex, "Capex"); _merge(ws, bh1, c_capex, bh1 + 1, c_capex)
+    ws.cell(bh1, c_total, "Total"); _merge(ws, bh1, c_total, bh1 + 1, c_total)
+    cur += 1
+
+    # Header row 2
+    bh2 = cur
+    for col in range(2, last_c + 1):
+        c = ws.cell(bh2, col)
+        c.fill = _FILL_ORANGE; c.font = _WHITE_BOLD; c.border = _BORDER; c.alignment = _CENTER
+    for i, shn in enumerate(sub_head_names):
+        ws.cell(bh2, c_start + i, shn)
+    ws.cell(bh2, c_opx_t, "Total")
+    cur += 1
 
     def _sh_val(actuals, shname, field):
         v = 0.0
         for sec in (actuals or []):
-            if "OPERATING" not in _norm(sec.get("name","")): continue
+            if "OPERATING" not in _norm(sec.get("name", "")): continue
             for sh in (sec.get("sub_heads") or []):
-                if sh.get("name","").strip() == shname: v += _fv(sh.get(field))
+                if sh.get("name", "").strip() == shname: v += _fv(sh.get(field))
         return v
 
-    def _opex_t(actuals, field):
+    def _opex_total(actuals, field):
         v = 0.0
         for sec in (actuals or []):
-            if "OPERATING" not in _norm(sec.get("name","")): continue
+            if "OPERATING" not in _norm(sec.get("name", "")): continue
             v += _fv(sec.get(field))
         return v
 
-    def _capex_t(actuals, field):
+    def _capex_total(actuals, field):
         v = 0.0
         for sec in (actuals or []):
-            if "CAPITAL" not in _norm(sec.get("name","")): continue
+            if "CAPITAL" not in _norm(sec.get("name", "")): continue
             v += _fv(sec.get(field))
         return v
 
-    bh1 = cur_row
-    for col in range(2, last_col+1):
-        c = ws.cell(bh1, col); c.fill = _FILL_HDR; c.font = _WHITE_BOLD
-        c.border = brd; c.alignment = _CENTER
-    ws.cell(bh1, 2, "Unit / Function"); _merge(ws, bh1, 2, bh1+1, 2)
-    ws.cell(bh1, c_sh_start, "Operating Expenses")
-    _merge(ws, bh1, c_sh_start, bh1, c_opex_tot)
-    ws.cell(bh1, c_capex, "Capex"); _merge(ws, bh1, c_capex, bh1+1, c_capex)
-    ws.cell(bh1, c_total, "Total"); _merge(ws, bh1, c_total, bh1+1, c_total)
-    cur_row += 1
-
-    bh2 = cur_row
-    for col in range(2, last_col+1):
-        c = ws.cell(bh2, col); c.fill = _FILL_HDR2; c.font = _WHITE_BOLD
-        c.border = brd; c.alignment = _CENTER
-    for i, shname in enumerate(sub_head_names): ws.cell(bh2, c_sh_start+i, shname)
-    ws.cell(bh2, c_opex_tot, "Total")
-    cur_row += 1
-
-    gt_sh_p = {n:0.0 for n in sub_head_names}; gt_sh_a = {n:0.0 for n in sub_head_names}
-    gt_op_p = gt_op_a = gt_cap_p = gt_cap_a = 0.0
+    gt_sh_p = {n: 0.0 for n in sub_head_names}
+    gt_sh_a = {n: 0.0 for n in sub_head_names}
+    gt_op_p = gt_op_a = gt_cp_p = gt_cp_a = 0.0
 
     for entry in main_entries:
-        act   = entry.get("actuals") or []
-        label = (entry.get("label") or "").strip()
+        act = entry.get("actuals") or []
+        lbl = (entry.get("label") or "").strip()
 
-        # Unit header row
-        for col in range(2, last_col+1):
-            c = ws.cell(cur_row, col); c.fill = _FILL_HEAD; c.border = brd
-            c.font = _BOLD; c.alignment = _LEFT if col==2 else _CENTER
-        ws.cell(cur_row, 2, label); _merge(ws, cur_row, 3, cur_row, last_col)
-        cur_row += 1
+        # Unit header row — sinr-unit-hdr (blue light)
+        for col in range(2, last_c + 1):
+            c = ws.cell(cur, col)
+            c.fill = _FILL_BLUE_LIGHT; c.font = _BOLD; c.border = _BORDER
+            c.alignment = _LEFT if col == 2 else _CENTER
+        ws.cell(cur, 2, lbl); _merge(ws, cur, 3, cur, last_c)
+        cur += 1
 
-        # Plan row
-        opex_p = _opex_t(act, "ytd"); cap_p = _capex_t(act, "ytd")
-        for col in range(2, last_col+1):
-            c = ws.cell(cur_row, col); c.fill = _FILL_WHITE; c.border = brd
-            c.font = _NORMAL; c.alignment = _LEFT if col==2 else _RIGHT
-        ws.cell(cur_row, 2, f"  - {plan_label}")
-        for i, shname in enumerate(sub_head_names):
-            v = _sh_val(act, shname, "ytd")
-            ws.cell(cur_row, c_sh_start+i, _to_cr(v)).number_format = NUM_FMT_CR
-            gt_sh_p[shname] += v
-        ws.cell(cur_row, c_opex_tot, _to_cr(opex_p)).number_format = NUM_FMT_CR
-        ws.cell(cur_row, c_capex,    _to_cr(cap_p)).number_format  = NUM_FMT_CR
-        ws.cell(cur_row, c_total,    _to_cr(opex_p+cap_p)).number_format = NUM_FMT_CR
-        gt_op_p += opex_p; gt_cap_p += cap_p
-        cur_row += 1
+        # Plan row — sinr-brkdwn-plan
+        op_p = _opex_total(act, "ytd"); cp_p = _capex_total(act, "ytd")
+        for col in range(2, last_c + 1):
+            c = ws.cell(cur, col)
+            c.fill = _FILL_WHITE; c.font = _NORMAL; c.border = _BORDER
+            c.alignment = _LEFT if col == 2 else _RIGHT
+        ws.cell(cur, 2, f"  - {p_lbl}")
+        for i, shn in enumerate(sub_head_names):
+            v = _sh_val(act, shn, "ytd")
+            gt_sh_p[shn] += v
+            c = ws.cell(cur, c_start + i, _to_cr(v) or None)
+            c.number_format = NUM_FMT_CR
+        ws.cell(cur, c_opx_t, _to_cr(op_p) or None).number_format = NUM_FMT_CR
+        ws.cell(cur, c_capex, _to_cr(cp_p) or None).number_format = NUM_FMT_CR
+        ws.cell(cur, c_total, _to_cr(op_p + cp_p) or None).number_format = NUM_FMT_CR
+        gt_op_p += op_p; gt_cp_p += cp_p
+        cur += 1
 
-        # Actual row
-        opex_a = _opex_t(act, "total_posted_amt_ytd"); cap_a = _capex_t(act, "total_posted_amt_ytd")
-        for col in range(2, last_col+1):
-            c = ws.cell(cur_row, col); c.fill = _FILL_FAFAFA; c.border = brd
-            c.font = _NORMAL; c.alignment = _LEFT if col==2 else _RIGHT
-        ws.cell(cur_row, 2, f"  - {act_label}")
-        for i, shname in enumerate(sub_head_names):
-            v = _sh_val(act, shname, "total_posted_amt_ytd")
-            ws.cell(cur_row, c_sh_start+i, _to_cr(v)).number_format = NUM_FMT_CR
-            gt_sh_a[shname] += v
-        ws.cell(cur_row, c_opex_tot, _to_cr(opex_a)).number_format = NUM_FMT_CR
-        ws.cell(cur_row, c_capex,    _to_cr(cap_a)).number_format  = NUM_FMT_CR
-        ws.cell(cur_row, c_total,    _to_cr(opex_a+cap_a)).number_format = NUM_FMT_CR
-        gt_op_a += opex_a; gt_cap_a += cap_a
-        cur_row += 1
+        # Actual row — sinr-brkdwn-act
+        op_a = _opex_total(act, "total_posted_amt_ytd"); cp_a = _capex_total(act, "total_posted_amt_ytd")
+        for col in range(2, last_c + 1):
+            c = ws.cell(cur, col)
+            c.fill = _FILL_FAFAFA; c.font = _NORMAL; c.border = _BORDER
+            c.alignment = _LEFT if col == 2 else _RIGHT
+        ws.cell(cur, 2, f"  - {a_lbl}")
+        for i, shn in enumerate(sub_head_names):
+            v = _sh_val(act, shn, "total_posted_amt_ytd")
+            gt_sh_a[shn] += v
+            c = ws.cell(cur, c_start + i, _to_cr(v) or None)
+            c.number_format = NUM_FMT_CR
+        ws.cell(cur, c_opx_t, _to_cr(op_a) or None).number_format = NUM_FMT_CR
+        ws.cell(cur, c_capex, _to_cr(cp_a) or None).number_format = NUM_FMT_CR
+        ws.cell(cur, c_total, _to_cr(op_a + cp_a) or None).number_format = NUM_FMT_CR
+        gt_op_a += op_a; gt_cp_a += cp_a
+        cur += 1
 
         # Spacer
-        for col in range(2, last_col+1):
-            ws.cell(cur_row, col).fill = PatternFill("solid", fgColor="F4F6F8")
-            ws.cell(cur_row, col).border = brd
-        cur_row += 1
+        for col in range(2, last_c + 1):
+            ws.cell(cur, col).fill = _FILL_SPACER; ws.cell(cur, col).border = _BORDER
+        cur += 1
 
-    # Grand Total label
-    for col in range(2, last_col+1):
-        c = ws.cell(cur_row, col); c.fill = _FILL_HTOTAL; c.border = brd
-        c.font = _BOLD; c.alignment = _LEFT if col==2 else _RIGHT
-    ws.cell(cur_row, 2, "Grand Total"); cur_row += 1
+    # Grand Total label row — cb-row-grand (dark blue)
+    for col in range(2, last_c + 1):
+        c = ws.cell(cur, col)
+        c.fill = _FILL_BLUE_DARK
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
+        c.border = _BORDER; c.alignment = _LEFT if col == 2 else _CENTER
+    ws.cell(cur, 2, "Grand Total"); _merge(ws, cur, 3, cur, last_c)
+    cur += 1
 
-    # GT Plan
-    for col in range(2, last_col+1):
-        c = ws.cell(cur_row, col); c.fill = _FILL_GT; c.border = brd
-        c.font = _NORMAL; c.alignment = _LEFT if col==2 else _RIGHT
-    ws.cell(cur_row, 2, f"  - {plan_label}")
-    for i, shname in enumerate(sub_head_names):
-        ws.cell(cur_row, c_sh_start+i, _to_cr(gt_sh_p[shname])).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_opex_tot, _to_cr(gt_op_p)).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_capex,    _to_cr(gt_cap_p)).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_total,    _to_cr(gt_op_p+gt_cap_p)).number_format = NUM_FMT_CR
-    cur_row += 1
+    # Use CONSOLIDATED TOTAL values for GT if available (match JS finalOP etc.)
+    fin_op_p = ct["opex_plan"]  if ct else gt_op_p
+    fin_op_a = ct["opex_act"]   if ct else gt_op_a
+    fin_cp_p = ct["capex_plan"] if ct else gt_cp_p
+    fin_cp_a = ct["capex_act"]  if ct else gt_cp_a
+    fin_tp   = ct["total_plan"] if ct else (gt_op_p + gt_cp_p)
+    fin_ta   = ct["total_act"]  if ct else (gt_op_a + gt_cp_a)
 
-    # GT Actual
-    for col in range(2, last_col+1):
-        c = ws.cell(cur_row, col); c.fill = _FILL_GT; c.border = brd
-        c.font = _NORMAL; c.alignment = _LEFT if col==2 else _RIGHT
-    ws.cell(cur_row, 2, f"  - {act_label}")
-    for i, shname in enumerate(sub_head_names):
-        ws.cell(cur_row, c_sh_start+i, _to_cr(gt_sh_a[shname])).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_opex_tot, _to_cr(gt_op_a)).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_capex,    _to_cr(gt_cap_a)).number_format = NUM_FMT_CR
-    ws.cell(cur_row, c_total,    _to_cr(gt_op_a+gt_cap_a)).number_format = NUM_FMT_CR
+    # GT Plan row — sinr-gt-plan
+    for col in range(2, last_c + 1):
+        c = ws.cell(cur, col); c.fill = _FILL_GT; c.font = _NORMAL
+        c.border = _BORDER; c.alignment = _LEFT if col == 2 else _RIGHT
+    ws.cell(cur, 2, f"  - {p_lbl}")
+    for i, shn in enumerate(sub_head_names):
+        ws.cell(cur, c_start + i, _to_cr(gt_sh_p[shn]) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_opx_t, _to_cr(fin_op_p) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_capex, _to_cr(fin_cp_p) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_total, _to_cr(fin_tp)   or None).number_format = NUM_FMT_CR
+    cur += 1
 
-    _auto_col_widths(ws)
+    # GT Actual row — sinr-gt-act
+    for col in range(2, last_c + 1):
+        c = ws.cell(cur, col); c.fill = _FILL_GT; c.font = _NORMAL
+        c.border = _BORDER; c.alignment = _LEFT if col == 2 else _RIGHT
+    ws.cell(cur, 2, f"  - {a_lbl}")
+    for i, shn in enumerate(sub_head_names):
+        ws.cell(cur, c_start + i, _to_cr(gt_sh_a[shn]) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_opx_t, _to_cr(fin_op_a) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_capex, _to_cr(fin_cp_a) or None).number_format = NUM_FMT_CR
+    ws.cell(cur, c_total, _to_cr(fin_ta)   or None).number_format = NUM_FMT_CR
+
+    _auto_widths(ws)
     return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: Headcount — all 5 tables matching JS output exactly
-# JS new API: r.message = { headcount_data: [...], plan_data: [...] }
-# headcount_data items: { financial_year, units:[{unit, unit_description,
-#                          total_headcount}], total_head_count }
-# plan_data items (unit-wise-plan): { label, actuals:[{name, ytd,
-#                          total_posted_amt_ytd, ...}] }
+# SHEET 3 — Headcount
+#
+# JS display — 5 sections (matching renderSummary + 4 tables):
+#   1. Headcount Summary  — Unit | Avg H/C y[-2] | Avg H/C y[-1] | % | Est Opex | Plan Opex | %
+#   2. Closing H/C        — Unit | [hc per year straight from API]
+#   3. Average H/C        — Unit | [(prev+curr)/2 per year;  i=0 → hc[0]/2]
+#   4. Increase Closing % — transitions (curr/prev)-1
+#   5. Increase Avg H/C % — transitions using avg values
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _sheet_headcount(wb, sheet_name, payload, fy, org_name="Azim Premji Foundation"):
-    """
-    payload = { "headcount_data": [...], "plan_data": [...] }
-    or just the headcount_data list (legacy).
-    """
-    ws = wb.create_sheet(title=sheet_name[:31])
-    brd = _BORDER
+def _sheet_headcount(wb, payload, fy, org="Azim Premji Foundation"):
+    ws = wb.create_sheet("Headcount")
 
-    # Support both shapes: raw list (old) or dict with headcount_data key (new)
     if isinstance(payload, dict):
         records   = payload.get("headcount_data") or []
         plan_data = payload.get("plan_data") or []
@@ -5585,812 +5668,757 @@ def _sheet_headcount(wb, sheet_name, payload, fy, org_name="Azim Premji Foundati
         records   = payload or []
         plan_data = []
 
-    # ── Build opex map from plan_data ──────────────────────────────────────
-    # key = lower-stripped label, value = {est: float_cr, plan: float_cr}
+    # Build opex map from plan_data — match JS buildOpexMap
     def _norm_lbl(s): return (s or "").lower().replace("  ", " ").strip()
 
     opex_map = {}
     for p in (plan_data or []):
-        lbl = _norm_lbl(p.get("label",""))
+        lbl = _norm_lbl(p.get("label", ""))
         op  = None
         for a in (p.get("actuals") or []):
             nm = (a.get("name") or "").strip()
-            if nm == "OPERATING  EXPENSES" or nm == "OPERATING EXPENSES":
+            if nm in ("OPERATING  EXPENSES", "OPERATING EXPENSES"):
                 op = a; break
         opex_map[lbl] = {
-            "est" : _to_cr(op.get("total_posted_amt_ytd", 0) if op else 0),
-            "plan": _to_cr(op.get("ytd", 0) if op else 0),
+            "est" : _fv(op.get("total_posted_amt_ytd", 0) if op else 0) / 1e7,
+            "plan": _fv(op.get("ytd", 0)                if op else 0) / 1e7,
         }
 
-    # ── Transform headcount records ────────────────────────────────────────
-    sorted_recs = sorted((records or []), key=lambda r: r.get("financial_year",""))
-    yrs = [r.get("financial_year","") for r in sorted_recs]
+    # Transform records — match JS transform (straight from API)
+    sorted_recs = sorted((records or []), key=lambda r: r.get("financial_year", ""))
+    yrs = [r.get("financial_year", "") for r in sorted_recs]
 
-    unit_map = {}
+    um = {}
     for rec in sorted_recs:
         for u in (rec.get("units") or []):
-            uid = str(u.get("unit",""))
-            if uid not in unit_map:
-                unit_map[uid] = {"id": uid, "desc": "", "hc": {}}
-            unit_map[uid]["hc"][rec["financial_year"]] = u.get("total_headcount") or 0
+            uid = str(u.get("unit", ""))
+            if uid not in um:
+                um[uid] = {"id": uid, "desc": "", "hc": {}, "seq": int(uid) if uid.isdigit() else 999}
+            um[uid]["hc"][rec["financial_year"]] = _fv(u.get("total_headcount") or 0)
             if rec["financial_year"] == yrs[-1]:
-                unit_map[uid]["desc"] = (u.get("unit_description") or "").strip()
-    units  = sorted(unit_map.values(),
-                    key=lambda u: int(u["id"]) if str(u["id"]).isdigit() else 999)
-    totals = {r["financial_year"]: r.get("total_head_count", 0) for r in sorted_recs}
+                um[uid]["desc"] = (u.get("unit_description") or u.get("description") or "").strip()
+    units  = sorted(um.values(), key=lambda u: u["seq"])
+    totals = {r["financial_year"]: _fv(r.get("total_head_count") or r.get("total_headcount") or 0)
+              for r in sorted_recs}
 
-    # ── Sheet title ────────────────────────────────────────────────────────
-    max_col = max(2 + len(yrs), 8)
-    ws.append(["", org_name])
-    _merge(ws, 1, 2, 1, max_col)
-    ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63")
-    ws["B1"].alignment = _LEFT
-    ws.append(["", f"Headcount – {fy}"])
-    _merge(ws, 2, 2, 2, max_col)
-    ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-    ws.append([])
-
-    cur_row = 4
-
-    # ── Helper: avg headcount ──────────────────────────────────────────────
-    def _avg_hc(unit_hc, i):
-        """Average H/C at year-index i.
-        i==0 → just hc[yrs[0]]/2  (matches JS: curr/2)
-        i>0  → (prev+curr)/2
-        """
-        curr = unit_hc.get(yrs[i])
+    # avgHC: i=0 → hc[0]/2; i>0 → (prev+curr)/2 — match JS
+    def _avg_hc(hc, i):
+        c = hc.get(yrs[i])
         if i == 0:
-            return curr / 2 if curr else None
-        prev = unit_hc.get(yrs[i-1])
-        if prev is None or curr is None: return None
-        return (prev + curr) / 2
+            return c / 2 if c else None
+        p = hc.get(yrs[i - 1])
+        return (p + c) / 2 if (p is not None and c is not None) else None
 
-    def _avg_total(i):
-        v = 0.0
-        for u in units:
-            a = _avg_hc(u["hc"], i)
-            if a is not None: v += a
-        return v if v else None
+    def _avg_tot(i):
+        c = totals.get(yrs[i])
+        if i == 0:
+            return c / 2 if c else None
+        p = totals.get(yrs[i - 1])
+        return (p + c) / 2 if (p is not None and c is not None) else None
 
     def _fym(fy_str):
         p = (fy_str or "").split("-")
-        return f"31-Mar-{p[1] if len(p)>1 else (p[0] or '')[-2:]}"
+        return f"31-Mar-{p[1][-2:] if len(p) > 1 else (p[0] or '')[-2:]}"
 
-    # ── Section helpers ────────────────────────────────────────────────────
-    def _section_title(title):
-        nonlocal cur_row
-        ws.cell(cur_row, 2, title)
-        ws.cell(cur_row, 2).font = Font(bold=True, name="Calibri", size=11,
-                                        underline="single", color="003B63")
-        cur_row += 1
+    max_col = max(2 + len(yrs), 8)
+    _sheet_title(ws, org, f"Headcount – {fy}", max_col)
+    cur = 4
 
-    def _hdr_row(col_labels):
-        nonlocal cur_row
-        for ci, lbl in enumerate(["Unit"] + col_labels, start=2):
-            c = ws.cell(cur_row, ci, lbl)
-            c.fill = _FILL_HDR; c.font = _WHITE_BOLD; c.border = brd; c.alignment = _CENTER
-        cur_row += 1
+    def _section_hdr(title):
+        nonlocal cur
+        c = ws.cell(cur, 2, title)
+        c.font = Font(bold=True, name="Calibri", size=11, underline="single", color="003B63")
+        cur += 1
+
+    def _col_hdr(labels):
+        nonlocal cur
+        for ci, lbl in enumerate(["Unit"] + labels, start=2):
+            c = ws.cell(cur, ci, lbl)
+            c.fill = _FILL_BLUE_MID; c.font = _WHITE_BOLD
+            c.border = _BORDER; c.alignment = _CENTER
+        cur += 1
 
     def _data_row(label, values, fill=_FILL_WHITE, font=_NORMAL, fmt=NUM_FMT_INT, is_grand=False):
-        nonlocal cur_row
-        f_grand = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
-        ws.cell(cur_row, 2, label)
-        ws.cell(cur_row, 2).fill = _FILL_GRAND if is_grand else fill
-        ws.cell(cur_row, 2).font = f_grand if is_grand else font
-        ws.cell(cur_row, 2).border = brd; ws.cell(cur_row, 2).alignment = _LEFT
+        nonlocal cur
+        gf = _FILL_BLUE_DARK
+        gfont = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
+        ws.cell(cur, 2, label).fill = gf if is_grand else fill
+        ws.cell(cur, 2).font = gfont if is_grand else font
+        ws.cell(cur, 2).border = _BORDER; ws.cell(cur, 2).alignment = _LEFT
         for ci, val in enumerate(values, start=3):
-            c = ws.cell(cur_row, ci, val)
-            c.fill = _FILL_GRAND if is_grand else fill
-            c.font = f_grand if is_grand else font
-            c.border = brd; c.alignment = _RIGHT
-            if val is not None and fmt: c.number_format = fmt
-        cur_row += 1
+            c = ws.cell(cur, ci)
+            c.fill = gf if is_grand else fill
+            c.font = gfont if is_grand else font
+            c.border = _BORDER; c.alignment = _RIGHT
+            if val is not None:
+                if fmt == NUM_FMT_PCT:
+                    c.value = val / 100   # store as decimal for % format
+                    c.number_format = NUM_FMT_PCT
+                else:
+                    c.value = round(val) if fmt == NUM_FMT_INT else val
+                    if fmt: c.number_format = fmt
+        cur += 1
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 1. HEADCOUNT SUMMARY (matches JS renderSummary)
-    #    Cols: Unit | Avg H/C yr[i1] | Avg H/C yr[i2] | % | Est opex | Plan opex | %
-    # ════════════════════════════════════════════════════════════════════════
-    _section_title("Headcount Summary")
+    # ── 1. Headcount Summary ────────────────────────────────────────────────
+    _section_hdr("Headcount Summary")
     if len(yrs) >= 2:
         i1 = len(yrs) - 2; i2 = len(yrs) - 1
-        y1 = yrs[i1]; y2 = yrs[i2]
-        _hdr_row([y1, y2, "%", f"{y1} Est", f"{y2} Plan", "%"])
-
+        _col_hdr([yrs[i1], yrs[i2], "%", f"{yrs[i1]} Est", f"{yrs[i2]} Plan", "%"])
         tot_est = tot_plan = 0.0
         for u in units:
             a1 = _avg_hc(u["hc"], i1); a2 = _avg_hc(u["hc"], i2)
-            o  = opex_map.get(_norm_lbl(u["desc"]), {"est":0.0,"plan":0.0})
+            o  = opex_map.get(_norm_lbl(u["desc"]), {"est": 0.0, "plan": 0.0})
             tot_est += o["est"]; tot_plan += o["plan"]
-            pct_hc  = round(((a2/a1)-1)*100, 1) if (a1 and a2) else None
-            pct_opx = round(((o["plan"]/o["est"])-1)*100,1) if (o["est"] and o["plan"]) else None
+            pct_hc  = round(((a2 / a1) - 1) * 100, 1) if (a1 and a2) else None
+            pct_opx = round(((o["plan"] / o["est"]) - 1) * 100, 1) if (o["est"] and o["plan"]) else None
             _data_row(u["desc"], [
                 round(a1) if a1 is not None else None,
                 round(a2) if a2 is not None else None,
                 pct_hc,
-                round(o["est"],1), round(o["plan"],1), pct_opx
+                round(o["est"], 2), round(o["plan"], 2), pct_opx,
             ])
-
-        ta1 = _avg_total(i1); ta2 = _avg_total(i2)
-        pct_t = round(((ta2/ta1)-1)*100,1) if (ta1 and ta2) else None
-        pct_o = round(((tot_plan/tot_est)-1)*100,1) if (tot_est and tot_plan) else None
+        ta1 = _avg_tot(i1); ta2 = _avg_tot(i2)
+        pct_t = round(((ta2 / ta1) - 1) * 100, 1) if (ta1 and ta2) else None
+        pct_o = round(((tot_plan / tot_est) - 1) * 100, 1) if (tot_est and tot_plan) else None
         _data_row("Total", [
             round(ta1) if ta1 else None, round(ta2) if ta2 else None, pct_t,
-            round(tot_est,1), round(tot_plan,1), pct_o
+            round(tot_est, 2), round(tot_plan, 2), pct_o,
         ], is_grand=True)
-    cur_row += 1
+    cur += 1
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 2. CLOSING H/C
-    # ════════════════════════════════════════════════════════════════════════
-    _section_title("Closing H/C")
-    _hdr_row([_fym(y) for y in yrs])
+    # ── 2. Closing H/C ──────────────────────────────────────────────────────
+    _section_hdr("Closing H/C")
+    _col_hdr([_fym(y) for y in yrs])
     for u in units:
         _data_row(u["desc"], [u["hc"].get(y) for y in yrs])
     _data_row("Total", [totals.get(y) for y in yrs], is_grand=True)
-    cur_row += 1
+    cur += 1
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 3. AVERAGE H/C
-    # ════════════════════════════════════════════════════════════════════════
-    _section_title("Average H/C")
-    _hdr_row([_fym(y) for y in yrs])
+    # ── 3. Average H/C ──────────────────────────────────────────────────────
+    _section_hdr("Average H/C")
+    _col_hdr([_fym(y) for y in yrs])
     for u in units:
-        vals = []
-        for i in range(len(yrs)):
-            v = _avg_hc(u["hc"], i)
-            vals.append(round(v) if v is not None else None)
-        _data_row(u["desc"], vals)
-    _data_row("Total",
-              [round(_avg_total(i)) if _avg_total(i) else None for i in range(len(yrs))],
-              is_grand=True)
-    cur_row += 1
+        _data_row(u["desc"], [_avg_hc(u["hc"], i) for i in range(len(yrs))])
+    _data_row("Total", [_avg_tot(i) for i in range(len(yrs))], is_grand=True)
+    cur += 1
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 4. INCREASE IN CLOSING H/C (%)
-    # ════════════════════════════════════════════════════════════════════════
-    _section_title("Increase in Closing H/C (%)")
+    # ── 4. Increase in Closing H/C (%) ─────────────────────────────────────
     if len(yrs) >= 2:
-        pairs = [(yrs[i-1], yrs[i]) for i in range(1, len(yrs))]
-        _hdr_row([f"{_fym(p[0])} → {_fym(p[1])}" for p in pairs])
+        _section_hdr("Increase in Closing H/C (%)")
+        pairs = [(yrs[i - 1], yrs[i]) for i in range(1, len(yrs))]
+        _col_hdr([f"{_fym(yf)} → {_fym(yt)}" for yf, yt in pairs])
         for u in units:
             vals = []
             for yf, yt in pairs:
                 a = u["hc"].get(yf); b = u["hc"].get(yt)
-                vals.append(round(((b/a)-1)*100, 1) if (a and b) else None)
+                vals.append(round(((b / a) - 1) * 100, 1) if (a and b) else None)
             _data_row(u["desc"], vals, fmt=NUM_FMT_PCT)
         tot_vals = []
         for yf, yt in pairs:
             a = totals.get(yf); b = totals.get(yt)
-            tot_vals.append(round(((b/a)-1)*100, 1) if (a and b) else None)
+            tot_vals.append(round(((b / a) - 1) * 100, 1) if (a and b) else None)
         _data_row("Total", tot_vals, fmt=NUM_FMT_PCT, is_grand=True)
-    cur_row += 1
+        cur += 1
 
-    # ════════════════════════════════════════════════════════════════════════
-    # 5. INCREASE IN AVERAGE H/C (%)
-    # ════════════════════════════════════════════════════════════════════════
-    _section_title("Increase in Average H/C (%)")
+    # ── 5. Increase in Average H/C (%) ─────────────────────────────────────
     if len(yrs) >= 2:
-        pair_idxs = [(i-1, i) for i in range(1, len(yrs))]
-        _hdr_row([f"{yrs[i1]} → {yrs[i2]}" for i1, i2 in pair_idxs])
+        _section_hdr("Increase in Average H/C (%)")
+        pair_idxs = [(i - 1, i) for i in range(1, len(yrs))]
+        _col_hdr([f"{yrs[i1]} → {yrs[i2]}" for i1, i2 in pair_idxs])
         for u in units:
             vals = []
             for i1, i2 in pair_idxs:
                 prev = _avg_hc(u["hc"], i1); curr = _avg_hc(u["hc"], i2)
-                vals.append(round(((curr/prev)-1)*100, 1) if (prev and curr) else None)
+                vals.append(round(((curr / prev) - 1) * 100, 1) if (prev and curr) else None)
             _data_row(u["desc"], vals, fmt=NUM_FMT_PCT)
         tot_vals = []
         for i1, i2 in pair_idxs:
-            prev = _avg_total(i1); curr = _avg_total(i2)
-            tot_vals.append(round(((curr/prev)-1)*100, 1) if (prev and curr) else None)
+            prev = _avg_tot(i1); curr = _avg_tot(i2)
+            tot_vals.append(round(((curr / prev) - 1) * 100, 1) if (prev and curr) else None)
         _data_row("Total", tot_vals, fmt=NUM_FMT_PCT, is_grand=True)
 
-    _auto_col_widths(ws)
+    _auto_widths(ws)
     return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: Annual Budget Consolidated  (raw rupees, same as before)
+# SHEET 4 — Annual Budget Consolidated
+#
+# JS display: Expense Head rows (blue), Sub-head rows (orange), Item rows,
+#   Quarter columns (Q1-Q4 monthly + QTR totals + YEAR total)
+#   Values in raw rupees (formatINR — whole number Indian grouping)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _sheet_annual(wb, sheet_name, data, fy, org_name="Azim Premji Foundation"):
-    ws = wb.create_sheet(title=sheet_name[:31])
+# Column layout (1-based)
+_C_SI    = 2    # Sl #
+_C_HEAD  = 3    # HEAD OF EXPENSE
+_C_TYPE  = 4    # TYPE OF EXPENSE
+_C_START = 5    # Apr (first data col)
+_C_END   = 21   # YEAR total
+# 5-7=Q1 months, 8-10=Q2, 11-13=Q3, 14-16=Q4, 17=QTR1, 18=QTR2, 19=QTR3, 20=QTR4, 21=YEAR
 
-    ws.append(["", org_name])
-    ws.merge_cells("B1:U1")
-    ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63")
-    ws["B1"].alignment = _LEFT
-    ws.append(["", f"Budget for the Financial Year {fy or ''}"])
-    ws.merge_cells("B2:U2")
-    ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-    ws.append([])
 
+def _to_roman(n):
+    vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
+    syms = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
+    out = ""; i = 0
+    while n > 0:
+        for _ in range(n // vals[i]):
+            out += syms[i]; n -= vals[i]
+        i += 1
+    return out
+
+
+def _qtr_fmls(r):
+    return [f"=SUM(E{r}:G{r})", f"=SUM(H{r}:J{r})", f"=SUM(K{r}:M{r})",
+            f"=SUM(N{r}:P{r})", f"=SUM(Q{r}:T{r})"]
+
+
+def _sum_fml(col_letter, rows):
+    if not rows: return 0
+    return "=" + "+".join(f"{col_letter}{r}" for r in rows)
+
+
+def _totals_fmls(rows):
+    return [_sum_fml(c, rows) for c in list("EFGHIJKLMNOPQRSTU")]
+
+
+def _style_annual_row(ws, row, fill=None, font=None, is_hdr=False):
+    for col in range(_C_SI, _C_END + 1):
+        c = ws.cell(row, col)
+        c.border = _BORDER
+        if is_hdr:
+            c.alignment = _CENTER
+        else:
+            if col == _C_SI:                   c.alignment = _CENTER
+            elif col in (_C_HEAD, _C_TYPE):    c.alignment = _LEFT
+            else:                              c.alignment = _RIGHT
+        if fill: c.fill = fill
+        if font: c.font = font
+
+
+def _fmt_annual_row(ws, row):
+    for col in range(_C_START, _C_END + 1):
+        ws.cell(row, col).number_format = NUM_FMT_RAW
+
+
+def _write_annual_headers(ws, fy, r1_label="Annual Budget Consolidated"):
     ws.append([
         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "QUARTER I","","","QUARTER II","","",
-        "QUARTER III","","","QUARTER IV","","",
-        "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
+        "QUARTER I", "", "", "QUARTER II", "", "",
+        "QUARTER III", "", "", "QUARTER IV", "", "",
+        "QTR-1", "QTR-2", "QTR-3", "QTR-4", f"YEAR {fy}",
     ])
     r1 = ws.max_row
     ws.append([
         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "Apr","May","Jun","Jul","Aug","Sep",
-        "Oct","Nov","Dec","Jan","Feb","Mar",
-        "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
+        "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+        "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
+        "QTR-1", "QTR-2", "QTR-3", "QTR-4", f"YEAR {fy}",
     ])
     r2 = ws.max_row
-
-    _style_row(ws, r1, _FILL_HDR, _WHITE_BOLD, is_header=True)
-    _style_row(ws, r2, _FILL_HDR, _WHITE_BOLD, is_header=True)
-
-    ws.merge_cells(start_row=r1, start_column=5,  end_row=r1, end_column=7)
-    ws.merge_cells(start_row=r1, start_column=8,  end_row=r1, end_column=10)
-    ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
-    ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
-    ws.merge_cells(start_row=r1, start_column=2,  end_row=r2, end_column=2)
-    ws.merge_cells(start_row=r1, start_column=3,  end_row=r2, end_column=3)
-    ws.merge_cells(start_row=r1, start_column=4,  end_row=r2, end_column=4)
+    _style_annual_row(ws, r1, _FILL_BLUE_MID, _WHITE_BOLD, is_hdr=True)
+    _style_annual_row(ws, r2, _FILL_BLUE_MID, _WHITE_BOLD, is_hdr=True)
+    for c1, c2 in [(5,7),(8,10),(11,13),(14,16)]:
+        _merge(ws, r1, c1, r1, c2)
+    for col in [2, 3, 4]:
+        _merge(ws, r1, col, r2, col)
     for col in range(17, 22):
-        ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
+        _merge(ws, r1, col, r2, col)
+    ws.freeze_panes = "E7"
 
-    ws.freeze_panes = "E6"
-    head_total_rows = []; head_counter = 0
+
+def _sheet_annual(wb, data, fy, org="Azim Premji Foundation"):
+    ws = wb.create_sheet("Annual Budget Consolidated")
+    _sheet_title(ws, org, f"Annual Budget Consolidated – {fy}", 21)
+    _write_annual_headers(ws, fy)
+
+    head_total_rows = []
+    head_counter    = 0
 
     for head in (data or []):
         head_counter += 1
-        alpha_index = chr(64 + head_counter)
-        head_name   = (head.get("name") or "").strip().upper()
+        alpha = chr(64 + head_counter)
+        head_name = _norm(head.get("name") or "")
 
-        if head_name == "COVID SUPPORT":
+        if "COVID" in head_name:
             ws.append([])
-            item = head["items"][0] if head.get("items") else {}
+            item = (head.get("items") or [{}])[0]
             r = ws.max_row + 1
-            ws.append([
-                "", alpha_index, head["name"], item.get("name",""),
-                *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                *_qtr_formulas(r),
-            ])
-            _style_row(ws, ws.max_row, font=_NORMAL)
-            _fmt_numeric(ws, ws.max_row)
-            ws.cell(row=ws.max_row, column=COL_HEAD).font = _BOLD
+            ws.append(["", alpha, head.get("name", ""), item.get("name", ""),
+                        *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                        *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                        *_qtr_fmls(r)])
+            _style_annual_row(ws, ws.max_row, font=_NORMAL)
+            _fmt_annual_row(ws, ws.max_row)
             continue
 
-        ws.append(["", alpha_index, head["name"]])
+        # Section header row
+        ws.append(["", alpha, head.get("name", "")])
         r_sec = ws.max_row
-        for col in range(COL_HEAD, COL_END + 1):
+        for col in range(_C_HEAD, _C_END + 1):
             c = ws.cell(r_sec, col)
-            c.fill = _FILL_HEAD; c.font = Font(bold=True, name="Calibri", size=10, color="003B63")
+            c.fill = _FILL_BLUE_LIGHT
+            c.font = Font(bold=True, name="Calibri", size=10, color="003B63")
             c.border = _BORDER; c.alignment = _LEFT
-        ws.cell(r_sec, COL_SI).fill = _FILL_HEAD
-        ws.cell(r_sec, COL_SI).border = _BORDER
-        ws.merge_cells(start_row=r_sec, start_column=COL_HEAD, end_row=r_sec, end_column=COL_END)
+        ws.cell(r_sec, _C_SI).fill = _FILL_BLUE_LIGHT
+        ws.cell(r_sec, _C_SI).border = _BORDER
+        _merge(ws, r_sec, _C_HEAD, r_sec, _C_END)
 
-        if head_name == "OPERATING EXPENSES":
+        if "OPERATING" in head_name:
             ws.append([])
 
         sub_total_rows = []; direct_item_rows = []
 
-        for item in head.get("items", []):
+        # Direct items (e.g. CAPEX items)
+        for item in (head.get("items") or []):
             r = ws.max_row + 1
-            sub_val = (item.get("sub_head_of_expense") or "").strip()
-            ws.append([
-                "", "", sub_val, item["name"],
-                *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                *_qtr_formulas(r),
-            ])
-            _style_row(ws, ws.max_row, font=_NORMAL)
-            _fmt_numeric(ws, ws.max_row)
+            ws.append(["", "", (item.get("sub_head_of_expense") or "").strip(), item.get("name", ""),
+                        *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                        *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                        *_qtr_fmls(r)])
+            _style_annual_row(ws, ws.max_row, font=_NORMAL)
+            _fmt_annual_row(ws, ws.max_row)
             direct_item_rows.append(ws.max_row)
 
-        sub_counter = 1
-        for sub in head.get("sub_heads", []):
-            roman_index = _to_roman(sub_counter)
-            ws.append(["", roman_index, sub["name"]])
+        # Sub-heads
+        sub_ctr = 1
+        for sub in (head.get("sub_heads") or []):
+            roman = _to_roman(sub_ctr)
+            ws.append(["", roman, sub.get("name", "")])
             r_sub = ws.max_row
-            for col in range(COL_HEAD, COL_END + 1):
+            for col in range(_C_HEAD, _C_END + 1):
                 c = ws.cell(r_sub, col)
-                c.fill = _FILL_SUBHEAD; c.font = Font(bold=True, name="Calibri", size=10, color="7A3B00")
+                c.fill = _FILL_ORANGE_LIGHT
+                c.font = Font(bold=True, name="Calibri", size=10, color="7A3B00")
                 c.border = _BORDER; c.alignment = _LEFT
-            ws.cell(r_sub, COL_SI).fill = _FILL_SUBHEAD
-            ws.cell(r_sub, COL_SI).border = _BORDER
-            ws.merge_cells(start_row=r_sub, start_column=COL_HEAD, end_row=r_sub, end_column=COL_END)
+            ws.cell(r_sub, _C_SI).fill = _FILL_ORANGE_LIGHT
+            ws.cell(r_sub, _C_SI).border = _BORDER
+            _merge(ws, r_sub, _C_HEAD, r_sub, _C_END)
 
             sub_item_rows = []
-            for item in sub.get("items", []):
+            for item in (sub.get("items") or []):
                 r = ws.max_row + 1
-                item_sub   = (item.get("sub_head_of_expense") or "").strip()
-                sub_nm     = (sub.get("name") or "").strip()
-                head_display = item_sub if item_sub.lower() != sub_nm.lower() else ""
-                ws.append([
-                    "", "", head_display, item["name"],
-                    *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                    *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                    *_qtr_formulas(r),
-                ])
-                _style_row(ws, ws.max_row, font=_NORMAL)
-                _fmt_numeric(ws, ws.max_row)
+                ws.append(["", "", sub.get("name", ""), item.get("name", ""),
+                            *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                            *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                            *_qtr_fmls(r)])
+                _style_annual_row(ws, ws.max_row, font=_NORMAL)
+                _fmt_annual_row(ws, ws.max_row)
                 sub_item_rows.append(ws.max_row)
 
             if sub_item_rows:
-                ws.append(["","","",f"TOTAL - {sub['name']}", *_totals_from_rows(sub_item_rows)])
-                _style_row(ws, ws.max_row, _FILL_SUBTOTAL, _BOLD)
-                _fmt_numeric(ws, ws.max_row)
+                ws.append(["", "", "", f"TOTAL - {sub.get('name', '')}",
+                            *_totals_fmls(sub_item_rows)])
+                _style_annual_row(ws, ws.max_row,
+                                   PatternFill("solid", fgColor="EBF5FB"), _BOLD)
+                _fmt_annual_row(ws, ws.max_row)
                 sub_total_rows.append(ws.max_row)
-            sub_counter += 1
+            sub_ctr += 1
 
         total_rows = sub_total_rows if sub_total_rows else direct_item_rows
         if total_rows:
-            ws.append(["","","",f"TOTAL - {head['name']}", *_totals_from_rows(total_rows)])
-            _style_row(ws, ws.max_row, _FILL_HTOTAL,
-                       Font(bold=True, name="Calibri", size=10, color="003B63"))
-            _fmt_numeric(ws, ws.max_row)
+            ws.append(["", "", "", f"TOTAL - {head.get('name', '')}",
+                        *_totals_fmls(total_rows)])
+            _style_annual_row(ws, ws.max_row,
+                               PatternFill("solid", fgColor="D4E6F1"),
+                               Font(bold=True, name="Calibri", size=10, color="003B63"))
+            _fmt_annual_row(ws, ws.max_row)
             head_total_rows.append(ws.max_row)
-            if head_name == "OPERATING EXPENSES":
+            if "OPERATING" in head_name:
                 ws.append([])
 
-    for r in range(ws.max_row, 1, -1):
-        if (ws.cell(r, COL_HEAD).value == "COVID SUPPORT" and
-                ws.cell(r-1, COL_HEAD).value is None):
-            ws.delete_rows(r-1); break
-
     if head_total_rows:
-        ws.append(["","","","GRAND TOTAL", *_totals_from_rows(head_total_rows)])
-        _style_row(ws, ws.max_row, _FILL_GRAND,
-                   Font(bold=True, color="FFFFFF", name="Calibri", size=10))
-        _fmt_numeric(ws, ws.max_row)
+        ws.append(["", "", "", "GRAND TOTAL", *_totals_fmls(head_total_rows)])
+        _style_annual_row(ws, ws.max_row, _FILL_BLUE_DARK,
+                           Font(bold=True, color="FFFFFF", name="Calibri", size=10))
+        _fmt_annual_row(ws, ws.max_row)
 
-    _auto_col_widths(ws)
+    _auto_widths(ws)
     return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: Estimate Consolidated  (same format as Annual)
+# SHEET 5 — Estimate Consolidated
+#
+# Same format as Annual but data comes from get_grouped_actuals… API.
+# API shape: items have Q1/Q2/Q3/Q4 keys (float totals) and months dict.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _sheet_estimate(wb, sheet_name, data, fy, org_name="Azim Premji Foundation"):
-    MONTH_MAP = {
-        "q1": ["4","5","6"], "q2": ["7","8","9"],
-        "q3": ["10","11","12"], "q4": ["1","2","3"],
-    }
+def _sheet_estimate(wb, data, fy, org="Azim Premji Foundation"):
+    # JS uses Q1/Q2/Q3/Q4 keys directly (pre-computed by API).
+    # months dict is only used when quarters are expanded (individual month cols).
+    # We MUST use Q1/Q2/Q3/Q4 as the source of truth to match JS totals exactly.
+    MONTH_KEYS = ["4", "5", "6", "7", "8", "9", "10", "11", "12", "1", "2", "3"]
+    Q_MONTH_IDX = {"q1": [0,1,2], "q2": [3,4,5], "q3": [6,7,8], "q4": [9,10,11]}
 
-    def _to_qlist(obj):
-        m = obj.get("months") or {}
-        return {qk: [float(m.get(k,0) or 0) for k in keys]
-                for qk, keys in MONTH_MAP.items()}
+    def _get_quarters(obj):
+        """
+        Return q1/q2/q3/q4 as 3-element monthly lists.
+        Source: months dict for individual values.
+        But quarterly TOTAL must equal Q1/Q2/Q3/Q4 keys (JS qTot).
+        If months sum != Q key, distribute Q key evenly across 3 months.
+        """
+        m    = obj.get("months") or {}
+        mths = [_fv(m.get(k, 0)) for k in MONTH_KEYS]
+        result = {}
+        for qk, idxs in Q_MONTH_IDX.items():
+            q_key  = qk.upper()   # Q1/Q2/Q3/Q4
+            q_val  = _fv(obj.get(q_key, 0))   # authoritative quarter total from API
+            m_vals = [mths[i] for i in idxs]
+            m_sum  = sum(m_vals)
+            if abs(m_sum - q_val) < 0.01:
+                # months already add up correctly
+                result[qk] = m_vals
+            else:
+                # months don't match Q key — use Q key split evenly (preserves total)
+                # This ensures Excel SUM(monthly) = Q key = matches JS display
+                each = q_val / 3.0
+                result[qk] = [each, each, q_val - 2 * each]
+        return result
 
-    def _normalise(obj):
-        ql = _to_qlist(obj); obj.update(ql)
-        for item in obj.get("items",  []): item.update(_to_qlist(item))
-        for sub  in obj.get("sub_heads",[]): 
-            sub.update(_to_qlist(sub))
-            for item in sub.get("items",[]): item.update(_to_qlist(item))
+    def _norm_obj(obj):
+        ql = _get_quarters(obj)
+        obj.update(ql)
+        for item in (obj.get("items") or []):
+            item.update(_get_quarters(item))
+        for sub in (obj.get("sub_heads") or []):
+            sub.update(_get_quarters(sub))
+            for item in (sub.get("items") or []):
+                item.update(_get_quarters(item))
         return obj
 
-    normalised = [_normalise(dict(h)) for h in (data or [])]
-    ws = wb.create_sheet(title=sheet_name[:31])
+    normalised = [_norm_obj(dict(h)) for h in (data or [])]
 
-    ws.append(["", org_name])
-    ws.merge_cells("B1:U1")
-    ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63")
-    ws["B1"].alignment = _LEFT
-    ws.append(["", f"Estimate for the Financial Year {fy or ''}"])
-    ws.merge_cells("B2:U2")
-    ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-    ws.append([])
+    ws = wb.create_sheet("Estimate Consolidated")
+    _sheet_title(ws, org, f"Estimate Consolidated – {fy}", 21)
+    _write_annual_headers(ws, fy)
 
-    ws.append([
-        "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "QUARTER I","","","QUARTER II","","",
-        "QUARTER III","","","QUARTER IV","","",
-        "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
-    ])
-    r1 = ws.max_row
-    ws.append([
-        "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-        "Apr","May","Jun","Jul","Aug","Sep",
-        "Oct","Nov","Dec","Jan","Feb","Mar",
-        "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
-    ])
-    r2 = ws.max_row
-
-    _style_row(ws, r1, _FILL_HDR, _WHITE_BOLD, is_header=True)
-    _style_row(ws, r2, _FILL_HDR, _WHITE_BOLD, is_header=True)
-
-    ws.merge_cells(start_row=r1, start_column=5,  end_row=r1, end_column=7)
-    ws.merge_cells(start_row=r1, start_column=8,  end_row=r1, end_column=10)
-    ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
-    ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
-    ws.merge_cells(start_row=r1, start_column=2,  end_row=r2, end_column=2)
-    ws.merge_cells(start_row=r1, start_column=3,  end_row=r2, end_column=3)
-    ws.merge_cells(start_row=r1, start_column=4,  end_row=r2, end_column=4)
-    for col in range(17, 22):
-        ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
-
-    ws.freeze_panes = "E6"
-    head_total_rows = []; head_counter = 0
+    head_total_rows = []
+    head_counter    = 0
 
     for head in normalised:
         head_counter += 1
-        alpha_index = chr(64 + head_counter)
-        head_name   = (head.get("name") or "").strip().upper()
+        alpha     = chr(64 + head_counter)
+        head_name = _norm(head.get("name") or "")
 
-        if head_name == "COVID SUPPORT":
+        if "COVID" in head_name:
             ws.append([])
-            item = head["items"][0] if head.get("items") else {}
+            item = (head.get("items") or [{}])[0]
             r = ws.max_row + 1
-            ws.append([
-                "", alpha_index, head["name"], item.get("name",""),
-                *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                *_qtr_formulas(r),
-            ])
-            _style_row(ws, ws.max_row, font=_NORMAL)
-            _fmt_numeric(ws, ws.max_row)
-            ws.cell(row=ws.max_row, column=COL_HEAD).font = _BOLD
+            ws.append(["", alpha, head.get("name", ""), item.get("name", ""),
+                        *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                        *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                        *_qtr_fmls(r)])
+            _style_annual_row(ws, ws.max_row, font=_NORMAL)
+            _fmt_annual_row(ws, ws.max_row)
+            # COVID row IS included in GRAND TOTAL (JS sums all heads incl. COVID)
+            head_total_rows.append(ws.max_row)
             continue
 
-        ws.append(["", alpha_index, head["name"]])
+        ws.append(["", alpha, head.get("name", "")])
         r_sec = ws.max_row
-        for col in range(COL_HEAD, COL_END + 1):
+        for col in range(_C_HEAD, _C_END + 1):
             c = ws.cell(r_sec, col)
-            c.fill = _FILL_HEAD; c.font = Font(bold=True, name="Calibri", size=10, color="003B63")
+            c.fill = _FILL_BLUE_LIGHT
+            c.font = Font(bold=True, name="Calibri", size=10, color="003B63")
             c.border = _BORDER; c.alignment = _LEFT
-        ws.cell(r_sec, COL_SI).fill = _FILL_HEAD
-        ws.cell(r_sec, COL_SI).border = _BORDER
-        ws.merge_cells(start_row=r_sec, start_column=COL_HEAD, end_row=r_sec, end_column=COL_END)
+        ws.cell(r_sec, _C_SI).fill = _FILL_BLUE_LIGHT
+        ws.cell(r_sec, _C_SI).border = _BORDER
+        _merge(ws, r_sec, _C_HEAD, r_sec, _C_END)
 
-        if head_name == "OPERATING EXPENSES":
+        if "OPERATING" in head_name:
             ws.append([])
 
         sub_total_rows = []; direct_item_rows = []
 
-        for item in head.get("items", []):
+        for item in (head.get("items") or []):
             r = ws.max_row + 1
-            sub_val = (item.get("sub_head_of_expense") or "").strip()
-            ws.append([
-                "", "", sub_val, item["name"],
-                *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                *_qtr_formulas(r),
-            ])
-            _style_row(ws, ws.max_row, font=_NORMAL)
-            _fmt_numeric(ws, ws.max_row)
+            ws.append(["", "", (item.get("sub_head_of_expense") or "").strip(), item.get("name", ""),
+                        *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                        *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                        *_qtr_fmls(r)])
+            _style_annual_row(ws, ws.max_row, font=_NORMAL)
+            _fmt_annual_row(ws, ws.max_row)
             direct_item_rows.append(ws.max_row)
 
-        sub_counter = 1
-        for sub in head.get("sub_heads", []):
-            roman_index = _to_roman(sub_counter)
-            ws.append(["", roman_index, sub["name"]])
+        sub_ctr = 1
+        for sub in (head.get("sub_heads") or []):
+            roman = _to_roman(sub_ctr)
+            ws.append(["", roman, sub.get("name", "")])
             r_sub = ws.max_row
-            for col in range(COL_HEAD, COL_END + 1):
+            for col in range(_C_HEAD, _C_END + 1):
                 c = ws.cell(r_sub, col)
-                c.fill = _FILL_SUBHEAD; c.font = Font(bold=True, name="Calibri", size=10, color="7A3B00")
+                c.fill = _FILL_ORANGE_LIGHT
+                c.font = Font(bold=True, name="Calibri", size=10, color="7A3B00")
                 c.border = _BORDER; c.alignment = _LEFT
-            ws.cell(r_sub, COL_SI).fill = _FILL_SUBHEAD
-            ws.cell(r_sub, COL_SI).border = _BORDER
-            ws.merge_cells(start_row=r_sub, start_column=COL_HEAD, end_row=r_sub, end_column=COL_END)
+            ws.cell(r_sub, _C_SI).fill = _FILL_ORANGE_LIGHT
+            ws.cell(r_sub, _C_SI).border = _BORDER
+            _merge(ws, r_sub, _C_HEAD, r_sub, _C_END)
 
             sub_item_rows = []
-            for item in sub.get("items", []):
+            for item in (sub.get("items") or []):
                 r = ws.max_row + 1
-                item_sub   = (item.get("sub_head_of_expense") or "").strip()
-                sub_nm     = (sub.get("name") or "").strip()
-                head_display = item_sub if item_sub.lower() != sub_nm.lower() else ""
-                ws.append([
-                    "", "", head_display, item["name"],
-                    *item.get("q1",[0,0,0]), *item.get("q2",[0,0,0]),
-                    *item.get("q3",[0,0,0]), *item.get("q4",[0,0,0]),
-                    *_qtr_formulas(r),
-                ])
-                _style_row(ws, ws.max_row, font=_NORMAL)
-                _fmt_numeric(ws, ws.max_row)
+                ws.append(["", "", sub.get("name", ""), item.get("name", ""),
+                            *item.get("q1", [0, 0, 0]), *item.get("q2", [0, 0, 0]),
+                            *item.get("q3", [0, 0, 0]), *item.get("q4", [0, 0, 0]),
+                            *_qtr_fmls(r)])
+                _style_annual_row(ws, ws.max_row, font=_NORMAL)
+                _fmt_annual_row(ws, ws.max_row)
                 sub_item_rows.append(ws.max_row)
 
             if sub_item_rows:
-                ws.append(["","","",f"TOTAL - {sub['name']}", *_totals_from_rows(sub_item_rows)])
-                _style_row(ws, ws.max_row, _FILL_SUBTOTAL, _BOLD)
-                _fmt_numeric(ws, ws.max_row)
+                ws.append(["", "", "", f"TOTAL - {sub.get('name', '')}",
+                            *_totals_fmls(sub_item_rows)])
+                _style_annual_row(ws, ws.max_row,
+                                   PatternFill("solid", fgColor="EBF5FB"), _BOLD)
+                _fmt_annual_row(ws, ws.max_row)
                 sub_total_rows.append(ws.max_row)
-            sub_counter += 1
+            sub_ctr += 1
 
         total_rows = sub_total_rows if sub_total_rows else direct_item_rows
         if total_rows:
-            ws.append(["","","",f"TOTAL - {head['name']}", *_totals_from_rows(total_rows)])
-            _style_row(ws, ws.max_row, _FILL_HTOTAL,
-                       Font(bold=True, name="Calibri", size=10, color="003B63"))
-            _fmt_numeric(ws, ws.max_row)
+            ws.append(["", "", "", f"TOTAL - {head.get('name', '')}",
+                        *_totals_fmls(total_rows)])
+            _style_annual_row(ws, ws.max_row,
+                               PatternFill("solid", fgColor="D4E6F1"),
+                               Font(bold=True, name="Calibri", size=10, color="003B63"))
+            _fmt_annual_row(ws, ws.max_row)
             head_total_rows.append(ws.max_row)
-            if head_name == "OPERATING EXPENSES":
+            if "OPERATING" in head_name:
                 ws.append([])
 
-    for r in range(ws.max_row, 1, -1):
-        if (ws.cell(r, COL_HEAD).value == "COVID SUPPORT" and
-                ws.cell(r-1, COL_HEAD).value is None):
-            ws.delete_rows(r-1); break
-
     if head_total_rows:
-        ws.append(["","","","GRAND TOTAL", *_totals_from_rows(head_total_rows)])
-        _style_row(ws, ws.max_row, _FILL_GRAND,
-                   Font(bold=True, color="FFFFFF", name="Calibri", size=10))
-        _fmt_numeric(ws, ws.max_row)
+        ws.append(["", "", "", "GRAND TOTAL", *_totals_fmls(head_total_rows)])
+        _style_annual_row(ws, ws.max_row, _FILL_BLUE_DARK,
+                           Font(bold=True, color="FFFFFF", name="Calibri", size=10))
+        _fmt_annual_row(ws, ws.max_row)
 
-    _auto_col_widths(ws)
+    _auto_widths(ws)
     return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SHEET: Budget & Estimate
-# Follows EXACTLY the same format as Annual Budget Consolidated:
-#   Col B = Sl# (entity label used as section prefix)
-#   Col C = HEAD OF EXPENSE
-#   Col D = TYPE OF EXPENSE
-#   Cols E–U = Plan months Q1-Q4 + QTR totals + YEAR total
+# SHEET 6 — Budget & Estimate
 #
-# One entity per sheet-section block.  Each entity block:
-#   • Section header row  (blue, entity label A/B/C…)
-#   • OPERATING EXPENSES header  → sub-heads I/II/…  → items  → TOTAL
-#   • CAPITAL EXPENSES header    → items              → TOTAL
-#   • Blank separator
-#   • Grand Total formula row
+# JS display: one table, rows = Expense Head / Sub-head / Line Item
+#   Columns: Expense Head/Line Item | [per unit: Plan | Est] | Grand Total Plan | Grand Total Est
+#   Values in raw rupees (formatINR whole number)
+#   Sections from rawData[0].actuals (structure only, values summed across all entities)
+#   Total column = GRAND TOTAL section (seq 9999) from each entity
 #
-# NOTE: be_data items have ytd (plan) and total_posted_amt_ytd (est) broken
-# into sections/sub-heads/items just like get_unit_wise_plan actuals.
-# We produce TWO blocks per entity: one for Plan (ytd), one for Est.
+# Export format:
+#   Row 1 = unit column headers (plan + est per unit + Grand Total plan + Grand Total est)
+#   Section rows (blue), sub-head rows (orange), item rows (white)
+#   Grand Total row (dark blue)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# def _sheet_be(wb, sheet_name, be_data, fy, plan_label, est_label,
-#               org_name="Azim Premji Foundation"):
-#     """
-#     Budget & Estimate sheet — IDENTICAL column layout to Annual Budget.
-#     Each entity gets two full section blocks: Plan and Estimate.
-#     """
-#     ws = wb.create_sheet(title=sheet_name[:31])
-#     entities = be_data or []
+def _sheet_be(wb, be_data, fy, plan_label, est_label, org="Azim Premji Foundation"):
+    ws = wb.create_sheet("Budget & Estimate")
+    entities = [e for e in (be_data or []) if not _is_consolidated(e)]
 
-#     # Sheet title rows
-#     ws.append(["", org_name])
-#     ws.merge_cells("B1:U1")
-#     ws["B1"].font = Font(size=14, bold=True, name="Calibri", color="003B63")
-#     ws["B1"].alignment = _LEFT
-#     ws.append(["", f"Budget & Estimate – {fy}"])
-#     ws.merge_cells("B2:U2")
-#     ws["B2"].font = Font(size=12, bold=True, name="Calibri"); ws["B2"].alignment = _LEFT
-#     ws.append([])
+    if not entities:
+        ws.cell(1, 1, "No data")
+        return ws
 
-#     # Header rows (same as Annual)
-#     ws.append([
-#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "QUARTER I","","","QUARTER II","","",
-#         "QUARTER III","","","QUARTER IV","","",
-#         "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
-#     ])
-#     r1 = ws.max_row
-#     ws.append([
-#         "", "Sl #", "HEAD OF EXPENSE", "TYPE OF EXPENSE",
-#         "Apr","May","Jun","Jul","Aug","Sep",
-#         "Oct","Nov","Dec","Jan","Feb","Mar",
-#         "QTR-1","QTR-2","QTR-3","QTR-4", f"YEAR {fy}",
-#     ])
-#     r2 = ws.max_row
+    # Build structure from first entity's actuals
+    def _build_struct(entity):
+        struct = []
+        for sec in (entity.get("actuals") or []):
+            if _is_gt(sec): continue
+            struct.append({
+                "name": sec.get("name", ""),
+                "sub_heads": [
+                    {"name": sub.get("name", ""),
+                     "items": [{"name": i.get("name", "")} for i in (sub.get("items") or [])]}
+                    for sub in (sec.get("sub_heads") or [])
+                ],
+                "items": [{"name": i.get("name", "")} for i in (sec.get("items") or [])],
+            })
+        return struct
 
-#     _style_row(ws, r1, _FILL_HDR, _WHITE_BOLD, is_header=True)
-#     _style_row(ws, r2, _FILL_HDR, _WHITE_BOLD, is_header=True)
+    struct = _build_struct(entities[0])
 
-#     ws.merge_cells(start_row=r1, start_column=5,  end_row=r1, end_column=7)
-#     ws.merge_cells(start_row=r1, start_column=8,  end_row=r1, end_column=10)
-#     ws.merge_cells(start_row=r1, start_column=11, end_row=r1, end_column=13)
-#     ws.merge_cells(start_row=r1, start_column=14, end_row=r1, end_column=16)
-#     ws.merge_cells(start_row=r1, start_column=2,  end_row=r2, end_column=2)
-#     ws.merge_cells(start_row=r1, start_column=3,  end_row=r2, end_column=3)
-#     ws.merge_cells(start_row=r1, start_column=4,  end_row=r2, end_column=4)
-#     for col in range(17, 22):
-#         ws.merge_cells(start_row=r1, start_column=col, end_row=r2, end_column=col)
+    # Value extraction functions — match JS secVal/subVal/itemVal/grandVal
+    def _sec_val(entity, sn, field):
+        v = 0.0
+        for s in (entity.get("actuals") or []):
+            if _is_gt(s) or s.get("name") != sn: continue
+            v += _fv(s.get("ytd" if field == "plan" else "total_posted_amt_ytd"))
+        return v
 
-#     ws.freeze_panes = "E6"
+    def _sub_val(entity, sn, subn, field):
+        v = 0.0
+        for s in (entity.get("actuals") or []):
+            if _is_gt(s) or s.get("name") != sn: continue
+            for sub in (s.get("sub_heads") or []):
+                if sub.get("name") != subn: continue
+                v += _fv(sub.get("ytd" if field == "plan" else "total_posted_amt_ytd"))
+        return v
 
-#     # ── Value extraction from actuals using a chosen field key ───────────────
-#     def _extract_monthly(actuals, sec_name, sub_name, item_name, field):
-#         """
-#         Return 12 monthly values [Apr..Mar] from actuals for the given path.
-#         field = "ytd" (plan) or "total_posted_amt_ytd" / "total_posted_amt" (est).
-#         Monthly breakdown lives in item.months dict keyed "4".."3".
-#         Falls back to evenly splitting section/sub totals if months absent.
-#         """
-#         MONTH_KEYS = ["4","5","6","7","8","9","10","11","12","1","2","3"]
-#         for sec in (actuals or []):
-#             if _is_grand_total_section(sec): continue
-#             sn = sec.get("name","")
-#             if sec_name and sn != sec_name: continue
-#             # direct items on section
-#             for item in (sec.get("items") or []):
-#                 if item.get("name") == item_name:
-#                     m = item.get("months") or {}
-#                     vals = [float(m.get(k,0) or 0) for k in MONTH_KEYS]
-#                     if any(vals): return vals
-#                     # fallback: split total evenly
-#                     tot = float(item.get(field,0) or 0)
-#                     return [tot/12]*12
-#             # sub-head items
-#             for sub in (sec.get("sub_heads") or []):
-#                 if sub_name and sub.get("name") != sub_name: continue
-#                 for item in (sub.get("items") or []):
-#                     if item.get("name") == item_name:
-#                         m = item.get("months") or {}
-#                         vals = [float(m.get(k,0) or 0) for k in MONTH_KEYS]
-#                         if any(vals): return vals
-#                         tot = float(item.get(field,0) or 0)
-#                         return [tot/12]*12
-#         return [0.0]*12
+    def _item_val(entity, nm, field):
+        v = 0.0
+        fld = "ytd" if field == "plan" else "total_posted_amt"
+        for s in (entity.get("actuals") or []):
+            if _is_gt(s): continue
+            for i in (s.get("items") or []):
+                if i.get("name") == nm: v += _fv(i.get(fld))
+            for sub in (s.get("sub_heads") or []):
+                for i in (sub.get("items") or []):
+                    if i.get("name") == nm: v += _fv(i.get(fld))
+        return v
 
-#     def _monthly_to_quarters(monthly):
-#         return {
-#             "q1": monthly[0:3],
-#             "q2": monthly[3:6],
-#             "q3": monthly[6:9],
-#             "q4": monthly[9:12],
-#         }
+    def _grand_val(entity, field):
+        # Use GRAND TOTAL section directly (match JS grandVal)
+        gt = 0.0; found = False
+        fld = "ytd" if field == "plan" else "total_posted_amt_ytd"
+        for s in (entity.get("actuals") or []):
+            if _is_gt(s):
+                gt += _fv(s.get(fld)); found = True
+        if not found:
+            for s in (entity.get("actuals") or []):
+                gt += _fv(s.get(fld))
+        return gt
 
-#     def _write_entity_block(entity, alpha_idx, value_field, block_label, entity_head_rows):
-#         """
-#         Write one full Budget/Estimate block for an entity.
-#         Returns row number of its grand-total row (added to entity_head_rows).
-#         """
-#         label     = (entity.get("label") or "").strip()
-#         actuals   = entity.get("actuals") or []
-#         head_total_rows = []
-#         head_counter    = 0
+    # Column layout:
+    # Col 2 = Expense Head / Line Item
+    # Col 3+ = per entity: Plan, Est
+    # Last 2 = Grand Total Plan, Grand Total Est
+    n_ents   = len(entities)
+    c_items  = 2
+    c_data   = 3                           # first entity plan col
+    c_gt_p   = c_data + n_ents * 2         # Grand Total Plan
+    c_gt_e   = c_gt_p + 1                  # Grand Total Est
+    last_col = c_gt_e
 
-#         # ── Entity label header (blue, like alpha section in Annual) ──────
-#         ws.append(["", alpha_idx, f"{label} — {block_label}"])
-#         r_ent = ws.max_row
-#         for col in range(COL_HEAD, COL_END + 1):
-#             c = ws.cell(r_ent, col)
-#             c.fill = PatternFill("solid", fgColor="003B63")
-#             c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
-#             c.border = _BORDER; c.alignment = _LEFT
-#         ws.cell(r_ent, COL_SI).fill = PatternFill("solid", fgColor="003B63")
-#         ws.cell(r_ent, COL_SI).border = _BORDER
-#         ws.merge_cells(start_row=r_ent, start_column=COL_HEAD, end_row=r_ent, end_column=COL_END)
+    _sheet_title(ws, org, f"Budget & Estimate – {fy}", last_col)
 
-#         for sec in actuals:
-#             if _is_grand_total_section(sec): continue
-#             head_counter += 1
-#             sec_name  = sec.get("name","")
-#             head_name = sec_name.upper().replace("  "," ").strip()
+    cur = 4
 
-#             # Section header (light-blue, same as Annual)
-#             ws.append(["", _to_roman(head_counter), sec_name])
-#             r_sec = ws.max_row
-#             for col in range(COL_HEAD, COL_END + 1):
-#                 c = ws.cell(r_sec, col)
-#                 c.fill = _FILL_HEAD; c.font = Font(bold=True, name="Calibri", size=10, color="003B63")
-#                 c.border = _BORDER; c.alignment = _LEFT
-#             ws.cell(r_sec, COL_SI).fill = _FILL_HEAD
-#             ws.cell(r_sec, COL_SI).border = _BORDER
-#             ws.merge_cells(start_row=r_sec, start_column=COL_HEAD, end_row=r_sec, end_column=COL_END)
+    # ── Header row 1 — entity names ─────────────────────────────────────────
+    for col in range(c_items, last_col + 1):
+        c = ws.cell(cur, col)
+        c.fill = _FILL_BLUE_MID; c.font = _WHITE_BOLD
+        c.border = _BORDER; c.alignment = _CENTER
 
-#             if "OPERATING" in head_name: ws.append([])
+    ws.cell(cur, c_items, "Expense Head / Line Item")
+    _merge(ws, cur, c_items, cur + 1, c_items)
 
-#             sub_total_rows = []; direct_item_rows = []
+    for i, e in enumerate(entities):
+        col = c_data + i * 2
+        ws.cell(cur, col, (e.get("label") or "").strip())
+        _merge(ws, cur, col, cur, col + 1)
 
-#             # Direct items on section (e.g. capex items)
-#             for item in (sec.get("items") or []):
-#                 iname   = item.get("name","")
-#                 monthly = _extract_monthly(actuals, sec_name, None, iname, value_field)
-#                 q       = _monthly_to_quarters(monthly)
-#                 r = ws.max_row + 1
-#                 ws.append(["", "", sec_name, iname,
-#                            *q["q1"], *q["q2"], *q["q3"], *q["q4"],
-#                            *_qtr_formulas(r)])
-#                 _style_row(ws, ws.max_row, font=_NORMAL)
-#                 _fmt_numeric(ws, ws.max_row)
-#                 direct_item_rows.append(ws.max_row)
+    ws.cell(cur, c_gt_p, "Grand Total")
+    _merge(ws, cur, c_gt_p, cur, c_gt_e)
+    cur += 1
 
-#             # Sub-heads
-#             sub_counter = 1
-#             for sub in (sec.get("sub_heads") or []):
-#                 sub_name = sub.get("name","")
-#                 roman_idx = _to_roman(sub_counter)
-#                 ws.append(["", roman_idx, sub_name])
-#                 r_sub = ws.max_row
-#                 for col in range(COL_HEAD, COL_END + 1):
-#                     c = ws.cell(r_sub, col)
-#                     c.fill = _FILL_SUBHEAD; c.font = Font(bold=True, name="Calibri", size=10, color="7A3B00")
-#                     c.border = _BORDER; c.alignment = _LEFT
-#                 ws.cell(r_sub, COL_SI).fill = _FILL_SUBHEAD
-#                 ws.cell(r_sub, COL_SI).border = _BORDER
-#                 ws.merge_cells(start_row=r_sub, start_column=COL_HEAD, end_row=r_sub, end_column=COL_END)
+    # ── Header row 2 — Plan / Est per entity ────────────────────────────────
+    for col in range(c_items, last_col + 1):
+        c = ws.cell(cur, col)
+        c.fill = _FILL_ORANGE; c.font = _WHITE_BOLD
+        c.border = _BORDER; c.alignment = _CENTER
 
-#                 sub_item_rows = []
-#                 for item in (sub.get("items") or []):
-#                     iname   = item.get("name","")
-#                     monthly = _extract_monthly(actuals, sec_name, sub_name, iname, value_field)
-#                     q       = _monthly_to_quarters(monthly)
-#                     r = ws.max_row + 1
-#                     ws.append(["", "", sub_name, iname,
-#                                *q["q1"], *q["q2"], *q["q3"], *q["q4"],
-#                                *_qtr_formulas(r)])
-#                     _style_row(ws, ws.max_row, font=_NORMAL)
-#                     _fmt_numeric(ws, ws.max_row)
-#                     sub_item_rows.append(ws.max_row)
+    for i in range(n_ents):
+        col = c_data + i * 2
+        ws.cell(cur, col,     plan_label)
+        ws.cell(cur, col + 1, est_label)
 
-#                 if sub_item_rows:
-#                     ws.append(["","","",f"TOTAL - {sub_name}", *_totals_from_rows(sub_item_rows)])
-#                     _style_row(ws, ws.max_row, _FILL_SUBTOTAL, _BOLD)
-#                     _fmt_numeric(ws, ws.max_row)
-#                     sub_total_rows.append(ws.max_row)
-#                 sub_counter += 1
+    ws.cell(cur, c_gt_p, plan_label)
+    ws.cell(cur, c_gt_e, est_label)
+    cur += 1
 
-#             total_rows = sub_total_rows if sub_total_rows else direct_item_rows
-#             if total_rows:
-#                 ws.append(["","","",f"TOTAL - {sec_name}", *_totals_from_rows(total_rows)])
-#                 _style_row(ws, ws.max_row, _FILL_HTOTAL,
-#                            Font(bold=True, name="Calibri", size=10, color="003B63"))
-#                 _fmt_numeric(ws, ws.max_row)
-#                 head_total_rows.append(ws.max_row)
-#                 if "OPERATING" in head_name: ws.append([])
+    # ── Currency note ────────────────────────────────────────────────────────
+    ws.cell(cur, last_col, "Raw ₹")
+    ws.cell(cur, last_col).font = _ITALIC
+    ws.cell(cur, last_col).alignment = Alignment(horizontal="right")
+    cur += 1
 
-#         # Grand total for this entity block
-#         if head_total_rows:
-#             ws.append(["","","",f"GRAND TOTAL – {label} {block_label}",
-#                        *_totals_from_rows(head_total_rows)])
-#             _style_row(ws, ws.max_row, _FILL_GRAND,
-#                        Font(bold=True, color="FFFFFF", name="Calibri", size=10))
-#             _fmt_numeric(ws, ws.max_row)
-#             entity_head_rows.append(ws.max_row)
+    def _fill_data_cols(row, plan_vals, est_vals, gt_p, gt_e,
+                        sec_fill=None, sec_font=None):
+        for col in range(c_items, last_col + 1):
+            c = ws.cell(row, col)
+            c.border = _BORDER
+            c.alignment = _LEFT if col == c_items else _RIGHT
+            if sec_fill: c.fill = sec_fill
+            if sec_font: c.font = sec_font
+            c.number_format = NUM_FMT_RAW
+        for i, (pv, ev) in enumerate(zip(plan_vals, est_vals)):
+            col = c_data + i * 2
+            ws.cell(row, col,     pv or None).number_format = NUM_FMT_RAW
+            ws.cell(row, col + 1, ev or None).number_format = NUM_FMT_RAW
+        ws.cell(row, c_gt_p, gt_p or None).number_format = NUM_FMT_RAW
+        ws.cell(row, c_gt_e, gt_e or None).number_format = NUM_FMT_RAW
 
-#         ws.append([])  # blank separator between entities
+    # ── Data rows ────────────────────────────────────────────────────────────
+    for sec in struct:
+        sn = sec["name"]
 
-#     # ── Write Plan block then Estimate block for each entity ─────────────
-#     plan_grand_rows = []; est_grand_rows = []
-#     ent_counter = 0
+        # Section row — cb-row-head (blue light)
+        sec_p_vals = [_sec_val(e, sn, "plan") for e in entities]
+        sec_e_vals = [_sec_val(e, sn, "est")  for e in entities]
+        gt_sec_p   = sum(sec_p_vals); gt_sec_e = sum(sec_e_vals)
 
-#     for entity in entities:
-#         ent_counter += 1
-#         alpha = chr(64 + ent_counter)
-#         _write_entity_block(entity, alpha,       "ytd",                  plan_label, plan_grand_rows)
-#         _write_entity_block(entity, alpha + "'", "total_posted_amt_ytd", est_label,  est_grand_rows)
+        ws.cell(cur, c_items, sn)
+        _fill_data_cols(cur, sec_p_vals, sec_e_vals, gt_sec_p, gt_sec_e,
+                        _FILL_BLUE_LIGHT,
+                        Font(bold=True, name="Calibri", size=10, color="003B63"))
+        cur += 1
 
-#     # ── Foundation-wide totals ────────────────────────────────────────────
-#     if plan_grand_rows:
-#         ws.append(["","","",f"FOUNDATION GRAND TOTAL — {plan_label}",
-#                    *_totals_from_rows(plan_grand_rows)])
-#         _style_row(ws, ws.max_row, PatternFill("solid", fgColor="003B63"),
-#                    Font(bold=True, color="FFFFFF", name="Calibri", size=11))
-#         _fmt_numeric(ws, ws.max_row)
+        # Sub-head rows — cb-row-sub (orange light)
+        for sub in sec.get("sub_heads", []):
+            subn = sub["name"]
+            sub_p = [_sub_val(e, sn, subn, "plan") for e in entities]
+            sub_e = [_sub_val(e, sn, subn, "est")  for e in entities]
+            gt_sp = sum(sub_p); gt_se = sum(sub_e)
 
-#     if est_grand_rows:
-#         ws.append(["","","",f"FOUNDATION GRAND TOTAL — {est_label}",
-#                    *_totals_from_rows(est_grand_rows)])
-#         _style_row(ws, ws.max_row, PatternFill("solid", fgColor="003B63"),
-#                    Font(bold=True, color="FFFFFF", name="Calibri", size=11))
-#         _fmt_numeric(ws, ws.max_row)
+            ws.cell(cur, c_items, f"  {subn}")
+            _fill_data_cols(cur, sub_p, sub_e, gt_sp, gt_se,
+                            _FILL_ORANGE_LIGHT,
+                            Font(bold=True, name="Calibri", size=10, color="7A3B00"))
+            cur += 1
 
-#     _auto_col_widths(ws)
-#     return ws
+            # Item rows
+            for item in sub.get("items", []):
+                nm = item["name"]
+                ip = [_item_val(e, nm, "plan") for e in entities]
+                ie = [_item_val(e, nm, "est")  for e in entities]
+                gt_ip = sum(ip); gt_ie = sum(ie)
+                ws.cell(cur, c_items, f"    {nm}")
+                _fill_data_cols(cur, ip, ie, gt_ip, gt_ie, _FILL_WHITE, _NORMAL)
+                cur += 1
 
+        # Direct items on section
+        for item in sec.get("items", []):
+            nm = item["name"]
+            ip = [_item_val(e, nm, "plan") for e in entities]
+            ie = [_item_val(e, nm, "est")  for e in entities]
+            gt_ip = sum(ip); gt_ie = sum(ie)
+            ws.cell(cur, c_items, f"  {nm}")
+            _fill_data_cols(cur, ip, ie, gt_ip, gt_ie, _FILL_WHITE, _NORMAL)
+            cur += 1
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# FY HELPERS
-# ═══════════════════════════════════════════════════════════════════════════════
+    # Grand Total row — use GRAND TOTAL section (seq 9999) per entity
+    gt_p_vals = [_grand_val(e, "plan") for e in entities]
+    gt_e_vals = [_grand_val(e, "est")  for e in entities]
+    all_gp    = sum(gt_p_vals); all_ge = sum(gt_e_vals)
 
-def _fy_labels(fy):
-    parts    = (fy or "2025-26").split("-")
-    start_yy = (parts[0] or "2025")[-2:]
-    end_yy   = (parts[1] if len(parts) > 1 else "26")[-2:]
-    prev_s   = str(int(start_yy) - 1).zfill(2)
-    prev_e   = str(int(end_yy)   - 1).zfill(2)
-    return {
-        "plan": f"FY{start_yy}-{end_yy} Plan",
-        "est" : f"FY{prev_s}-{prev_e} Estimate",
-    }
+    ws.cell(cur, c_items, "GRAND TOTAL")
+    for col in range(c_items, last_col + 1):
+        c = ws.cell(cur, col)
+        c.fill = _FILL_BLUE_DARK
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
+        c.border = _BORDER; c.alignment = _LEFT if col == c_items else _RIGHT
+        c.number_format = NUM_FMT_RAW
+    for i, (pv, ev) in enumerate(zip(gt_p_vals, gt_e_vals)):
+        col = c_data + i * 2
+        ws.cell(cur, col,     pv or None).number_format = NUM_FMT_RAW
+        ws.cell(cur, col + 1, ev or None).number_format = NUM_FMT_RAW
+    ws.cell(cur, c_gt_p, all_gp or None).number_format = NUM_FMT_RAW
+    ws.cell(cur, c_gt_e, all_ge or None).number_format = NUM_FMT_RAW
 
-def _prev_fy(fy):
-    parts = (fy or "2025-26").split("-")
-    s = int(parts[0] or 2025) - 1
-    e = int(parts[1] or 26)   - 1
-    return f"{s}-{str(e).zfill(2)}"
+    _auto_widths(ws)
+    return ws
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -6400,15 +6428,12 @@ def _prev_fy(fy):
 @frappe.whitelist()
 def export_ppt(financial_year, ppt_rows, prev_ppt_rows,
                budget_label, est_label, prev_budget_label, prev_est_label):
-    fy      = financial_year or "2025-26"
-    prev_fy = _prev_fy(fy)
+    fy = financial_year or "2025-26"
     wb = Workbook(); wb.remove(wb.active)
-    _sheet_ppt_combined(
-        wb, "Foundation Metrics",
-        json.loads(ppt_rows),      budget_label,      est_label,
-        json.loads(prev_ppt_rows), prev_budget_label, prev_est_label,
-        fy=fy, prev_fy=prev_fy,
-    )
+    _sheet_ppt(wb,
+               json.loads(ppt_rows),      budget_label,      est_label,
+               json.loads(prev_ppt_rows), prev_budget_label, prev_est_label,
+               fy, _prev_fy(fy))
     return {"filename": f"Foundation_Metrics_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
@@ -6416,21 +6441,16 @@ def export_ppt(financial_year, ppt_rows, prev_ppt_rows,
 def export_summary_inr(financial_year, summary_data):
     fy = financial_year or "2025-26"
     wb = Workbook(); wb.remove(wb.active)
-    _sheet_summary_inr(wb, "Summary in INR", json.loads(summary_data), fy)
+    _sheet_summary_inr(wb, json.loads(summary_data), fy)
     return {"filename": f"Summary_INR_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
 @frappe.whitelist()
 def export_headcount(financial_year, headcount_data):
-    """
-    headcount_data may be:
-      - JSON string of { headcount_data: [...], plan_data: [...] }  (new API)
-      - JSON string of [...]  (old API — list of records)
-    """
-    fy = financial_year or "2025-26"
+    fy  = financial_year or "2025-26"
     raw = json.loads(headcount_data)
-    wb = Workbook(); wb.remove(wb.active)
-    _sheet_headcount(wb, "Headcount", raw, fy)
+    wb  = Workbook(); wb.remove(wb.active)
+    _sheet_headcount(wb, raw, fy)
     return {"filename": f"Headcount_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
@@ -6438,7 +6458,7 @@ def export_headcount(financial_year, headcount_data):
 def export_annual(financial_year, annual_data):
     fy = financial_year or "2025-26"
     wb = Workbook(); wb.remove(wb.active)
-    _sheet_annual(wb, "Annual Budget Consolidated", json.loads(annual_data), fy)
+    _sheet_annual(wb, json.loads(annual_data), fy)
     return {"filename": f"Annual_Budget_Consolidated_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
@@ -6446,7 +6466,7 @@ def export_annual(financial_year, annual_data):
 def export_estimate(financial_year, estimate_data):
     fy = financial_year or "2025-26"
     wb = Workbook(); wb.remove(wb.active)
-    _sheet_estimate(wb, "Estimate Consolidated", json.loads(estimate_data), fy)
+    _sheet_estimate(wb, json.loads(estimate_data), fy)
     return {"filename": f"Estimate_Consolidated_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
@@ -6454,9 +6474,8 @@ def export_estimate(financial_year, estimate_data):
 def export_budget_estimate(financial_year, be_data):
     fy     = financial_year or "2025-26"
     labels = _fy_labels(fy)
-    wb = Workbook(); wb.remove(wb.active)
-    _sheet_be(wb, "Budget & Estimate", json.loads(be_data),
-              fy, labels["plan"], labels["est"])
+    wb     = Workbook(); wb.remove(wb.active)
+    _sheet_be(wb, json.loads(be_data), fy, labels["plan"], labels["est"])
     return {"filename": f"Budget_and_Estimate_{fy}.xlsx", "data": _wb_to_b64(wb)}
 
 
@@ -6466,25 +6485,21 @@ def export_all(financial_year,
                budget_label, est_label, prev_budget_label, prev_est_label,
                summary_data, headcount_data,
                annual_data, estimate_data, be_data):
-    fy      = financial_year or "2025-26"
-    prev_fy = _prev_fy(fy)
-    labels  = _fy_labels(fy)
-    wb = Workbook(); wb.remove(wb.active)
+    fy     = financial_year or "2025-26"
+    labels = _fy_labels(fy)
+    wb     = Workbook(); wb.remove(wb.active)
 
-    _sheet_ppt_combined(
-        wb, "Foundation Metrics",
-        json.loads(ppt_rows),      budget_label,      est_label,
-        json.loads(prev_ppt_rows), prev_budget_label, prev_est_label,
-        fy=fy, prev_fy=prev_fy,
-    )
-    _sheet_summary_inr(wb, "Summary in INR",            json.loads(summary_data),    fy)
-    _sheet_headcount(  wb, "Headcount",                 json.loads(headcount_data),  fy)
-    _sheet_annual(     wb, "Annual Budget Consolidated", json.loads(annual_data),     fy)
-    _sheet_estimate(   wb, "Estimate Consolidated",      json.loads(estimate_data),   fy)
-    _sheet_be(         wb, "Budget & Estimate",          json.loads(be_data),
-              fy, labels["plan"], labels["est"])
+    _sheet_ppt(wb,
+               json.loads(ppt_rows),      budget_label,      est_label,
+               json.loads(prev_ppt_rows), prev_budget_label, prev_est_label,
+               fy, _prev_fy(fy))
+    _sheet_summary_inr(wb, json.loads(summary_data),   fy)
+    _sheet_headcount(  wb, json.loads(headcount_data),  fy)
+    _sheet_annual(     wb, json.loads(annual_data),     fy)
+    _sheet_estimate(   wb, json.loads(estimate_data),   fy)
+    _sheet_be(         wb, json.loads(be_data),         fy, labels["plan"], labels["est"])
 
     return {
         "filename": f"Foundation_Consolidated_Budget_{fy}.xlsx",
-        "data"    : _wb_to_b64(wb)
+        "data"    : _wb_to_b64(wb),
     }
