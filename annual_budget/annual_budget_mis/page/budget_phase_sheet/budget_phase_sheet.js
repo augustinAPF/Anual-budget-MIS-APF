@@ -4098,9 +4098,9 @@ frappe.pages['budget-phase-sheet'].on_page_load = function (wrapper) {
         let fy        = fiscal_year_filter.get_value() || '';
 
         $pie_section.html(`
-            <div class="bps-section-label">Grants vs Direct Work</div>
+            <div class="bps-section-label">Grants & Direct Work</div>
             <div class="bps-pie-card">
-                <div class="bps-pie-card-title">FY ${fy} — Grants &amp; Donations vs Direct Work</div>
+                <div class="bps-pie-card-title">FY ${fy} — Grants &amp; Donations And Direct Work</div>
                 <div class="bps-pie-canvas-wrap">
                     <canvas id="bps-pie-canvas" width="220" height="220"></canvas>
                 </div>

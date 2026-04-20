@@ -1517,6 +1517,467 @@
 //     }
 // };
 
+
+
+
+
+
+
+// frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
+
+//     const page = frappe.ui.make_app_page({
+//         parent: wrapper,
+//         title: 'Budget Dashboard',
+//         single_column: true
+//     });
+
+//     /* ── STYLES ── */
+//     $(`<style>
+//         /* === BASE === */
+//         .bd-wrap {
+//             padding: 16px;
+//             box-sizing: border-box;
+//         }
+
+//         /* === TOP BAR === */
+//         .bd-top {
+//             display: flex;
+//             align-items: center;
+//             justify-content: space-between;
+//             flex-wrap: wrap;
+//             gap: 10px;
+//             margin-bottom: 16px;
+//         }
+//         .bd-title {
+//             font-size: 18px;
+//             font-weight: 600;
+//             color: #111;
+//             margin: 0;
+//         }
+//         .bd-filter { width: 200px; }
+//         .bd-filter .form-control,
+//         .bd-filter select {
+//             width: 100% !important;
+//             height: 34px !important;
+//             font-size: 13px !important;
+//             border-radius: 8px !important;
+//             border: 1px solid #e2e8f0 !important;
+//         }
+
+//         /* === CARDS === */
+//         .bd-cards {
+//             display: grid;
+//             grid-template-columns: repeat(4, 1fr);
+//             gap: 12px;
+//             margin-bottom: 16px;
+//         }
+//         .bd-card {
+//             background: #fff;
+//             border: 1px solid #e8edf3;
+//             border-radius: 12px;
+//             padding: 14px 16px;
+//             border-left: 4px solid #378ADD;
+//             min-width: 0;
+//         }
+//         .bd-card-label {
+//             font-size: 10px;
+//             font-weight: 600;
+//             text-transform: uppercase;
+//             letter-spacing: .6px;
+//             color: #888;
+//             margin-bottom: 5px;
+//             white-space: nowrap;
+//             overflow: hidden;
+//             text-overflow: ellipsis;
+//         }
+//         .bd-card-value {
+//             font-size: 18px;
+//             font-weight: 700;
+//             color: #111;
+//             line-height: 1.2;
+//             white-space: nowrap;
+//             overflow: hidden;
+//             text-overflow: ellipsis;
+//         }
+//         .bd-card-sub {
+//             font-size: 11px;
+//             color: #888;
+//             margin-top: 3px;
+//         }
+
+//         /* === BOTTOM ROW: hbar + donut side by side === */
+//         .bd-bottom {
+//             display: grid;
+//             grid-template-columns: 1fr 400px;
+//             gap: 14px;
+//             align-items: start;
+//         }
+
+//         /* === HORIZONTAL BAR === */
+//         .bd-hbar-row {
+//             display: flex;
+//             align-items: center;
+//             gap: 12px;
+//             margin-bottom: 13px;
+//         }
+//         .bd-hbar-label {
+//             font-size: 13px;
+//             color: #444;
+//             font-weight: 500;
+//             width: 180px;
+//             min-width: 180px;
+//             white-space: nowrap;
+//             overflow: hidden;
+//             text-overflow: ellipsis;
+//             text-align: right;
+//         }
+//         .bd-hbar-track {
+//             flex: 1;
+//             height: 22px;
+//             background: #f0f2f5;
+//             border-radius: 6px;
+//             overflow: hidden;
+//         }
+//         .bd-hbar-fill {
+//             height: 100%;
+//             border-radius: 6px;
+//             transition: width .5s ease;
+//         }
+//         .bd-hbar-val {
+//             font-size: 13px;
+//             color: #222;
+//             font-weight: 700;
+//             white-space: nowrap;
+//             width: 72px;
+//             min-width: 72px;
+//         }
+
+//         .bd-chart-box {
+//             background: #fff;
+//             border: 1px solid #e8edf3;
+//             border-radius: 12px;
+//             padding: 16px 18px;
+//             min-width: 0;
+//         }
+//         .bd-chart-header {
+//             display: flex;
+//             align-items: center;
+//             justify-content: space-between;
+//             margin-bottom: 2px;
+//         }
+//         .bd-chart-title {
+//             font-size: 13px;
+//             font-weight: 600;
+//             color: #111;
+//             margin: 0;
+//         }
+//         .bd-chart-sub {
+//             font-size: 12px;
+//             color: #aaa;
+//             margin: 0 0 12px;
+//         }
+
+//         /* === LEGEND === */
+//         .bd-legend {
+//             display: flex;
+//             flex-wrap: wrap;
+//             gap: 8px;
+//             margin-top: 12px;
+//         }
+//         .bd-legend-item {
+//             display: flex;
+//             align-items: center;
+//             gap: 5px;
+//             font-size: 13px;
+//             color: #444;
+//             font-weight: 500;
+//         }
+//         .bd-legend-dot {
+//             width: 9px;
+//             height: 9px;
+//             border-radius: 2px;
+//             flex-shrink: 0;
+//         }
+
+//         /* === DONUT CENTER === */
+//         .bd-donut-center {
+//             position: absolute;
+//             top: 50%;
+//             left: 50%;
+//             transform: translate(-50%, -50%);
+//             text-align: center;
+//             pointer-events: none;
+//         }
+//         .bd-donut-center-val {
+//             font-size: 20px;
+//             font-weight: 700;
+//             color: #111;
+//             line-height: 1.1;
+//         }
+//         .bd-donut-center-lbl {
+//             font-size: 10px;
+//             color: #888;
+//             margin-top: 2px;
+//         }
+
+//         /* =====================
+//            RESPONSIVE BREAKPOINTS
+//            ===================== */
+//         @media (min-width: 1400px) {
+//             .bd-wrap { padding: 20px 28px; }
+//             .bd-title { font-size: 20px; }
+//             .bd-card-value { font-size: 20px; }
+//             .bd-bottom { grid-template-columns: 1fr 440px; }
+//         }
+//         @media (max-width: 1200px) {
+//             .bd-bottom { grid-template-columns: 1fr 360px; }
+//         }
+//         @media (max-width: 1024px) {
+//             .bd-cards { grid-template-columns: repeat(4, 1fr); }
+//             .bd-bottom { grid-template-columns: 1fr; }
+//         }
+//         @media (max-width: 768px) {
+//             .bd-wrap { padding: 12px; }
+//             .bd-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+//             .bd-filter { width: 180px; }
+//             .bd-title { font-size: 16px; }
+//             .bd-card-value { font-size: 16px; }
+//             .bd-hbar-label { width: 130px; min-width: 130px; font-size: 12px; }
+//             .bd-hbar-track { height: 18px; }
+//             .bd-hbar-val   { font-size: 12px; width: 60px; min-width: 60px; }
+//         }
+//         @media (max-width: 600px) {
+//             .bd-top { flex-direction: column; align-items: flex-start; }
+//             .bd-filter { width: 100%; }
+//             .bd-cards { grid-template-columns: repeat(2, 1fr); }
+//             .bd-chart-box { padding: 12px 14px; }
+//             .bd-hbar-label { width: 90px; min-width: 90px; font-size: 11px; }
+//             .bd-hbar-track { height: 16px; }
+//             .bd-hbar-val   { width: 52px; min-width: 52px; font-size: 11px; }
+//             .bd-hbar-row   { gap: 8px; margin-bottom: 10px; }
+//         }
+//         @media (max-width: 420px) {
+//             .bd-cards { grid-template-columns: 1fr; }
+//             .bd-card-value { font-size: 15px; }
+//             .bd-donut-center-val { font-size: 16px; }
+//             .bd-hbar-label { width: 70px; min-width: 70px; }
+//             .bd-hbar-val   { width: 46px; min-width: 46px; }
+//         }
+//     </style>`).appendTo('head');
+
+//     /* ── PALETTE ── */
+//     const PALETTE = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#888780','#185FA5'];
+
+//     /* ── LAYOUT ── */
+//     $(page.body).html(`
+//         <div class="bd-wrap">
+//                 <div class="bd-filter" id="bd-fy-wrap"></div>
+//             <div class="bd-cards" id="bd-cards"></div>
+//             <div class="bd-bottom">
+//                 <!-- Horizontal bar -->
+//                 <div class="bd-chart-box">
+//                     <div class="bd-chart-header">
+//                         <p class="bd-chart-title">Top spenders by budget</p>
+//                     </div>
+//                     <p class="bd-chart-sub">All categories ranked highest to lowest</p>
+//                     <div id="bd-hbar-body"></div>
+//                 </div>
+//                 <!-- Donut -->
+//                 <div class="bd-chart-box">
+//                     <div class="bd-chart-header">
+//                         <p class="bd-chart-title">Budget share</p>
+//                     </div>
+//                     <p class="bd-chart-sub">Percentage distribution</p>
+//                     <div style="position:relative;width:100%;height:260px;" id="bd-donut-wrap">
+//                         <canvas id="bd-donut"></canvas>
+//                         <div class="bd-donut-center" id="bd-donut-center">
+//                             <div class="bd-donut-center-val" id="bd-donut-total"></div>
+//                             <div class="bd-donut-center-lbl">Grand total</div>
+//                         </div>
+//                     </div>
+//                     <div class="bd-legend" id="bd-donut-legend"></div>
+//                 </div>
+//             </div>
+//         </div>
+//     `);
+
+//     /* ── FY FILTER ── */
+//     let donutChart = null;
+
+//     const fyControl = frappe.ui.form.make_control({
+//         parent: document.getElementById('bd-fy-wrap'),
+//         df: {
+//             label: 'Financial Year',
+//             fieldtype: 'Select',
+//             fieldname: 'financial_year',
+//             reqd: 1,
+//             change() { const fy = this.get_value(); if (fy) load(fy); }
+//         },
+//         render_input: true
+//     });
+//     fyControl.refresh();
+
+//     frappe.call({
+//         method: 'annual_budget.api.filter_options.get_financial_year_list',
+//         callback(r) {
+//             if (!r.message?.length) return;
+//             const years = r.message.map(d => d.financial_year);
+//             fyControl.df.options = years.join('\n');
+//             fyControl.refresh();
+//             const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
+//             const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+//             const def = years.includes(fy) ? fy : years[0];
+//             fyControl.set_value(def);
+//             load(def);
+//         }
+//     });
+
+//     /* ── HELPERS ── */
+//     const fmtINR = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
+//     const fmtCr  = v => { const cr = Math.round((v || 0) / 1e7); return cr >= 1 ? cr + ' Cr' : fmtINR(v); };
+
+//     /* ── RENDER CARDS ── */
+//     function renderCards(data) {
+//         const cards = data.number_cards || [];
+//         const grand = data.grand_total  || 0;
+//         const $c    = $('#bd-cards').empty();
+
+//         $c.append(`
+//             <div class="bd-card" style="border-left-color:#1D9E75;">
+//                 <div class="bd-card-label">Grand Total</div>
+//                 <div class="bd-card-value">${fmtINR(grand)}</div>
+//                 <div class="bd-card-sub">${cards.length} categories</div>
+//             </div>
+//         `);
+
+//         cards.forEach((c, i) => {
+//             const pct = grand > 0 ? ((c.total_budget / grand) * 100).toFixed(1) : '0.0';
+//             $c.append(`
+//                 <div class="bd-card" style="border-left-color:${PALETTE[i % PALETTE.length]};">
+//                     <div class="bd-card-label">${c.label}</div>
+//                     <div class="bd-card-value">${fmtINR(c.total_budget)}</div>
+//                     <div class="bd-card-sub">${pct}% of total</div>
+//                 </div>
+//             `);
+//         });
+//     }
+
+//     /* ── RENDER HORIZONTAL BAR ── */
+//     function renderHBar(data) {
+//         const cards  = data.number_cards || [];
+//         const sorted = [...cards].sort((a, b) => (b.total_budget || 0) - (a.total_budget || 0));
+//         const max    = sorted[0]?.total_budget || 1;
+//         const $body  = $('#bd-hbar-body').empty();
+
+//         sorted.forEach((c, i) => {
+//             const pct   = ((c.total_budget || 0) / max * 100).toFixed(1);
+//             const color = PALETTE[i % PALETTE.length];
+//             $body.append(`
+//                 <div class="bd-hbar-row">
+//                     <div class="bd-hbar-label" title="${c.label}">${c.label}</div>
+//                     <div class="bd-hbar-track">
+//                         <div class="bd-hbar-fill" style="width:${pct}%;background:${color};"></div>
+//                     </div>
+//                     <div class="bd-hbar-val">${fmtCr(c.total_budget)}</div>
+//                 </div>
+//             `);
+//         });
+//     }
+
+//     /* ── RENDER DONUT CHART ── */
+//     function renderDonut(data) {
+//         const cards  = data.number_cards || [];
+//         const grand  = data.grand_total  || 0;
+//         const labels = cards.map(c => c.label);
+//         const values = cards.map(c => Math.round(c.total_budget || 0));
+//         const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+
+//         $('#bd-donut-total').text(fmtCr(grand));
+
+//         const $leg = $('#bd-donut-legend').empty();
+//         labels.forEach((lbl, i) => {
+//             const pct = grand > 0 ? ((values[i] / grand) * 100).toFixed(1) : '0.0';
+//             $leg.append(`
+//                 <span class="bd-legend-item">
+//                     <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+//                     ${lbl} — ${pct}%
+//                 </span>
+//             `);
+//         });
+
+//         if (donutChart) { donutChart.destroy(); donutChart = null; }
+
+//         donutChart = new Chart(document.getElementById('bd-donut'), {
+//             type: 'doughnut',
+//             data: {
+//                 labels,
+//                 datasets: [{
+//                     data: values,
+//                     backgroundColor: colors,
+//                     borderWidth: 2,
+//                     borderColor: '#fff',
+//                     hoverOffset: 6,
+//                 }]
+//             },
+//             options: {
+//                 responsive: true,
+//                 maintainAspectRatio: false,
+//                 cutout: '68%',
+//                 plugins: {
+//                     legend: { display: false },
+//                     tooltip: {
+//                         bodyFont: { size: 13 },
+//                         titleFont: { size: 13 },
+//                         callbacks: {
+//                             label: ctx => {
+//                                 const pct = grand > 0 ? ((ctx.parsed / grand) * 100).toFixed(1) : '0.0';
+//                                 return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         });
+//     }
+
+//     /* ── LOAD ── */
+//     function load(fy) {
+//         frappe.call({
+//             method: 'annual_budget.api.phase_sheet.get_number_card_totals',
+//             args: { financial_year: fy },
+//             callback(r) {
+//                 if (!r.message) return;
+//                 renderCards(r.message);
+//                 renderHBar(r.message);
+//                 renderDonut(r.message);
+//             }
+//         });
+//     }
+
+//     /* ── RESIZE HANDLER ── */
+//     let resizeTimer;
+//     $(window).on('resize.bd', function () {
+//         clearTimeout(resizeTimer);
+//         resizeTimer = setTimeout(() => {
+//             const fy = fyControl.get_value();
+//             if (fy) load(fy);
+//         }, 300);
+//     });
+
+//     $(wrapper).on('hide', function () {
+//         $(window).off('resize.bd');
+//     });
+
+//     /* ── LOAD CHART.JS ONCE ── */
+//     if (!window.Chart) {
+//         const s = document.createElement('script');
+//         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+//         s.onload = () => { const fy = fyControl.get_value(); if (fy) load(fy); };
+//         document.head.appendChild(s);
+//     }
+// };
+
+
 frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
 
     const page = frappe.ui.make_app_page({
@@ -1527,43 +1988,120 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
 
     /* ── STYLES ── */
     $(`<style>
-        /* === BASE === */
-        .bd-wrap {
-            padding: 16px;
-            box-sizing: border-box;
-        }
+        .bd-wrap { padding: 0; box-sizing: border-box; }
 
-        /* === TOP BAR === */
-        .bd-top {
+        /* FILTER BAR */
+        .bd-filter-bar {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            padding: 16px 20px 0;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .bd-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #111;
-            margin: 0;
         }
         .bd-filter { width: 200px; }
-        .bd-filter .form-control,
-        .bd-filter select {
-            width: 100% !important;
-            height: 34px !important;
-            font-size: 13px !important;
-            border-radius: 8px !important;
-            border: 1px solid #e2e8f0 !important;
+
+        /* TAB NAV */
+        #bd-tab-nav {
+            list-style: none;
+            margin: 18px 0 0;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            border-bottom: 2px solid #d1d5db;
+        }
+        #bd-tab-nav li { margin: 0; padding: 0; }
+        #bd-tab-nav .bd-tab {
+            display: block;
+            font-size: 13px;
+            font-weight: 400;
+            color: #6b7280;
+            padding: 10px 16px 11px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            text-decoration: none;
+            transition: color .15s, border-color .15s;
+            user-select: none;
+        }
+        #bd-tab-nav .bd-tab:hover { color: #111; }
+        #bd-tab-nav .bd-tab.active {
+            color: #111827;
+            font-weight: 700;
+            border-bottom-color: #111827;
         }
 
-        /* === CARDS === */
+        /* TAB PANELS */
+        .bd-panel { display: none; padding: 16px 20px; }
+        .bd-panel.active { display: block; }
+
+        /* BANNER STRIP */
+        .bd-banner-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .bd-banner-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border-left: 4px solid #378ADD;
+            min-width: 0;
+            transition: box-shadow .2s;
+        }
+        .bd-banner-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+        .bd-banner-card.blue   { border-left-color: #1a56db; }
+        .bd-banner-card.green  { border-left-color: #0e9f6e; }
+        .bd-banner-card.orange { border-left-color: #ff5a1f; }
+        .bd-banner-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .bd-banner-value { font-size: 22px; font-weight: 700; color: #111; line-height: 1.2; }
+        .bd-banner-sub   { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+        /* SECTION TITLE */
+        .bd-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #374151;
+            margin: 0 0 12px;
+        }
+        .bd-section-title::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 14px;
+            border-radius: 2px;
+            background: #378ADD;
+            flex-shrink: 0;
+        }
+        .bd-section-title.sub::before { background: #7F77DD; }
+        .bd-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e8edf3;
+        }
+
+        /* CARDS */
         .bd-cards {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
         .bd-card {
             background: #fff;
@@ -1572,12 +2110,14 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             padding: 14px 16px;
             border-left: 4px solid #378ADD;
             min-width: 0;
+            transition: box-shadow .2s;
         }
+        .bd-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
         .bd-card-label {
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: .6px;
+            letter-spacing: .5px;
             color: #888;
             margin-bottom: 5px;
             white-space: nowrap;
@@ -1585,7 +2125,7 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             text-overflow: ellipsis;
         }
         .bd-card-value {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 700;
             color: #111;
             line-height: 1.2;
@@ -1593,59 +2133,16 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .bd-card-sub {
-            font-size: 11px;
-            color: #888;
-            margin-top: 3px;
-        }
+        .bd-card-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
 
-        /* === BOTTOM ROW: hbar + donut side by side === */
+        /* BOTTOM ROW */
         .bd-bottom {
             display: grid;
             grid-template-columns: 1fr 400px;
             gap: 14px;
             align-items: start;
+            margin-top: 16px;
         }
-
-        /* === HORIZONTAL BAR === */
-        .bd-hbar-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 13px;
-        }
-        .bd-hbar-label {
-            font-size: 13px;
-            color: #444;
-            font-weight: 500;
-            width: 180px;
-            min-width: 180px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: right;
-        }
-        .bd-hbar-track {
-            flex: 1;
-            height: 22px;
-            background: #f0f2f5;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .bd-hbar-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width .5s ease;
-        }
-        .bd-hbar-val {
-            font-size: 13px;
-            color: #222;
-            font-weight: 700;
-            white-space: nowrap;
-            width: 72px;
-            min-width: 72px;
-        }
-
         .bd-chart-box {
             background: #fff;
             border: 1px solid #e8edf3;
@@ -1653,151 +2150,322 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             padding: 16px 18px;
             min-width: 0;
         }
-        .bd-chart-header {
+        .bd-chart-title { font-size: 13px; font-weight: 600; color: #111; margin: 0 0 2px; }
+        .bd-chart-sub   { font-size: 12px; color: #aaa; margin: 0 0 14px; }
+
+        /* BAR ROWS */
+        .bd-bar-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2px;
+            gap: 10px;
+            margin-bottom: 9px;
         }
-        .bd-chart-title {
+        .bd-bar-label {
             font-size: 13px;
             font-weight: 600;
-            color: #111;
-            margin: 0;
+            color: #222;
+            width: 170px;
+            min-width: 170px;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .bd-chart-sub {
+        .bd-bar-track {
+            flex: 1;
+            height: 22px;
+            background: #f0f2f5;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .bd-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width .5s ease;
+        }
+        .bd-bar-val {
             font-size: 12px;
-            color: #aaa;
-            margin: 0 0 12px;
+            font-weight: 700;
+            color: #222;
+            width: 72px;
+            min-width: 72px;
+            white-space: nowrap;
+        }
+        .bd-bar-divider {
+            border: none;
+            border-top: 1px dashed #e0e4ea;
+            margin: 6px 0 10px;
+        }
+        .bd-bar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
         }
 
-        /* === LEGEND === */
-        .bd-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .bd-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 13px;
-            color: #444;
-            font-weight: 500;
-        }
-        .bd-legend-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
+        /* LEGEND */
+        .bd-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .bd-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #555; }
+        .bd-legend-dot  { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
 
-        /* === DONUT CENTER === */
+        /* DONUT CENTER */
         .bd-donut-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
+            text-align: center; pointer-events: none;
         }
-        .bd-donut-center-val {
-            font-size: 20px;
+        .bd-donut-center-val { font-size: 19px; font-weight: 700; color: #111; line-height: 1.1; }
+        .bd-donut-center-lbl { font-size: 10px; color: #888; margin-top: 2px; }
+
+        /* WORK PLAN */
+        .bd-wp-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 16px;
+            align-items: start;
+        }
+        .bd-wp-pie-box { min-width: 0; }
+        .bd-wp-pie-total-box {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f2f5;
+        }
+        .bd-wp-pie-total-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .bd-wp-pie-total-val {
+            font-size: 26px;
             font-weight: 700;
             color: #111;
             line-height: 1.1;
         }
-        .bd-donut-center-lbl {
-            font-size: 10px;
-            color: #888;
-            margin-top: 2px;
+        .bd-wp-summary { display: flex; flex-direction: column; gap: 12px; }
+        .bd-wp-stat-card { cursor: default; }
+        .bd-wp-two-col-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 16px;
         }
 
-        /* =====================
-           RESPONSIVE BREAKPOINTS
-           ===================== */
+        /* LOADING OVERLAY */
+        #global-loader.loader-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(18,18,18,.92);
+            backdrop-filter: blur(6px);
+            display: none; z-index: 999999;
+            align-items: center; justify-content: center;
+        }
+        .loader-box { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .loader-logo {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(145deg,#fff,#eaeaea);
+            padding: 14px; object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            animation: lp 1.6s infinite ease-in-out;
+        }
+        .loader-text { font-size: 13px; color: #fff; font-weight: 600; letter-spacing: .5px; opacity: .85; }
+        .loader-text::after { content: ""; display: inline-block; width: 1em; animation: ld 1.5s infinite; }
+        @keyframes lp { 0%,100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.08); opacity: 1; } }
+        @keyframes ld { 0% { content: ""; } 33% { content: "."; } 66% { content: ".."; } 100% { content: "..."; } }
+
+        /* RESPONSIVE */
         @media (min-width: 1400px) {
-            .bd-wrap { padding: 20px 28px; }
-            .bd-title { font-size: 20px; }
-            .bd-card-value { font-size: 20px; }
+            .bd-banner-value { font-size: 26px; }
             .bd-bottom { grid-template-columns: 1fr 440px; }
         }
-        @media (max-width: 1200px) {
-            .bd-bottom { grid-template-columns: 1fr 360px; }
-        }
-        @media (max-width: 1024px) {
-            .bd-cards { grid-template-columns: repeat(4, 1fr); }
-            .bd-bottom { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1200px) { .bd-bottom { grid-template-columns: 1fr 360px; } }
+        @media (max-width: 1024px) { .bd-bottom { grid-template-columns: 1fr; } }
+        @media (max-width: 900px)  { .bd-wp-two-col-row { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
-            .bd-wrap { padding: 12px; }
             .bd-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .bd-filter { width: 180px; }
-            .bd-title { font-size: 16px; }
-            .bd-card-value { font-size: 16px; }
-            .bd-hbar-label { width: 130px; min-width: 130px; font-size: 12px; }
-            .bd-hbar-track { height: 18px; }
-            .bd-hbar-val   { font-size: 12px; width: 60px; min-width: 60px; }
+            .bd-banner-strip { grid-template-columns: 1fr; }
+            .bd-wp-grid { grid-template-columns: 1fr; }
+            .bd-bar-label { width: 120px; min-width: 120px; font-size: 11px; }
+            .bd-bar-val   { width: 60px; min-width: 60px; }
+            .bd-filter { width: 150px; }
         }
         @media (max-width: 600px) {
-            .bd-top { flex-direction: column; align-items: flex-start; }
-            .bd-filter { width: 100%; }
+            .bd-filter-bar { padding: 12px 12px 0; }
+            .bd-panel { padding: 12px; }
             .bd-cards { grid-template-columns: repeat(2, 1fr); }
-            .bd-chart-box { padding: 12px 14px; }
-            .bd-hbar-label { width: 90px; min-width: 90px; font-size: 11px; }
-            .bd-hbar-track { height: 16px; }
-            .bd-hbar-val   { width: 52px; min-width: 52px; font-size: 11px; }
-            .bd-hbar-row   { gap: 8px; margin-bottom: 10px; }
+            .bd-filter { width: 100%; }
         }
-        @media (max-width: 420px) {
-            .bd-cards { grid-template-columns: 1fr; }
-            .bd-card-value { font-size: 15px; }
-            .bd-donut-center-val { font-size: 16px; }
-            .bd-hbar-label { width: 70px; min-width: 70px; }
-            .bd-hbar-val   { width: 46px; min-width: 46px; }
-        }
+        @media (max-width: 420px) { .bd-cards { grid-template-columns: 1fr; } }
     </style>`).appendTo('head');
 
     /* ── PALETTE ── */
-    const PALETTE = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#888780','#185FA5'];
+    const PALETTE     = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
+    const SUB_PALETTE = ['#5b9bd5','#17856a','#c04e22','#6b62c7','#c03d6a','#9a5e0e','#4e7a18','#c93737','#0f4a87','#6b6b68'];
+
 
     /* ── LAYOUT ── */
     $(page.body).html(`
         <div class="bd-wrap">
+
+            <!-- Filters -->
+            <div class="bd-filter-bar">
                 <div class="bd-filter" id="bd-fy-wrap"></div>
-            <div class="bd-cards" id="bd-cards"></div>
-            <div class="bd-bottom">
-                <!-- Horizontal bar -->
-                <div class="bd-chart-box">
-                    <div class="bd-chart-header">
-                        <p class="bd-chart-title">Top spenders by budget</p>
+
+            </div>
+
+            <!-- Tab nav -->
+            <ul id="bd-tab-nav">
+                <li><a class="bd-tab active" data-tab="dashboard">Budget Dashboard</a></li>
+                <li><a class="bd-tab" data-tab="workplan">Work Plan Views</a></li>
+            </ul>
+
+            <!-- Tab 1: Budget Dashboard -->
+            <div class="bd-panel active" id="bd-panel-dashboard">
+
+                <!-- Consolidated totals -->
+                <div class="bd-banner-strip">
+                    <div class="bd-banner-card blue">
+                        <div class="bd-banner-label">Overall Grand Total</div>
+                        <div class="bd-banner-value" id="bd-grand-total">—</div>
+                        <div class="bd-banner-sub" id="bd-unit-count">—</div>
                     </div>
-                    <p class="bd-chart-sub">All categories ranked highest to lowest</p>
-                    <div id="bd-hbar-body"></div>
+                    <div class="bd-banner-card green">
+                        <div class="bd-banner-label">CAPEX Total</div>
+                        <div class="bd-banner-value" id="bd-capex-total">—</div>
+                        <div class="bd-banner-sub">Capital Expenses</div>
+                    </div>
+                    <div class="bd-banner-card orange">
+                        <div class="bd-banner-label">OPEX Total</div>
+                        <div class="bd-banner-value" id="bd-opex-total">—</div>
+                        <div class="bd-banner-sub">Operating Expenses</div>
+                    </div>
                 </div>
-                <!-- Donut -->
-                <div class="bd-chart-box">
-                    <div class="bd-chart-header">
-                        <p class="bd-chart-title">Budget share</p>
+
+                <!-- Units -->
+                <p class="bd-section-title" style="margin-top:4px;">Units</p>
+                <div class="bd-cards" id="bd-cards">
+                    <div class="bd-loading"><div class="bd-spinner"></div> Loading…</div>
+                </div>
+
+                <!-- Sub Units -->
+                <p class="bd-section-title sub" id="bd-sub-title" style="margin-top:16px;">Sub Units</p>
+                <div class="bd-cards" id="bd-subcards"></div>
+
+                <!-- Charts -->
+                <div class="bd-bottom">
+                    <div class="bd-chart-box">
+                        <p class="bd-chart-title">Budget by Unit</p>
+                        <p class="bd-chart-sub">Units and Sub Units ranked by budget</p>
+                        <div id="bd-hbar-body"></div>
                     </div>
-                    <p class="bd-chart-sub">Percentage distribution</p>
-                    <div style="position:relative;width:100%;height:260px;" id="bd-donut-wrap">
-                        <canvas id="bd-donut"></canvas>
-                        <div class="bd-donut-center" id="bd-donut-center">
-                            <div class="bd-donut-center-val" id="bd-donut-total"></div>
-                            <div class="bd-donut-center-lbl">Grand total</div>
+                    <div class="bd-chart-box">
+                        <p class="bd-chart-title">Budget Share</p>
+                        <p class="bd-chart-sub">Units only — percentage distribution</p>
+                        <div style="position:relative;width:100%;height:260px;">
+                            <canvas id="bd-donut"></canvas>
+                            <div class="bd-donut-center">
+                                <div class="bd-donut-center-val" id="bd-donut-total">—</div>
+                                <div class="bd-donut-center-lbl">Grand total</div>
+                            </div>
                         </div>
+                        <div class="bd-legend" id="bd-donut-legend"></div>
                     </div>
-                    <div class="bd-legend" id="bd-donut-legend"></div>
                 </div>
             </div>
+
+            <!-- Tab 2: Work Plan Views -->
+            <div class="bd-panel" id="bd-panel-workplan">
+                <div class="bd-wp-grid">
+                    <!-- Pie Chart: Grants vs Others -->
+                    <div class="bd-chart-box bd-wp-pie-box">
+                        <p class="bd-chart-title">Grants &amp; Donations And Direct Work</p>
+                        <p class="bd-chart-sub">Consolidated budget breakdown</p>
+                        <div id="bd-wp-pie-wrap" style="position:relative;width:100%;height:320px;">
+                            <canvas id="bd-wp-pie"></canvas>
+                        </div>
+                        <div class="bd-wp-pie-total-box">
+                            <div class="bd-wp-pie-total-label">TOTAL BUDGET</div>
+                            <div class="bd-wp-pie-total-val" id="bd-wp-pie-total">—</div>
+                        </div>
+                    </div>
+                    <!-- Summary cards -->
+                    <div class="bd-wp-summary">
+                        <div class="bd-card bd-wp-stat-card" style="border-left-color:#1a56db;">
+                            <div class="bd-card-label">Grand Total</div>
+                            <div class="bd-card-value" id="bd-wp-pie-total-card">—</div>
+                            <div class="bd-card-sub">Overall budget</div>
+                        </div>
+                        <div class="bd-card bd-wp-stat-card" id="bd-wp-grants-card" style="border-left-color:#378ADD;">
+                            <div class="bd-card-label">Grants &amp; Donations</div>
+                            <div class="bd-card-value" id="bd-wp-grants-val">—</div>
+                            <div class="bd-card-sub" id="bd-wp-grants-pct">—</div>
+                        </div>
+                        <div class="bd-card bd-wp-stat-card" id="bd-wp-others-card" style="border-left-color:#F5A623;">
+                            <div class="bd-card-label">Direct Work</div>
+                            <div class="bd-card-value" id="bd-wp-others-val">—</div>
+                            <div class="bd-card-sub" id="bd-wp-others-pct">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Direct Work & Grants unit pies — side by side -->
+                <div class="bd-wp-two-col-row">
+                    <div class="bd-chart-box">
+                        <p class="bd-chart-title">Direct Work — Unit-wise</p>
+                        <p class="bd-chart-sub">Direct Work budget share per unit</p>
+                        <div style="position:relative;width:100%;height:320px;">
+                            <canvas id="bd-wp-unit-pie"></canvas>
+                        </div>
+                        <div class="bd-wp-pie-total-box">
+                            <div class="bd-wp-pie-total-label">TOTAL DIRECT WORK</div>
+                            <div class="bd-wp-pie-total-val" id="bd-wp-unit-pie-total">—</div>
+                        </div>
+                        <div class="bd-legend" id="bd-wp-unit-legend"></div>
+                    </div>
+                    <div class="bd-chart-box">
+                        <p class="bd-chart-title">Grants &amp; Donations — Unit-wise</p>
+                        <p class="bd-chart-sub">Grants &amp; Donations budget share per unit</p>
+                        <div style="position:relative;width:100%;height:320px;">
+                            <canvas id="bd-wp-grants-unit-pie"></canvas>
+                        </div>
+                        <div class="bd-wp-pie-total-box">
+                            <div class="bd-wp-pie-total-label">TOTAL GRANTS &amp; DONATIONS</div>
+                            <div class="bd-wp-pie-total-val" id="bd-wp-grants-unit-total">—</div>
+                        </div>
+                        <div class="bd-legend" id="bd-wp-grants-unit-legend"></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     `);
 
-    /* ── FY FILTER ── */
     let donutChart = null;
+    let wpPieChart = null;
+    let wpUnitPieChart = null;
+    let wpGrantsUnitPieChart = null;
+    let wpDataLoaded = false;
 
+    /* ── TAB SWITCHING ── */
+    $(page.body).on('click', '#bd-tab-nav .bd-tab', function (e) {
+        e.preventDefault();
+        const tab = $(this).data('tab');
+        $('#bd-tab-nav .bd-tab').removeClass('active');
+        $('.bd-panel').removeClass('active');
+        $(this).addClass('active');
+        $('#bd-panel-' + tab).addClass('active');
+        // Load work plan data when switching to that tab
+        if (tab === 'workplan' && !wpDataLoaded) {
+            const fy = fyControl.get_value();
+            if (fy) loadWorkPlan(fy);
+        }
+    });
+
+    /* ── FY FILTER ── */
     const fyControl = frappe.ui.form.make_control({
         parent: document.getElementById('bd-fy-wrap'),
         df: {
@@ -1805,12 +2473,31 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             fieldtype: 'Select',
             fieldname: 'financial_year',
             reqd: 1,
-            change() { const fy = this.get_value(); if (fy) load(fy); }
+            change() { triggerLoad(); }
         },
         render_input: true
     });
     fyControl.refresh();
+    // Apply Frappe's native field styling
+    $(fyControl.wrapper).find('.frappe-control').css('min-width', '0');
 
+
+    function triggerLoad() {
+        const fy = fyControl.get_value();
+        if (!fy) return;
+        // Reset work plan so it reloads for new FY
+        wpDataLoaded = false;
+        if (wpPieChart) { wpPieChart.destroy(); wpPieChart = null; }
+        if (wpUnitPieChart) { wpUnitPieChart.destroy(); wpUnitPieChart = null; }
+        if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart = null; }
+        load(fy, 'March');
+        // If work plan tab is active, reload it too
+        if ($('#bd-tab-nav .bd-tab.active').data('tab') === 'workplan') {
+            loadWorkPlan(fy);
+        }
+    }
+
+    /* ── LOAD FY LIST ── */
     frappe.call({
         method: 'annual_budget.api.filter_options.get_financial_year_list',
         callback(r) {
@@ -1818,88 +2505,178 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             const years = r.message.map(d => d.financial_year);
             fyControl.df.options = years.join('\n');
             fyControl.refresh();
+
             const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
             const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
             const def = years.includes(fy) ? fy : years[0];
             fyControl.set_value(def);
-            load(def);
+
+            load(def, 'March');
         }
     });
 
     /* ── HELPERS ── */
     const fmtINR = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
-    const fmtCr  = v => { const cr = Math.round((v || 0) / 1e7); return cr >= 1 ? cr + ' Cr' : fmtINR(v); };
+    const fmtCr  = v => {
+        const abs = Math.abs(v || 0);
+        if (abs >= 1e7) return '₹' + (Math.round((v || 0) / 1e5) / 100).toFixed(1) + ' Cr';
+        if (abs >= 1e5) return '₹' + (Math.round((v || 0) / 1e3) / 100).toFixed(1) + ' L';
+        return fmtINR(v);
+    };
 
-    /* ── RENDER CARDS ── */
-    function renderCards(data) {
-        const cards = data.number_cards || [];
-        const grand = data.grand_total  || 0;
-        const $c    = $('#bd-cards').empty();
+    /* ── PARSE ── */
+    function parseData(message) {
+        const consolidated = message.find(d => d.settings_doc === 'CONSOLIDATED');
 
-        $c.append(`
-            <div class="bd-card" style="border-left-color:#1D9E75;">
-                <div class="bd-card-label">Grand Total</div>
-                <div class="bd-card-value">${fmtINR(grand)}</div>
-                <div class="bd-card-sub">${cards.length} categories</div>
-            </div>
-        `);
+        // Sort by sequence_id before mapping so colors align with order
+        const mainRaw = message
+            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
+            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
 
-        cards.forEach((c, i) => {
-            const pct = grand > 0 ? ((c.total_budget / grand) * 100).toFixed(1) : '0.0';
+        const mainUnits = mainRaw.map((u, idx) => {
+                const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
+                return {
+                    label:       (u.label || '').trim(),
+                    ytd:         gt ? (gt.ytd || 0) : 0,
+                    sequence_id: u.sequence_id || 0,
+                    color:       PALETTE[idx % PALETTE.length]
+                };
+            })
+            .filter(u => u.ytd > 0);
+
+        const subRaw = message
+            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 1)
+            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
+
+        const subUnits = subRaw.map((u, idx) => {
+                const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
+                return {
+                    label:       (u.label || '').trim(),
+                    ytd:         gt ? (gt.ytd || 0) : 0,
+                    sequence_id: u.sequence_id || 0,
+                    color:       SUB_PALETTE[idx % SUB_PALETTE.length]
+                };
+            })
+            .filter(u => u.ytd > 0);
+
+        let overall = 0, capex = 0, opex = 0;
+        if (consolidated) {
+            const ca = consolidated.actuals || [];
+            overall = (ca.find(a => a.name === 'OVERALL GRAND TOTAL') || {}).ytd || 0;
+            capex   = (ca.find(a => a.name === 'CAPEX TOTAL')         || {}).ytd || 0;
+            opex    = (ca.find(a => a.name === 'OPEX TOTAL')          || {}).ytd || 0;
+        }
+        if (!overall) overall = mainUnits.reduce((s, u) => s + u.ytd, 0);
+
+        return { mainUnits, subUnits, overall, capex, opex };
+    }
+
+    /* ── RENDER BANNER ── */
+    function renderBanner(overall, capex, opex, mainUnits, subUnits) {
+        $('#bd-grand-total').text(fmtCr(overall));
+        $('#bd-capex-total').text(fmtCr(capex));
+        $('#bd-opex-total').text(fmtCr(opex));
+        $('#bd-unit-count').text(
+            mainUnits.length + ' units' +
+            (subUnits.length ? ' · ' + subUnits.length + ' sub units' : '')
+        );
+    }
+
+    /* ── RENDER CARDS — same design for both ── */
+    function renderCards(mainUnits, subUnits, overall) {
+        // Units
+        const $c = $('#bd-cards').empty();
+        mainUnits.forEach(u => {
+            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
             $c.append(`
-                <div class="bd-card" style="border-left-color:${PALETTE[i % PALETTE.length]};">
-                    <div class="bd-card-label">${c.label}</div>
-                    <div class="bd-card-value">${fmtINR(c.total_budget)}</div>
+                <div class="bd-card" style="border-left-color:${u.color};">
+                    <div class="bd-card-label" title="${u.label}">${u.label}</div>
+                    <div class="bd-card-value">${fmtINR(u.ytd)}</div>
+                    <div class="bd-card-sub">${pct}% of total</div>
+                </div>
+            `);
+        });
+
+        // Sub Units — identical card design
+        const $s = $('#bd-subcards').empty();
+        if (!subUnits.length) {
+            $('#bd-sub-title').hide();
+            return;
+        }
+        $('#bd-sub-title').show();
+        subUnits.forEach(u => {
+            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
+            $s.append(`
+                <div class="bd-card" style="border-left-color:${u.color};">
+                    <div class="bd-card-label" title="${u.label}">${u.label}</div>
+                    <div class="bd-card-value">${fmtINR(u.ytd)}</div>
                     <div class="bd-card-sub">${pct}% of total</div>
                 </div>
             `);
         });
     }
 
-    /* ── RENDER HORIZONTAL BAR ── */
-    function renderHBar(data) {
-        const cards  = data.number_cards || [];
-        const sorted = [...cards].sort((a, b) => (b.total_budget || 0) - (a.total_budget || 0));
-        const max    = sorted[0]?.total_budget || 1;
+    /* ── RENDER BAR — same style for both ── */
+    function renderHBar(mainUnits, subUnits) {
         const $body  = $('#bd-hbar-body').empty();
+        const allMax = Math.max(...mainUnits.map(u => u.ytd), ...subUnits.map(u => u.ytd), 1);
 
-        sorted.forEach((c, i) => {
-            const pct   = ((c.total_budget || 0) / max * 100).toFixed(1);
-            const color = PALETTE[i % PALETTE.length];
+        // Units section
+        mainUnits.forEach(u => {
+            const pct = ((u.ytd / allMax) * 100).toFixed(1);
             $body.append(`
-                <div class="bd-hbar-row">
-                    <div class="bd-hbar-label" title="${c.label}">${c.label}</div>
-                    <div class="bd-hbar-track">
-                        <div class="bd-hbar-fill" style="width:${pct}%;background:${color};"></div>
+                <div class="bd-bar-row">
+                    <div class="bd-bar-label" title="${u.label}">${u.label}</div>
+                    <div class="bd-bar-track">
+                        <div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div>
                     </div>
-                    <div class="bd-hbar-val">${fmtCr(c.total_budget)}</div>
+                    <div class="bd-bar-val">${fmtCr(u.ytd)}</div>
                 </div>
             `);
         });
+
+        // Sub Units section — same bar style, just separated
+        if (subUnits.length) {
+            $body.append(`
+                <hr class="bd-bar-divider">
+                <div class="bd-bar-section-label">Sub Units</div>
+            `);
+            subUnits.forEach(u => {
+                const pct = ((u.ytd / allMax) * 100).toFixed(1);
+                $body.append(`
+                    <div class="bd-bar-row">
+                        <div class="bd-bar-label" title="${u.label}">${u.label}</div>
+                        <div class="bd-bar-track">
+                            <div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div>
+                        </div>
+                        <div class="bd-bar-val">${fmtCr(u.ytd)}</div>
+                    </div>
+                `);
+            });
+        }
     }
 
-    /* ── RENDER DONUT CHART ── */
-    function renderDonut(data) {
-        const cards  = data.number_cards || [];
-        const grand  = data.grand_total  || 0;
-        const labels = cards.map(c => c.label);
-        const values = cards.map(c => Math.round(c.total_budget || 0));
-        const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+    /* ── RENDER DONUT ── */
+    function renderDonut(mainUnits, overall) {
+        const labels = mainUnits.map(u => u.label);
+        const values = mainUnits.map(u => Math.round(u.ytd));
+        const colors = mainUnits.map(u => u.color);
 
-        $('#bd-donut-total').text(fmtCr(grand));
+        $('#bd-donut-total').text(fmtCr(overall));
 
         const $leg = $('#bd-donut-legend').empty();
-        labels.forEach((lbl, i) => {
-            const pct = grand > 0 ? ((values[i] / grand) * 100).toFixed(1) : '0.0';
+        mainUnits.forEach((u, i) => {
+            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
             $leg.append(`
                 <span class="bd-legend-item">
                     <span class="bd-legend-dot" style="background:${colors[i]};"></span>
-                    ${lbl} — ${pct}%
+                    ${u.label} — ${pct}%
                 </span>
             `);
         });
 
         if (donutChart) { donutChart.destroy(); donutChart = null; }
+        if (!values.length) return;
 
         donutChart = new Chart(document.getElementById('bd-donut'), {
             type: 'doughnut',
@@ -1910,7 +2687,7 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                     backgroundColor: colors,
                     borderWidth: 2,
                     borderColor: '#fff',
-                    hoverOffset: 6,
+                    hoverOffset: 6
                 }]
             },
             options: {
@@ -1920,11 +2697,10 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        bodyFont: { size: 13 },
-                        titleFont: { size: 13 },
                         callbacks: {
                             label: ctx => {
-                                const pct = grand > 0 ? ((ctx.parsed / grand) * 100).toFixed(1) : '0.0';
+                                const pct = overall > 0
+                                    ? ((ctx.parsed / overall) * 100).toFixed(1) : '0.0';
                                 return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
                             }
                         }
@@ -1935,38 +2711,445 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     }
 
     /* ── LOAD ── */
-    function load(fy) {
+    function load(fy, month) {
+        Loader.show('Loading dashboard…');
+        $('#bd-grand-total,#bd-capex-total,#bd-opex-total,#bd-donut-total').text('—');
+        $('#bd-unit-count').text('—');
+        $('#bd-cards').empty();
+        $('#bd-hbar-body').empty();
+
+        // Single API: get_unit_wise_plan_budget for entire dashboard
         frappe.call({
-            method: 'annual_budget.api.phase_sheet.get_number_card_totals',
-            args: { financial_year: fy },
+            method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
+            args: { financial_year: fy, month: month, table_name_filter: 'Number Card' },
             callback(r) {
-                if (!r.message) return;
-                renderCards(r.message);
-                renderHBar(r.message);
-                renderDonut(r.message);
+                Loader.hide();
+                if (!r.message?.length) {
+                    $('#bd-cards').html('<div class="bd-loading">No data returned.</div>');
+                    return;
+                }
+                const { mainUnits, subUnits, overall, capex, opex } = parseData(r.message);
+                renderBanner(overall, capex, opex, mainUnits, subUnits);
+                renderCards(mainUnits, subUnits, overall);
+                renderHBar(mainUnits, subUnits);
+                renderDonut(mainUnits, overall);
+            },
+            error() {
+                Loader.hide();
+                frappe.msgprint('Failed to load data. Please try again.');
             }
         });
     }
 
-    /* ── RESIZE HANDLER ── */
+    /* ── WORK PLAN: LOAD & RENDER ── */
+    function loadWorkPlan(fy) {
+        Loader.show('Loading Work Plan data…');
+
+        frappe.call({
+            method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
+            args: {
+                financial_year: fy,
+                month: 'March',
+                table_name_filter: 'Pie Chart'
+            },
+            callback(r) {
+                Loader.hide();
+                if (!r.message?.length) {
+                    frappe.msgprint('No Work Plan data returned.');
+                    return;
+                }
+                // Find CONSOLIDATED TOTAL row
+                const consolidated = r.message.find(d => d.settings_doc === 'CONSOLIDATED');
+                if (!consolidated) {
+                    frappe.msgprint('Consolidated data not found.');
+                    return;
+                }
+                renderWpPie(consolidated);
+                renderWpUnitPie(r.message);
+                renderWpGrantsUnitPie(r.message);
+                wpDataLoaded = true;
+            },
+            error() {
+                Loader.hide();
+                frappe.msgprint('Failed to load Work Plan data.');
+            }
+        });
+    }
+
+    function renderWpPie(consolidated) {
+        const actuals = consolidated.actuals || [];
+        let grantsYtd = 0;
+        let othersYtd = 0;
+        const GRANTS_NAME = 'Grants & Donations';
+
+        // Walk all actuals: top-level items, sub_heads items
+        actuals.forEach(actual => {
+            if (actual.sequence_id === 9999 ||
+                actual.name === 'CAPEX TOTAL' ||
+                actual.name === 'OPEX TOTAL' ||
+                actual.name === 'OVERALL GRAND TOTAL') return;
+
+            // Check top-level items array
+            (actual.items || []).forEach(item => {
+                if (item.name === GRANTS_NAME) {
+                    grantsYtd += (item.ytd || 0);
+                } else {
+                    othersYtd += (item.ytd || 0);
+                }
+            });
+
+            // Check sub_heads
+            (actual.sub_heads || []).forEach(sh => {
+                (sh.items || []).forEach(item => {
+                    if (item.name === GRANTS_NAME) {
+                        grantsYtd += (item.ytd || 0);
+                    } else {
+                        othersYtd += (item.ytd || 0);
+                    }
+                });
+            });
+        });
+
+        const total = grantsYtd + othersYtd;
+        const grantsPct = total > 0 ? ((grantsYtd / total) * 100).toFixed(1) : '0.0';
+        const othersPct = total > 0 ? ((othersYtd / total) * 100).toFixed(1) : '0.0';
+
+        // Update summary cards
+        $('#bd-wp-pie-total').text(fmtCr(total));
+        $('#bd-wp-pie-total-card').text(fmtINR(total));
+        $('#bd-wp-grants-val').text(fmtINR(grantsYtd));
+        $('#bd-wp-grants-pct').text(grantsPct + '% of total');
+        $('#bd-wp-others-val').text(fmtINR(othersYtd));
+        $('#bd-wp-others-pct').text(othersPct + '% of total');
+
+        // No separate legend - values shown on slices
+
+        // Destroy existing chart
+        if (wpPieChart) { wpPieChart.destroy(); wpPieChart = null; }
+
+        // Use Chart.js with custom afterDraw plugin for slice labels
+        const wpCanvas = document.getElementById('bd-wp-pie');
+        wpPieChart = new Chart(wpCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Grants & Donations', 'Direct Work'],
+                datasets: [{
+                    data: [Math.round(grantsYtd), Math.round(othersYtd)],
+                    backgroundColor: ['#378ADD', '#F5A623'],
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const pct = total > 0
+                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
+                                return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'sliceLabels',
+                afterDraw(chart) {
+                    const { ctx, data } = chart;
+                    const ds = chart.getDatasetMeta(0).data;
+                    const vals = data.datasets[0].data;
+                    const tot = vals.reduce((a, b) => a + b, 0);
+                    ctx.save();
+                    ds.forEach((arc, i) => {
+                        const angle = (arc.startAngle + arc.endAngle) / 2;
+                        const r = arc.outerRadius * 0.65;
+                        const x = arc.x + Math.cos(angle) * r;
+                        const y = arc.y + Math.sin(angle) * r;
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 14px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(fmtCr(vals[i]), x, y);
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+    }
+
+    /* ── WORK PLAN: UNIT-WISE PIE ── */
+    function renderWpUnitPie(message) {
+        const PALETTE_WP = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
+        const GRANTS_NAME = 'Grants & Donations';
+
+        // Helper: get Direct Work ytd for a unit
+        // = GRAND TOTAL ytd minus all Grants & Donations items ytd
+        function getDirectWork(u) {
+            const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
+            const grandTotal = gt ? (gt.ytd || 0) : 0;
+            let grantsAmt = 0;
+            (u.actuals || []).forEach(actual => {
+                if (actual.sequence_id === 9999) return;
+                (actual.items || []).forEach(item => {
+                    if (item.name === GRANTS_NAME) grantsAmt += (item.ytd || 0);
+                });
+                (actual.sub_heads || []).forEach(sh => {
+                    (sh.items || []).forEach(item => {
+                        if (item.name === GRANTS_NAME) grantsAmt += (item.ytd || 0);
+                    });
+                });
+            });
+            return grandTotal - grantsAmt;
+        }
+
+        // All MAIN units sorted by sequence_id, exclude CONSOLIDATED and sub items
+        const units = message
+            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
+            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
+
+        const labels = [];
+        const values = [];
+        const colors = [];
+        let colorIdx = 0;
+
+        units.forEach(u => {
+            const directWork = getDirectWork(u);
+            if (!directWork || directWork <= 0) return; // skip zero
+            labels.push((u.label || '').trim());
+            values.push(Math.round(directWork));
+            colors.push(PALETTE_WP[colorIdx % PALETTE_WP.length]);
+            colorIdx++;
+        });
+
+        const total = values.reduce((s, v) => s + v, 0);
+        $('#bd-wp-unit-pie-total').text(fmtCr(total));
+
+        // Legend
+        const $leg = $('#bd-wp-unit-legend').empty();
+        labels.forEach((lbl, i) => {
+            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
+            $leg.append(`
+                <span class="bd-legend-item">
+                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+                    ${lbl} — ${pct}%
+                </span>
+            `);
+        });
+
+        if (wpUnitPieChart) { wpUnitPieChart.destroy(); wpUnitPieChart = null; }
+        if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart = null; }
+        if (!values.length) return;
+
+        wpUnitPieChart = new Chart(document.getElementById('bd-wp-unit-pie'), {
+            type: 'pie',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const pct = total > 0
+                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
+                                return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'unitSliceLabels',
+                afterDraw(chart) {
+                    const { ctx, data } = chart;
+                    const ds = chart.getDatasetMeta(0).data;
+                    const vals = data.datasets[0].data;
+                    const lbls = data.labels;
+                    const tot = vals.reduce((a, b) => a + b, 0);
+                    ctx.save();
+                    ds.forEach((arc, i) => {
+                        const pct = tot > 0 ? ((vals[i] / tot) * 100) : 0;
+                        if (pct < 4) return;
+                        const angle = (arc.startAngle + arc.endAngle) / 2;
+                        const r = arc.outerRadius * 0.65;
+                        const x = arc.x + Math.cos(angle) * r;
+                        const y = arc.y + Math.sin(angle) * r;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowColor = 'rgba(0,0,0,0.55)';
+                        ctx.shadowBlur = 4;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '600 12px sans-serif';
+                        ctx.fillText(fmtCr(vals[i]), x, y);
+                        ctx.shadowBlur = 0;
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+    }
+
+    /* ── WORK PLAN: GRANTS & DONATIONS UNIT PIE ── */
+    function renderWpGrantsUnitPie(message) {
+        const PALETTE_WP = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
+        const GRANTS_NAME = 'Grants & Donations';
+
+        function getGrantsAmt(u) {
+            let amt = 0;
+            (u.actuals || []).forEach(actual => {
+                if (actual.sequence_id === 9999) return;
+                (actual.items || []).forEach(item => {
+                    if (item.name === GRANTS_NAME) amt += (item.ytd || 0);
+                });
+                (actual.sub_heads || []).forEach(sh => {
+                    (sh.items || []).forEach(item => {
+                        if (item.name === GRANTS_NAME) amt += (item.ytd || 0);
+                    });
+                });
+            });
+            return amt;
+        }
+
+        const units = message
+            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
+            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
+
+        const labels = [];
+        const values = [];
+        const colors = [];
+        let colorIdx = 0;
+
+        units.forEach(u => {
+            const grants = getGrantsAmt(u);
+            if (!grants || grants <= 0) return;
+            labels.push((u.label || '').trim());
+            values.push(Math.round(grants));
+            colors.push(PALETTE_WP[colorIdx % PALETTE_WP.length]);
+            colorIdx++;
+        });
+
+        const total = values.reduce((s, v) => s + v, 0);
+        $('#bd-wp-grants-unit-total').text(fmtCr(total));
+
+        const $leg = $('#bd-wp-grants-unit-legend').empty();
+        labels.forEach((lbl, i) => {
+            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
+            $leg.append(`
+                <span class="bd-legend-item">
+                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+                    ${lbl} — ${pct}%
+                </span>
+            `);
+        });
+
+        if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart = null; }
+        if (!values.length) return;
+
+        wpGrantsUnitPieChart = new Chart(document.getElementById('bd-wp-grants-unit-pie'), {
+            type: 'pie',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const pct = total > 0
+                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
+                                return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'grantsSliceLabels',
+                afterDraw(chart) {
+                    const { ctx, data } = chart;
+                    const ds = chart.getDatasetMeta(0).data;
+                    const vals = data.datasets[0].data;
+                    const lbls = data.labels;
+                    const tot = vals.reduce((a, b) => a + b, 0);
+                    ctx.save();
+                    ds.forEach((arc, i) => {
+                        const pct = tot > 0 ? ((vals[i] / tot) * 100) : 0;
+                        if (pct < 4) return;
+                        const angle = (arc.startAngle + arc.endAngle) / 2;
+                        const r = arc.outerRadius * 0.65;
+                        const x = arc.x + Math.cos(angle) * r;
+                        const y = arc.y + Math.sin(angle) * r;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowColor = 'rgba(0,0,0,0.55)';
+                        ctx.shadowBlur = 4;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '600 12px sans-serif';
+                        ctx.fillText(fmtCr(vals[i]), x, y);
+                        ctx.shadowBlur = 0;
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+    }
+
+    /* ── RESIZE ── */
     let resizeTimer;
     $(window).on('resize.bd', function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            const fy = fyControl.get_value();
-            if (fy) load(fy);
-        }, 300);
+        resizeTimer = setTimeout(() => triggerLoad(), 300);
     });
+    $(wrapper).on('hide', function () { $(window).off('resize.bd'); });
 
-    $(wrapper).on('hide', function () {
-        $(window).off('resize.bd');
-    });
-
-    /* ── LOAD CHART.JS ONCE ── */
+    /* ── CHART.JS ── */
     if (!window.Chart) {
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
-        s.onload = () => { const fy = fyControl.get_value(); if (fy) load(fy); };
         document.head.appendChild(s);
     }
+
+    /* ── GLOBAL LOADER ── */
+    if (!$('#global-loader').length) {
+        $('body').append(
+            '<div id="global-loader" class="loader-overlay">' +
+            '<div class="loader-box"><img src="/files/APF logo.png" class="loader-logo" alt="">' +
+            '<div class="loader-text">Loading, please wait</div></div></div>'
+        );
+    }
+    $('#global-loader').hide();
+
+    var Loader = {
+        show: function (msg) {
+            var $l = $('#global-loader');
+            $l.find('.loader-text').text(msg || 'Loading, please wait');
+            $l.css('display', 'flex').hide().fadeIn(200);
+        },
+        hide: function () { $('#global-loader').fadeOut(200); }
+    };
 };
