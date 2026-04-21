@@ -5733,343 +5733,115 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     $(`<style>
         .bd-wrap { padding: 0; box-sizing: border-box; width: 100%; max-width: 100%; overflow-x: hidden; }
 
-        /* FILTER BAR */
         .bd-filter-bar {
-            display: flex;
-            align-items: flex-end;
-            gap: 20px;
-            padding: 16px 20px 0;
-            flex-wrap: wrap;
+            display: flex; align-items: flex-end; gap: 20px;
+            padding: 16px 20px 0; flex-wrap: wrap;
         }
         .bd-filter { width: 200px; }
 
-        /* TAB NAV */
         #bd-tab-nav {
-            list-style: none;
-            margin: 18px 0 0;
-            padding: 0 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0;
+            list-style: none; margin: 18px 0 0; padding: 0 20px;
+            display: flex; flex-wrap: wrap; gap: 0;
             border-bottom: 2px solid #d1d5db;
         }
         #bd-tab-nav li { margin: 0; padding: 0; }
         #bd-tab-nav .bd-tab {
-            display: block;
-            font-size: 13px;
-            font-weight: 400;
-            color: #6b7280;
-            padding: 10px 16px 11px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            white-space: nowrap;
-            text-decoration: none;
-            transition: color .15s, border-color .15s;
-            user-select: none;
+            display: block; font-size: 13px; font-weight: 400; color: #6b7280;
+            padding: 10px 16px 11px; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            white-space: nowrap; text-decoration: none;
+            transition: color .15s, border-color .15s; user-select: none;
         }
         #bd-tab-nav .bd-tab:hover { color: #111; }
-        #bd-tab-nav .bd-tab.active {
-            color: #111827;
-            font-weight: 700;
-            border-bottom-color: #111827;
-        }
+        #bd-tab-nav .bd-tab.active { color: #111827; font-weight: 700; border-bottom-color: #111827; }
 
-        /* TAB PANELS */
         .bd-panel { display: none; padding: 16px 20px; max-width: 100%; overflow-x: hidden; }
         .bd-panel.active { display: block; }
 
-        /* BANNER STRIP */
-        .bd-banner-strip {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+        .bd-banner-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
         .bd-banner-card {
-            background: #fff;
-            border: 1px solid #e8edf3;
-            border-radius: 12px;
-            padding: 14px 16px;
-            border-left: 4px solid #378ADD;
-            min-width: 0;
-            transition: box-shadow .2s;
+            background: #fff; border: 1px solid #e8edf3; border-radius: 12px;
+            padding: 14px 16px; border-left: 4px solid #378ADD; min-width: 0; transition: box-shadow .2s;
         }
         .bd-banner-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
         .bd-banner-card.blue   { border-left-color: #1a56db; }
         .bd-banner-card.green  { border-left-color: #0e9f6e; }
         .bd-banner-card.orange { border-left-color: #ff5a1f; }
-        .bd-banner-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .6px;
-            color: #888;
-            margin-bottom: 5px;
-        }
+        .bd-banner-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #888; margin-bottom: 5px; }
         .bd-banner-value { font-size: 22px; font-weight: 700; color: #111; line-height: 1.2; }
         .bd-banner-sub   { font-size: 11px; color: #aaa; margin-top: 3px; }
 
-        /* SECTION TITLE */
         .bd-section-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #374151;
-            margin: 0 0 12px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.2px; color: #374151; margin: 0 0 12px;
         }
-        .bd-section-title::before {
-            content: '';
-            display: inline-block;
-            width: 3px;
-            height: 14px;
-            border-radius: 2px;
-            background: #378ADD;
-            flex-shrink: 0;
-        }
-        .bd-section-title.sub::before { background: #7F77DD; }
-        .bd-section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e8edf3;
-        }
+        .bd-section-title::before { content:''; display:inline-block; width:3px; height:14px; border-radius:2px; background:#378ADD; flex-shrink:0; }
+        .bd-section-title.sub::before { background:#7F77DD; }
+        .bd-section-title::after { content:''; flex:1; height:1px; background:#e8edf3; }
 
-        /* CARDS */
-        .bd-cards {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .bd-card {
-            background: #fff;
-            border: 1px solid #e8edf3;
-            border-radius: 12px;
-            padding: 14px 16px;
-            border-left: 4px solid #378ADD;
-            min-width: 0;
-            transition: box-shadow .2s;
-        }
+        .bd-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 10px; }
+        .bd-card { background: #fff; border: 1px solid #e8edf3; border-radius: 12px; padding: 14px 16px; border-left: 4px solid #378ADD; min-width: 0; transition: box-shadow .2s; }
         .bd-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
-        .bd-card-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            color: #888;
-            margin-bottom: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .bd-card-value {
-            font-size: 17px;
-            font-weight: 700;
-            color: #111;
-            line-height: 1.2;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .bd-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #888; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bd-card-value { font-size: 17px; font-weight: 700; color: #111; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bd-card-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
 
-        /* BOTTOM ROW */
-        .bd-bottom {
-            display: grid;
-            grid-template-columns: 1fr minmax(0, 400px);
-            gap: 14px;
-            align-items: start;
-            margin-top: 16px;
-        }
-        .bd-chart-box {
-            background: #fff;
-            border: 1px solid #e8edf3;
-            border-radius: 12px;
-            padding: 16px 18px;
-            min-width: 0;
-        }
+        .bd-bottom { display: grid; grid-template-columns: 1fr minmax(0,400px); gap: 14px; align-items: start; margin-top: 16px; }
+        .bd-chart-box { background: #fff; border: 1px solid #e8edf3; border-radius: 12px; padding: 16px 18px; min-width: 0; }
         .bd-chart-title { font-size: 13px; font-weight: 600; color: #111; margin: 0 0 2px; }
         .bd-chart-sub   { font-size: 12px; color: #aaa; margin: 0 0 14px; }
 
-        /* BAR ROWS */
-        .bd-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 9px;
-        }
-        .bd-bar-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #222;
-            width: 170px;
-            min-width: 170px;
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .bd-bar-track {
-            flex: 1;
-            height: 22px;
-            background: #f0f2f5;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .bd-bar-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width .5s ease;
-        }
-        .bd-bar-val {
-            font-size: 12px;
-            font-weight: 700;
-            color: #222;
-            width: 72px;
-            min-width: 72px;
-            white-space: nowrap;
-        }
-        .bd-bar-divider {
-            border: none;
-            border-top: 1px dashed #e0e4ea;
-            margin: 6px 0 10px;
-        }
-        .bd-bar-section-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #bbb;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            margin-bottom: 8px;
-        }
+        .bd-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+        .bd-bar-label { font-size: 13px; font-weight: 600; color: #222; width: 170px; min-width: 170px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bd-bar-track { flex: 1; height: 22px; background: #f0f2f5; border-radius: 5px; overflow: hidden; }
+        .bd-bar-fill  { height: 100%; border-radius: 5px; transition: width .5s ease; }
+        .bd-bar-val   { font-size: 12px; font-weight: 700; color: #222; width: 72px; min-width: 72px; white-space: nowrap; }
+        .bd-bar-divider { border: none; border-top: 1px dashed #e0e4ea; margin: 6px 0 10px; }
+        .bd-bar-section-label { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
 
-        /* LEGEND */
         .bd-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .bd-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #555; }
         .bd-legend-dot  { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
 
-        /* DONUT CENTER */
-        .bd-donut-center {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center; pointer-events: none;
-        }
+        .bd-donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
         .bd-donut-center-val { font-size: 19px; font-weight: 700; color: #111; line-height: 1.1; }
         .bd-donut-center-lbl { font-size: 10px; color: #888; margin-top: 2px; }
 
-        /* WORK PLAN */
-        .bd-wp-grid {
-            display: grid;
-            grid-template-columns: 1fr minmax(0, 280px);
-            gap: 16px;
-            align-items: start;
-        }
+        .bd-wp-grid { display: grid; grid-template-columns: 1fr minmax(0,280px); gap: 16px; align-items: start; }
         .bd-wp-pie-box { min-width: 0; }
-        .bd-wp-pie-total-box {
-            text-align: center;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid #f0f2f5;
-        }
-        .bd-wp-pie-total-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .8px;
-            color: #aaa;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .bd-wp-pie-total-val {
-            font-size: 26px;
-            font-weight: 700;
-            color: #111;
-            line-height: 1.1;
-        }
+        .bd-wp-pie-total-box { text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f2f5; }
+        .bd-wp-pie-total-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #aaa; text-transform: uppercase; margin-bottom: 4px; }
+        .bd-wp-pie-total-val   { font-size: 26px; font-weight: 700; color: #111; line-height: 1.1; }
         .bd-wp-summary { display: flex; flex-direction: column; gap: 12px; }
         .bd-wp-stat-card { cursor: default; }
-        .bd-wp-two-col-row {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-            margin-top: 16px;
-        }
+        .bd-wp-two-col-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
 
-        /* LOADING OVERLAY */
+        /* Canvas wrapper — height set dynamically by plugin */
+        .bd-pie-canvas-wrap { position: relative; width: 100%; min-height: 400px; }
+
         #global-loader.loader-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(18,18,18,.92);
-            backdrop-filter: blur(6px);
-            display: none; z-index: 999999;
-            align-items: center; justify-content: center;
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(18,18,18,.92); backdrop-filter: blur(6px);
+            display: none; z-index: 999999; align-items: center; justify-content: center;
         }
-        .loader-box { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-        .loader-logo {
-            width: 90px; height: 90px; border-radius: 50%;
-            background: linear-gradient(145deg,#fff,#eaeaea);
-            padding: 14px; object-fit: contain;
-            box-shadow: 0 10px 30px rgba(0,0,0,.35);
-            animation: lp 1.6s infinite ease-in-out;
-        }
-        .loader-text { font-size: 13px; color: #fff; font-weight: 600; letter-spacing: .5px; opacity: .85; }
-        .loader-text::after { content: ""; display: inline-block; width: 1em; animation: ld 1.5s infinite; }
-        @keyframes lp { 0%,100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.08); opacity: 1; } }
-        @keyframes ld { 0% { content: ""; } 33% { content: "."; } 66% { content: ".."; } 100% { content: "..."; } }
+        .loader-box { display:flex; flex-direction:column; align-items:center; gap:14px; }
+        .loader-logo { width:90px; height:90px; border-radius:50%; background:linear-gradient(145deg,#fff,#eaeaea); padding:14px; object-fit:contain; box-shadow:0 10px 30px rgba(0,0,0,.35); animation:lp 1.6s infinite ease-in-out; }
+        .loader-text { font-size:13px; color:#fff; font-weight:600; letter-spacing:.5px; opacity:.85; }
+        .loader-text::after { content:""; display:inline-block; width:1em; animation:ld 1.5s infinite; }
+        @keyframes lp { 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.08);opacity:1} }
+        @keyframes ld { 0%{content:""} 33%{content:"."} 66%{content:".."} 100%{content:"..."} }
 
-        /* RESPONSIVE */
-        .bd-wrap, .bd-panel, .bd-filter-bar {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-        .bd-chart-box, .bd-card, .bd-banner-card {
-            min-width: 0;
-            word-break: break-word;
-        }
+        .bd-wrap,.bd-panel,.bd-filter-bar { max-width:100%; overflow-x:hidden; }
+        .bd-chart-box,.bd-card,.bd-banner-card { min-width:0; word-break:break-word; }
 
-        @media (min-width: 1400px) {
-            .bd-banner-value { font-size: 26px; }
-            .bd-bottom { grid-template-columns: 1fr 440px; }
-        }
-        @media (max-width: 1200px) {
-            .bd-bottom { grid-template-columns: 1fr 360px; }
-            .bd-cards  { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (max-width: 1024px) {
-            .bd-bottom { grid-template-columns: 1fr; }
-            .bd-wp-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 900px) {
-            .bd-wp-two-col-row { grid-template-columns: 1fr; }
-            .bd-cards { grid-template-columns: repeat(2, 1fr); }
-            .bd-banner-strip { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 768px) {
-            .bd-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .bd-banner-strip { grid-template-columns: 1fr; }
-            .bd-bar-label { width: 110px; min-width: 110px; font-size: 11px; }
-            .bd-bar-val   { width: 60px; min-width: 60px; font-size: 11px; }
-            .bd-filter { width: 150px; }
-            .bd-banner-value { font-size: 18px; }
-            .bd-card-value { font-size: 14px; }
-        }
-        @media (max-width: 600px) {
-            .bd-filter-bar { padding: 12px 12px 0; gap: 12px; }
-            .bd-panel { padding: 10px; }
-            .bd-filter { width: 100%; }
-            .bd-bottom { gap: 10px; }
-            .bd-bar-label { width: 90px; min-width: 90px; font-size: 10px; }
-            .bd-bar-val   { width: 52px; min-width: 52px; font-size: 10px; }
-            .bd-chart-box { padding: 12px; }
-        }
-        @media (max-width: 480px) {
-            .bd-cards { grid-template-columns: 1fr; }
-            .bd-banner-strip { grid-template-columns: 1fr; }
-            .bd-banner-value { font-size: 16px; }
-        }
+        @media (min-width:1400px) { .bd-banner-value{font-size:26px} .bd-bottom{grid-template-columns:1fr 440px} }
+        @media (max-width:1200px) { .bd-bottom{grid-template-columns:1fr 360px} .bd-cards{grid-template-columns:repeat(3,1fr)} }
+        @media (max-width:1024px) { .bd-bottom{grid-template-columns:1fr} .bd-wp-grid{grid-template-columns:1fr} }
+        @media (max-width:900px)  { .bd-wp-two-col-row{grid-template-columns:1fr} .bd-cards{grid-template-columns:repeat(2,1fr)} .bd-banner-strip{grid-template-columns:repeat(2,1fr)} }
+        @media (max-width:768px)  { .bd-cards{grid-template-columns:repeat(2,1fr);gap:10px} .bd-banner-strip{grid-template-columns:1fr} .bd-bar-label{width:110px;min-width:110px;font-size:11px} .bd-bar-val{width:60px;min-width:60px;font-size:11px} .bd-filter{width:150px} .bd-banner-value{font-size:18px} .bd-card-value{font-size:14px} }
+        @media (max-width:600px)  { .bd-filter-bar{padding:12px 12px 0;gap:12px} .bd-panel{padding:10px} .bd-filter{width:100%} .bd-bottom{gap:10px} .bd-bar-label{width:90px;min-width:90px;font-size:10px} .bd-bar-val{width:52px;min-width:52px;font-size:10px} .bd-chart-box{padding:12px} }
+        @media (max-width:480px)  { .bd-cards{grid-template-columns:1fr} .bd-banner-strip{grid-template-columns:1fr} .bd-banner-value{font-size:16px} }
     </style>`).appendTo('head');
 
     /* ── PALETTE ── */
@@ -6079,22 +5851,16 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     /* ── LAYOUT ── */
     $(page.body).html(`
         <div class="bd-wrap">
-
-            <!-- Filters -->
             <div class="bd-filter-bar">
                 <div class="bd-filter" id="bd-fy-wrap"></div>
             </div>
 
-            <!-- Tab nav -->
             <ul id="bd-tab-nav">
                 <li><a class="bd-tab active" data-tab="dashboard">Budget Dashboard</a></li>
                 <li><a class="bd-tab" data-tab="workplan">Work Plan Views</a></li>
             </ul>
 
-            <!-- Tab 1: Budget Dashboard -->
             <div class="bd-panel active" id="bd-panel-dashboard">
-
-                <!-- Consolidated totals -->
                 <div class="bd-banner-strip">
                     <div class="bd-banner-card blue">
                         <div class="bd-banner-label">Overall Grand Total</div>
@@ -6113,17 +5879,12 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                     </div>
                 </div>
 
-                <!-- Units -->
                 <p class="bd-section-title" style="margin-top:4px;">Units</p>
-                <div class="bd-cards" id="bd-cards">
-                    <div class="bd-loading"><div class="bd-spinner"></div> Loading…</div>
-                </div>
+                <div class="bd-cards" id="bd-cards"><div class="bd-loading">Loading…</div></div>
 
-                <!-- Sub Units -->
                 <p class="bd-section-title sub" id="bd-sub-title" style="margin-top:16px;">Sub Units</p>
                 <div class="bd-cards" id="bd-subcards"></div>
 
-                <!-- Charts -->
                 <div class="bd-bottom">
                     <div class="bd-chart-box">
                         <p class="bd-chart-title">Budget by Unit</p>
@@ -6145,14 +5906,12 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                 </div>
             </div>
 
-            <!-- Tab 2: Work Plan Views -->
             <div class="bd-panel" id="bd-panel-workplan">
                 <div class="bd-wp-grid">
-                    <!-- Pie Chart: Grants vs Others -->
                     <div class="bd-chart-box bd-wp-pie-box">
                         <p class="bd-chart-title">Grants &amp; Donations And Direct Work</p>
                         <p class="bd-chart-sub">Consolidated budget breakdown</p>
-                        <div id="bd-wp-pie-wrap" style="position:relative;width:100%;height:320px;">
+                        <div style="position:relative;width:100%;height:320px;">
                             <canvas id="bd-wp-pie"></canvas>
                         </div>
                         <div class="bd-wp-pie-total-box">
@@ -6160,19 +5919,18 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                             <div class="bd-wp-pie-total-val" id="bd-wp-pie-total">—</div>
                         </div>
                     </div>
-                    <!-- Summary cards -->
                     <div class="bd-wp-summary">
                         <div class="bd-card bd-wp-stat-card" style="border-left-color:#1a56db;">
                             <div class="bd-card-label">Grand Total</div>
                             <div class="bd-card-value" id="bd-wp-pie-total-card">—</div>
                             <div class="bd-card-sub">Overall budget</div>
                         </div>
-                        <div class="bd-card bd-wp-stat-card" id="bd-wp-grants-card" style="border-left-color:#378ADD;">
+                        <div class="bd-card bd-wp-stat-card" style="border-left-color:#378ADD;">
                             <div class="bd-card-label">Grants &amp; Donations</div>
                             <div class="bd-card-value" id="bd-wp-grants-val">—</div>
                             <div class="bd-card-sub" id="bd-wp-grants-pct">—</div>
                         </div>
-                        <div class="bd-card bd-wp-stat-card" id="bd-wp-others-card" style="border-left-color:#F5A623;">
+                        <div class="bd-card bd-wp-stat-card" style="border-left-color:#F5A623;">
                             <div class="bd-card-label">Direct Work</div>
                             <div class="bd-card-value" id="bd-wp-others-val">—</div>
                             <div class="bd-card-sub" id="bd-wp-others-pct">—</div>
@@ -6180,12 +5938,11 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                     </div>
                 </div>
 
-                <!-- Direct Work & Grants unit pies — side by side -->
                 <div class="bd-wp-two-col-row">
                     <div class="bd-chart-box">
                         <p class="bd-chart-title">Direct Work — Unit-wise</p>
                         <p class="bd-chart-sub">Direct Work budget share per unit</p>
-                        <div style="position:relative;width:100%;height:1000px;">
+                        <div class="bd-pie-canvas-wrap" id="bd-unit-pie-wrap">
                             <canvas id="bd-wp-unit-pie"></canvas>
                         </div>
                         <div class="bd-wp-pie-total-box">
@@ -6197,7 +5954,7 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                     <div class="bd-chart-box">
                         <p class="bd-chart-title">Grants &amp; Donations — Unit-wise</p>
                         <p class="bd-chart-sub">Grants &amp; Donations budget share per unit</p>
-                        <div style="position:relative;width:100%;height:1000px;">
+                        <div class="bd-pie-canvas-wrap" id="bd-grants-pie-wrap">
                             <canvas id="bd-wp-grants-unit-pie"></canvas>
                         </div>
                         <div class="bd-wp-pie-total-box">
@@ -6208,15 +5965,14 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
                     </div>
                 </div>
             </div>
-
         </div>
     `);
 
-    let donutChart = null;
-    let wpPieChart = null;
-    let wpUnitPieChart = null;
+    let donutChart           = null;
+    let wpPieChart           = null;
+    let wpUnitPieChart       = null;
     let wpGrantsUnitPieChart = null;
-    let wpDataLoaded = false;
+    let wpDataLoaded         = false;
 
     /* ── TAB SWITCHING ── */
     $(page.body).on('click', '#bd-tab-nav .bd-tab', function (e) {
@@ -6236,10 +5992,8 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     const fyControl = frappe.ui.form.make_control({
         parent: document.getElementById('bd-fy-wrap'),
         df: {
-            label: 'Financial Year',
-            fieldtype: 'Select',
-            fieldname: 'financial_year',
-            reqd: 1,
+            label: 'Financial Year', fieldtype: 'Select',
+            fieldname: 'financial_year', reqd: 1,
             change() { triggerLoad(); }
         },
         render_input: true
@@ -6251,13 +6005,11 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
         const fy = fyControl.get_value();
         if (!fy) return;
         wpDataLoaded = false;
-        if (wpPieChart)         { wpPieChart.destroy();         wpPieChart = null; }
-        if (wpUnitPieChart)     { wpUnitPieChart.destroy();     wpUnitPieChart = null; }
+        if (wpPieChart)          { wpPieChart.destroy();          wpPieChart = null; }
+        if (wpUnitPieChart)      { wpUnitPieChart.destroy();      wpUnitPieChart = null; }
         if (wpGrantsUnitPieChart){ wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart = null; }
         load(fy, 'March');
-        if ($('#bd-tab-nav .bd-tab.active').data('tab') === 'workplan') {
-            loadWorkPlan(fy);
-        }
+        if ($('#bd-tab-nav .bd-tab.active').data('tab') === 'workplan') loadWorkPlan(fy);
     }
 
     /* ── LOAD FY LIST ── */
@@ -6268,12 +6020,10 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
             const years = r.message.map(d => d.financial_year);
             fyControl.df.options = years.join('\n');
             fyControl.refresh();
-
             const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
             const fy  = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
             const def = years.includes(fy) ? fy : years[0];
             fyControl.set_value(def);
-
             load(def, 'March');
         }
     });
@@ -6282,170 +6032,198 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     const fmtINR = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
     const fmtCr  = v => {
         const abs = Math.abs(v || 0);
-        if (abs >= 1e7) return '₹' + ((v || 0) / 1e7).toFixed(2) + ' Cr';
-        if (abs >= 1e5) return '₹' + ((v || 0) / 1e5).toFixed(2) + ' L';
-        if (abs >= 1e3) return '₹' + ((v || 0) / 1e3).toFixed(2) + ' K';
+        if (abs >= 1e7) return '₹' + ((v||0)/1e7).toFixed(2) + ' Cr';
+        if (abs >= 1e5) return '₹' + ((v||0)/1e5).toFixed(2) + ' L';
+        if (abs >= 1e3) return '₹' + ((v||0)/1e3).toFixed(2) + ' K';
         return '₹' + Math.round(v || 0);
     };
 
-    /* ── SHARED LABEL PLUGIN FACTORY ──
-       Builds a Chart.js afterDraw plugin that:
-         1. Draws % text inside each slice (if slice >= 5%)
-         2. Splits labels into left / right buckets
-         3. Sorts each bucket top→bottom and spreads them
-            so no two labels overlap (min LABEL_H gap)
-         4. Draws an elbow connector: slice-edge → radial bend → horizontal to label
-    ── */
-    function makeLabelPlugin(pluginId) {
-        const NAME_SIZE  = 14;   // px — unit name (bold)
-        const VAL_SIZE   = 13;   // px — value
-        const PCT_SIZE   = 12;   // px — percentage
-        const LINE_H     = 17;   // px between rows
-        const MAX_LABEL_W = 160; // px — max width before wrapping name to 2nd line
-        const LABEL_H    = LINE_H * 4 + 6; // 4 rows (name may wrap) + gap
+    /* ════════════════════════════════════════════════════════════
+       setSafePieHeight(canvasId, nSlices)
+       Called BEFORE new Chart() so the canvas has the right size.
+       Uses offsetWidth (reliable even before paint) with a safe
+       fallback of 700 so it never produces 0-height canvases.
+    ════════════════════════════════════════════════════════════ */
+    function setSafePieHeight(canvasId, nSlices) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return 180;
+        const wrap = canvas.parentElement;
+        let totalW = (wrap && wrap.offsetWidth)  ||
+                     (wrap && wrap.clientWidth)  ||
+                     canvas.offsetWidth || 700;
+        totalW = Math.max(totalW, 320);
 
-        /* Word-wrap a name into ≤2 lines that fit within MAX_LABEL_W */
-        function wrapName(ctx, text) {
-            ctx.font = `bold ${NAME_SIZE}px sans-serif`;
-            if (ctx.measureText(text).width <= MAX_LABEL_W) return [text];
+        const BLOCK_H = 16 * 4 + 8;
+        const colW    = Math.min(240, Math.max(120, Math.round(totalW * 0.30)));
+        const pieDiam = Math.max(200, totalW - colW * 2 - 32);
+        const finalH  = Math.max(pieDiam + 160, nSlices * BLOCK_H + 160, 500);
+
+        canvas.style.height = finalH + 'px';
+        if (wrap) wrap.style.height = finalH + 'px';
+        canvas._bdColW = colW;
+        return colW;  // caller uses this for layout.padding
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       RESPONSIVE LABEL PLUGIN FACTORY
+       - No beforeInit (avoids 0-width race on Windows/lazy tabs)
+       - afterDraw reads colW from canvas._bdColW (set above)
+       - Two-pass spread prevents label overlap
+       - Names word-wrap into up to 2 lines
+    ════════════════════════════════════════════════════════════ */
+    function makeLabelPlugin(pluginId) {
+
+        const NAME_SZ = 13;
+        const VAL_SZ  = 12;
+        const PCT_SZ  = 11;
+        const LINE_H  = 16;
+        const ROW_GAP = 8;
+        const BLOCK_H = LINE_H * 4 + ROW_GAP;
+
+        function wrapName(ctx, text, maxW) {
+            ctx.font = `bold ${NAME_SZ}px sans-serif`;
+            if (ctx.measureText(text).width <= maxW) return [text];
             const words = text.split(' ');
             let line1 = '', line2 = '';
             for (const w of words) {
                 const test = line1 ? line1 + ' ' + w : w;
-                if (ctx.measureText(test).width <= MAX_LABEL_W) {
-                    line1 = test;
-                } else {
-                    line2 = line2 ? line2 + ' ' + w : w;
-                }
+                if (ctx.measureText(test).width <= maxW) { line1 = test; }
+                else { line2 = line2 ? line2 + ' ' + w : w; }
             }
             return line2 ? [line1, line2] : [line1];
         }
 
-        function spreadLabels(items) {
+        function spreadLabels(items, canvasH) {
             if (!items.length) return;
-            items.sort((a, b) => a.naturalY - b.naturalY);
-            items[0].finalY = items[0].naturalY;
+            const margin = 8;
+            const topBound = margin;
+            const botBound = canvasH - BLOCK_H - margin;
+
+            items.sort((a, b) => a.nat - b.nat);
+
+            // Clamp naturals to canvas bounds first
+            items.forEach(e => { e.nat = Math.min(Math.max(e.nat, topBound), botBound); });
+
+            items[0].y = items[0].nat;
             for (let k = 1; k < items.length; k++) {
-                const minY = items[k - 1].finalY + LABEL_H;
-                items[k].finalY = Math.max(items[k].naturalY, minY);
+                items[k].y = Math.max(items[k].nat, items[k-1].y + BLOCK_H);
             }
-            for (let k = items.length - 2; k >= 0; k--) {
-                const maxY = items[k + 1].finalY - LABEL_H;
-                if (items[k].finalY > maxY) items[k].finalY = maxY;
+            // Pull back up if we've gone past bottom
+            for (let k = items.length - 1; k >= 0; k--) {
+                if (items[k].y > botBound) items[k].y = botBound;
+                if (k < items.length - 1 && items[k].y > items[k+1].y - BLOCK_H) {
+                    items[k].y = items[k+1].y - BLOCK_H;
+                }
             }
         }
 
         return {
             id: pluginId,
+
             afterDraw(chart) {
                 const { ctx, data } = chart;
-                const meta = chart.getDatasetMeta(0);
-                const arcs = meta.data;
-                const vals = data.datasets[0].data;
-                const lbls = data.labels;
-                const tot  = vals.reduce((a, b) => a + b, 0);
+                const meta  = chart.getDatasetMeta(0);
+                const arcs  = meta.data;
+                const vals  = data.datasets[0].data;
+                const lbls  = data.labels;
+                const tot   = vals.reduce((a, b) => a + b, 0);
                 if (!tot || !arcs.length) return;
 
-                const cx     = arcs[0].x;
-                const cy     = arcs[0].y;
-                const outerR = arcs[0].outerRadius;
+                const cx      = arcs[0].x;
+                const cy      = arcs[0].y;
+                const outerR  = arcs[0].outerRadius;
+                const colW    = chart.canvas._bdColW || 180;
+                const canvasW = chart.width;
+                const canvasH = chart.height;
 
-                const RIGHT_X = cx + outerR + 100;
-                const LEFT_X  = cx - outerR - 100;
+                /*
+                 * RIGHT side: elbow terminates at (cx + outerR + gap),
+                 *   text draws LEFT-aligned starting a few px further right.
+                 * LEFT side:  elbow terminates at (cx - outerR - gap),
+                 *   text draws RIGHT-aligned ending a few px further left.
+                 * The text column is colW wide, so it must not exceed the canvas edge.
+                 * We pick the elbow X so that the text column fits within canvas.
+                 */
+                const ELBOW_GAP = 18;
+                const elbowRight = Math.min(cx + outerR + ELBOW_GAP, canvasW - colW - 4);
+                const elbowLeft  = Math.max(cx - outerR - ELBOW_GAP, colW + 4);
+                const xTxtRight  = elbowRight + 6;
+                const xTxtLeft   = elbowLeft  - 6;
 
                 ctx.save();
 
-                /* ── Step 1: % inside large slices ── */
+                /* 1 ── % text inside large slices */
                 arcs.forEach((arc, i) => {
                     if (!vals[i]) return;
                     const pct = (vals[i] / tot) * 100;
-                    if (pct < 5) return;
+                    if (pct < 4) return;
                     const angle = (arc.startAngle + arc.endAngle) / 2;
-                    const r  = outerR * 0.65;
-                    const xi = cx + Math.cos(angle) * r;
-                    const yi = cy + Math.sin(angle) * r;
+                    const xi = cx + Math.cos(angle) * outerR * 0.64;
+                    const yi = cy + Math.sin(angle) * outerR * 0.64;
                     ctx.save();
-                    ctx.shadowColor  = 'rgba(0,0,0,0.6)';
-                    ctx.shadowBlur   = 4;
-                    ctx.fillStyle    = '#fff';
-                    ctx.textAlign    = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.font         = `bold ${NAME_SIZE}px sans-serif`;
+                    ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 4;
+                    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.font = `bold ${NAME_SZ}px sans-serif`;
                     ctx.fillText(pct.toFixed(1) + '%', xi, yi);
                     ctx.restore();
                 });
 
-                /* ── Step 2: Build left / right buckets ── */
+                /* 2 ── Build left / right label buckets */
                 const left = [], right = [];
                 arcs.forEach((arc, i) => {
                     if (!vals[i]) return;
                     const pct   = (vals[i] / tot) * 100;
                     const angle = (arc.startAngle + arc.endAngle) / 2;
                     const entry = {
-                        i,
-                        angle,
-                        isRight:  Math.cos(angle) >= 0,
-                        name:     (lbls[i] || '').trim(),
-                        valTxt:   fmtCr(vals[i]),
-                        pctTxt:   pct.toFixed(1) + '%',
-                        naturalY: cy + Math.sin(angle) * (outerR * 1.28),
-                        finalY:   0
+                        i, angle,
+                        isRight: Math.cos(angle) >= 0,
+                        name:    (lbls[i] || '').trim(),
+                        valTxt:  fmtCr(vals[i]),
+                        pctTxt:  pct.toFixed(1) + '%',
+                        nat:     cy + Math.sin(angle) * outerR * 1.22,
+                        y:       0
                     };
                     (entry.isRight ? right : left).push(entry);
                 });
 
-                /* ── Step 3: Spread labels ── */
-                spreadLabels(left);
-                spreadLabels(right);
+                /* 3 ── Spread labels within canvas bounds */
+                spreadLabels(left,  canvasH);
+                spreadLabels(right, canvasH);
 
-                /* ── Step 4: Draw connectors + text ── */
+                /* 4 ── Draw connectors + text */
                 [...left, ...right].forEach(entry => {
-                    const { angle, isRight, name, valTxt, pctTxt, finalY } = entry;
-
-                    const x1   = cx + Math.cos(angle) * (outerR * 1.03);
-                    const y1   = cy + Math.sin(angle) * (outerR * 1.03);
-                    const x2   = cx + Math.cos(angle) * (outerR * 1.22);
-                    const y2   = cy + Math.sin(angle) * (outerR * 1.22);
-                    const x3   = isRight ? RIGHT_X : LEFT_X;
-                    const y3   = finalY;
-                    const xTxt = x3 + (isRight ? 7 : -7);
+                    const { angle, isRight, name, valTxt, pctTxt, y } = entry;
                     const align = isRight ? 'left' : 'right';
+                    const elbowX = isRight ? elbowRight : elbowLeft;
+                    const xTxt   = isRight ? xTxtRight  : xTxtLeft;
 
-                    // Connector line
-                    ctx.strokeStyle = '#aaa';
-                    ctx.lineWidth   = 1.2;
-                    ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
-                    ctx.lineTo(x3, y3);
-                    ctx.stroke();
+                    const x1 = cx + Math.cos(angle) * (outerR * 1.02);
+                    const y1 = cy + Math.sin(angle) * (outerR * 1.02);
+                    const x2 = cx + Math.cos(angle) * (outerR * 1.16);
+                    const y2 = cy + Math.sin(angle) * (outerR * 1.16);
 
-                    // Dot at slice edge
-                    ctx.beginPath();
-                    ctx.arc(x1, y1, 2.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#aaa';
-                    ctx.fill();
+                    /* Elbow connector: radial segment → horizontal to elbow point */
+                    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.2;
+                    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(elbowX, y); ctx.stroke();
 
-                    // Name — wrapped into up to 2 lines
-                    const nameLines = wrapName(ctx, name);
-                    ctx.fillStyle    = '#111';
-                    ctx.textAlign    = align;
-                    ctx.textBaseline = 'alphabetic';
-                    ctx.font         = `bold ${NAME_SIZE}px sans-serif`;
-                    nameLines.forEach((line, li) => {
-                        ctx.fillText(line, xTxt, y3 + li * LINE_H);
-                    });
-                    const afterName = nameLines.length * LINE_H;
+                    /* Dot at slice edge */
+                    ctx.beginPath(); ctx.arc(x1, y1, 2.5, 0, Math.PI*2);
+                    ctx.fillStyle = '#bbb'; ctx.fill();
 
-                    // Value
-                    ctx.font      = `600 ${VAL_SIZE}px sans-serif`;
-                    ctx.fillStyle = '#333';
-                    ctx.fillText(valTxt, xTxt, y3 + afterName);
+                    /* Name — wrap to label column width */
+                    const lines = wrapName(ctx, name, colW - 12);
+                    ctx.fillStyle = '#111'; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+                    ctx.font = `bold ${NAME_SZ}px sans-serif`;
+                    lines.forEach((ln, li) => ctx.fillText(ln, xTxt, y + li * LINE_H));
+                    const afterName = lines.length * LINE_H;
 
-                    // Percentage
-                    ctx.font      = `500 ${PCT_SIZE}px sans-serif`;
-                    ctx.fillStyle = '#777';
-                    ctx.fillText(pctTxt, xTxt, y3 + afterName + LINE_H);
+                    /* Value */
+                    ctx.font = `600 ${VAL_SZ}px sans-serif`; ctx.fillStyle = '#333';
+                    ctx.fillText(valTxt, xTxt, y + afterName);
+
+                    /* Percentage */
+                    ctx.font = `500 ${PCT_SZ}px sans-serif`; ctx.fillStyle = '#777';
+                    ctx.fillText(pctTxt, xTxt, y + afterName + LINE_H);
                 });
 
                 ctx.restore();
@@ -6457,45 +6235,32 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     function parseData(message) {
         const consolidated = message.find(d => d.settings_doc === 'CONSOLIDATED');
 
-        const mainRaw = message
+        const mainUnits = message
             .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
-            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
+            .sort((a, b) => (a.sequence_id||0) - (b.sequence_id||0))
+            .map((u, idx) => {
+                const gt = (u.actuals||[]).find(a => a.sequence_id === 9999);
+                return { label:(u.label||'').trim(), ytd:gt?(gt.ytd||0):0,
+                         sequence_id:u.sequence_id||0, color:PALETTE[idx%PALETTE.length] };
+            }).filter(u => u.ytd > 0);
 
-        const mainUnits = mainRaw.map((u, idx) => {
-                const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
-                return {
-                    label:       (u.label || '').trim(),
-                    ytd:         gt ? (gt.ytd || 0) : 0,
-                    sequence_id: u.sequence_id || 0,
-                    color:       PALETTE[idx % PALETTE.length]
-                };
-            })
-            .filter(u => u.ytd > 0);
-
-        const subRaw = message
+        const subUnits = message
             .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 1)
-            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
+            .sort((a, b) => (a.sequence_id||0) - (b.sequence_id||0))
+            .map((u, idx) => {
+                const gt = (u.actuals||[]).find(a => a.sequence_id === 9999);
+                return { label:(u.label||'').trim(), ytd:gt?(gt.ytd||0):0,
+                         sequence_id:u.sequence_id||0, color:SUB_PALETTE[idx%SUB_PALETTE.length] };
+            }).filter(u => u.ytd > 0);
 
-        const subUnits = subRaw.map((u, idx) => {
-                const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
-                return {
-                    label:       (u.label || '').trim(),
-                    ytd:         gt ? (gt.ytd || 0) : 0,
-                    sequence_id: u.sequence_id || 0,
-                    color:       SUB_PALETTE[idx % SUB_PALETTE.length]
-                };
-            })
-            .filter(u => u.ytd > 0);
-
-        let overall = 0, capex = 0, opex = 0;
+        let overall=0, capex=0, opex=0;
         if (consolidated) {
             const ca = consolidated.actuals || [];
-            overall = (ca.find(a => a.name === 'OVERALL GRAND TOTAL') || {}).ytd || 0;
-            capex   = (ca.find(a => a.name === 'CAPEX TOTAL')         || {}).ytd || 0;
-            opex    = (ca.find(a => a.name === 'OPEX TOTAL')          || {}).ytd || 0;
+            overall = (ca.find(a=>a.name==='OVERALL GRAND TOTAL')||{}).ytd||0;
+            capex   = (ca.find(a=>a.name==='CAPEX TOTAL')||{}).ytd||0;
+            opex    = (ca.find(a=>a.name==='OPEX TOTAL')||{}).ytd||0;
         }
-        if (!overall) overall = mainUnits.reduce((s, u) => s + u.ytd, 0);
-
+        if (!overall) overall = mainUnits.reduce((s,u)=>s+u.ytd,0);
         return { mainUnits, subUnits, overall, capex, opex };
     }
 
@@ -6504,132 +6269,79 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
         $('#bd-grand-total').text(fmtCr(overall));
         $('#bd-capex-total').text(fmtCr(capex));
         $('#bd-opex-total').text(fmtCr(opex));
-        $('#bd-unit-count').text(
-            mainUnits.length + ' units' +
-            (subUnits.length ? ' · ' + subUnits.length + ' sub units' : '')
-        );
+        $('#bd-unit-count').text(mainUnits.length + ' units' +
+            (subUnits.length ? ' · ' + subUnits.length + ' sub units' : ''));
     }
 
     /* ── RENDER CARDS ── */
     function renderCards(mainUnits, subUnits, overall) {
         const $c = $('#bd-cards').empty();
         mainUnits.forEach(u => {
-            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
-            $c.append(`
-                <div class="bd-card" style="border-left-color:${u.color};">
-                    <div class="bd-card-label" title="${u.label}">${u.label}</div>
-                    <div class="bd-card-value">${fmtINR(u.ytd)}</div>
-                    <div class="bd-card-sub">${pct}% of total</div>
-                </div>
-            `);
+            const pct = overall>0 ? ((u.ytd/overall)*100).toFixed(1) : '0.0';
+            $c.append(`<div class="bd-card" style="border-left-color:${u.color};">
+                <div class="bd-card-label" title="${u.label}">${u.label}</div>
+                <div class="bd-card-value">${fmtINR(u.ytd)}</div>
+                <div class="bd-card-sub">${pct}% of total</div></div>`);
         });
-
         const $s = $('#bd-subcards').empty();
-        if (!subUnits.length) {
-            $('#bd-sub-title').hide();
-            return;
-        }
+        if (!subUnits.length) { $('#bd-sub-title').hide(); return; }
         $('#bd-sub-title').show();
         subUnits.forEach(u => {
-            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
-            $s.append(`
-                <div class="bd-card" style="border-left-color:${u.color};">
-                    <div class="bd-card-label" title="${u.label}">${u.label}</div>
-                    <div class="bd-card-value">${fmtINR(u.ytd)}</div>
-                    <div class="bd-card-sub">${pct}% of total</div>
-                </div>
-            `);
+            const pct = overall>0 ? ((u.ytd/overall)*100).toFixed(1) : '0.0';
+            $s.append(`<div class="bd-card" style="border-left-color:${u.color};">
+                <div class="bd-card-label" title="${u.label}">${u.label}</div>
+                <div class="bd-card-value">${fmtINR(u.ytd)}</div>
+                <div class="bd-card-sub">${pct}% of total</div></div>`);
         });
     }
 
     /* ── RENDER BAR ── */
     function renderHBar(mainUnits, subUnits) {
         const $body  = $('#bd-hbar-body').empty();
-        const allMax = Math.max(...mainUnits.map(u => u.ytd), ...subUnits.map(u => u.ytd), 1);
-
+        const allMax = Math.max(...mainUnits.map(u=>u.ytd), ...subUnits.map(u=>u.ytd), 1);
         mainUnits.forEach(u => {
-            const pct = ((u.ytd / allMax) * 100).toFixed(1);
-            $body.append(`
-                <div class="bd-bar-row">
-                    <div class="bd-bar-label" title="${u.label}">${u.label}</div>
-                    <div class="bd-bar-track">
-                        <div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div>
-                    </div>
-                    <div class="bd-bar-val">${fmtCr(u.ytd)}</div>
-                </div>
-            `);
+            const pct = ((u.ytd/allMax)*100).toFixed(1);
+            $body.append(`<div class="bd-bar-row">
+                <div class="bd-bar-label" title="${u.label}">${u.label}</div>
+                <div class="bd-bar-track"><div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div></div>
+                <div class="bd-bar-val">${fmtCr(u.ytd)}</div></div>`);
         });
-
         if (subUnits.length) {
-            $body.append(`
-                <hr class="bd-bar-divider">
-                <div class="bd-bar-section-label">Sub Units</div>
-            `);
+            $body.append('<hr class="bd-bar-divider"><div class="bd-bar-section-label">Sub Units</div>');
             subUnits.forEach(u => {
-                const pct = ((u.ytd / allMax) * 100).toFixed(1);
-                $body.append(`
-                    <div class="bd-bar-row">
-                        <div class="bd-bar-label" title="${u.label}">${u.label}</div>
-                        <div class="bd-bar-track">
-                            <div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div>
-                        </div>
-                        <div class="bd-bar-val">${fmtCr(u.ytd)}</div>
-                    </div>
-                `);
+                const pct = ((u.ytd/allMax)*100).toFixed(1);
+                $body.append(`<div class="bd-bar-row">
+                    <div class="bd-bar-label" title="${u.label}">${u.label}</div>
+                    <div class="bd-bar-track"><div class="bd-bar-fill" style="width:${pct}%;background:${u.color};"></div></div>
+                    <div class="bd-bar-val">${fmtCr(u.ytd)}</div></div>`);
             });
         }
     }
 
     /* ── RENDER DONUT ── */
     function renderDonut(mainUnits, overall) {
-        const labels = mainUnits.map(u => u.label);
-        const values = mainUnits.map(u => Math.round(u.ytd));
-        const colors = mainUnits.map(u => u.color);
-
+        const labels = mainUnits.map(u=>u.label);
+        const values = mainUnits.map(u=>Math.round(u.ytd));
+        const colors = mainUnits.map(u=>u.color);
         $('#bd-donut-total').text(fmtCr(overall));
-
         const $leg = $('#bd-donut-legend').empty();
-        mainUnits.forEach((u, i) => {
-            const pct = overall > 0 ? ((u.ytd / overall) * 100).toFixed(1) : '0.0';
-            $leg.append(`
-                <span class="bd-legend-item">
-                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
-                    ${u.label} — ${pct}%
-                </span>
-            `);
+        mainUnits.forEach((u,i) => {
+            const pct = overall>0 ? ((u.ytd/overall)*100).toFixed(1):'0.0';
+            $leg.append(`<span class="bd-legend-item">
+                <span class="bd-legend-dot" style="background:${colors[i]};"></span>
+                ${u.label} — ${pct}%</span>`);
         });
-
-        if (donutChart) { donutChart.destroy(); donutChart = null; }
+        if (donutChart) { donutChart.destroy(); donutChart=null; }
         if (!values.length) return;
-
         donutChart = new Chart(document.getElementById('bd-donut'), {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors,
-                    borderWidth: 2,
-                    borderColor: '#fff',
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => {
-                                const pct = overall > 0
-                                    ? ((ctx.parsed / overall) * 100).toFixed(1) : '0.0';
-                                return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
-                            }
-                        }
-                    }
-                }
+            type:'doughnut',
+            data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+            options:{
+                responsive:true, maintainAspectRatio:false, cutout:'68%',
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+                    const pct=overall>0?((ctx.parsed/overall)*100).toFixed(1):'0.0';
+                    return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+                }}}}
             }
         });
     }
@@ -6639,338 +6351,187 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
         Loader.show('Loading dashboard…');
         $('#bd-grand-total,#bd-capex-total,#bd-opex-total,#bd-donut-total').text('—');
         $('#bd-unit-count').text('—');
-        $('#bd-cards').empty();
-        $('#bd-hbar-body').empty();
-
+        $('#bd-cards').empty(); $('#bd-hbar-body').empty();
         frappe.call({
             method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
-            args: { financial_year: fy, month: month, table_name_filter: 'Number Card' },
+            args: { financial_year:fy, month:month, table_name_filter:'Number Card' },
             callback(r) {
                 Loader.hide();
-                if (!r.message?.length) {
-                    $('#bd-cards').html('<div class="bd-loading">No data returned.</div>');
-                    return;
-                }
+                if (!r.message?.length) { $('#bd-cards').html('<div>No data returned.</div>'); return; }
                 const { mainUnits, subUnits, overall, capex, opex } = parseData(r.message);
                 renderBanner(overall, capex, opex, mainUnits, subUnits);
                 renderCards(mainUnits, subUnits, overall);
                 renderHBar(mainUnits, subUnits);
                 renderDonut(mainUnits, overall);
             },
-            error() {
-                Loader.hide();
-                frappe.msgprint('Failed to load data. Please try again.');
-            }
+            error() { Loader.hide(); frappe.msgprint('Failed to load data.'); }
         });
     }
 
     /* ── WORK PLAN: LOAD ── */
     function loadWorkPlan(fy) {
         Loader.show('Loading Work Plan data…');
-
         frappe.call({
             method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
-            args: {
-                financial_year: fy,
-                month: 'March',
-                table_name_filter: 'Pie Chart'
-            },
+            args: { financial_year:fy, month:'March', table_name_filter:'Unit Wise Plan' },
             callback(r) {
                 Loader.hide();
-                if (!r.message?.length) {
-                    frappe.msgprint('No Work Plan data returned.');
-                    return;
-                }
-                const consolidated = r.message.find(d => d.settings_doc === 'CONSOLIDATED');
-                if (!consolidated) {
-                    frappe.msgprint('Consolidated data not found.');
-                    return;
-                }
+                if (!r.message?.length) { frappe.msgprint('No Work Plan data returned.'); return; }
+                const consolidated = r.message.find(d => d.settings_doc==='CONSOLIDATED');
+                if (!consolidated)   { frappe.msgprint('Consolidated data not found.'); return; }
                 renderWpPie(consolidated);
                 renderWpUnitPie(r.message);
                 renderWpGrantsUnitPie(r.message);
                 wpDataLoaded = true;
             },
-            error() {
-                Loader.hide();
-                frappe.msgprint('Failed to load Work Plan data.');
-            }
+            error() { Loader.hide(); frappe.msgprint('Failed to load Work Plan data.'); }
         });
     }
 
     /* ── WORK PLAN: GRANTS vs DIRECT WORK PIE ── */
     function renderWpPie(consolidated) {
         const actuals = consolidated.actuals || [];
-        let grantsYtd = 0;
-        let othersYtd = 0;
-        const GRANTS_NAME = 'Grants & Donations';
-
-        actuals.forEach(actual => {
-            if (actual.sequence_id === 9999 ||
-                actual.name === 'CAPEX TOTAL' ||
-                actual.name === 'OPEX TOTAL' ||
-                actual.name === 'OVERALL GRAND TOTAL') return;
-
-            (actual.items || []).forEach(item => {
-                if (item.name === GRANTS_NAME) grantsYtd += (item.ytd || 0);
-                else                           othersYtd += (item.ytd || 0);
-            });
-            (actual.sub_heads || []).forEach(sh => {
-                (sh.items || []).forEach(item => {
-                    if (item.name === GRANTS_NAME) grantsYtd += (item.ytd || 0);
-                    else                           othersYtd += (item.ytd || 0);
-                });
-            });
+        let grantsYtd=0, othersYtd=0;
+        const GN = 'Grants & Donations';
+        actuals.forEach(a => {
+            if (a.sequence_id===9999||a.name==='CAPEX TOTAL'||a.name==='OPEX TOTAL'||a.name==='OVERALL GRAND TOTAL') return;
+            (a.items||[]).forEach(it => { if(it.name===GN) grantsYtd+=(it.ytd||0); else othersYtd+=(it.ytd||0); });
+            (a.sub_heads||[]).forEach(sh => (sh.items||[]).forEach(it => { if(it.name===GN) grantsYtd+=(it.ytd||0); else othersYtd+=(it.ytd||0); }));
         });
-
-        const total      = grantsYtd + othersYtd;
-        const grantsPct  = total > 0 ? ((grantsYtd / total) * 100).toFixed(1) : '0.0';
-        const othersPct  = total > 0 ? ((othersYtd / total) * 100).toFixed(1) : '0.0';
-
+        const total=grantsYtd+othersYtd;
+        const gPct=total>0?((grantsYtd/total)*100).toFixed(1):'0.0';
+        const oPct=total>0?((othersYtd/total)*100).toFixed(1):'0.0';
         $('#bd-wp-pie-total').text(fmtCr(total));
         $('#bd-wp-pie-total-card').text(fmtINR(total));
-        $('#bd-wp-grants-val').text(fmtINR(grantsYtd));
-        $('#bd-wp-grants-pct').text(grantsPct + '% of total');
-        $('#bd-wp-others-val').text(fmtINR(othersYtd));
-        $('#bd-wp-others-pct').text(othersPct + '% of total');
-
-        if (wpPieChart) { wpPieChart.destroy(); wpPieChart = null; }
-
+        $('#bd-wp-grants-val').text(fmtINR(grantsYtd));  $('#bd-wp-grants-pct').text(gPct+'% of total');
+        $('#bd-wp-others-val').text(fmtINR(othersYtd));  $('#bd-wp-others-pct').text(oPct+'% of total');
+        if (wpPieChart) { wpPieChart.destroy(); wpPieChart=null; }
         wpPieChart = new Chart(document.getElementById('bd-wp-pie'), {
-            type: 'pie',
-            data: {
-                labels: ['Grants & Donations', 'Direct Work'],
-                datasets: [{
-                    data: [Math.round(grantsYtd), Math.round(othersYtd)],
-                    backgroundColor: ['#378ADD', '#F5A623'],
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 6
-                }]
+            type:'pie',
+            data:{ labels:['Grants & Donations','Direct Work'],
+                datasets:[{ data:[Math.round(grantsYtd),Math.round(othersYtd)],
+                    backgroundColor:['#378ADD','#F5A623'], borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+                    const pct=total>0?((ctx.parsed/total)*100).toFixed(1):'0.0';
+                    return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
+                }}}}
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => {
-                                const pct = total > 0
-                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
-                                return ` ${fmtINR(ctx.parsed)}  (${pct}%)`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [{
-                id: 'sliceLabels',
-                afterDraw(chart) {
-                    const { ctx, data } = chart;
-                    const ds   = chart.getDatasetMeta(0).data;
-                    const vals = data.datasets[0].data;
-                    const tot  = vals.reduce((a, b) => a + b, 0);
-                    ctx.save();
-                    ds.forEach((arc, i) => {
-                        const angle = (arc.startAngle + arc.endAngle) / 2;
-                        const r = arc.outerRadius * 0.65;
-                        const x = arc.x + Math.cos(angle) * r;
-                        const y = arc.y + Math.sin(angle) * r;
-                        ctx.fillStyle    = '#fff';
-                        ctx.font         = 'bold 14px sans-serif';
-                        ctx.textAlign    = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(fmtCr(vals[i]), x, y);
-                    });
-                    ctx.restore();
-                }
-            }]
+            plugins:[{ id:'sliceLabels', afterDraw(chart){
+                const {ctx,data}=chart; const ds=chart.getDatasetMeta(0).data;
+                const vals=data.datasets[0].data;
+                ctx.save();
+                ds.forEach((arc,i)=>{
+                    const angle=(arc.startAngle+arc.endAngle)/2;
+                    const x=arc.x+Math.cos(angle)*arc.outerRadius*0.65;
+                    const y=arc.y+Math.sin(angle)*arc.outerRadius*0.65;
+                    ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif';
+                    ctx.textAlign='center'; ctx.textBaseline='middle';
+                    ctx.fillText(fmtCr(vals[i]),x,y);
+                });
+                ctx.restore();
+            }}]
         });
     }
 
     /* ── WORK PLAN: DIRECT WORK UNIT PIE ── */
     function renderWpUnitPie(message) {
-        const PALETTE_WP  = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
-        const GRANTS_NAME = 'Grants & Donations';
-
+        const PALETTE_WP = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
+        const GN = 'Grants & Donations';
         function getDirectWork(u) {
-            const gt = (u.actuals || []).find(a => a.sequence_id === 9999);
-            const grandTotal = gt ? (gt.ytd || 0) : 0;
-            let grantsAmt = 0;
-            (u.actuals || []).forEach(actual => {
-                if (actual.sequence_id === 9999) return;
-                (actual.items || []).forEach(item => {
-                    if (item.name === GRANTS_NAME) grantsAmt += (item.ytd || 0);
-                });
-                (actual.sub_heads || []).forEach(sh => {
-                    (sh.items || []).forEach(item => {
-                        if (item.name === GRANTS_NAME) grantsAmt += (item.ytd || 0);
-                    });
-                });
-            });
-            return grandTotal - grantsAmt;
+            const gt=(u.actuals||[]).find(a=>a.sequence_id===9999);
+            const grand=gt?(gt.ytd||0):0;
+            let grants=0;
+            (u.actuals||[]).forEach(a=>{ if(a.sequence_id===9999) return;
+                (a.items||[]).forEach(it=>{ if(it.name===GN) grants+=(it.ytd||0); });
+                (a.sub_heads||[]).forEach(sh=>(sh.items||[]).forEach(it=>{ if(it.name===GN) grants+=(it.ytd||0); })); });
+            return grand-grants;
         }
-
-        const units = message
-            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
-            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
-
-        const labels = [], values = [], colors = [];
-        let colorIdx = 0;
-        units.forEach(u => {
-            const dw = getDirectWork(u);
-            if (!dw || dw <= 0) return;
-            labels.push((u.label || '').trim());
-            values.push(Math.round(dw));
-            colors.push(PALETTE_WP[colorIdx++ % PALETTE_WP.length]);
-        });
-
-        const total = values.reduce((s, v) => s + v, 0);
+        const units=message.filter(d=>d.settings_doc!=='CONSOLIDATED'&&d.is_this_sub_item===0)
+            .sort((a,b)=>(a.sequence_id||0)-(b.sequence_id||0));
+        const labels=[],values=[],colors=[]; let ci=0;
+        units.forEach(u=>{ const dw=getDirectWork(u); if(dw<=0) return;
+            labels.push((u.label||'').trim()); values.push(Math.round(dw)); colors.push(PALETTE_WP[ci++%PALETTE_WP.length]); });
+        const total=values.reduce((s,v)=>s+v,0);
         $('#bd-wp-unit-pie-total').text(fmtCr(total));
-
-        const $leg = $('#bd-wp-unit-legend').empty();
-        labels.forEach((lbl, i) => {
-            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
-            $leg.append(`
-                <span class="bd-legend-item">
-                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
-                    ${lbl} — ${pct}%
-                </span>
-            `);
-        });
-
-        if (wpUnitPieChart) { wpUnitPieChart.destroy(); wpUnitPieChart = null; }
+        const $leg=$('#bd-wp-unit-legend').empty();
+        labels.forEach((lbl,i)=>{ const pct=total>0?((values[i]/total)*100).toFixed(1):'0.0';
+            $leg.append(`<span class="bd-legend-item"><span class="bd-legend-dot" style="background:${colors[i]};"></span>${lbl} — ${pct}%</span>`); });
+        if (wpUnitPieChart) { wpUnitPieChart.destroy(); wpUnitPieChart=null; }
         if (!values.length) return;
-
+        const colWUnit = setSafePieHeight('bd-wp-unit-pie', values.length);
         wpUnitPieChart = new Chart(document.getElementById('bd-wp-unit-pie'), {
-            type: 'pie',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors,
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 6
-                }]
+            type:'pie',
+            data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false,
+                layout:{ padding:{ left: colWUnit, right: colWUnit, top: 40, bottom: 40 } },
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+                    const pct=total>0?((ctx.parsed/total)*100).toFixed(1):'0.0';
+                    return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
+                }}}}
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 80, bottom: 80, left: 300, right: 300 } },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => {
-                                const pct = total > 0
-                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
-                                return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [ makeLabelPlugin('unitSliceLabels') ]
+            plugins:[ makeLabelPlugin('unitSliceLabels') ]
         });
     }
 
     /* ── WORK PLAN: GRANTS UNIT PIE ── */
     function renderWpGrantsUnitPie(message) {
-        const PALETTE_WP  = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
-        const GRANTS_NAME = 'Grants & Donations';
-
+        const PALETTE_WP = ['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#639922','#E24B4A','#185FA5','#888780'];
+        const GN = 'Grants & Donations';
         function getGrantsAmt(u) {
-            let amt = 0;
-            (u.actuals || []).forEach(actual => {
-                if (actual.sequence_id === 9999) return;
-                (actual.items || []).forEach(item => {
-                    if (item.name === GRANTS_NAME) amt += (item.ytd || 0);
-                });
-                (actual.sub_heads || []).forEach(sh => {
-                    (sh.items || []).forEach(item => {
-                        if (item.name === GRANTS_NAME) amt += (item.ytd || 0);
-                    });
-                });
-            });
+            let amt=0;
+            (u.actuals||[]).forEach(a=>{ if(a.sequence_id===9999) return;
+                (a.items||[]).forEach(it=>{ if(it.name===GN) amt+=(it.ytd||0); });
+                (a.sub_heads||[]).forEach(sh=>(sh.items||[]).forEach(it=>{ if(it.name===GN) amt+=(it.ytd||0); })); });
             return amt;
         }
-
-        const units = message
-            .filter(d => d.settings_doc !== 'CONSOLIDATED' && d.is_this_sub_item === 0)
-            .sort((a, b) => (a.sequence_id || 0) - (b.sequence_id || 0));
-
-        const labels = [], values = [], colors = [];
-        let colorIdx = 0;
-        units.forEach(u => {
-            const grants = getGrantsAmt(u);
-            if (!grants || grants <= 0) return;
-            labels.push((u.label || '').trim());
-            values.push(Math.round(grants));
-            colors.push(PALETTE_WP[colorIdx++ % PALETTE_WP.length]);
-        });
-
-        const total = values.reduce((s, v) => s + v, 0);
+        const units=message.filter(d=>d.settings_doc!=='CONSOLIDATED'&&d.is_this_sub_item===0)
+            .sort((a,b)=>(a.sequence_id||0)-(b.sequence_id||0));
+        const labels=[],values=[],colors=[]; let ci=0;
+        units.forEach(u=>{ const g=getGrantsAmt(u); if(g<=0) return;
+            labels.push((u.label||'').trim()); values.push(Math.round(g)); colors.push(PALETTE_WP[ci++%PALETTE_WP.length]); });
+        const total=values.reduce((s,v)=>s+v,0);
         $('#bd-wp-grants-unit-total').text(fmtCr(total));
-
-        const $leg = $('#bd-wp-grants-unit-legend').empty();
-        labels.forEach((lbl, i) => {
-            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
-            $leg.append(`
-                <span class="bd-legend-item">
-                    <span class="bd-legend-dot" style="background:${colors[i]};"></span>
-                    ${lbl} — ${pct}%
-                </span>
-            `);
-        });
-
-        if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart = null; }
+        const $leg=$('#bd-wp-grants-unit-legend').empty();
+        labels.forEach((lbl,i)=>{ const pct=total>0?((values[i]/total)*100).toFixed(1):'0.0';
+            $leg.append(`<span class="bd-legend-item"><span class="bd-legend-dot" style="background:${colors[i]};"></span>${lbl} — ${pct}%</span>`); });
+        if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart=null; }
         if (!values.length) return;
-
+        const colWGrants = setSafePieHeight('bd-wp-grants-unit-pie', values.length);
         wpGrantsUnitPieChart = new Chart(document.getElementById('bd-wp-grants-unit-pie'), {
-            type: 'pie',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors,
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 6
-                }]
+            type:'pie',
+            data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false,
+                layout:{ padding:{ left: colWGrants, right: colWGrants, top: 40, bottom: 40 } },
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+                    const pct=total>0?((ctx.parsed/total)*100).toFixed(1):'0.0';
+                    return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
+                }}}}
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 80, bottom: 80, left: 300, right: 300 } },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => {
-                                const pct = total > 0
-                                    ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
-                                return ` ${ctx.label}: ${fmtCr(ctx.parsed)}  (${pct}%)`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [ makeLabelPlugin('grantsSliceLabels') ]
+            plugins:[ makeLabelPlugin('grantsSliceLabels') ]
         });
     }
 
-    /* ── RESIZE ── */
+    /* ── RESIZE — re-render work plan charts so heights recalculate ── */
     let resizeTimer;
     $(window).on('resize.bd', function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            if (donutChart)           donutChart.resize();
-            if (wpPieChart)           wpPieChart.resize();
-            if (wpUnitPieChart)       wpUnitPieChart.resize();
-            if (wpGrantsUnitPieChart) wpGrantsUnitPieChart.resize();
-        }, 200);
+            if (donutChart) donutChart.resize();
+            if (wpPieChart) wpPieChart.resize();
+            if (wpDataLoaded) {
+                wpDataLoaded = false;
+                if (wpUnitPieChart)       { wpUnitPieChart.destroy();       wpUnitPieChart=null; }
+                if (wpGrantsUnitPieChart) { wpGrantsUnitPieChart.destroy(); wpGrantsUnitPieChart=null; }
+                /* Reset wrapper heights so offsetWidth is re-read correctly */
+                ['bd-unit-pie-wrap','bd-grants-pie-wrap'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.height = '';
+                });
+                const fy = fyControl.get_value();
+                if (fy && $('#bd-tab-nav .bd-tab.active').data('tab')==='workplan') loadWorkPlan(fy);
+            }
+        }, 300);
     });
     $(wrapper).on('hide', function () { $(window).off('resize.bd'); });
 
@@ -6992,16 +6553,14 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
     $('#global-loader').hide();
 
     var Loader = {
-        show: function (msg) {
+        show(msg) {
             var $l = $('#global-loader');
             $l.find('.loader-text').text(msg || 'Loading, please wait');
-            $l.css('display', 'flex').hide().fadeIn(200);
+            $l.css('display','flex').hide().fadeIn(200);
         },
-        hide: function () { $('#global-loader').fadeOut(200); }
+        hide() { $('#global-loader').fadeOut(200); }
     };
 };
-
-
 
 
 
