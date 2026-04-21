@@ -6373,7 +6373,7 @@ frappe.pages['consolidate-report'].on_page_load = function (wrapper) {
         Loader.show('Loading Work Plan data…');
         frappe.call({
             method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
-            args: { financial_year:fy, month:'March', table_name_filter:'Unit Wise Plan' },
+            args: { financial_year:fy, month:'March', table_name_filter:'Pie Chart' },
             callback(r) {
                 Loader.hide();
                 if (!r.message?.length) { frappe.msgprint('No Work Plan data returned.'); return; }
