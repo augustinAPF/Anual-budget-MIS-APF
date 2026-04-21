@@ -11,7 +11,8 @@
   "reference_for",
   "location_code_description",
   "location_code_erp",
-  "unit"
+  "unit",
+  "state"
  ],
  "fields": [
   {
@@ -57,13 +58,22 @@
    "in_standard_filter": 1,
    "label": "Reference For",
    "options": "\nBudget\nActual\nBoth"
+  },
+  {
+   "fetch_from": "location_code.state",
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "State",
+   "read_only": 1
   }
  ],
  "grid_page_length": 100,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-13 21:51:48.367520",
+ "modified": "2026-04-21 11:18:00.226704",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "Location code Link",
