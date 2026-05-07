@@ -4331,7 +4331,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 
 					frappe.call({
 						method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
-						args: { financial_year: fy, month: 'March', table_name_filter: 'Operating and Captial expenses' },
+						args: { financial_year: fy, month: 'March', table_name_filter: 'Opex Capex' },
 						callback: function (r2) {
 							Loader.hide();
 							var raw = Array.isArray(r2.message) ? r2.message
