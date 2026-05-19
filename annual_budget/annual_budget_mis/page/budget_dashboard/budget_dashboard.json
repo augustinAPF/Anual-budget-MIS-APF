@@ -1,19 +1,19 @@
 {
  "content": null,
- "creation": "2025-11-06 06:33:18.615985",
+ "creation": "2026-05-05 10:55:05.074919",
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-11-06 06:33:23.152007",
+ "modified": "2026-05-05 10:56:41.677411",
  "modified_by": "Administrator",
  "module": "Annual Budget MIS",
- "name": "budget-phase-sheet-r",
+ "name": "budget-dashboard",
  "owner": "Administrator",
- "page_name": "budget-phase-sheet-r",
+ "page_name": "budget-dashboard",
  "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,
  "system_page": 1,
- "title": "Budget Phase Sheet Report"
+ "title": "Budget Dashboard"
 }

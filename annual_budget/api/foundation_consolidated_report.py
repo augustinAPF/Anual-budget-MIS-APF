@@ -1490,127 +1490,6 @@ def get_combination_table_settings(table_name_filter=None):
 
 
 
-# @frappe.whitelist(allow_guest=True)
-# def get_combination_table_settings_1(table_name_filter=None):
-
-#     results = []
-
-#     def parse_list(value):
-#         if not value:
-#             return []
-#         return [v.strip() for v in str(value).split(",") if v.strip()]
-
-#     # ✅ HANDLE MULTIPLE TABLE NAMES
-#     table_filters = parse_list(table_name_filter)
-#     table_filters = [t.lower() for t in table_filters]
-
-#     # ✅ FETCH ALL SETTINGS
-#     settings_docs = frappe.get_all(
-#         "Overview number cards settings",
-#         fields=["name", "number_card_title"],
-#         order_by="creation desc"
-#     )
-
-#     for setting in settings_docs:
-
-#         doc = frappe.get_doc(
-#             "Overview number cards settings",
-#             setting.name
-#         )
-
-#         # -------- GROUPING BY UNIT --------
-#         unit_map = {}
-
-#         # Initialize units
-#         for d in doc.select_units:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#         # Map cost centers to units
-#         for d in doc.select_cost_centers:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#             if d.cost_center:
-#                 unit_map[d.unit]["cost_centers"].append(d.cost_center)
-
-#             if d.cost_center_erp:
-#                 unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
-
-#         # Map locations to units
-#         for d in doc.select_location_codes:
-#             if not d.unit:
-#                 continue
-
-#             if d.unit not in unit_map:
-#                 unit_map[d.unit] = {
-#                     "unit": d.unit,
-#                     "cost_centers": [],
-#                     "cost_centers_erp": [],
-#                     "locations": [],
-#                     "locations_erp": []
-#                 }
-
-#             if d.location_code:
-#                 unit_map[d.unit]["locations"].append(d.location_code)
-
-#             if d.location_code_erp:
-#                 unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
-
-#         # Convert to list
-#         grouped_units = list(unit_map.values())
-
-#         # -------- CHILD TABLE FILTER --------
-#         combination_settings = []
-
-#         for row in doc.combination_table_settings:
-
-#             row_table_name = (row.table_name or "").strip().lower()
-
-#             # ✅ APPLY FILTER
-#             if table_filters and row_table_name not in table_filters:
-#                 continue
-
-#             combination_settings.append({
-#                 "table_name": row.table_name,
-#                 "sequence_id": row.sequence_id,
-#                 "is_this_sub_item": row.is_this_sub_item
-#             })
-
-#         # ❗ Skip if no matching child rows
-#         if table_filters and not combination_settings:
-#             continue
-
-#         # -------- FINAL RESULT --------
-#         results.append({
-#             "settings_doc": doc.name,
-#             "label": doc.number_card_title,
-#             "grouped_units": grouped_units,
-#             "combination_settings": combination_settings
-#         })
-
-#     return results
-
-
-
 @frappe.whitelist(allow_guest=True)
 def get_combination_table_settings_1(table_name_filter=None):
 
@@ -1748,6 +1627,14 @@ def get_combination_table_settings_1(table_name_filter=None):
         })
 
     return results
+
+
+
+
+
+
+
+
 
 
 
@@ -4085,8 +3972,6 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 #     return final_results
 
 
-import frappe
-
 
 @frappe.whitelist(allow_guest=True)
 def get_headcount(financial_year=None, month=None, table_name_filter=None):
@@ -4155,62 +4040,1313 @@ def get_headcount(financial_year=None, month=None, table_name_filter=None):
             "message": str(e)
         }
     
-# @frappe.whitelist(allow_guest=True)
-# def get_headcount(financial_year=None):
-#     filters = {}
 
-#     if financial_year:
-#         try:
-#             # Step 1: Get last 3 financial years including selected one
-#             fy_list = frappe.get_all(
-#                 "Financial Year List",
-#                 fields=["name"],
-#                 order_by="creation desc"
-#             )
 
-#             # Step 2: Find index of selected FY
-#             fy_names_all = [fy["name"] for fy in fy_list]
 
-#             if financial_year in fy_names_all:
-#                 index = fy_names_all.index(financial_year)
+@frappe.whitelist(allow_guest=True)
+def get_reports_table_settings():
 
-#                 # Get selected + previous 2
-#                 fy_names = fy_names_all[index:index+3]
-#             else:
-#                 fy_names = [financial_year]
+    results = []
 
-#             # Apply filter
-#             filters["financial_year"] = ["in", fy_names]
+    # ✅ GET ALL TABLE NAMES
+    all_table_names = frappe.get_all(
+        "Table Name",
+        fields=["name"]
+    )
 
-#         except Exception as e:
-#             frappe.log_error(frappe.get_traceback(), "Headcount API Error")
-#             return {
-#                 "status": "error",
-#                 "message": str(e)
-#             }
+    table_name_list = [
+        t.name.strip().lower()
+        for t in all_table_names if t.name
+    ]
 
-#     # Step 3: Fetch Headcount records
-#     docs = frappe.get_all(
-#         "Headcount",
-#         filters=filters,
-#         fields=["name", "financial_year", "total_head_count"],
-#         order_by="creation desc"
-#     )
+    # ✅ FETCH SETTINGS
+    settings_docs = frappe.get_all(
+        "Overview number cards settings",
+        fields=["name", "number_card_title"],
+        order_by="creation desc"
+    )
 
-#     # Step 4: Fetch child table data
-#     for doc in docs:
-#         units = frappe.get_all(
-#             "Headcount Operating Units",
-#             filters={
-#                 "parent": doc["name"],
-#                 "parenttype": "Headcount"
-#             },
-#             fields=["unit", "total_headcount", "unit_description"]
-#         )
+    for setting in settings_docs:
 
-#         doc["units"] = units
+        doc = frappe.get_doc(
+            "Overview number cards settings",
+            setting.name
+        )
 
-#     return {
-#         "status": "success",
-#         "data": docs
-#     }
+        # -------- GROUPING --------
+        unit_map = {}
+
+        # -------- UNITS --------
+        for d in doc.select_units:
+            if not d.unit:
+                continue
+
+            unit_map.setdefault(d.unit, {
+                "unit": d.unit,
+                "cost_centers": [],
+                "cost_centers_erp": [],
+                "locations": [],
+                "locations_erp": []
+            })
+
+        # -------- COST CENTERS --------
+        for d in doc.select_cost_centers:
+            if not d.unit:
+                continue
+
+            unit_map.setdefault(d.unit, {
+                "unit": d.unit,
+                "cost_centers": [],
+                "cost_centers_erp": [],
+                "locations": [],
+                "locations_erp": []
+            })
+
+            ref = (d.reference_for or "Both").strip().lower()
+
+            is_budget = ref in ("budget", "both")
+            is_actual = ref in ("actual", "both")
+
+            if is_budget and d.cost_center:
+                unit_map[d.unit]["cost_centers"].append(d.cost_center)
+
+            if is_actual and d.cost_center_erp:
+                unit_map[d.unit]["cost_centers_erp"].append(d.cost_center_erp)
+
+        # -------- LOCATIONS --------
+        for d in doc.select_location_codes:
+            if not d.unit:
+                continue
+
+            unit_map.setdefault(d.unit, {
+                "unit": d.unit,
+                "cost_centers": [],
+                "cost_centers_erp": [],
+                "locations": [],
+                "locations_erp": []
+            })
+
+            ref = (d.reference_for or "Both").strip().lower()
+
+            is_budget = ref in ("budget", "both")
+            is_actual = ref in ("actual", "both")
+
+            if is_budget and d.location_code:
+                unit_map[d.unit]["locations"].append(d.location_code)
+
+            if is_actual and d.location_code_erp:
+                unit_map[d.unit]["locations_erp"].append(d.location_code_erp)
+
+        # -------- REMOVE DUPLICATES --------
+        for unit in unit_map.values():
+            unit["cost_centers"] = list(set(unit["cost_centers"]))
+            unit["cost_centers_erp"] = list(set(unit["cost_centers_erp"]))
+            unit["locations"] = list(set(unit["locations"]))
+            unit["locations_erp"] = list(set(unit["locations_erp"]))
+
+        grouped_units = list(unit_map.values())
+
+        # -------- COMBINATION SETTINGS --------
+
+        sequence_map = {
+            (row.table_name or "").strip().lower(): {
+                "sequence_id": row.sequence_id,
+                "is_this_sub_item": 1 if row.is_this_sub_item else 0
+            }
+            for row in doc.combination_table_settings
+        }
+
+        combination_settings = {}
+
+        for tbl in table_name_list:
+
+            is_selected = 1 if tbl in sequence_map else 0
+
+            combination_settings[tbl] = {
+                "selected": is_selected,
+                "sequence_id": sequence_map.get(tbl, {}).get("sequence_id"),
+                "is_this_sub_item": sequence_map.get(tbl, {}).get("is_this_sub_item", 0)
+            }
+
+        # -------- FINAL RESULT --------
+        results.append({
+            "settings_doc": doc.name,
+            "label": doc.number_card_title,
+            "grouped_units": grouped_units,
+            "combination_settings": combination_settings
+        })
+
+    return results
+
+
+
+
+
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def get_unit_wise_plan_budget_common(financial_year, month):
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
+
+    def safe_join(arr):
+        if not arr:
+            return ""
+        return ",".join(map(str, arr))
+
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+
+            sub_heads = head.get("sub_heads") or []
+            items = head.get("items") or []
+
+            # =================================================
+            # SUB HEADS
+            # =================================================
+
+            if sub_heads:
+
+                for sub in sub_heads:
+
+                    sub_items = sub.get("items") or []
+
+                    sub_ytd = sum(
+                        (item.get("ytd") or 0)
+                        for item in sub_items
+                    )
+
+                    sub["ytd"] = round(sub_ytd, 2)
+
+                    total_ytd += sub_ytd
+
+                    sub_items.sort(
+                        key=lambda x: x.get(
+                            "sequence_id",
+                            0
+                        )
+                    )
+
+                sub_heads.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+            # =================================================
+            # DIRECT ITEMS
+            # =================================================
+
+            else:
+
+                total_ytd = sum(
+                    (item.get("ytd") or 0)
+                    for item in items
+                )
+
+                items.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+            head["ytd"] = round(total_ytd, 2)
+
+        actuals.sort(
+            key=lambda x: x.get(
+                "sequence_id",
+                0
+            )
+        )
+
+        return actuals
+
+    # =========================================================
+    # GRAND TOTAL
+    # =========================================================
+
+    def calculate_grand_total(actuals):
+
+        return round(
+            sum(
+                (head.get("ytd") or 0)
+                for head in actuals
+            ),
+            2
+        )
+
+    # =========================================================
+    # CONSOLIDATION
+    # =========================================================
+
+    def consolidate_actuals(all_actuals):
+
+        head_map = {}
+
+        for actuals in all_actuals:
+
+            for head in actuals:
+
+                head_name = head["name"]
+
+                existing_head = head_map.get(head_name)
+
+                # =================================================
+                # CREATE HEAD
+                # =================================================
+
+                if not existing_head:
+
+                    existing_head = {
+                        "name": head_name,
+                        "sequence_id": head.get(
+                            "sequence_id",
+                            0
+                        ),
+                        "sub_heads": [],
+                        "items": [],
+                        "ytd": 0
+                    }
+
+                    head_map[head_name] = existing_head
+
+                existing_head["ytd"] += (
+                    head.get("ytd") or 0
+                )
+
+                # =================================================
+                # SUB HEADS
+                # =================================================
+
+                sub_heads = head.get("sub_heads") or []
+
+                if sub_heads:
+
+                    sub_map = {
+                        sub["name"]: sub
+                        for sub in existing_head[
+                            "sub_heads"
+                        ]
+                    }
+
+                    for sub in sub_heads:
+
+                        sub_name = sub["name"]
+
+                        existing_sub = sub_map.get(
+                            sub_name
+                        )
+
+                        if not existing_sub:
+
+                            existing_sub = {
+                                "name": sub_name,
+                                "sequence_id": sub.get(
+                                    "sequence_id",
+                                    0
+                                ),
+                                "items": [],
+                                "ytd": 0
+                            }
+
+                            existing_head[
+                                "sub_heads"
+                            ].append(existing_sub)
+
+                            sub_map[sub_name] = (
+                                existing_sub
+                            )
+
+                        existing_sub["ytd"] += (
+                            sub.get("ytd") or 0
+                        )
+
+                        item_map = {
+                            item["name"]: item
+                            for item in existing_sub[
+                                "items"
+                            ]
+                        }
+
+                        for item in sub.get(
+                            "items",
+                            []
+                        ):
+
+                            item_name = item["name"]
+
+                            existing_item = item_map.get(
+                                item_name
+                            )
+
+                            if not existing_item:
+
+                                existing_item = {
+                                    "name": item_name,
+                                    "sequence_id": item.get(
+                                        "sequence_id",
+                                        0
+                                    ),
+                                    "gl_code": item.get(
+                                        "gl_code"
+                                    ),
+                                    "ytd": 0
+                                }
+
+                                existing_sub[
+                                    "items"
+                                ].append(existing_item)
+
+                                item_map[item_name] = (
+                                    existing_item
+                                )
+
+                            existing_item["ytd"] += (
+                                item.get("ytd") or 0
+                            )
+
+                # =================================================
+                # DIRECT ITEMS
+                # =================================================
+
+                else:
+
+                    item_map = {
+                        item["name"]: item
+                        for item in existing_head[
+                            "items"
+                        ]
+                    }
+
+                    for item in head.get(
+                        "items",
+                        []
+                    ):
+
+                        item_name = item["name"]
+
+                        existing_item = item_map.get(
+                            item_name
+                        )
+
+                        if not existing_item:
+
+                            existing_item = {
+                                "name": item_name,
+                                "sequence_id": item.get(
+                                    "sequence_id",
+                                    0
+                                ),
+                                "gl_code": item.get(
+                                    "gl_code"
+                                ),
+                                "ytd": 0
+                            }
+
+                            existing_head[
+                                "items"
+                            ].append(existing_item)
+
+                            item_map[item_name] = (
+                                existing_item
+                            )
+
+                        existing_item["ytd"] += (
+                            item.get("ytd") or 0
+                        )
+
+        # =========================================================
+        # SORTING
+        # =========================================================
+
+        consolidated = list(head_map.values())
+
+        for head in consolidated:
+
+            sub_heads = head.get("sub_heads") or []
+
+            if sub_heads:
+
+                sub_heads.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+                for sub in sub_heads:
+
+                    sub["items"].sort(
+                        key=lambda x: x.get(
+                            "sequence_id",
+                            0
+                        )
+                    )
+
+            else:
+
+                head["items"].sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+        consolidated.sort(
+            key=lambda x: x.get(
+                "sequence_id",
+                0
+            )
+        )
+
+        return consolidated
+
+    # =========================================================
+    # SETTINGS
+    # =========================================================
+
+    settings = get_reports_table_settings()
+
+    final_results = []
+
+    # =========================================================
+    # MAIN LOOP
+    # =========================================================
+
+    for s in settings:
+
+        grouped_units = s.get(
+            "grouped_units",
+            []
+        )
+
+        all_unit_actuals = []
+
+        for gu in grouped_units:
+
+            actuals = get_combined_actuals(
+                financial_year=financial_year,
+                month=month,
+                unit=gu.get("unit"),
+                cost_center=safe_join(
+                    gu.get("cost_centers")
+                ),
+                location_code=safe_join(
+                    gu.get("locations")
+                ),
+                erp_cost_center_value=safe_join(
+                    gu.get("cost_centers_erp")
+                ),
+                erp_loc_value=safe_join(
+                    gu.get("locations_erp")
+                )
+            )
+
+            all_unit_actuals.append(
+                calculate_totals(actuals)
+            )
+
+        # =====================================================
+        # CONSOLIDATE UNIT DATA
+        # =====================================================
+
+        consolidated = consolidate_actuals(
+            all_unit_actuals
+        )
+
+        grand_total = calculate_grand_total(
+            consolidated
+        )
+
+        consolidated.append({
+            "name": "GRAND TOTAL",
+            "sequence_id": 9999,
+            "sub_heads": [],
+            "items": [],
+            "ytd": grand_total
+        })
+
+        final_results.append({
+            "settings_doc": s.get(
+                "settings_doc"
+            ),
+            "label": s.get("label"),
+            "data": consolidated,
+            "combination_settings": s.get(
+                "combination_settings",
+                {}
+            )
+        })
+
+    # =========================================================
+    # CONSOLIDATED OUTPUT
+    # =========================================================
+
+    consolidated_output = {
+        "settings_doc": "CONSOLIDATED",
+        "label": "CONSOLIDATED TOTAL",
+        "combination_settings": {}
+    }
+
+    combination_bucket = {}
+
+    # =========================================================
+    # GROUP COMBINATION DATA
+    # =========================================================
+
+    for result in final_results:
+
+        cleaned_data = [
+            row
+            for row in result.get(
+                "data",
+                []
+            )
+            if row.get("name")
+            != "GRAND TOTAL"
+        ]
+
+        combo_settings = result.get(
+            "combination_settings",
+            {}
+        )
+
+        for combo_name, combo_meta in combo_settings.items():
+
+            if combo_meta.get("selected") != 1:
+                continue
+
+            bucket = combination_bucket.setdefault(
+                combo_name,
+                {
+                    "selected": 1,
+                    "is_this_sub_item": combo_meta.get(
+                        "is_this_sub_item",
+                        0
+                    ),
+                    "data_list": []
+                }
+            )
+
+            bucket["data_list"].append(
+                cleaned_data
+            )
+
+    # =========================================================
+    # BUILD CONSOLIDATED COMBINATIONS
+    # =========================================================
+
+    for combo_name, combo_data in (
+        combination_bucket.items()
+    ):
+
+        consolidated = consolidate_actuals(
+            combo_data["data_list"]
+        )
+
+        grand_total = calculate_grand_total(
+            consolidated
+        )
+
+        consolidated.append({
+            "name": "OVERALL GRAND TOTAL",
+            "ytd": grand_total
+        })
+
+        consolidated_output[
+            "combination_settings"
+        ][combo_name] = {
+            "selected": combo_data[
+                "selected"
+            ],
+            "is_this_sub_item": combo_data[
+                "is_this_sub_item"
+            ],
+            "data": consolidated
+        }
+
+    final_results.append(
+        consolidated_output
+    )
+
+    # =========================================================
+    # SORT RESULTS
+    # =========================================================
+
+    final_results.sort(
+        key=lambda x: (
+            999999
+            if isinstance(
+                x.get("settings_doc"),
+                str
+            )
+            else x.get("settings_doc", 0)
+        )
+    )
+
+    return final_results
+
+@frappe.whitelist(allow_guest=True)
+def get_unit_wise_plan_test(financial_year, month):
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
+
+    def safe_join(arr):
+        if not arr:
+            return ""
+        return ",".join(map(str, arr))
+
+    # =========================================================
+    # CALCULATE TOTALS
+    # =========================================================
+
+    def calculate_totals(actuals):
+
+        for head in actuals:
+
+            total_ytd = 0
+            total_actual = 0
+
+            sub_heads = head.get("sub_heads") or []
+            items = head.get("items") or []
+
+            # =================================================
+            # SUB HEADS
+            # =================================================
+
+            if sub_heads:
+
+                for sub in sub_heads:
+
+                    sub_items = sub.get("items") or []
+
+                    sub_ytd = sum(
+                        (item.get("ytd") or 0)
+                        for item in sub_items
+                    )
+
+                    sub_actual = sum(
+                        (item.get("total_posted_amt") or 0)
+                        for item in sub_items
+                    )
+
+                    sub["ytd"] = round(sub_ytd, 2)
+
+                    sub["total_posted_amt_ytd"] = round(
+                        sub_actual,
+                        2
+                    )
+
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+
+                    sub_items.sort(
+                        key=lambda x: x.get(
+                            "sequence_id",
+                            0
+                        )
+                    )
+
+                sub_heads.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+            # =================================================
+            # DIRECT ITEMS
+            # =================================================
+
+            else:
+
+                total_ytd = sum(
+                    (item.get("ytd") or 0)
+                    for item in items
+                )
+
+                total_actual = sum(
+                    (item.get("total_posted_amt") or 0)
+                    for item in items
+                )
+
+                items.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+            head["ytd"] = round(total_ytd, 2)
+
+            head["total_posted_amt_ytd"] = round(
+                total_actual,
+                2
+            )
+
+        actuals.sort(
+            key=lambda x: x.get(
+                "sequence_id",
+                0
+            )
+        )
+
+        return actuals
+
+    # =========================================================
+    # GRAND TOTAL
+    # =========================================================
+
+    def calculate_grand_total(actuals):
+
+        return {
+            "grand_total_ytd": round(
+                sum(
+                    (head.get("ytd") or 0)
+                    for head in actuals
+                ),
+                2
+            ),
+            "grand_total_actual": round(
+                sum(
+                    (
+                        head.get(
+                            "total_posted_amt_ytd"
+                        )
+                        or 0
+                    )
+                    for head in actuals
+                ),
+                2
+            )
+        }
+
+    # =========================================================
+    # CONSOLIDATION
+    # =========================================================
+
+    def consolidate_actuals(all_actuals):
+
+        head_map = {}
+
+        for actuals in all_actuals:
+
+            for head in actuals:
+
+                head_name = head["name"]
+
+                existing_head = head_map.get(
+                    head_name
+                )
+
+                # =================================================
+                # CREATE HEAD
+                # =================================================
+
+                if not existing_head:
+
+                    existing_head = {
+                        "name": head_name,
+                        "sequence_id": head.get(
+                            "sequence_id",
+                            0
+                        ),
+                        "sub_heads": [],
+                        "items": [],
+                        "ytd": 0,
+                        "total_posted_amt_ytd": 0
+                    }
+
+                    head_map[head_name] = (
+                        existing_head
+                    )
+
+                existing_head["ytd"] += (
+                    head.get("ytd") or 0
+                )
+
+                existing_head[
+                    "total_posted_amt_ytd"
+                ] += (
+                    head.get(
+                        "total_posted_amt_ytd"
+                    )
+                    or 0
+                )
+
+                # =================================================
+                # SUB HEADS
+                # =================================================
+
+                sub_heads = head.get("sub_heads") or []
+
+                if sub_heads:
+
+                    sub_map = {
+                        sub["name"]: sub
+                        for sub in existing_head[
+                            "sub_heads"
+                        ]
+                    }
+
+                    for sub in sub_heads:
+
+                        sub_name = sub["name"]
+
+                        existing_sub = sub_map.get(
+                            sub_name
+                        )
+
+                        if not existing_sub:
+
+                            existing_sub = {
+                                "name": sub_name,
+                                "sequence_id": sub.get(
+                                    "sequence_id",
+                                    0
+                                ),
+                                "items": [],
+                                "ytd": 0,
+                                "total_posted_amt_ytd": 0
+                            }
+
+                            existing_head[
+                                "sub_heads"
+                            ].append(existing_sub)
+
+                            sub_map[sub_name] = (
+                                existing_sub
+                            )
+
+                        existing_sub["ytd"] += (
+                            sub.get("ytd") or 0
+                        )
+
+                        existing_sub[
+                            "total_posted_amt_ytd"
+                        ] += (
+                            sub.get(
+                                "total_posted_amt_ytd"
+                            )
+                            or 0
+                        )
+
+                        item_map = {
+                            item["name"]: item
+                            for item in existing_sub[
+                                "items"
+                            ]
+                        }
+
+                        for item in sub.get(
+                            "items",
+                            []
+                        ):
+
+                            item_name = item["name"]
+
+                            existing_item = item_map.get(
+                                item_name
+                            )
+
+                            if not existing_item:
+
+                                existing_item = {
+                                    "name": item_name,
+                                    "sequence_id": item.get(
+                                        "sequence_id",
+                                        0
+                                    ),
+                                    "gl_code": item.get(
+                                        "gl_code"
+                                    ),
+                                    "ytd": 0,
+                                    "total_posted_amt": 0
+                                }
+
+                                existing_sub[
+                                    "items"
+                                ].append(existing_item)
+
+                                item_map[item_name] = (
+                                    existing_item
+                                )
+
+                            existing_item["ytd"] += (
+                                item.get("ytd") or 0
+                            )
+
+                            existing_item[
+                                "total_posted_amt"
+                            ] += (
+                                item.get(
+                                    "total_posted_amt"
+                                )
+                                or 0
+                            )
+
+                # =================================================
+                # DIRECT ITEMS
+                # =================================================
+
+                else:
+
+                    item_map = {
+                        item["name"]: item
+                        for item in existing_head[
+                            "items"
+                        ]
+                    }
+
+                    for item in head.get(
+                        "items",
+                        []
+                    ):
+
+                        item_name = item["name"]
+
+                        existing_item = item_map.get(
+                            item_name
+                        )
+
+                        if not existing_item:
+
+                            existing_item = {
+                                "name": item_name,
+                                "sequence_id": item.get(
+                                    "sequence_id",
+                                    0
+                                ),
+                                "gl_code": item.get(
+                                    "gl_code"
+                                ),
+                                "ytd": 0,
+                                "total_posted_amt": 0
+                            }
+
+                            existing_head[
+                                "items"
+                            ].append(existing_item)
+
+                            item_map[item_name] = (
+                                existing_item
+                            )
+
+                        existing_item["ytd"] += (
+                            item.get("ytd") or 0
+                        )
+
+                        existing_item[
+                            "total_posted_amt"
+                        ] += (
+                            item.get(
+                                "total_posted_amt"
+                            )
+                            or 0
+                        )
+
+        # =========================================================
+        # SORTING
+        # =========================================================
+
+        consolidated = list(head_map.values())
+
+        for head in consolidated:
+
+            sub_heads = head.get("sub_heads") or []
+
+            if sub_heads:
+
+                sub_heads.sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+                for sub in sub_heads:
+
+                    sub["items"].sort(
+                        key=lambda x: x.get(
+                            "sequence_id",
+                            0
+                        )
+                    )
+
+            else:
+
+                head["items"].sort(
+                    key=lambda x: x.get(
+                        "sequence_id",
+                        0
+                    )
+                )
+
+        consolidated.sort(
+            key=lambda x: x.get(
+                "sequence_id",
+                0
+            )
+        )
+
+        return consolidated
+
+    # =========================================================
+    # SETTINGS
+    # =========================================================
+
+    settings = get_reports_table_settings()
+
+    previous_financial_year = (
+        get_previous_financial_year(
+            financial_year
+        )
+    )
+
+    formatted = get_accounting_period_from_month(
+        month,
+        previous_financial_year
+    )
+
+    grouped_actuals_data = (
+        get_grouped_actuals(
+            fiscal_year=formatted.get(
+                "fiscal_year"
+            ),
+            accounting_period=formatted.get(
+                "accounting_period"
+            )
+        ).get("data", [])
+    )
+
+    final_results = []
+
+    # =========================================================
+    # MAIN LOOP
+    # =========================================================
+
+    for s in settings:
+
+        all_unit_actuals = []
+
+        grouped_units = s.get(
+            "grouped_units",
+            []
+        )
+
+        for gu in grouped_units:
+
+            actuals = get_combined_actuals(
+                financial_year=financial_year,
+                month=month,
+                unit=gu.get("unit"),
+                cost_center=safe_join(
+                    gu.get("cost_centers")
+                ),
+                location_code=safe_join(
+                    gu.get("locations")
+                ),
+                erp_cost_center_value=safe_join(
+                    gu.get("cost_centers_erp")
+                ),
+                erp_loc_value=safe_join(
+                    gu.get("locations_erp")
+                ),
+                grouped_actuals_data=grouped_actuals_data
+            )
+
+            all_unit_actuals.append(
+                calculate_totals(actuals)
+            )
+
+        # =====================================================
+        # CONSOLIDATE SETTINGS DATA
+        # =====================================================
+
+        consolidated = consolidate_actuals(
+            all_unit_actuals
+        )
+
+        totals = calculate_grand_total(
+            consolidated
+        )
+
+        consolidated.append({
+            "name": "GRAND TOTAL",
+            "sequence_id": 9999,
+            "sub_heads": [],
+            "items": [],
+            "ytd": totals[
+                "grand_total_ytd"
+            ],
+            "total_posted_amt_ytd": totals[
+                "grand_total_actual"
+            ]
+        })
+
+        final_results.append({
+            "settings_doc": s.get(
+                "settings_doc"
+            ),
+            "label": s.get("label"),
+            "data": consolidated,
+            "combination_settings": s.get(
+                "combination_settings",
+                {}
+            )
+        })
+
+    # =========================================================
+    # FINAL CONSOLIDATED OUTPUT
+    # =========================================================
+
+    consolidated_output = {
+        "settings_doc": "CONSOLIDATED",
+        "label": "CONSOLIDATED TOTAL",
+        "combination_settings": {}
+    }
+
+    combination_bucket = {}
+
+    # =========================================================
+    # GROUP COMBINATION DATA
+    # =========================================================
+
+    for result in final_results:
+
+        cleaned_data = [
+            row
+            for row in result.get(
+                "data",
+                []
+            )
+            if row.get("name")
+            != "GRAND TOTAL"
+        ]
+
+        combo_settings = result.get(
+            "combination_settings",
+            {}
+        )
+
+        for combo_name, combo_meta in combo_settings.items():
+
+            if combo_meta.get("selected") != 1:
+                continue
+
+            bucket = combination_bucket.setdefault(
+                combo_name,
+                {
+                    "selected": 1,
+                    "is_this_sub_item": combo_meta.get(
+                        "is_this_sub_item",
+                        0
+                    ),
+                    "data_list": []
+                }
+            )
+
+            bucket["data_list"].append(
+                cleaned_data
+            )
+
+    # =========================================================
+    # BUILD CONSOLIDATED COMBINATIONS
+    # =========================================================
+
+    for combo_name, combo_data in (
+        combination_bucket.items()
+    ):
+
+        consolidated = consolidate_actuals(
+            combo_data["data_list"]
+        )
+
+        totals = calculate_grand_total(
+            consolidated
+        )
+
+        consolidated.append({
+            "name": "OVERALL GRAND TOTAL",
+            "ytd": totals[
+                "grand_total_ytd"
+            ],
+            "total_posted_amt_ytd": totals[
+                "grand_total_actual"
+            ]
+        })
+
+        consolidated_output[
+            "combination_settings"
+        ][combo_name] = {
+            "selected": combo_data[
+                "selected"
+            ],
+            "is_this_sub_item": combo_data[
+                "is_this_sub_item"
+            ],
+            "data": consolidated
+        }
+
+    final_results.append(
+        consolidated_output
+    )
+
+    # =========================================================
+    # SORT RESULTS
+    # =========================================================
+
+    final_results.sort(
+        key=lambda x: (
+            999999
+            if isinstance(
+                x.get("settings_doc"),
+                str
+            )
+            else x.get(
+                "settings_doc",
+                0
+            )
+        )
+    )
+
+    return final_results
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
