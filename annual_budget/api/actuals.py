@@ -706,7 +706,8 @@ def get_actuals_from_erp_prod(fiscal_year, accounting_period):
 import frappe
 import requests
 import xml.etree.ElementTree as ET
-
+def convert_year(year):
+    return f"{year}-{str(int(year) + 1)[-2:]}"
 @frappe.whitelist(allow_guest=True)
 def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 
@@ -757,7 +758,7 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
                         }
                         erp_rows.append(row_data)
 
-        frappe_rows = get_adjustments_month_wise(fiscal_year, accounting_period)
+        frappe_rows = get_adjustments_month_wise(convert_year(fiscal_year), accounting_period)
 
         combined_rows = erp_rows + frappe_rows
 

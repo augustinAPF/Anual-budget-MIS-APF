@@ -339,8 +339,120 @@
 
 #     return result
 
+
+
+
+
+# import frappe
+# from collections import defaultdict
+
+# @frappe.whitelist(allow_guest=True)
+# def get_adjustments_month_wise(financial_year=None, month=None):
+
+#     month_map = {
+#         "April": 1, "May": 2, "June": 3, "July": 4,
+#         "August": 5, "September": 6, "October": 7,
+#         "November": 8, "December": 9,
+#         "January": 10, "February": 11, "March": 12
+#     }
+
+#     reverse_month_map = {v: k for k, v in month_map.items()}
+
+#     # ✅ Validate month
+#     if month is not None:
+#         try:
+#             month = int(month)
+#             if not (1 <= month <= 12):
+#                 frappe.throw("Month must be between 1 and 12")
+
+#             print(f"Selected Month: {month} ({reverse_month_map.get(month)})")
+
+#         except:
+#             frappe.throw("Invalid month format. Must be 1–12")
+
+#     filters = {}
+#     if financial_year:
+#         filters["financial_year"] = financial_year
+
+#     docs = frappe.get_all(
+#         "Monthly Adjustment",
+#         filters=filters,
+#         fields=["name", "month"]
+#     )
+
+#     grouped_data = defaultdict(list)
+
+#     # 🔹 Step 1: Collect & group data
+#     for doc in docs:
+
+#         # ✅ Normalize period
+#         if isinstance(doc.month, int):
+#             period = doc.month
+#         elif str(doc.month).isdigit():
+#             period = int(doc.month)
+#         else:
+#             period = month_map.get(doc.month)
+
+#         if not period:
+#             continue
+
+#         # ✅ YTD filter
+#         if month is not None and period > month:
+#             continue
+
+#         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
+
+#         for row in full_doc.adjustment_line_items:
+
+#             amount = row.adjustment_amount or 0
+#             if row.adjustment_type == "Minus":
+#                 amount = -amount
+
+#             key = (
+#                 row.unit,
+#                 row.gl_code,
+#                 getattr(row, "location_code_erp", row.location_code),
+#                 getattr(row, "cost_center_erp", row.cost_center)
+#             )
+
+#             grouped_data[key].append({
+#                 "period": period,
+#                 "amount": amount
+#             })
+
+#     # 🔹 Step 2: Calculate YTD properly
+#     result = []
+
+#     for key, entries in grouped_data.items():
+
+#         # ✅ Sort ONLY by period (critical fix)
+#         entries.sort(key=lambda x: x["period"])
+
+#         running_total = 0
+
+#         for entry in entries:
+#             running_total += entry["amount"]
+
+#             result.append({
+#                 "business_unit": key[0],
+#                 "ledger": "ACTUALS",
+#                 "account": key[1],
+#                 "deptid": key[3],
+#                 "operating_unit": key[2],
+#                 "accounting_period": str(entry["period"]),
+#                 "fiscal_year": (financial_year or "").split("-")[0],
+#                 "is_adjustment": 1,
+#                 "posted_total_amt": f"{running_total:.2f}"
+#             })
+
+#     print(f"Total records returned: {len(result)}")
+
+#     return result
+
+
 import frappe
 from collections import defaultdict
+
 
 @frappe.whitelist(allow_guest=True)
 def get_adjustments_month_wise(financial_year=None, month=None):
@@ -352,19 +464,13 @@ def get_adjustments_month_wise(financial_year=None, month=None):
         "January": 10, "February": 11, "March": 12
     }
 
-    reverse_month_map = {v: k for k, v in month_map.items()}
-
-    # ✅ Validate month
     if month is not None:
         try:
             month = int(month)
             if not (1 <= month <= 12):
                 frappe.throw("Month must be between 1 and 12")
-
-            print(f"Selected Month: {month} ({reverse_month_map.get(month)})")
-
-        except:
-            frappe.throw("Invalid month format. Must be 1–12")
+        except (ValueError, TypeError):
+            frappe.throw("Invalid month format. Must be integer 1–12")
 
     filters = {}
     if financial_year:
@@ -376,12 +482,13 @@ def get_adjustments_month_wise(financial_year=None, month=None):
         fields=["name", "month"]
     )
 
-    grouped_data = defaultdict(list)
+    if not docs:
+        return []
 
-    # 🔹 Step 1: Collect & group data
+    # Group amounts by (key, period) — no cumulative, just per-period sums
+    grouped_data = defaultdict(lambda: defaultdict(float))
+
     for doc in docs:
-
-        # ✅ Normalize period
         if isinstance(doc.month, int):
             period = doc.month
         elif str(doc.month).isdigit():
@@ -392,14 +499,13 @@ def get_adjustments_month_wise(financial_year=None, month=None):
         if not period:
             continue
 
-        # ✅ YTD filter
+        # ✅ Include periods 1 up to requested month (all of them separately)
         if month is not None and period > month:
             continue
 
         full_doc = frappe.get_doc("Monthly Adjustment", doc.name)
 
         for row in full_doc.adjustment_line_items:
-
             amount = row.adjustment_amount or 0
             if row.adjustment_type == "Minus":
                 amount = -amount
@@ -407,43 +513,35 @@ def get_adjustments_month_wise(financial_year=None, month=None):
             key = (
                 row.unit,
                 row.gl_code,
-                getattr(row, "location_code_erp", row.location_code),
-                getattr(row, "cost_center_erp", row.cost_center)
+                getattr(row, "location_code_erp", None) or row.location_code,
+                getattr(row, "cost_center_erp", None) or row.cost_center
             )
 
-            grouped_data[key].append({
-                "period": period,
-                "amount": amount
-            })
+            # ✅ Sum by period separately — no running total
+            grouped_data[key][period] += amount
 
-    # 🔹 Step 2: Calculate YTD properly
+    fiscal_year_label = financial_year if financial_year else ""
     result = []
 
-    for key, entries in grouped_data.items():
-
-        # ✅ Sort ONLY by period (critical fix)
-        entries.sort(key=lambda x: x["period"])
-
-        running_total = 0
-
-        for entry in entries:
-            running_total += entry["amount"]
-
+    for key, period_totals in grouped_data.items():
+        # ✅ Each period becomes its own row with just that period's amount
+        for period in sorted(period_totals.keys()):
             result.append({
                 "business_unit": key[0],
                 "ledger": "ACTUALS",
                 "account": key[1],
                 "deptid": key[3],
                 "operating_unit": key[2],
-                "accounting_period": str(entry["period"]),
-                "fiscal_year": (financial_year or "").split("-")[0],
+                "accounting_period": str(period),
+                "fiscal_year": fiscal_year_label,
                 "is_adjustment": 1,
-                "posted_total_amt": f"{running_total:.2f}"
+                "posted_total_amt": round(period_totals[period], 2)
             })
 
-    print(f"Total records returned: {len(result)}")
-
+    frappe.logger().debug(f"Total month-wise records: {len(result)}")
     return result
+
+
 
 import frappe
 from collections import defaultdict

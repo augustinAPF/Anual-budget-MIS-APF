@@ -1192,6 +1192,9 @@ frappe.pages['budget-dashboard'].on_page_load = function(wrapper) {
             border-bottom: 3px solid #002a47;
             margin-top: 2px; margin-bottom: 0;
             animation: totalSlideUp .3s ease both;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
         }
         .ba-drill-row.total-row > div {
             color: #fff !important; font-weight: 700;
