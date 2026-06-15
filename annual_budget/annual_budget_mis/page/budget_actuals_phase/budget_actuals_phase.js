@@ -8970,6 +8970,1986 @@
 // };
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// old code 
+// frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
+
+//     $(`<style>
+//     #tables-container {
+//         margin: 20px;
+//         background: #fff;
+//         border-radius: 8px;
+//         padding: 8px;
+//     }
+//     #controls-row {
+//         display: flex; flex-wrap: wrap;
+//         justify-content: space-between; align-items: center;
+//         gap: 8px; margin-bottom: 12px; padding: 8px 10px;
+//         background: #f7f9fb; border: 1px solid #dcdcdc; border-radius: 6px;
+//     }
+//     #global-search-box {
+//         flex: 1 1 200px; min-width: 0; max-width: 320px;
+//         padding: 7px 12px; border: 1px solid #aaa;
+//         border-radius: 6px; font-size: 13px; box-sizing: border-box;
+//     }
+//     #controls-right { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+//     #expand-all-wrapper {
+//         display: flex; align-items: center; gap: 7px;
+//         font-size: 13px; font-weight: 600; color: #444;
+//         cursor: pointer; user-select: none; white-space: nowrap;
+//     }
+//     #expand-all-checkbox { width:16px; height:16px; accent-color:#0076B6; cursor:pointer; }
+//     #export-excel-btn {
+//         display: inline-flex; align-items: center; gap: 6px;
+//         padding: 6px 14px; font-size: 13px; font-weight: 600;
+//         color: #fff !important; background: #0076B6;
+//         border: 1px solid #0076B6; border-radius: 6px;
+//         cursor: pointer; white-space: nowrap; line-height: 1.5;
+//         box-shadow: 0 1px 3px rgba(0,0,0,.12); text-decoration: none;
+//         transition: background .15s ease;
+//     }
+//     #export-excel-btn:hover { background:#005f94; border-color:#005f94; }
+
+//     .scroll-wrapper {
+//         border: 1px solid #ccc; border-radius: 6px;
+//         overflow-x: auto; overflow-y: auto; max-height: 70vh;
+//         background: #fff; -webkit-overflow-scrolling: touch;
+//     }
+//     table.university-table { min-width: 600px; width: 100%; border-collapse: collapse; font-size: 13px; }
+//     table.university-table th, table.university-table td {
+//         border: 1px solid #ddd; padding: 8px 10px;
+//         white-space: nowrap; vertical-align: middle;
+//         text-align: center; background: #fff !important;
+//     }
+//     table.university-table th:first-child,
+//     table.university-table td:first-child { text-align:left !important; white-space:normal; word-break:break-word; }
+//     table.university-table thead tr.main-row th {
+//         background: #0076B6 !important; color: #fff !important;
+//         position: sticky; top: 0; z-index: 25;
+//     }
+//     tr.expense-head { font-weight:700; cursor:pointer; }
+//     tr.expense-head:hover td { background:#F4F9FD !important; }
+//     tr.sub-head { background:#FFF3E6 !important; font-weight:600; cursor:pointer; }
+//     tr.sub-head:hover td { background:#FFEAD5 !important; }
+//     tr.line-item td:first-child { padding-left:35px !important; }
+//     tr.sub-head td:first-child { padding-left:20px !important; }
+//     .text-blue { color:#0076B6; font-weight:600; }
+//     tr.grand-total-row td { background:#003B63 !important; color:#fff !important; font-weight:700 !important; }
+
+//     /* ══ SUMMARY LAYOUT ══ */
+//     #summary-area {
+//         display: grid;
+//         grid-template-columns: 1fr 500px;
+//         gap: 0 20px;
+//         align-items: start;
+//         margin-bottom: 18px;
+//     }
+
+//     /* ── Cards column ── */
+//     #cards-area { min-width: 0; }
+
+//     .cards-section-label {
+//         font-size: 11px; font-weight: 700; letter-spacing: .8px;
+//         text-transform: uppercase; color: #888;
+//         margin: 14px 0 7px; padding-left: 2px;
+//     }
+//     .cards-section-label:first-child { margin-top: 0; }
+
+//     .grand-total-summary-card {
+//         border: 1px solid #e0e0e0;
+//         border-left: 4px solid #0076B6;
+//         border-radius: 8px;
+//         padding: 12px 14px;
+//         background: #fff;
+//         box-sizing: border-box;
+//         min-width: 0;
+//         overflow: hidden;
+//         word-break: break-word;
+//         transition: box-shadow .15s ease;
+//         display: flex;
+//         flex-direction: column;
+//         margin-bottom: 14px;
+//     }
+//     .grand-total-summary-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+//     .grand-total-summary-card .number-title {
+//         font-size: 11px; font-weight: 600; color: #555;
+//         text-transform: uppercase; letter-spacing: .5px;
+//         margin-bottom: 8px; min-height: 16px;
+//         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+//     }
+
+//     .card-row-grid {
+//         display: grid !important;
+//         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+//         gap: 10px; margin-bottom: 12px;
+//         width: 100%; box-sizing: border-box;
+//     }
+//     .card-row-grid.sub-grid {
+//         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+//         gap: 8px;
+//     }
+
+//     .number-card {
+//         border: 1px solid #e0e0e0;
+//         border-left: 3px solid #ccc;
+//         border-radius: 8px; padding: 12px 14px;
+//         background: #fff; box-sizing: border-box;
+//         min-width: 0; overflow: hidden; word-break: break-word;
+//         transition: box-shadow .15s ease;
+//         display: flex; flex-direction: column;
+//     }
+//     .number-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+//     .number-card.sub {
+//         background: #fafafa; border-color: #ebebeb;
+//         border-left-width: 3px; border-radius: 7px; padding: 10px 12px;
+//         display: flex; flex-direction: column;
+//     }
+
+//     .number-title {
+//         font-size: 11px; font-weight: 600; color: #555;
+//         text-transform: uppercase; letter-spacing: .5px;
+//         margin-bottom: 8px;
+//         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+//         min-height: 16px;
+//     }
+//     .number-card.sub .number-title { font-size: 10px; color: #777; }
+
+//     .kpi-row { display: flex; justify-content: space-between; margin-top: 4px; }
+//     .kpi-block { text-align: left; }
+//     .kpi-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .4px; }
+//     .kpi-value { font-size: 14px; font-weight: 700; color: #111; }
+//     .number-card.sub .kpi-value { font-size: 13px; }
+
+//     .kpi-bottom {
+//         display: flex; justify-content: space-between;
+//         margin-top: 8px; padding-top: 7px;
+//         border-top: 1px solid #f0f0f0;
+//     }
+
+//     .util-bar-wrap {
+//         margin-top: auto; padding-top: 8px;
+//         border-top: 1px solid #f0f0f0;
+//     }
+//     .util-bar-bg { width:100%; height:4px; background:#f0f0ed; border-radius:2px; overflow:hidden; }
+//     .util-bar { height:100%; border-radius:2px; transition:width .4s ease; }
+
+//     /* ── Charts column ── */
+//     #charts-row {
+//         display: flex; flex-direction: column;
+//         gap: 14px; min-width: 0; margin-top: 23px;
+//     }
+//     .pie-card {
+//         background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+//         padding: 14px 16px; box-sizing: border-box;
+//         display: grid;
+//         grid-template-columns: 220px 1fr;
+//         grid-template-rows: auto 1fr;
+//         column-gap: 16px; align-items: start;
+//         overflow: visible; position: relative;
+//     }
+//     .pie-title {
+//         grid-column: 1 / -1;
+//         font-size: 11px; font-weight: 700; color: #444;
+//         text-transform: uppercase; letter-spacing: .6px;
+//         margin-bottom: 10px;
+//     }
+//     .pie-canvas-wrap {
+//         width: 220px; height: 220px;
+//         position: relative; overflow: visible;
+//     }
+//     .pie-canvas-wrap canvas {
+//         width: 220px !important;
+//         height: 220px !important;
+//     }
+//     .pie-legend {
+//         display: flex; flex-direction: column;
+//         gap: 5px; align-self: center; min-width: 0;
+//     }
+//     .pie-legend-item {
+//         display: grid;
+//         grid-template-columns: 10px 1fr auto;
+//         align-items: center; gap: 5px;
+//         font-size: 11px; color: #555; min-width: 0;
+//     }
+//     .pie-legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+//     .pie-legend-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+//     .pie-legend-pct { font-weight:700; color:#222; white-space:nowrap; padding-left:4px; min-width:36px; text-align:right; }
+
+//     /* ── Loader ── */
+//     #global-loader.loader-overlay {
+//         position:fixed; inset:0; width:100vw; height:100vh;
+//         background:rgba(18,18,18,.92); backdrop-filter:blur(6px);
+//         z-index:999999; display:none; align-items:center; justify-content:center;
+//     }
+//     #global-loader.loader-overlay.active { display:flex; }
+//     .loader-box { display:flex; flex-direction:column; align-items:center; gap:14px; }
+//     .loader-logo {
+//         width:90px; height:90px; border-radius:50%;
+//         background:linear-gradient(145deg,#fff,#eaeaea); padding:14px;
+//         object-fit:contain; box-shadow:0 10px 30px rgba(0,0,0,.35);
+//         animation:pulse 1.6s infinite ease-in-out;
+//     }
+//     .loader-text { font-size:14px; color:#fff; font-weight:600; opacity:.85; }
+//     @keyframes pulse { 0%,100%{transform:scale(1);opacity:.8;} 50%{transform:scale(1.08);opacity:1;} }
+
+//     .custom-filter-row { padding:15px 20px; background:#fff; border-radius:6px; margin-top:10px; }
+//     .custom-filter-row.row { margin-left:0; margin-right:0; }
+//     .custom-select-all-btn { margin-right:8px; }
+
+//     /* ── Responsive ── */
+//     @media(max-width:1280px) {
+//         #summary-area { grid-template-columns: 1fr 460px; }
+//         .pie-canvas-wrap, .pie-canvas-wrap canvas { width:200px !important; height:200px !important; }
+//         .pie-card { grid-template-columns: 200px 1fr; }
+//     }
+//     @media(max-width:1024px) {
+//         #summary-area { grid-template-columns: 1fr; }
+//         #charts-row { flex-direction: row; }
+//         .pie-card { grid-template-columns: 180px 1fr; }
+//         .pie-canvas-wrap, .pie-canvas-wrap canvas { width:180px !important; height:180px !important; }
+//     }
+//     @media(max-width:768px) {
+//         #tables-container { margin:6px; padding:6px; }
+//         #controls-row { flex-direction:column; align-items:stretch; }
+//         #global-search-box { max-width:100%; width:100%; }
+//         #summary-area { grid-template-columns: 1fr; }
+//         #charts-row { flex-direction: column; }
+//         .card-row-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+//         .card-row-grid.sub-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+//         .pie-card { grid-template-columns: 1fr; }
+//         .pie-canvas-wrap { width:100%; height:200px; }
+//         .pie-canvas-wrap canvas { width:100% !important; height:200px !important; }
+//         .custom-filter-row { padding:10px; }
+//         .custom-filter-row .col-md-4 { width:100%; margin-bottom:8px; }
+//         table.university-table { font-size:11px; }
+//         table.university-table th, table.university-table td { padding:5px 6px; }
+//     }
+//     @media(max-width:480px) {
+//         .card-row-grid, .card-row-grid.sub-grid { grid-template-columns: 1fr !important; }
+//         #export-excel-btn { width:100%; }
+//     }
+//     </style>`).appendTo('head');
+
+//     if (!$("#global-loader").length) {
+//         $("body").append(`
+//             <div id="global-loader" class="loader-overlay">
+//                 <div class="loader-box">
+//                     <img src="/files/APF logo.png" class="loader-logo" alt="Loading">
+//                     <div class="loader-text">Loading, please wait…</div>
+//                 </div>
+//             </div>
+//         `);
+//     }
+//     const Loader = {
+//         show(msg = "Loading, please wait…") { $("#global-loader").find(".loader-text").text(msg); $("#global-loader").addClass("active"); },
+//         hide() { $("#global-loader").removeClass("active"); }
+//     };
+
+//     let page = frappe.ui.make_app_page({
+//         parent: wrapper,
+//         title: 'Budget vs Actuals Face Sheet',
+//         single_column: true
+//     });
+
+//     function updatePageTitle(fy) {
+//         page.set_title('Budget vs Actuals Face Sheet' + (fy ? ' – ' + fy : ''));
+//     }
+
+//     /* ── Filters ── */
+//     let filter_section = $(`<div class="frappe-control-group row custom-filter-row"></div>`).appendTo(page.body);
+//     const make_field = () => $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+
+//     function mergeSelectedOptions(ctrl, new_opts) {
+//         let selected = (ctrl.get_value() || []).map(String);
+//         let map = {};
+//         ((ctrl.df && ctrl.df.options) ? ctrl.df.options : []).forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
+//         new_opts.forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
+//         selected.forEach(v => { if (!map[v]) map[v] = { label:v, value:v, description:"" }; });
+//         return Object.values(map);
+//     }
+
+//     function addSelectAllButton(ctrl, label) {
+//         if (!ctrl?.$input) return;
+//         ctrl.$input.on("focus", function () {
+//             setTimeout(function () {
+//                 let $dd = $('.multiselect-dropdown:visible').last();
+//                 if (!$dd.length) return;
+//                 let $act = $dd.find('.multiselect-actions');
+//                 if (!$act.length) return;
+//                 $act.find('.custom-select-all-btn').remove();
+//                 let $btn = $(`<button type="button" class="btn btn-xs btn-default custom-select-all-btn">Select All</button>`);
+//                 $btn.on("click", function (e) {
+//                     e.stopPropagation(); e.preventDefault();
+//                     function apply(data) { let vals = data.map(d => String(d.value ?? d)); if (vals.length) ctrl.set_value(vals); }
+//                     if (ctrl.get_data) {
+//                         let r = ctrl.get_data();
+//                         r && typeof r.then === "function" ? r.then(apply).catch(err => console.error(label, err)) : Array.isArray(r) && apply(r);
+//                     } else if (Array.isArray(ctrl.df?.options)) {
+//                         apply(ctrl.df.options.map(o => typeof o === "object" ? o : { value:o }));
+//                     }
+//                 });
+//                 $act.prepend($btn);
+//             }, 120);
+//         });
+//     }
+
+//     let fiscal_year_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Financial Year", fieldtype:"Select", fieldname:"financial_year", reqd:1,
+//             change() { let y = this.get_value(); if (y) updatePageTitle(y); }
+//         }, render_input:true
+//     });
+//     fiscal_year_filter.refresh();
+//     frappe.call({
+//         method: "annual_budget.api.filter_options.get_financial_year_list",
+//         callback(r) {
+//             if (!r.message?.length) return;
+//             let years = r.message.map(d => d.financial_year);
+//             fiscal_year_filter.df.options = years.join("\n"); fiscal_year_filter.refresh();
+//             let now = new Date(), m = now.getMonth()+1, y = now.getFullYear();
+//             let fy = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+//             let def = years.includes(fy) ? fy : years[0];
+//             fiscal_year_filter.set_value(def); updatePageTitle(def);
+//         }
+//     });
+
+//     let month_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"YTD Month", fieldtype:"Select", fieldname:"month", reqd:1,
+//             options:["January","February","March","April","May","June","July","August","September","October","November","December"].join("\n")
+//         }, render_input:true
+//     });
+//     month_filter.set_value(new Date().toLocaleString('default', { month:'long' }));
+
+//     let theme_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Operating Units", fieldtype:"MultiSelectList", fieldname:"theme",
+//             get_data() { return frappe.call({ method:"annual_budget.api.filter_options.get_theme" }).then(r => (r.message||[]).map(d => ({ label:d.number_card_title, value:d.name, description:"" }))); }
+//         }, render_input:true
+//     });
+//     addSelectAllButton(theme_filter, "Operating Units");
+
+//     let unit_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Unit", fieldtype:"MultiSelectList", fieldname:"unit", reqd:1,
+//             get_data() { return frappe.call({ method:"annual_budget.api.filter_options.get_units" }).then(r => (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"" }))); },
+//             change() {
+//                 let units = (unit_filter.get_value()||[]).map(String);
+//                 cost_center_filter.set_value([]); location_code_filter.set_value([]);
+//                 cost_center_filter.df.options = []; cost_center_filter.refresh();
+//                 location_code_filter.df.options = []; location_code_filter.refresh();
+//                 if (units.length) { loadCostCenters(units); loadLocationCodes(units); }
+//             }
+//         }, render_input:true
+//     });
+//     addSelectAllButton(unit_filter, "Unit");
+
+//     let cost_center_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Cost Center", fieldtype:"MultiSelectList", fieldname:"cost_center", options:[] },
+//         render_input:true
+//     });
+//     addSelectAllButton(cost_center_filter, "Cost Center");
+
+//     let location_code_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Location Code", fieldtype:"MultiSelectList", fieldname:"location_code", options:[] },
+//         render_input:true
+//     });
+//     addSelectAllButton(location_code_filter, "Location Code");
+
+//     let load_button = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:" ", fieldtype:"Button", fieldname:"load_button", click() { loadData(); } },
+//         render_input:true
+//     });
+//     load_button.$wrapper.find('button').addClass("btn-primary").text("Get Report");
+//     load_button.$wrapper.css("margin-top", "26px");
+
+//     frappe.require("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+
+//     /* ── Container — report-content hidden until data loads ── */
+//     const $container = $(`
+//         <div id="tables-container">
+//             <div id="report-content" style="display:none;">
+//                 <div id="summary-area">
+//                     <div class="cards-col" id="cards-area"></div>
+//                     <div id="charts-row">
+//                         <div class="pie-card">
+//                             <div class="pie-title">Budget Breakdown</div>
+//                             <div class="pie-canvas-wrap"><canvas id="budget-pie"></canvas></div>
+//                             <div class="pie-legend" id="budget-legend"></div>
+//                         </div>
+//                         <div class="pie-card">
+//                             <div class="pie-title">Actuals Breakdown</div>
+//                             <div class="pie-canvas-wrap"><canvas id="actuals-pie"></canvas></div>
+//                             <div class="pie-legend" id="actuals-legend"></div>
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div id="controls-row">
+//                     <input id="global-search-box" type="text" placeholder="Search Expense / Sub Head / Item…">
+//                     <div id="controls-right">
+//                         <label id="expand-all-wrapper">
+//                             <input type="checkbox" id="expand-all-checkbox"> Expand All
+//                         </label>
+//                         <button id="export-excel-btn">↓ Export to Excel</button>
+//                     </div>
+//                 </div>
+//                 <div class="scroll-wrapper">
+//                     <table class="university-table" id="phase-table"></table>
+//                 </div>
+//             </div>
+//         </div>
+//     `);
+//     $(page.body).append($container);
+
+//     /* ── State ── */
+//     let expense_heads = [], expandedHeads = [], expandedSubHeads = [], searchText = "";
+
+//     const PALETTE = [
+//         '#0076B6','#f58020','#2ecc71','#9b59b6',
+//         '#e74c3c','#1abc9c','#e67e22','#2980b9',
+//         '#8e44ad','#27ae60','#c0392b','#16a085'
+//     ];
+//     const headColor = i => PALETTE[i % PALETTE.length];
+
+//     function utilColor(u) {
+//         if (u > 100) return '#c0392b';
+//         if (u >= 60)  return '#e07c3a';
+//         return '#27ae60';
+//     }
+
+//     const fmt  = n => Math.round(Number(n)||0).toLocaleString('en-IN', { maximumFractionDigits:0 });
+//     const rnd  = n => Math.round(Number(n)||0);
+//     const pct  = (b, a) => { b = rnd(b); a = rnd(a); return b ? Math.round((a/b)*100) : 0; };
+//     const mtch = (...v) => v.some(x => String(x||'').toLowerCase().includes(searchText.toLowerCase()));
+
+//     function getKey(ctrl, key) {
+//         let sel = (ctrl.get_value()||[]).map(String);
+//         let opts = Array.isArray(ctrl.df?.options) ? ctrl.df.options : [];
+//         return sel.map(v => { let o = opts.find(o => o && String(o.value)===v); return o?.[key]||null; }).filter(Boolean);
+//     }
+
+//     /* ── Events ── */
+//     $container.find('#global-search-box').on('input', function () {
+//         searchText = $(this).val().trim();
+//         if (searchText) {
+//             expandedHeads    = expense_heads.map(h => h.name);
+//             expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+//         } else {
+//             expandedHeads = []; expandedSubHeads = [];
+//             $('#expand-all-checkbox').prop('checked', false);
+//         }
+//         renderTable();
+//     });
+
+//     $(document).on('change', '#expand-all-checkbox', function () {
+//         if ($(this).is(':checked')) {
+//             expandedHeads    = expense_heads.map(h => h.name);
+//             expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+//         } else { expandedHeads = []; expandedSubHeads = []; }
+//         renderTable();
+//     });
+
+//     $(document).on('click', '#export-excel-btn', exportToExcel);
+
+//     function exportToExcel() {
+//         if (typeof XLSX === "undefined") { frappe.msgprint("Excel library not loaded yet."); return; }
+//         let data = [["Expense Items","Budget","Actuals","Util %","Variance"]];
+//         let gB = 0, gA = 0;
+//         expense_heads.forEach(h => {
+//             let hB = rnd(h.ytd), hA = rnd(h.total_posted_amt_ytd);
+//             gB += hB; gA += hA;
+//             data.push([h.name, hB, hA, pct(hB,hA)+"%", hB-hA]);
+//             (h.sub_heads||[]).forEach(s => {
+//                 let sB = rnd(s.ytd), sA = rnd(s.total_posted_amt_ytd);
+//                 data.push(["   "+s.name, sB, sA, pct(sB,sA)+"%", sB-sA]);
+//                 (s.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["      "+i.name,b,a,pct(b,a)+"%",b-a]); });
+//             });
+//             (h.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["   "+i.name,b,a,pct(b,a)+"%",b-a]); });
+//         });
+//         data.push(["GRAND TOTAL", gB, gA, pct(gB,gA)+"%", gB-gA]);
+//         let ws = XLSX.utils.aoa_to_sheet(data);
+//         ws["!cols"] = [{wch:40},{wch:15},{wch:15},{wch:10},{wch:15}];
+//         let wb = XLSX.utils.book_new();
+//         XLSX.utils.book_append_sheet(wb, ws, "Expense Report");
+//         XLSX.writeFile(wb, "Expense_Report.xlsx");
+//     }
+
+//     function loadCostCenters(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
+//             args: { units: units.join(",") },
+//             callback(r) {
+//                 let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"", erp_cost_center_value:String(d.erp_cost_center_value||"") }));
+//                 cost_center_filter.df.options = mergeSelectedOptions(cost_center_filter, opts);
+//                 cost_center_filter.refresh();
+//             }
+//         });
+//     }
+
+//     function loadLocationCodes(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_location_codes_by_unit",
+//             args: { unit: units.join(",") },
+//             callback(r) {
+//                 let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"", erp_loc_value:String(d.erp_loc_value||"") }));
+//                 location_code_filter.df.options = mergeSelectedOptions(location_code_filter, opts);
+//                 location_code_filter.refresh();
+//             }
+//         });
+//     }
+
+//     function loadData() {
+//         let fy   = fiscal_year_filter.get_value();
+//         let mon  = month_filter.get_value();
+//         let unit = (unit_filter.get_value()||[]).join(",") || null;
+//         let missing = [];
+//         if (!fy)   missing.push("Financial Year");
+//         if (!mon)  missing.push("Month");
+//         if (!unit) missing.push("Unit");
+//         if (missing.length) { frappe.msgprint({ title:"Required Filters", message:"Please select: "+missing.join(", "), indicator:"orange" }); return; }
+
+//         Loader.show("We're crafting your report with care…");
+//         $('#expand-all-checkbox').prop('checked', false);
+//         $('#global-search-box').val("");
+//         expandedHeads = []; expandedSubHeads = []; searchText = "";
+
+//         frappe.call({
+//             method: "annual_budget.api.phase_sheet.get_combined_actuals",
+//             args: {
+//                 financial_year: fy, month: mon, unit,
+//                 cost_center:           (getKey(cost_center_filter,"value")||[]).join(",") || null,
+//                 location_code:         (getKey(location_code_filter,"value")||[]).join(",") || null,
+//                 erp_cost_center_value: (getKey(cost_center_filter,"erp_cost_center_value")||[]).join(",") || null,
+//                 erp_loc_value:         (getKey(location_code_filter,"erp_loc_value")||[]).join(",") || null
+//             }
+//         })
+//         .done(r => {
+//             expense_heads = Array.isArray(r.message) ? r.message : (r.message?.message || []);
+
+//             // Reveal everything only after data is ready
+//             $('#report-content').show();
+
+//             renderCards(expense_heads);
+//             renderTable();
+//         })
+//         .fail(() => frappe.msgprint({ title:"Error", message:"Failed to load data.", indicator:"red" }))
+//         .always(() => Loader.hide());
+//     }
+
+//     /* ── Build card ── */
+//     function buildCard(name, budget, actual, color, isSub) {
+//         let u  = pct(budget, actual);
+//         let bw = Math.min(u, 100);
+//         let uc = utilColor(u);
+//         let cls = isSub ? 'number-card sub' : 'number-card';
+//         return $(`
+//             <div class="${cls}" style="border-left-color:${color};">
+//                 <div class="number-title" title="${frappe.utils.escape_html(name)}">${frappe.utils.escape_html(name)}</div>
+//                 <div class="kpi-row">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Budget</div>
+//                         <div class="kpi-value">${fmt(budget)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Actual</div>
+//                         <div class="kpi-value">${fmt(actual)}</div>
+//                     </div>
+//                 </div>
+//                 <div class="kpi-bottom">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Variance</div>
+//                         <div class="kpi-value">${fmt(budget - actual)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Util %</div>
+//                         <div class="kpi-value" style="color:${uc};">${u}%</div>
+//                     </div>
+//                 </div>
+//                 <div class="util-bar-wrap">
+//                     <div class="util-bar-bg">
+//                         <div class="util-bar" style="width:${bw}%; background:${uc};"></div>
+//                     </div>
+//                 </div>
+//             </div>
+//         `);
+//     }
+
+//     /* ── Pie charts ── */
+//     let _budgetPie = null, _actualsPie = null;
+
+//     function renderPieCharts(data) {
+//         function draw() {
+//             const BUDGET_COLORS = [
+//                 '#4361EE','#3A0CA3','#7209B7','#F72585',
+//                 '#4CC9F0','#4895EF','#560BAD','#B5179E',
+//                 '#3F37C9','#480CA8','#6A0572','#D62828'
+//             ];
+//             const ACTUAL_COLORS = [
+//                 '#2D6A4F','#40916C','#52B788','#74C69D',
+//                 '#F4A261','#E76F51','#E9C46A','#264653',
+//                 '#2A9D8F','#8AB17D','#BABB74','#E07A5F'
+//             ];
+
+//             let labels = [], budgets = [], actuals = [];
+//             (data||[]).forEach(h => {
+//                 let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0 || rnd(s.total_posted_amt_ytd) !== 0);
+//                 if (validSubs.length) {
+//                     validSubs.forEach(s => { labels.push(s.name); budgets.push(rnd(s.ytd)); actuals.push(rnd(s.total_posted_amt_ytd)); });
+//                 } else {
+//                     labels.push(h.name); budgets.push(rnd(h.ytd)); actuals.push(rnd(h.total_posted_amt_ytd));
+//                 }
+//             });
+
+//             const budgetColors = labels.map((_, i) => BUDGET_COLORS[i % BUDGET_COLORS.length]);
+//             const actualColors = labels.map((_, i) => ACTUAL_COLORS[i % ACTUAL_COLORS.length]);
+
+//             const pctPlugin = {
+//                 id: 'pctLabels',
+//                 afterDatasetDraw(chart) {
+//                     let { ctx, data } = chart;
+//                     let ds = data.datasets[0];
+//                     let total = ds.data.reduce((a,b)=>a+b,0);
+//                     if (!total) return;
+//                     let meta = chart.getDatasetMeta(0);
+//                     ctx.save();
+//                     meta.data.forEach((arc, i) => {
+//                         let p = Math.round((ds.data[i]/total)*100);
+//                         if (p < 4) return;
+//                         let { x, y } = arc.tooltipPosition();
+//                         ctx.fillStyle = '#fff';
+//                         ctx.font = 'bold 11px sans-serif';
+//                         ctx.textAlign = 'center';
+//                         ctx.textBaseline = 'middle';
+//                         ctx.fillText(p + '%', x, y);
+//                     });
+//                     ctx.restore();
+//                 }
+//             };
+
+//             function buildLegend(id, values, colors) {
+//                 let total = values.reduce((a,b)=>a+b,0);
+//                 let $leg = $('#' + id).empty();
+//                 labels.forEach((lbl, i) => {
+//                     let p = total ? Math.round((values[i]/total)*100) : 0;
+//                     $leg.append(`
+//                         <div class="pie-legend-item">
+//                             <div class="pie-legend-dot" style="background:${colors[i]};"></div>
+//                             <span class="pie-legend-name" title="${frappe.utils.escape_html(lbl)}">${frappe.utils.escape_html(lbl)}</span>
+//                             <span class="pie-legend-pct">${p}%</span>
+//                         </div>
+//                     `);
+//                 });
+//             }
+
+//             function makePie(canvasId, values, colors, existing) {
+//                 if (existing) existing.destroy();
+//                 let ctx = document.getElementById(canvasId)?.getContext('2d');
+//                 if (!ctx) return null;
+//                 return new Chart(ctx, {
+//                     type: 'doughnut',
+//                     data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 10 }] },
+//                     options: {
+//                         responsive: false,
+//                         cutout: '50%',
+//                         animation: { animateRotate: true, duration: 600 },
+//                         layout: { padding: 10 },
+//                         plugins: {
+//                             legend: { display: false },
+//                             tooltip: {
+//                                 enabled: true,
+//                                 mode: 'nearest',
+//                                 intersect: true,
+//                                 position: 'average',
+//                                 callbacks: {
+//                                     title(items) { return items[0]?.label || ''; },
+//                                     label(ctx) {
+//                                         let total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+//                                         let p = total ? Math.round((ctx.parsed/total)*100) : 0;
+//                                         return ` ₹${ctx.parsed.toLocaleString('en-IN')}  (${p}%)`;
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     plugins: [pctPlugin]
+//                 });
+//             }
+
+//             _budgetPie  = makePie('budget-pie',  budgets, budgetColors, _budgetPie);
+//             _actualsPie = makePie('actuals-pie', actuals, actualColors, _actualsPie);
+//             buildLegend('budget-legend',  budgets, budgetColors);
+//             buildLegend('actuals-legend', actuals, actualColors);
+//         }
+
+//         if (window.Chart) { draw(); return; }
+//         let s = document.createElement('script');
+//         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+//         s.onload = draw;
+//         document.head.appendChild(s);
+//     }
+
+//     /* ── Render cards ── */
+//     function renderCards(data) {
+//         let $area = $('#cards-area');
+//         $area.empty();
+//         if (!data?.length) return;
+
+//         let gB = 0, gA = 0;
+//         data.forEach(h => { gB += rnd(h.ytd); gA += rnd(h.total_posted_amt_ytd); });
+
+//         let gU  = pct(gB, gA);
+//         let gBw = Math.min(gU, 100);
+//         let gUc = utilColor(gU);
+
+//         $area.append(`<div class="cards-section-label">Grand Total</div>`);
+//         $area.append(`
+//             <div class="grand-total-summary-card">
+//                 <div class="number-title">Grand Total</div>
+//                 <div class="kpi-row">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Budget</div>
+//                         <div class="kpi-value">${fmt(gB)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Actual</div>
+//                         <div class="kpi-value">${fmt(gA)}</div>
+//                     </div>
+//                 </div>
+//                 <div class="kpi-bottom">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Variance</div>
+//                         <div class="kpi-value">${fmt(gB - gA)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Util %</div>
+//                         <div class="kpi-value" style="color:${gUc};">${gU}%</div>
+//                     </div>
+//                 </div>
+//                 <div class="util-bar-wrap">
+//                     <div class="util-bar-bg">
+//                         <div class="util-bar" style="width:${gBw}%; background:${gUc};"></div>
+//                     </div>
+//                 </div>
+//             </div>
+//         `);
+
+//         let mainHeads = data.filter(h => rnd(h.ytd) !== 0);
+//         if (!mainHeads.length) {
+//             requestAnimationFrame(() => requestAnimationFrame(() => renderPieCharts(data)));
+//             return;
+//         }
+
+//         $area.append(`<div class="cards-section-label">Expense Heads</div>`);
+//         let $mainGrid = $('<div class="card-row-grid"></div>');
+//         mainHeads.forEach((h, i) => {
+//             $mainGrid.append(buildCard(h.name, rnd(h.ytd), rnd(h.total_posted_amt_ytd), headColor(i), false));
+//         });
+//         $area.append($mainGrid);
+
+//         mainHeads.forEach((h, i) => {
+//             let color     = headColor(i);
+//             let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0);
+//             if (!validSubs.length) return;
+//             $area.append(`
+//                 <div class="cards-section-label" style="color:${color};">
+//                     <span style="opacity:.45; color:#888;">Sub Heads —</span>
+//                     ${frappe.utils.escape_html(h.name)}
+//                 </div>
+//             `);
+//             let $subGrid = $('<div class="card-row-grid sub-grid"></div>');
+//             validSubs.forEach(s => {
+//                 $subGrid.append(buildCard(s.name, rnd(s.ytd), rnd(s.total_posted_amt_ytd), color, true));
+//             });
+//             $area.append($subGrid);
+//         });
+
+//         requestAnimationFrame(() => requestAnimationFrame(() => renderPieCharts(data)));
+//     }
+
+//     /* ── Render table ── */
+//     function renderTable() {
+//         let $table = $('#phase-table');
+//         $table.html('');
+
+//         if (!expense_heads?.length) {
+//             $table.append(`<tr><td colspan="5" style="text-align:center;padding:20px;color:#888;">No Data Found</td></tr>`);
+//             return;
+//         }
+
+//         $table.append(`
+//             <thead>
+//                 <tr class="main-row">
+//                     <th>Expense Head</th><th>Budget</th><th>Actuals</th><th>Util %</th><th>Variance</th>
+//                 </tr>
+//             </thead>
+//         `);
+
+//         let $tbody = $('<tbody></tbody>');
+//         let gB = 0, gA = 0;
+
+//         expense_heads.forEach(head => {
+//             if (searchText &&
+//                 !mtch(head.name) &&
+//                 !(head.items||[]).some(i => mtch(i.name)) &&
+//                 !(head.sub_heads||[]).some(s => mtch(s.name) || (s.items||[]).some(i => mtch(i.name)))
+//             ) return;
+
+//             let hB = rnd(head.ytd), hA = rnd(head.total_posted_amt_ytd);
+//             gB += hB; gA += hA;
+//             let exp  = expandedHeads.includes(head.name);
+//             let hasC = head.items?.length || head.sub_heads?.length;
+
+//             $tbody.append(`
+//                 <tr class="expense-head" data-head="${frappe.utils.escape_html(head.name)}">
+//                     <td>${hasC ? (exp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(head.name)}</td>
+//                     <td>${fmt(hB)}</td><td>${fmt(hA)}</td>
+//                     <td class="text-blue">${pct(hB,hA)}%</td>
+//                     <td class="text-blue">${fmt(hB-hA)}</td>
+//                 </tr>
+//             `);
+
+//             if (exp) {
+//                 (head.items||[]).forEach(item => {
+//                     if (searchText && !mtch(item.name)) return;
+//                     let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
+//                     $tbody.append(`<tr class="line-item"><td>${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+//                 });
+//                 (head.sub_heads||[]).forEach(sub => {
+//                     let key  = head.name+"__"+sub.name;
+//                     let sB   = rnd(sub.ytd), sA = rnd(sub.total_posted_amt_ytd);
+//                     let sExp = expandedSubHeads.includes(key);
+//                     $tbody.append(`
+//                         <tr class="sub-head" data-sub="${frappe.utils.escape_html(key)}">
+//                             <td>${sub.items?.length ? (sExp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(sub.name)}</td>
+//                             <td>${fmt(sB)}</td><td>${fmt(sA)}</td>
+//                             <td class="text-blue">${pct(sB,sA)}%</td>
+//                             <td class="text-blue">${fmt(sB-sA)}</td>
+//                         </tr>
+//                     `);
+//                     if (sExp) {
+//                         (sub.items||[]).forEach(item => {
+//                             let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
+//                             $tbody.append(`<tr class="line-item"><td style="padding-left:55px">${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+//                         });
+//                     }
+//                 });
+//             }
+//         });
+
+//         $tbody.append(`
+//             <tr class="grand-total-row">
+//                 <td>GRAND TOTAL</td><td>${fmt(gB)}</td><td>${fmt(gA)}</td>
+//                 <td>${pct(gB,gA)}%</td><td>${fmt(gB-gA)}</td>
+//             </tr>
+//         `);
+//         $table.append($tbody);
+
+//         let allH = expense_heads.map(h=>h.name);
+//         let allS = expense_heads.flatMap(h=>(h.sub_heads||[]).map(s=>h.name+"__"+s.name));
+//         $('#expand-all-checkbox').prop('checked',
+//             allH.length > 0 && allH.every(n=>expandedHeads.includes(n)) && allS.every(k=>expandedSubHeads.includes(k))
+//         );
+
+//         $tbody.on('click','.expense-head', function () {
+//             let n = $(this).data('head');
+//             expandedHeads.includes(n) ? expandedHeads=expandedHeads.filter(x=>x!==n) : expandedHeads.push(n);
+//             renderTable();
+//         });
+//         $tbody.on('click','.sub-head', function () {
+//             let k = $(this).data('sub');
+//             expandedSubHeads.includes(k) ? expandedSubHeads=expandedSubHeads.filter(x=>x!==k) : expandedSubHeads.push(k);
+//             renderTable();
+//         });
+//     }
+// };
+
+
+
+// update 1
+// frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
+
+//     $(`<style>
+//     #tables-container {
+//         margin: 20px;
+//         background: #fff;
+//         border-radius: 8px;
+//         padding: 8px;
+//     }
+//     #controls-row {
+//         display: flex; flex-wrap: wrap;
+//         justify-content: space-between; align-items: center;
+//         gap: 8px; margin-bottom: 12px; padding: 8px 10px;
+//         background: #f7f9fb; border: 1px solid #dcdcdc; border-radius: 6px;
+//     }
+//     #global-search-box {
+//         flex: 1 1 200px; min-width: 0; max-width: 320px;
+//         padding: 7px 12px; border: 1px solid #aaa;
+//         border-radius: 6px; font-size: 13px; box-sizing: border-box;
+//     }
+//     #controls-right { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+//     #expand-all-wrapper {
+//         display: flex; align-items: center; gap: 7px;
+//         font-size: 13px; font-weight: 600; color: #444;
+//         cursor: pointer; user-select: none; white-space: nowrap;
+//     }
+//     #expand-all-checkbox { width:16px; height:16px; accent-color:#0076B6; cursor:pointer; }
+//     #export-excel-btn {
+//         display: inline-flex; align-items: center; gap: 6px;
+//         padding: 6px 14px; font-size: 13px; font-weight: 600;
+//         color: #fff !important; background: #0076B6;
+//         border: 1px solid #0076B6; border-radius: 6px;
+//         cursor: pointer; white-space: nowrap; line-height: 1.5;
+//         box-shadow: 0 1px 3px rgba(0,0,0,.12); text-decoration: none;
+//         transition: background .15s ease;
+//     }
+//     #export-excel-btn:hover { background:#005f94; border-color:#005f94; }
+
+//     .scroll-wrapper {
+//         border: 1px solid #ccc; border-radius: 6px;
+//         overflow-x: auto; overflow-y: auto; max-height: 70vh;
+//         background: #fff; -webkit-overflow-scrolling: touch;
+//     }
+//     table.university-table { min-width: 600px; width: 100%; border-collapse: collapse; font-size: 13px; }
+//     table.university-table th, table.university-table td {
+//         border: 1px solid #ddd; padding: 8px 10px;
+//         white-space: nowrap; vertical-align: middle;
+//         text-align: center; background: #fff !important;
+//     }
+//     table.university-table th:first-child,
+//     table.university-table td:first-child { text-align:left !important; white-space:normal; word-break:break-word; }
+//     table.university-table thead tr.main-row th {
+//         background: #0076B6 !important; color: #fff !important;
+//         position: sticky; top: 0; z-index: 25;
+//     }
+//     tr.expense-head { font-weight:700; cursor:pointer; }
+//     tr.expense-head:hover td { background:#F4F9FD !important; }
+//     tr.sub-head { background:#FFF3E6 !important; font-weight:600; cursor:pointer; }
+//     tr.sub-head:hover td { background:#FFEAD5 !important; }
+//     tr.line-item td:first-child { padding-left:35px !important; }
+//     tr.sub-head td:first-child { padding-left:20px !important; }
+//     .text-blue { color:#0076B6; font-weight:600; }
+//     tr.grand-total-row td { background:#003B63 !important; color:#fff !important; font-weight:700 !important; }
+
+//     /* ══ SUMMARY LAYOUT ══ */
+//     #summary-area {
+//         display: grid;
+//         grid-template-columns: 1fr 500px;
+//         gap: 0 20px;
+//         align-items: start;
+//         margin-bottom: 18px;
+//     }
+
+//     /* ── Cards column ── */
+//     #cards-area { min-width: 0; }
+
+//     .cards-section-label {
+//         font-size: 11px; font-weight: 700; letter-spacing: .8px;
+//         text-transform: uppercase; color: #888;
+//         margin: 14px 0 7px; padding-left: 2px;
+//     }
+//     .cards-section-label:first-child { margin-top: 0; }
+
+//     .grand-total-summary-card {
+//         border: 1px solid #e0e0e0;
+//         border-left: 4px solid #0076B6;
+//         border-radius: 8px;
+//         padding: 12px 14px;
+//         background: #fff;
+//         box-sizing: border-box;
+//         min-width: 0;
+//         overflow: hidden;
+//         word-break: break-word;
+//         transition: box-shadow .15s ease;
+//         display: flex;
+//         flex-direction: column;
+//         margin-bottom: 14px;
+//     }
+//     .grand-total-summary-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+//     .grand-total-summary-card .number-title {
+//         font-size: 11px; font-weight: 600; color: #555;
+//         text-transform: uppercase; letter-spacing: .5px;
+//         margin-bottom: 8px; min-height: 16px;
+//         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+//     }
+
+//     .card-row-grid {
+//         display: grid !important;
+//         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+//         gap: 10px; margin-bottom: 12px;
+//         width: 100%; box-sizing: border-box;
+//     }
+//     .card-row-grid.sub-grid {
+//         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+//         gap: 8px;
+//     }
+
+//     .number-card {
+//         border: 1px solid #e0e0e0;
+//         border-left: 3px solid #ccc;
+//         border-radius: 8px; padding: 12px 14px;
+//         background: #fff; box-sizing: border-box;
+//         min-width: 0; overflow: hidden; word-break: break-word;
+//         transition: box-shadow .15s ease;
+//         display: flex; flex-direction: column;
+//     }
+//     .number-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+//     .number-card.sub {
+//         background: #fafafa; border-color: #ebebeb;
+//         border-left-width: 3px; border-radius: 7px; padding: 10px 12px;
+//         display: flex; flex-direction: column;
+//     }
+
+//     .number-title {
+//         font-size: 11px; font-weight: 600; color: #555;
+//         text-transform: uppercase; letter-spacing: .5px;
+//         margin-bottom: 8px;
+//         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+//         min-height: 16px;
+//     }
+//     .number-card.sub .number-title { font-size: 10px; color: #777; }
+
+//     .kpi-row { display: flex; justify-content: space-between; margin-top: 4px; }
+//     .kpi-block { text-align: left; }
+//     .kpi-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .4px; }
+//     .kpi-value { font-size: 14px; font-weight: 700; color: #111; }
+//     .number-card.sub .kpi-value { font-size: 13px; }
+
+//     .kpi-bottom {
+//         display: flex; justify-content: space-between;
+//         margin-top: 8px; padding-top: 7px;
+//         border-top: 1px solid #f0f0f0;
+//     }
+
+//     .util-bar-wrap {
+//         margin-top: auto; padding-top: 8px;
+//         border-top: 1px solid #f0f0f0;
+//     }
+//     .util-bar-bg { width:100%; height:4px; background:#f0f0ed; border-radius:2px; overflow:hidden; }
+//     .util-bar { height:100%; border-radius:2px; transition:width .4s ease; }
+
+//     /* ── Charts column ── */
+//     #charts-row {
+//         display: flex; flex-direction: column;
+//         gap: 14px; min-width: 0; margin-top: 23px;
+//     }
+//     .pie-card {
+//         background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+//         padding: 14px 16px; box-sizing: border-box;
+//         display: grid;
+//         grid-template-columns: 220px 1fr;
+//         grid-template-rows: auto 1fr;
+//         column-gap: 16px; align-items: start;
+//         overflow: visible; position: relative;
+//     }
+//     .pie-title {
+//         grid-column: 1 / -1;
+//         font-size: 11px; font-weight: 700; color: #444;
+//         text-transform: uppercase; letter-spacing: .6px;
+//         margin-bottom: 10px;
+//     }
+//     .pie-canvas-wrap {
+//         width: 220px; height: 220px;
+//         position: relative; overflow: visible;
+//     }
+//     .pie-canvas-wrap canvas {
+//         width: 220px !important;
+//         height: 220px !important;
+//     }
+//     .pie-legend {
+//         display: flex; flex-direction: column;
+//         gap: 5px; align-self: center; min-width: 0;
+//     }
+//     .pie-legend-item {
+//         display: grid;
+//         grid-template-columns: 10px 1fr auto;
+//         align-items: center; gap: 5px;
+//         font-size: 11px; color: #555; min-width: 0;
+//     }
+//     .pie-legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+//     .pie-legend-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+//     .pie-legend-pct { font-weight:700; color:#222; white-space:nowrap; padding-left:4px; min-width:36px; text-align:right; }
+
+//     /* ── Loader ── */
+//     #global-loader.loader-overlay {
+//         position:fixed; inset:0; width:100vw; height:100vh;
+//         background:rgba(18,18,18,.92); backdrop-filter:blur(6px);
+//         z-index:999999; display:none; align-items:center; justify-content:center;
+//     }
+//     #global-loader.loader-overlay.active { display:flex; }
+//     .loader-box { display:flex; flex-direction:column; align-items:center; gap:14px; }
+//     .loader-logo {
+//         width:90px; height:90px; border-radius:50%;
+//         background:linear-gradient(145deg,#fff,#eaeaea); padding:14px;
+//         object-fit:contain; box-shadow:0 10px 30px rgba(0,0,0,.35);
+//         animation:pulse 1.6s infinite ease-in-out;
+//     }
+//     .loader-text { font-size:14px; color:#fff; font-weight:600; opacity:.85; }
+//     @keyframes pulse { 0%,100%{transform:scale(1);opacity:.8;} 50%{transform:scale(1.08);opacity:1;} }
+
+//     .custom-filter-row { padding:15px 20px; background:#fff; border-radius:6px; margin-top:10px; }
+//     .custom-filter-row.row { margin-left:0; margin-right:0; }
+//     .custom-select-all-btn { margin-right:8px; }
+
+//     /* ── Responsive ── */
+//     @media(max-width:1280px) {
+//         #summary-area { grid-template-columns: 1fr 460px; }
+//         .pie-canvas-wrap, .pie-canvas-wrap canvas { width:200px !important; height:200px !important; }
+//         .pie-card { grid-template-columns: 200px 1fr; }
+//     }
+//     @media(max-width:1024px) {
+//         #summary-area { grid-template-columns: 1fr; }
+//         #charts-row { flex-direction: row; }
+//         .pie-card { grid-template-columns: 180px 1fr; }
+//         .pie-canvas-wrap, .pie-canvas-wrap canvas { width:180px !important; height:180px !important; }
+//     }
+//     @media(max-width:768px) {
+//         #tables-container { margin:6px; padding:6px; }
+//         #controls-row { flex-direction:column; align-items:stretch; }
+//         #global-search-box { max-width:100%; width:100%; }
+//         #summary-area { grid-template-columns: 1fr; }
+//         #charts-row { flex-direction: column; }
+//         .card-row-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+//         .card-row-grid.sub-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+//         .pie-card { grid-template-columns: 1fr; }
+//         .pie-canvas-wrap { width:100%; height:200px; }
+//         .pie-canvas-wrap canvas { width:100% !important; height:200px !important; }
+//         .custom-filter-row { padding:10px; }
+//         .custom-filter-row .col-md-4 { width:100%; margin-bottom:8px; }
+//         table.university-table { font-size:11px; }
+//         table.university-table th, table.university-table td { padding:5px 6px; }
+//     }
+//     @media(max-width:480px) {
+//         .card-row-grid, .card-row-grid.sub-grid { grid-template-columns: 1fr !important; }
+//         #export-excel-btn { width:100%; }
+//     }
+//     </style>`).appendTo('head');
+
+//     if (!$("#global-loader").length) {
+//         $("body").append(`
+//             <div id="global-loader" class="loader-overlay">
+//                 <div class="loader-box">
+//                     <img src="/files/APF logo.png" class="loader-logo" alt="Loading">
+//                     <div class="loader-text">Loading, please wait…</div>
+//                 </div>
+//             </div>
+//         `);
+//     }
+//     const Loader = {
+//         show(msg = "Loading, please wait…") { $("#global-loader").find(".loader-text").text(msg); $("#global-loader").addClass("active"); },
+//         hide() { $("#global-loader").removeClass("active"); }
+//     };
+
+//     let page = frappe.ui.make_app_page({
+//         parent: wrapper,
+//         title: 'Budget vs Actuals Face Sheet',
+//         single_column: true
+//     });
+
+//     function updatePageTitle(fy) {
+//         page.set_title('Budget vs Actuals Face Sheet' + (fy ? ' – ' + fy : ''));
+//     }
+
+//     /* ── Filters ── */
+//     let filter_section = $(`<div class="frappe-control-group row custom-filter-row"></div>`).appendTo(page.body);
+//     const make_field = () => $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
+
+//     function mergeSelectedOptions(ctrl, new_opts) {
+//         let selected = (ctrl.get_value() || []).map(String);
+//         let map = {};
+//         ((ctrl.df && ctrl.df.options) ? ctrl.df.options : []).forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
+//         new_opts.forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
+//         selected.forEach(v => { if (!map[v]) map[v] = { label:v, value:v, description:"" }; });
+//         return Object.values(map);
+//     }
+
+//     function addSelectAllButton(ctrl, label) {
+//         if (!ctrl?.$input) return;
+//         ctrl.$input.on("focus", function () {
+//             setTimeout(function () {
+//                 let $dd = $('.multiselect-dropdown:visible').last();
+//                 if (!$dd.length) return;
+//                 let $act = $dd.find('.multiselect-actions');
+//                 if (!$act.length) return;
+//                 $act.find('.custom-select-all-btn').remove();
+//                 let $btn = $(`<button type="button" class="btn btn-xs btn-default custom-select-all-btn">Select All</button>`);
+//                 $btn.on("click", function (e) {
+//                     e.stopPropagation(); e.preventDefault();
+//                     function apply(data) { let vals = data.map(d => String(d.value ?? d)); if (vals.length) ctrl.set_value(vals); }
+//                     if (ctrl.get_data) {
+//                         let r = ctrl.get_data();
+//                         r && typeof r.then === "function" ? r.then(apply).catch(err => console.error(label, err)) : Array.isArray(r) && apply(r);
+//                     } else if (Array.isArray(ctrl.df?.options)) {
+//                         apply(ctrl.df.options.map(o => typeof o === "object" ? o : { value:o }));
+//                     }
+//                 });
+//                 $act.prepend($btn);
+//             }, 120);
+//         });
+//     }
+
+//     /* ── Financial Year ── */
+//     let fiscal_year_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Financial Year", fieldtype:"Select", fieldname:"financial_year", reqd:1,
+//             change() { let y = this.get_value(); if (y) updatePageTitle(y); }
+//         }, render_input:true
+//     });
+//     fiscal_year_filter.refresh();
+//     frappe.call({
+//         method: "annual_budget.api.filter_options.get_financial_year_list",
+//         callback(r) {
+//             if (!r.message?.length) return;
+//             let years = r.message.map(d => d.financial_year);
+//             fiscal_year_filter.df.options = years.join("\n"); fiscal_year_filter.refresh();
+//             let now = new Date(), m = now.getMonth()+1, y = now.getFullYear();
+//             let fy = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+//             let def = years.includes(fy) ? fy : years[0];
+//             fiscal_year_filter.set_value(def); updatePageTitle(def);
+//         }
+//     });
+
+//     /* ── YTD Month ── */
+//     let month_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"YTD Month", fieldtype:"Select", fieldname:"month", reqd:1,
+//             options:["January","February","March","April","May","June","July","August","September","October","November","December"].join("\n")
+//         }, render_input:true
+//     });
+//     month_filter.set_value(new Date().toLocaleString('default', { month:'long' }));
+
+//     /* ── Operating Units (theme) — defined BEFORE unit_filter so it can reference later controls ── */
+//     // We use a placeholder first, then wire up the change handler after all filters exist.
+//     let theme_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: {
+//             label: "Operating Units",
+//             fieldtype: "MultiSelectList",
+//             fieldname: "theme",
+//             get_data() {
+//                 return frappe.call({
+//                     method: "annual_budget.api.filter_options.get_theme"
+//                 }).then(r =>
+//                     (r.message || []).map(d => ({
+//                         label: d.number_card_title,
+//                         value: d.name,
+//                         description: ""
+//                     }))
+//                 );
+//             }
+//         },
+//         render_input: true
+//     });
+//     addSelectAllButton(theme_filter, "Operating Units");
+
+//     /* ── Unit ── */
+//     let unit_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Unit", fieldtype:"MultiSelectList", fieldname:"unit", reqd:1,
+//             get_data() {
+//                 return frappe.call({
+//                     method: "annual_budget.api.filter_options.get_units"
+//                 }).then(r => (r.message?.data||[]).filter(d=>d.value).map(d => ({
+//                     label: d.label, value: String(d.value), description: ""
+//                 })));
+//             },
+//             change() {
+//                 let units = (unit_filter.get_value()||[]).map(String);
+//                 cost_center_filter.set_value([]); location_code_filter.set_value([]);
+//                 cost_center_filter.df.options = []; cost_center_filter.refresh();
+//                 location_code_filter.df.options = []; location_code_filter.refresh();
+//                 if (units.length) { loadCostCenters(units); loadLocationCodes(units); }
+//             }
+//         }, render_input:true
+//     });
+//     addSelectAllButton(unit_filter, "Unit");
+
+//     /* ── Cost Center ── */
+//     let cost_center_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Cost Center", fieldtype:"MultiSelectList", fieldname:"cost_center", options:[] },
+//         render_input:true
+//     });
+//     addSelectAllButton(cost_center_filter, "Cost Center");
+
+//     /* ── Location Code ── */
+//     let location_code_filter = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:"Location Code", fieldtype:"MultiSelectList", fieldname:"location_code", options:[] },
+//         render_input:true
+//     });
+//     addSelectAllButton(location_code_filter, "Location Code");
+
+//     /* ── Helper: force-set a MultiSelectList with known options+values ──
+//        Frappe's set_value() on MultiSelectList only works when awesomplete
+//        has already seen the options. We bypass that by writing directly to
+//        ctrl.value and then re-rendering the pills.                         */
+//     function setMultiSelectWithOptions(ctrl, opts) {
+//         // opts = [{ label, value, description?, ...extra }]
+//         // Store full option objects on df.options so getKey() can read
+//         // custom fields (erp_cost_center_value, erp_loc_value) later.
+//         ctrl.df.options = opts.map(o => ({ ...o, value: String(o.value) }));
+
+//         // Write selected values directly into the control's internal store
+//         ctrl.value = opts.map(o => String(o.value));
+
+//         // Rebuild the displayed pills
+//         ctrl.refresh();
+
+//         // Frappe renders pills from ctrl.value inside render_input flow;
+//         // trigger it explicitly by calling set_value with the same array,
+//         // but now df.options is already populated so the lookup succeeds.
+//         try {
+//             ctrl.set_value(opts.map(o => String(o.value)));
+//         } catch(e) {
+//             // fallback: manually paint pills if set_value throws
+//             if (ctrl.$input) {
+//                 let $wrap = ctrl.$input.closest('.form-group').find('.multiselect-list');
+//                 if (!$wrap.length) $wrap = ctrl.$input.parent().find('.multiselect-list');
+//                 $wrap.empty();
+//                 opts.forEach(o => {
+//                     $wrap.append(`
+//                         <span class="btn btn-default btn-xs" style="margin:2px 3px;padding:2px 8px;">
+//                             ${frappe.utils.escape_html(o.label || o.value)}
+//                             <span class="remove" data-value="${frappe.utils.escape_html(String(o.value))}"
+//                                   style="margin-left:5px;cursor:pointer;">×</span>
+//                         </span>
+//                     `);
+//                 });
+//             }
+//         }
+//     }
+
+//     /* ── Wire up theme change AFTER all filters are declared ── */
+//     theme_filter.df.change = function() {
+//         let selected_themes = (theme_filter.get_value() || []);
+
+//         // If nothing selected, clear dependent filters
+//         if (!selected_themes.length) {
+//             unit_filter.set_value([]);
+//             cost_center_filter.df.options = []; cost_center_filter.set_value([]); cost_center_filter.refresh();
+//             location_code_filter.df.options = []; location_code_filter.set_value([]); location_code_filter.refresh();
+//             return;
+//         }
+
+//         Loader.show("Loading Operating Unit filters…");
+
+//         // Fetch mappings for every selected theme in parallel
+//         let promises = selected_themes.map(theme_name =>
+//             frappe.call({
+//                 method: "annual_budget.api.filter_options.get_theme_mappings",
+//                 args: { theme_name }
+//             }).then(r => r.message || {})
+//         );
+
+//         Promise.all(promises).then(results => {
+//             let allUnits = [], allCCs = [], allLCs = [];
+
+//             results.forEach(res => {
+//                 allUnits.push(...(res.units || []));
+//                 allCCs.push(...(res.cost_centers || []));
+//                 allLCs.push(...(res.location_codes || []));
+//             });
+
+//             // Deduplicate by value
+//             const dedupe = arr => {
+//                 let seen = new Set();
+//                 return arr.filter(o => {
+//                     if (seen.has(String(o.value))) return false;
+//                     seen.add(String(o.value)); return true;
+//                 });
+//             };
+
+//             allUnits = dedupe(allUnits);
+//             allCCs   = dedupe(allCCs);
+//             allLCs   = dedupe(allLCs);
+
+//             // ── 1. Unit filter ───────────────────────────────────────
+//             // Suppress the cascade (unit.change loads CC/LC from server)
+//             // since we're setting CC/LC ourselves from the theme mapping.
+//             let _origUnitChange = unit_filter.df.change;
+//             unit_filter.df.change = null;
+
+//             setMultiSelectWithOptions(unit_filter, allUnits.map(u => ({
+//                 label: u.label, value: String(u.value), description: ""
+//             })));
+
+//             // Restore after a tick so any pending Frappe events settle
+//             setTimeout(() => { unit_filter.df.change = _origUnitChange; }, 0);
+
+//             // ── 2. Cost Center filter ────────────────────────────────
+//             // Keep erp_cost_center_value on the option so getKey() works
+//             setMultiSelectWithOptions(cost_center_filter, allCCs.map(c => ({
+//                 label: c.label,
+//                 value: String(c.value),
+//                 description: "",
+//                 erp_cost_center_value: String(c.erp_cost_center_value || "")
+//             })));
+
+//             // ── 3. Location Code filter ──────────────────────────────
+//             setMultiSelectWithOptions(location_code_filter, allLCs.map(l => ({
+//                 label: l.label,
+//                 value: String(l.value),
+//                 description: "",
+//                 erp_loc_value: String(l.erp_loc_value || "")
+//             })));
+
+//         }).catch(err => {
+//             console.error("Theme mapping error:", err);
+//             frappe.msgprint({ title:"Error", message:"Failed to load Operating Unit mappings.", indicator:"red" });
+//         }).finally(() => Loader.hide());
+//     };
+
+//     /* ── Get Report button ── */
+//     let load_button = frappe.ui.form.make_control({
+//         parent: make_field(),
+//         df: { label:" ", fieldtype:"Button", fieldname:"load_button", click() { loadData(); } },
+//         render_input:true
+//     });
+//     load_button.$wrapper.find('button').addClass("btn-primary").text("Get Report");
+//     load_button.$wrapper.css("margin-top", "26px");
+
+//     frappe.require("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+
+//     /* ── Container — report-content hidden until data loads ── */
+//     const $container = $(`
+//         <div id="tables-container">
+//             <div id="report-content" style="display:none;">
+//                 <div id="summary-area">
+//                     <div class="cards-col" id="cards-area"></div>
+//                     <div id="charts-row">
+//                         <div class="pie-card">
+//                             <div class="pie-title">Budget Breakdown</div>
+//                             <div class="pie-canvas-wrap"><canvas id="budget-pie"></canvas></div>
+//                             <div class="pie-legend" id="budget-legend"></div>
+//                         </div>
+//                         <div class="pie-card">
+//                             <div class="pie-title">Actuals Breakdown</div>
+//                             <div class="pie-canvas-wrap"><canvas id="actuals-pie"></canvas></div>
+//                             <div class="pie-legend" id="actuals-legend"></div>
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div id="controls-row">
+//                     <input id="global-search-box" type="text" placeholder="Search Expense / Sub Head / Item…">
+//                     <div id="controls-right">
+//                         <label id="expand-all-wrapper">
+//                             <input type="checkbox" id="expand-all-checkbox"> Expand All
+//                         </label>
+//                         <button id="export-excel-btn">↓ Export to Excel</button>
+//                     </div>
+//                 </div>
+//                 <div class="scroll-wrapper">
+//                     <table class="university-table" id="phase-table"></table>
+//                 </div>
+//             </div>
+//         </div>
+//     `);
+//     $(page.body).append($container);
+
+//     /* ── State ── */
+//     let expense_heads = [], expandedHeads = [], expandedSubHeads = [], searchText = "";
+
+//     const PALETTE = [
+//         '#0076B6','#f58020','#2ecc71','#9b59b6',
+//         '#e74c3c','#1abc9c','#e67e22','#2980b9',
+//         '#8e44ad','#27ae60','#c0392b','#16a085'
+//     ];
+//     const headColor = i => PALETTE[i % PALETTE.length];
+
+//     function utilColor(u) {
+//         if (u > 100) return '#c0392b';
+//         if (u >= 60)  return '#e07c3a';
+//         return '#27ae60';
+//     }
+
+//     const fmt  = n => Math.round(Number(n)||0).toLocaleString('en-IN', { maximumFractionDigits:0 });
+//     const rnd  = n => Math.round(Number(n)||0);
+//     const pct  = (b, a) => { b = rnd(b); a = rnd(a); return b ? Math.round((a/b)*100) : 0; };
+//     const mtch = (...v) => v.some(x => String(x||'').toLowerCase().includes(searchText.toLowerCase()));
+
+//     function getKey(ctrl, key) {
+//         let sel = (ctrl.get_value()||[]).map(String);
+//         let opts = Array.isArray(ctrl.df?.options) ? ctrl.df.options : [];
+//         return sel.map(v => { let o = opts.find(o => o && String(o.value)===v); return o?.[key]||null; }).filter(Boolean);
+//     }
+
+//     /* ── Table / search events ── */
+//     $container.find('#global-search-box').on('input', function () {
+//         searchText = $(this).val().trim();
+//         if (searchText) {
+//             expandedHeads    = expense_heads.map(h => h.name);
+//             expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+//         } else {
+//             expandedHeads = []; expandedSubHeads = [];
+//             $('#expand-all-checkbox').prop('checked', false);
+//         }
+//         renderTable();
+//     });
+
+//     $(document).on('change', '#expand-all-checkbox', function () {
+//         if ($(this).is(':checked')) {
+//             expandedHeads    = expense_heads.map(h => h.name);
+//             expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+//         } else { expandedHeads = []; expandedSubHeads = []; }
+//         renderTable();
+//     });
+
+//     $(document).on('click', '#export-excel-btn', exportToExcel);
+
+//     function exportToExcel() {
+//         if (typeof XLSX === "undefined") { frappe.msgprint("Excel library not loaded yet."); return; }
+//         let data = [["Expense Items","Budget","Actuals","Util %","Variance"]];
+//         let gB = 0, gA = 0;
+//         expense_heads.forEach(h => {
+//             let hB = rnd(h.ytd), hA = rnd(h.total_posted_amt_ytd);
+//             gB += hB; gA += hA;
+//             data.push([h.name, hB, hA, pct(hB,hA)+"%", hB-hA]);
+//             (h.sub_heads||[]).forEach(s => {
+//                 let sB = rnd(s.ytd), sA = rnd(s.total_posted_amt_ytd);
+//                 data.push(["   "+s.name, sB, sA, pct(sB,sA)+"%", sB-sA]);
+//                 (s.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["      "+i.name,b,a,pct(b,a)+"%",b-a]); });
+//             });
+//             (h.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["   "+i.name,b,a,pct(b,a)+"%",b-a]); });
+//         });
+//         data.push(["GRAND TOTAL", gB, gA, pct(gB,gA)+"%", gB-gA]);
+//         let ws = XLSX.utils.aoa_to_sheet(data);
+//         ws["!cols"] = [{wch:40},{wch:15},{wch:15},{wch:10},{wch:15}];
+//         let wb = XLSX.utils.book_new();
+//         XLSX.utils.book_append_sheet(wb, ws, "Expense Report");
+//         XLSX.writeFile(wb, "Expense_Report.xlsx");
+//     }
+
+//     /* ── Dependent filter loaders ── */
+//     function loadCostCenters(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
+//             args: { units: units.join(",") },
+//             callback(r) {
+//                 let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({
+//                     label: d.label, value: String(d.value), description: "",
+//                     erp_cost_center_value: String(d.erp_cost_center_value||"")
+//                 }));
+//                 cost_center_filter.df.options = mergeSelectedOptions(cost_center_filter, opts);
+//                 cost_center_filter.refresh();
+//             }
+//         });
+//     }
+
+//     function loadLocationCodes(units) {
+//         frappe.call({
+//             method: "annual_budget.api.filter_options.get_location_codes_by_unit",
+//             args: { unit: units.join(",") },
+//             callback(r) {
+//                 let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({
+//                     label: d.label, value: String(d.value), description: "",
+//                     erp_loc_value: String(d.erp_loc_value||"")
+//                 }));
+//                 location_code_filter.df.options = mergeSelectedOptions(location_code_filter, opts);
+//                 location_code_filter.refresh();
+//             }
+//         });
+//     }
+
+//     /* ── Load report data ── */
+//     function loadData() {
+//         let fy   = fiscal_year_filter.get_value();
+//         let mon  = month_filter.get_value();
+//         let unit = (unit_filter.get_value()||[]).join(",") || null;
+//         let missing = [];
+//         if (!fy)   missing.push("Financial Year");
+//         if (!mon)  missing.push("Month");
+//         if (!unit) missing.push("Unit");
+//         if (missing.length) {
+//             frappe.msgprint({ title:"Required Filters", message:"Please select: "+missing.join(", "), indicator:"orange" });
+//             return;
+//         }
+
+//         Loader.show("We're crafting your report with care…");
+//         $('#expand-all-checkbox').prop('checked', false);
+//         $('#global-search-box').val("");
+//         expandedHeads = []; expandedSubHeads = []; searchText = "";
+
+//         frappe.call({
+//             method: "annual_budget.api.phase_sheet.get_combined_actuals",
+//             args: {
+//                 financial_year: fy,
+//                 month: mon,
+//                 unit,
+//                 cost_center:           (getKey(cost_center_filter,"value")||[]).join(",") || null,
+//                 location_code:         (getKey(location_code_filter,"value")||[]).join(",") || null,
+//                 erp_cost_center_value: (getKey(cost_center_filter,"erp_cost_center_value")||[]).join(",") || null,
+//                 erp_loc_value:         (getKey(location_code_filter,"erp_loc_value")||[]).join(",") || null
+//             }
+//         })
+//         .done(r => {
+//             expense_heads = Array.isArray(r.message) ? r.message : (r.message?.message || []);
+//             $('#report-content').show();
+//             renderCards(expense_heads);
+//             renderTable();
+//         })
+//         .fail(() => frappe.msgprint({ title:"Error", message:"Failed to load data.", indicator:"red" }))
+//         .always(() => Loader.hide());
+//     }
+
+//     /* ── Build number card ── */
+//     function buildCard(name, budget, actual, color, isSub) {
+//         let u  = pct(budget, actual);
+//         let bw = Math.min(u, 100);
+//         let uc = utilColor(u);
+//         let cls = isSub ? 'number-card sub' : 'number-card';
+//         return $(`
+//             <div class="${cls}" style="border-left-color:${color};">
+//                 <div class="number-title" title="${frappe.utils.escape_html(name)}">${frappe.utils.escape_html(name)}</div>
+//                 <div class="kpi-row">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Budget</div>
+//                         <div class="kpi-value">${fmt(budget)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Actual</div>
+//                         <div class="kpi-value">${fmt(actual)}</div>
+//                     </div>
+//                 </div>
+//                 <div class="kpi-bottom">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Variance</div>
+//                         <div class="kpi-value">${fmt(budget - actual)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Util %</div>
+//                         <div class="kpi-value" style="color:${uc};">${u}%</div>
+//                     </div>
+//                 </div>
+//                 <div class="util-bar-wrap">
+//                     <div class="util-bar-bg">
+//                         <div class="util-bar" style="width:${bw}%; background:${uc};"></div>
+//                     </div>
+//                 </div>
+//             </div>
+//         `);
+//     }
+
+//     /* ── Pie charts ── */
+//     let _budgetPie = null, _actualsPie = null;
+
+//     function renderPieCharts(data) {
+//         function draw() {
+//             const BUDGET_COLORS = [
+//                 '#4361EE','#3A0CA3','#7209B7','#F72585',
+//                 '#4CC9F0','#4895EF','#560BAD','#B5179E',
+//                 '#3F37C9','#480CA8','#6A0572','#D62828'
+//             ];
+//             const ACTUAL_COLORS = [
+//                 '#2D6A4F','#40916C','#52B788','#74C69D',
+//                 '#F4A261','#E76F51','#E9C46A','#264653',
+//                 '#2A9D8F','#8AB17D','#BABB74','#E07A5F'
+//             ];
+
+//             let labels = [], budgets = [], actuals = [];
+//             (data||[]).forEach(h => {
+//                 let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0 || rnd(s.total_posted_amt_ytd) !== 0);
+//                 if (validSubs.length) {
+//                     validSubs.forEach(s => { labels.push(s.name); budgets.push(rnd(s.ytd)); actuals.push(rnd(s.total_posted_amt_ytd)); });
+//                 } else {
+//                     labels.push(h.name); budgets.push(rnd(h.ytd)); actuals.push(rnd(h.total_posted_amt_ytd));
+//                 }
+//             });
+
+//             const budgetColors = labels.map((_, i) => BUDGET_COLORS[i % BUDGET_COLORS.length]);
+//             const actualColors = labels.map((_, i) => ACTUAL_COLORS[i % ACTUAL_COLORS.length]);
+
+//             const pctPlugin = {
+//                 id: 'pctLabels',
+//                 afterDatasetDraw(chart) {
+//                     let { ctx, data } = chart;
+//                     let ds = data.datasets[0];
+//                     let total = ds.data.reduce((a,b)=>a+b,0);
+//                     if (!total) return;
+//                     let meta = chart.getDatasetMeta(0);
+//                     ctx.save();
+//                     meta.data.forEach((arc, i) => {
+//                         let p = Math.round((ds.data[i]/total)*100);
+//                         if (p < 4) return;
+//                         let { x, y } = arc.tooltipPosition();
+//                         ctx.fillStyle = '#fff';
+//                         ctx.font = 'bold 11px sans-serif';
+//                         ctx.textAlign = 'center';
+//                         ctx.textBaseline = 'middle';
+//                         ctx.fillText(p + '%', x, y);
+//                     });
+//                     ctx.restore();
+//                 }
+//             };
+
+//             function buildLegend(id, values, colors) {
+//                 let total = values.reduce((a,b)=>a+b,0);
+//                 let $leg = $('#' + id).empty();
+//                 labels.forEach((lbl, i) => {
+//                     let p = total ? Math.round((values[i]/total)*100) : 0;
+//                     $leg.append(`
+//                         <div class="pie-legend-item">
+//                             <div class="pie-legend-dot" style="background:${colors[i]};"></div>
+//                             <span class="pie-legend-name" title="${frappe.utils.escape_html(lbl)}">${frappe.utils.escape_html(lbl)}</span>
+//                             <span class="pie-legend-pct">${p}%</span>
+//                         </div>
+//                     `);
+//                 });
+//             }
+
+//             function makePie(canvasId, values, colors, existing) {
+//                 if (existing) existing.destroy();
+//                 let ctx = document.getElementById(canvasId)?.getContext('2d');
+//                 if (!ctx) return null;
+//                 return new Chart(ctx, {
+//                     type: 'doughnut',
+//                     data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 10 }] },
+//                     options: {
+//                         responsive: false,
+//                         cutout: '50%',
+//                         animation: { animateRotate: true, duration: 600 },
+//                         layout: { padding: 10 },
+//                         plugins: {
+//                             legend: { display: false },
+//                             tooltip: {
+//                                 enabled: true,
+//                                 mode: 'nearest',
+//                                 intersect: true,
+//                                 position: 'average',
+//                                 callbacks: {
+//                                     title(items) { return items[0]?.label || ''; },
+//                                     label(ctx) {
+//                                         let total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+//                                         let p = total ? Math.round((ctx.parsed/total)*100) : 0;
+//                                         return ` ₹${ctx.parsed.toLocaleString('en-IN')}  (${p}%)`;
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     plugins: [pctPlugin]
+//                 });
+//             }
+
+//             _budgetPie  = makePie('budget-pie',  budgets, budgetColors, _budgetPie);
+//             _actualsPie = makePie('actuals-pie', actuals, actualColors, _actualsPie);
+//             buildLegend('budget-legend',  budgets, budgetColors);
+//             buildLegend('actuals-legend', actuals, actualColors);
+//         }
+
+//         if (window.Chart) { draw(); return; }
+//         let s = document.createElement('script');
+//         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+//         s.onload = draw;
+//         document.head.appendChild(s);
+//     }
+
+//     /* ── Render cards ── */
+//     function renderCards(data) {
+//         let $area = $('#cards-area');
+//         $area.empty();
+//         if (!data?.length) return;
+
+//         let gB = 0, gA = 0;
+//         data.forEach(h => { gB += rnd(h.ytd); gA += rnd(h.total_posted_amt_ytd); });
+
+//         let gU  = pct(gB, gA);
+//         let gBw = Math.min(gU, 100);
+//         let gUc = utilColor(gU);
+
+//         $area.append(`<div class="cards-section-label">Grand Total</div>`);
+//         $area.append(`
+//             <div class="grand-total-summary-card">
+//                 <div class="number-title">Grand Total</div>
+//                 <div class="kpi-row">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Budget</div>
+//                         <div class="kpi-value">${fmt(gB)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Actual</div>
+//                         <div class="kpi-value">${fmt(gA)}</div>
+//                     </div>
+//                 </div>
+//                 <div class="kpi-bottom">
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Variance</div>
+//                         <div class="kpi-value">${fmt(gB - gA)}</div>
+//                     </div>
+//                     <div class="kpi-block">
+//                         <div class="kpi-label">Util %</div>
+//                         <div class="kpi-value" style="color:${gUc};">${gU}%</div>
+//                     </div>
+//                 </div>
+//                 <div class="util-bar-wrap">
+//                     <div class="util-bar-bg">
+//                         <div class="util-bar" style="width:${gBw}%; background:${gUc};"></div>
+//                     </div>
+//                 </div>
+//             </div>
+//         `);
+
+//         let mainHeads = data.filter(h => rnd(h.ytd) !== 0);
+//         if (!mainHeads.length) {
+//             requestAnimationFrame(() => requestAnimationFrame(() => renderPieCharts(data)));
+//             return;
+//         }
+
+//         $area.append(`<div class="cards-section-label">Expense Heads</div>`);
+//         let $mainGrid = $('<div class="card-row-grid"></div>');
+//         mainHeads.forEach((h, i) => {
+//             $mainGrid.append(buildCard(h.name, rnd(h.ytd), rnd(h.total_posted_amt_ytd), headColor(i), false));
+//         });
+//         $area.append($mainGrid);
+
+//         mainHeads.forEach((h, i) => {
+//             let color     = headColor(i);
+//             let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0);
+//             if (!validSubs.length) return;
+//             $area.append(`
+//                 <div class="cards-section-label" style="color:${color};">
+//                     <span style="opacity:.45; color:#888;">Sub Heads —</span>
+//                     ${frappe.utils.escape_html(h.name)}
+//                 </div>
+//             `);
+//             let $subGrid = $('<div class="card-row-grid sub-grid"></div>');
+//             validSubs.forEach(s => {
+//                 $subGrid.append(buildCard(s.name, rnd(s.ytd), rnd(s.total_posted_amt_ytd), color, true));
+//             });
+//             $area.append($subGrid);
+//         });
+
+//         requestAnimationFrame(() => requestAnimationFrame(() => renderPieCharts(data)));
+//     }
+
+//     /* ── Render table ── */
+//     function renderTable() {
+//         let $table = $('#phase-table');
+//         $table.html('');
+
+//         if (!expense_heads?.length) {
+//             $table.append(`<tr><td colspan="5" style="text-align:center;padding:20px;color:#888;">No Data Found</td></tr>`);
+//             return;
+//         }
+
+//         $table.append(`
+//             <thead>
+//                 <tr class="main-row">
+//                     <th>Expense Head</th><th>Budget</th><th>Actuals</th><th>Util %</th><th>Variance</th>
+//                 </tr>
+//             </thead>
+//         `);
+
+//         let $tbody = $('<tbody></tbody>');
+//         let gB = 0, gA = 0;
+
+//         expense_heads.forEach(head => {
+//             if (searchText &&
+//                 !mtch(head.name) &&
+//                 !(head.items||[]).some(i => mtch(i.name)) &&
+//                 !(head.sub_heads||[]).some(s => mtch(s.name) || (s.items||[]).some(i => mtch(i.name)))
+//             ) return;
+
+//             let hB = rnd(head.ytd), hA = rnd(head.total_posted_amt_ytd);
+//             gB += hB; gA += hA;
+//             let exp  = expandedHeads.includes(head.name);
+//             let hasC = head.items?.length || head.sub_heads?.length;
+
+//             $tbody.append(`
+//                 <tr class="expense-head" data-head="${frappe.utils.escape_html(head.name)}">
+//                     <td>${hasC ? (exp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(head.name)}</td>
+//                     <td>${fmt(hB)}</td><td>${fmt(hA)}</td>
+//                     <td class="text-blue">${pct(hB,hA)}%</td>
+//                     <td class="text-blue">${fmt(hB-hA)}</td>
+//                 </tr>
+//             `);
+
+//             if (exp) {
+//                 (head.items||[]).forEach(item => {
+//                     if (searchText && !mtch(item.name)) return;
+//                     let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
+//                     $tbody.append(`<tr class="line-item"><td>${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+//                 });
+//                 (head.sub_heads||[]).forEach(sub => {
+//                     let key  = head.name+"__"+sub.name;
+//                     let sB   = rnd(sub.ytd), sA = rnd(sub.total_posted_amt_ytd);
+//                     let sExp = expandedSubHeads.includes(key);
+//                     $tbody.append(`
+//                         <tr class="sub-head" data-sub="${frappe.utils.escape_html(key)}">
+//                             <td>${sub.items?.length ? (sExp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(sub.name)}</td>
+//                             <td>${fmt(sB)}</td><td>${fmt(sA)}</td>
+//                             <td class="text-blue">${pct(sB,sA)}%</td>
+//                             <td class="text-blue">${fmt(sB-sA)}</td>
+//                         </tr>
+//                     `);
+//                     if (sExp) {
+//                         (sub.items||[]).forEach(item => {
+//                             let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
+//                             $tbody.append(`<tr class="line-item"><td style="padding-left:55px">${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+//                         });
+//                     }
+//                 });
+//             }
+//         });
+
+//         $tbody.append(`
+//             <tr class="grand-total-row">
+//                 <td>GRAND TOTAL</td><td>${fmt(gB)}</td><td>${fmt(gA)}</td>
+//                 <td>${pct(gB,gA)}%</td><td>${fmt(gB-gA)}</td>
+//             </tr>
+//         `);
+//         $table.append($tbody);
+
+//         let allH = expense_heads.map(h=>h.name);
+//         let allS = expense_heads.flatMap(h=>(h.sub_heads||[]).map(s=>h.name+"__"+s.name));
+//         $('#expand-all-checkbox').prop('checked',
+//             allH.length > 0 &&
+//             allH.every(n=>expandedHeads.includes(n)) &&
+//             allS.every(k=>expandedSubHeads.includes(k))
+//         );
+
+//         $tbody.on('click','.expense-head', function () {
+//             let n = $(this).data('head');
+//             expandedHeads.includes(n) ? expandedHeads=expandedHeads.filter(x=>x!==n) : expandedHeads.push(n);
+//             renderTable();
+//         });
+//         $tbody.on('click','.sub-head', function () {
+//             let k = $(this).data('sub');
+//             expandedSubHeads.includes(k) ? expandedSubHeads=expandedSubHeads.filter(x=>x!==k) : expandedSubHeads.push(k);
+//             renderTable();
+//         });
+//     }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
     $(`<style>
@@ -9034,7 +11014,6 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     .text-blue { color:#0076B6; font-weight:600; }
     tr.grand-total-row td { background:#003B63 !important; color:#fff !important; font-weight:700 !important; }
 
-    /* ══ SUMMARY LAYOUT ══ */
     #summary-area {
         display: grid;
         grid-template-columns: 1fr 500px;
@@ -9042,31 +11021,19 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         align-items: start;
         margin-bottom: 18px;
     }
-
-    /* ── Cards column ── */
     #cards-area { min-width: 0; }
-
     .cards-section-label {
         font-size: 11px; font-weight: 700; letter-spacing: .8px;
         text-transform: uppercase; color: #888;
         margin: 14px 0 7px; padding-left: 2px;
     }
     .cards-section-label:first-child { margin-top: 0; }
-
     .grand-total-summary-card {
-        border: 1px solid #e0e0e0;
-        border-left: 4px solid #0076B6;
-        border-radius: 8px;
-        padding: 12px 14px;
-        background: #fff;
-        box-sizing: border-box;
-        min-width: 0;
-        overflow: hidden;
-        word-break: break-word;
-        transition: box-shadow .15s ease;
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 14px;
+        border: 1px solid #e0e0e0; border-left: 4px solid #0076B6;
+        border-radius: 8px; padding: 12px 14px; background: #fff;
+        box-sizing: border-box; min-width: 0; overflow: hidden;
+        word-break: break-word; transition: box-shadow .15s ease;
+        display: flex; flex-direction: column; margin-bottom: 14px;
     }
     .grand-total-summary-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
     .grand-total-summary-card .number-title {
@@ -9075,25 +11042,19 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         margin-bottom: 8px; min-height: 16px;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-
     .card-row-grid {
         display: grid !important;
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 10px; margin-bottom: 12px;
-        width: 100%; box-sizing: border-box;
+        gap: 10px; margin-bottom: 12px; width: 100%; box-sizing: border-box;
     }
     .card-row-grid.sub-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px;
     }
-
     .number-card {
-        border: 1px solid #e0e0e0;
-        border-left: 3px solid #ccc;
-        border-radius: 8px; padding: 12px 14px;
-        background: #fff; box-sizing: border-box;
-        min-width: 0; overflow: hidden; word-break: break-word;
-        transition: box-shadow .15s ease;
+        border: 1px solid #e0e0e0; border-left: 3px solid #ccc;
+        border-radius: 8px; padding: 12px 14px; background: #fff;
+        box-sizing: border-box; min-width: 0; overflow: hidden;
+        word-break: break-word; transition: box-shadow .15s ease;
         display: flex; flex-direction: column;
     }
     .number-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
@@ -9102,78 +11063,49 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         border-left-width: 3px; border-radius: 7px; padding: 10px 12px;
         display: flex; flex-direction: column;
     }
-
     .number-title {
         font-size: 11px; font-weight: 600; color: #555;
-        text-transform: uppercase; letter-spacing: .5px;
-        margin-bottom: 8px;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        min-height: 16px;
+        text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 16px;
     }
     .number-card.sub .number-title { font-size: 10px; color: #777; }
-
     .kpi-row { display: flex; justify-content: space-between; margin-top: 4px; }
     .kpi-block { text-align: left; }
     .kpi-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .4px; }
     .kpi-value { font-size: 14px; font-weight: 700; color: #111; }
     .number-card.sub .kpi-value { font-size: 13px; }
-
     .kpi-bottom {
         display: flex; justify-content: space-between;
-        margin-top: 8px; padding-top: 7px;
-        border-top: 1px solid #f0f0f0;
+        margin-top: 8px; padding-top: 7px; border-top: 1px solid #f0f0f0;
     }
-
-    .util-bar-wrap {
-        margin-top: auto; padding-top: 8px;
-        border-top: 1px solid #f0f0f0;
-    }
+    .util-bar-wrap { margin-top: auto; padding-top: 8px; border-top: 1px solid #f0f0f0; }
     .util-bar-bg { width:100%; height:4px; background:#f0f0ed; border-radius:2px; overflow:hidden; }
     .util-bar { height:100%; border-radius:2px; transition:width .4s ease; }
 
-    /* ── Charts column ── */
     #charts-row {
-        display: flex; flex-direction: column;
-        gap: 14px; min-width: 0; margin-top: 23px;
+        display: flex; flex-direction: column; gap: 14px; min-width: 0; margin-top: 23px;
     }
     .pie-card {
         background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
-        padding: 14px 16px; box-sizing: border-box;
-        display: grid;
-        grid-template-columns: 220px 1fr;
-        grid-template-rows: auto 1fr;
-        column-gap: 16px; align-items: start;
-        overflow: visible; position: relative;
+        padding: 14px 16px; box-sizing: border-box; display: grid;
+        grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr;
+        column-gap: 16px; align-items: start; overflow: visible; position: relative;
     }
     .pie-title {
-        grid-column: 1 / -1;
-        font-size: 11px; font-weight: 700; color: #444;
-        text-transform: uppercase; letter-spacing: .6px;
-        margin-bottom: 10px;
+        grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #444;
+        text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
     }
-    .pie-canvas-wrap {
-        width: 220px; height: 220px;
-        position: relative; overflow: visible;
-    }
-    .pie-canvas-wrap canvas {
-        width: 220px !important;
-        height: 220px !important;
-    }
-    .pie-legend {
-        display: flex; flex-direction: column;
-        gap: 5px; align-self: center; min-width: 0;
-    }
+    .pie-canvas-wrap { width: 220px; height: 220px; position: relative; overflow: visible; }
+    .pie-canvas-wrap canvas { width: 220px !important; height: 220px !important; }
+    .pie-legend { display: flex; flex-direction: column; gap: 5px; align-self: center; min-width: 0; }
     .pie-legend-item {
-        display: grid;
-        grid-template-columns: 10px 1fr auto;
-        align-items: center; gap: 5px;
-        font-size: 11px; color: #555; min-width: 0;
+        display: grid; grid-template-columns: 10px 1fr auto;
+        align-items: center; gap: 5px; font-size: 11px; color: #555; min-width: 0;
     }
     .pie-legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
     .pie-legend-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
     .pie-legend-pct { font-weight:700; color:#222; white-space:nowrap; padding-left:4px; min-width:36px; text-align:right; }
 
-    /* ── Loader ── */
     #global-loader.loader-overlay {
         position:fixed; inset:0; width:100vw; height:100vh;
         background:rgba(18,18,18,.92); backdrop-filter:blur(6px);
@@ -9194,7 +11126,6 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     .custom-filter-row.row { margin-left:0; margin-right:0; }
     .custom-select-all-btn { margin-right:8px; }
 
-    /* ── Responsive ── */
     @media(max-width:1280px) {
         #summary-area { grid-template-columns: 1fr 460px; }
         .pie-canvas-wrap, .pie-canvas-wrap canvas { width:200px !important; height:200px !important; }
@@ -9239,7 +11170,10 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         `);
     }
     const Loader = {
-        show(msg = "Loading, please wait…") { $("#global-loader").find(".loader-text").text(msg); $("#global-loader").addClass("active"); },
+        show(msg = "Loading, please wait…") {
+            $("#global-loader").find(".loader-text").text(msg);
+            $("#global-loader").addClass("active");
+        },
         hide() { $("#global-loader").removeClass("active"); }
     };
 
@@ -9253,18 +11187,23 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         page.set_title('Budget vs Actuals Face Sheet' + (fy ? ' – ' + fy : ''));
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════
+       KEY FIX: Separate label↔value lookup maps per filter.
+       Frappe MultiSelectList uses the `value` field as both the stored key
+       AND the displayed pill text. To show labels in pills, we set
+       value = label (human-readable), then use these maps to resolve back
+       to real IDs / ERP codes when calling the API.
+    ═══════════════════════════════════════════════════════════════════════ */
+
+    // Maps: label → { realValue, erp_cost_center_value?, erp_loc_value? }
+    let _unitLabelToMeta       = {};   // label → { value }
+    let _costCenterLabelToMeta = {};   // label → { value, erp_cost_center_value }
+    let _locationLabelToMeta   = {};   // label → { value, erp_loc_value }
+    let _themeLabelToMeta      = {};   // label → { value }
+
     /* ── Filters ── */
     let filter_section = $(`<div class="frappe-control-group row custom-filter-row"></div>`).appendTo(page.body);
     const make_field = () => $(`<div class="col-md-4 col-sm-12"></div>`).appendTo(filter_section);
-
-    function mergeSelectedOptions(ctrl, new_opts) {
-        let selected = (ctrl.get_value() || []).map(String);
-        let map = {};
-        ((ctrl.df && ctrl.df.options) ? ctrl.df.options : []).forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
-        new_opts.forEach(o => { if (o?.value != null) map[String(o.value)] = o; });
-        selected.forEach(v => { if (!map[v]) map[v] = { label:v, value:v, description:"" }; });
-        return Object.values(map);
-    }
 
     function addSelectAllButton(ctrl, label) {
         if (!ctrl?.$input) return;
@@ -9278,12 +11217,17 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                 let $btn = $(`<button type="button" class="btn btn-xs btn-default custom-select-all-btn">Select All</button>`);
                 $btn.on("click", function (e) {
                     e.stopPropagation(); e.preventDefault();
-                    function apply(data) { let vals = data.map(d => String(d.value ?? d)); if (vals.length) ctrl.set_value(vals); }
+                    function apply(data) {
+                        let vals = data.map(d => String(d.value ?? d));
+                        if (vals.length) ctrl.set_value(vals);
+                    }
                     if (ctrl.get_data) {
                         let r = ctrl.get_data();
-                        r && typeof r.then === "function" ? r.then(apply).catch(err => console.error(label, err)) : Array.isArray(r) && apply(r);
+                        r && typeof r.then === "function"
+                            ? r.then(apply).catch(err => console.error(label, err))
+                            : Array.isArray(r) && apply(r);
                     } else if (Array.isArray(ctrl.df?.options)) {
-                        apply(ctrl.df.options.map(o => typeof o === "object" ? o : { value:o }));
+                        apply(ctrl.df.options.map(o => typeof o === "object" ? o : { value: o }));
                     }
                 });
                 $act.prepend($btn);
@@ -9291,11 +11235,15 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         });
     }
 
+    /* ── Financial Year ── */
     let fiscal_year_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"Financial Year", fieldtype:"Select", fieldname:"financial_year", reqd:1,
+        df: {
+            label: "Financial Year", fieldtype: "Select",
+            fieldname: "financial_year", reqd: 1,
             change() { let y = this.get_value(); if (y) updatePageTitle(y); }
-        }, render_input:true
+        },
+        render_input: true
     });
     fiscal_year_filter.refresh();
     frappe.call({
@@ -9303,70 +11251,276 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         callback(r) {
             if (!r.message?.length) return;
             let years = r.message.map(d => d.financial_year);
-            fiscal_year_filter.df.options = years.join("\n"); fiscal_year_filter.refresh();
-            let now = new Date(), m = now.getMonth()+1, y = now.getFullYear();
-            let fy = m >= 4 ? `${y}-${String(y+1).slice(-2)}` : `${y-1}-${String(y).slice(-2)}`;
+            fiscal_year_filter.df.options = years.join("\n");
+            fiscal_year_filter.refresh();
+            let now = new Date(), m = now.getMonth() + 1, y = now.getFullYear();
+            let fy = m >= 4 ? `${y}-${String(y + 1).slice(-2)}` : `${y - 1}-${String(y).slice(-2)}`;
             let def = years.includes(fy) ? fy : years[0];
-            fiscal_year_filter.set_value(def); updatePageTitle(def);
+            fiscal_year_filter.set_value(def);
+            updatePageTitle(def);
         }
     });
 
+    /* ── YTD Month ── */
     let month_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"YTD Month", fieldtype:"Select", fieldname:"month", reqd:1,
-            options:["January","February","March","April","May","June","July","August","September","October","November","December"].join("\n")
-        }, render_input:true
+        df: {
+            label: "YTD Month", fieldtype: "Select",
+            fieldname: "month", reqd: 1,
+            options: ["January","February","March","April","May","June",
+                      "July","August","September","October","November","December"].join("\n")
+        },
+        render_input: true
     });
-    month_filter.set_value(new Date().toLocaleString('default', { month:'long' }));
+    month_filter.set_value(new Date().toLocaleString('default', { month: 'long' }));
 
+    /* ── Operating Units (theme) ──
+       get_data returns { label, value } where value = label (display key).
+       _themeLabelToMeta maps label → real doc name.                        */
     let theme_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"Operating Units", fieldtype:"MultiSelectList", fieldname:"theme",
-            get_data() { return frappe.call({ method:"annual_budget.api.filter_options.get_theme" }).then(r => (r.message||[]).map(d => ({ label:d.number_card_title, value:d.name, description:"" }))); }
-        }, render_input:true
+        df: {
+            label: "Operating Units",
+            fieldtype: "MultiSelectList",
+            fieldname: "theme",
+            get_data() {
+                return frappe.call({
+                    method: "annual_budget.api.filter_options.get_theme"
+                }).then(r => {
+                    _themeLabelToMeta = {};
+                    return (r.message || []).map(d => {
+                        let displayLabel = d.number_card_title;
+                        _themeLabelToMeta[displayLabel] = { value: d.name };
+                        // value = label so the pill shows the human-readable title
+                        return { label: displayLabel, value: displayLabel, description: "" };
+                    });
+                });
+            }
+        },
+        render_input: true
     });
     addSelectAllButton(theme_filter, "Operating Units");
 
+    /* ── Unit ──
+       get_data returns label as pill text; real unit name stored in map.   */
     let unit_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"Unit", fieldtype:"MultiSelectList", fieldname:"unit", reqd:1,
-            get_data() { return frappe.call({ method:"annual_budget.api.filter_options.get_units" }).then(r => (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"" }))); },
+        df: {
+            label: "Unit", fieldtype: "MultiSelectList",
+            fieldname: "unit", reqd: 1,
+            get_data() {
+                return frappe.call({
+                    method: "annual_budget.api.filter_options.get_units"
+                }).then(r => {
+                    _unitLabelToMeta = {};
+                    return (r.message?.data || [])
+                        .filter(d => d.value)
+                        .map(d => {
+                            let displayLabel = d.label; // e.g. "U001 - Description"
+                            _unitLabelToMeta[displayLabel] = { value: String(d.value) };
+                            return { label: displayLabel, value: displayLabel, description: "" };
+                        });
+                });
+            },
             change() {
-                let units = (unit_filter.get_value()||[]).map(String);
-                cost_center_filter.set_value([]); location_code_filter.set_value([]);
-                cost_center_filter.df.options = []; cost_center_filter.refresh();
-                location_code_filter.df.options = []; location_code_filter.refresh();
-                if (units.length) { loadCostCenters(units); loadLocationCodes(units); }
+                // Resolve selected labels back to real unit IDs
+                let selectedLabels = (unit_filter.get_value() || []);
+                let unitIds = selectedLabels
+                    .map(lbl => _unitLabelToMeta[lbl]?.value)
+                    .filter(Boolean);
+
+                cost_center_filter.set_value([]);
+                location_code_filter.set_value([]);
+                cost_center_filter.refresh();
+                location_code_filter.refresh();
+
+                if (unitIds.length) {
+                    loadCostCenters(unitIds);
+                    loadLocationCodes(unitIds);
+                }
             }
-        }, render_input:true
+        },
+        render_input: true
     });
     addSelectAllButton(unit_filter, "Unit");
 
+    /* ── Cost Center ── */
     let cost_center_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"Cost Center", fieldtype:"MultiSelectList", fieldname:"cost_center", options:[] },
-        render_input:true
+        df: {
+            label: "Cost Center", fieldtype: "MultiSelectList",
+            fieldname: "cost_center", options: []
+        },
+        render_input: true
     });
     addSelectAllButton(cost_center_filter, "Cost Center");
 
+    /* ── Location Code ── */
     let location_code_filter = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:"Location Code", fieldtype:"MultiSelectList", fieldname:"location_code", options:[] },
-        render_input:true
+        df: {
+            label: "Location Code", fieldtype: "MultiSelectList",
+            fieldname: "location_code", options: []
+        },
+        render_input: true
     });
     addSelectAllButton(location_code_filter, "Location Code");
 
+    /* ═══════════════════════════════════════════════════════════════════════
+       setMultiSelectWithOptions
+       ─────────────────────────────────────────────────────────────────────
+       Sets a MultiSelectList so pills show the human-readable label.
+       opts must be: [{ label, value (real ID), erp_cost_center_value?, erp_loc_value? }]
+       We store label→meta in the supplied mapObj, then present value=label
+       to Frappe so the pill text is readable.
+    ═══════════════════════════════════════════════════════════════════════ */
+    function setMultiSelectWithOptions(ctrl, opts, mapObj, extraKeys) {
+        // extraKeys: array of additional field names to copy into meta (e.g. ['erp_cost_center_value'])
+        extraKeys = extraKeys || [];
+
+        // Build the label→meta lookup
+        opts.forEach(o => {
+            let meta = { value: String(o.value) };
+            extraKeys.forEach(k => { meta[k] = o[k] || ""; });
+            mapObj[o.label] = meta;
+        });
+
+        // Build Frappe-compatible option list: value = label (pill display)
+        let frappe_opts = opts.map(o => ({
+            label: o.label,
+            value: o.label,      // ← pill will show this
+            description: ""
+        }));
+
+        // Populate df.options so set_value can find the items
+        ctrl.df.options = frappe_opts;
+        ctrl.refresh();
+
+        // Select all of them
+        let display_values = frappe_opts.map(o => o.value);
+        try {
+            ctrl.set_value(display_values);
+        } catch (e) {
+            // Manual pill fallback
+            ctrl.value = display_values;
+            ctrl.refresh();
+        }
+    }
+
+    /* ── Wire up theme change AFTER all filters are declared ── */
+    theme_filter.df.change = function () {
+        let selectedThemeLabels = (theme_filter.get_value() || []);
+
+        if (!selectedThemeLabels.length) {
+            unit_filter.set_value([]);
+            _unitLabelToMeta = {};
+            cost_center_filter.df.options = [];
+            cost_center_filter.set_value([]);
+            cost_center_filter.refresh();
+            _costCenterLabelToMeta = {};
+            location_code_filter.df.options = [];
+            location_code_filter.set_value([]);
+            location_code_filter.refresh();
+            _locationLabelToMeta = {};
+            return;
+        }
+
+        // Resolve display labels → real theme doc names
+        let realThemeNames = selectedThemeLabels
+            .map(lbl => _themeLabelToMeta[lbl]?.value || lbl)
+            .filter(Boolean);
+
+        Loader.show("Loading Operating Unit filters…");
+
+        let promises = realThemeNames.map(theme_name =>
+            frappe.call({
+                method: "annual_budget.api.filter_options.get_theme_mappings",
+                args: { theme_name }
+            }).then(r => r.message || {})
+        );
+
+        Promise.all(promises).then(results => {
+            let allUnits = [], allCCs = [], allLCs = [];
+
+            results.forEach(res => {
+                allUnits.push(...(res.units || []));
+                allCCs.push(...(res.cost_centers || []));
+                allLCs.push(...(res.location_codes || []));
+            });
+
+            // Deduplicate by real value
+            const dedupe = arr => {
+                let seen = new Set();
+                return arr.filter(o => {
+                    let k = String(o.value);
+                    if (seen.has(k)) return false;
+                    seen.add(k); return true;
+                });
+            };
+            allUnits = dedupe(allUnits);
+            allCCs   = dedupe(allCCs);
+            allLCs   = dedupe(allLCs);
+
+            // Suppress unit cascade while we set everything at once
+            let _origUnitChange = unit_filter.df.change;
+            unit_filter.df.change = null;
+
+            _unitLabelToMeta       = {};
+            _costCenterLabelToMeta = {};
+            _locationLabelToMeta   = {};
+
+            // Units: label from API is already "UNIT - Description"
+            setMultiSelectWithOptions(
+                unit_filter,
+                allUnits.map(u => ({ label: u.label, value: u.value })),
+                _unitLabelToMeta,
+                []
+            );
+
+            // Cost Centers
+            setMultiSelectWithOptions(
+                cost_center_filter,
+                allCCs.map(c => ({
+                    label: c.label,
+                    value: c.value,
+                    erp_cost_center_value: c.erp_cost_center_value || ""
+                })),
+                _costCenterLabelToMeta,
+                ['erp_cost_center_value']
+            );
+
+            // Location Codes
+            setMultiSelectWithOptions(
+                location_code_filter,
+                allLCs.map(l => ({
+                    label: l.label,
+                    value: l.value,
+                    erp_loc_value: l.erp_loc_value || ""
+                })),
+                _locationLabelToMeta,
+                ['erp_loc_value']
+            );
+
+            setTimeout(() => { unit_filter.df.change = _origUnitChange; }, 0);
+
+        }).catch(err => {
+            console.error("Theme mapping error:", err);
+            frappe.msgprint({ title: "Error", message: "Failed to load Operating Unit mappings.", indicator: "red" });
+        }).finally(() => Loader.hide());
+    };
+
+    /* ── Get Report button ── */
     let load_button = frappe.ui.form.make_control({
         parent: make_field(),
-        df: { label:" ", fieldtype:"Button", fieldname:"load_button", click() { loadData(); } },
-        render_input:true
+        df: { label: " ", fieldtype: "Button", fieldname: "load_button", click() { loadData(); } },
+        render_input: true
     });
     load_button.$wrapper.find('button').addClass("btn-primary").text("Get Report");
     load_button.$wrapper.css("margin-top", "26px");
 
     frappe.require("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
 
-    /* ── Container — report-content hidden until data loads ── */
+    /* ── Container ── */
     const $container = $(`
         <div id="tables-container">
             <div id="report-content" style="display:none;">
@@ -9418,15 +11572,35 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         return '#27ae60';
     }
 
-    const fmt  = n => Math.round(Number(n)||0).toLocaleString('en-IN', { maximumFractionDigits:0 });
-    const rnd  = n => Math.round(Number(n)||0);
-    const pct  = (b, a) => { b = rnd(b); a = rnd(a); return b ? Math.round((a/b)*100) : 0; };
-    const mtch = (...v) => v.some(x => String(x||'').toLowerCase().includes(searchText.toLowerCase()));
+    const fmt  = n => Math.round(Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const rnd  = n => Math.round(Number(n) || 0);
+    const pct  = (b, a) => { b = rnd(b); a = rnd(a); return b ? Math.round((a / b) * 100) : 0; };
+    const mtch = (...v) => v.some(x => String(x || '').toLowerCase().includes(searchText.toLowerCase()));
 
-    function getKey(ctrl, key) {
-        let sel = (ctrl.get_value()||[]).map(String);
-        let opts = Array.isArray(ctrl.df?.options) ? ctrl.df.options : [];
-        return sel.map(v => { let o = opts.find(o => o && String(o.value)===v); return o?.[key]||null; }).filter(Boolean);
+    /* ═══════════════════════════════════════════════════════════════════════
+       resolveFilterValues
+       ─────────────────────────────────────────────────────────────────────
+       Given a MultiSelectList control and its label→meta map, returns an
+       object with arrays of real values and any extra ERP fields needed
+       for the API call.  The selected "values" in the control are actually
+       labels (because we set value=label for display), so we look them up
+       in the map to get the real IDs.
+    ═══════════════════════════════════════════════════════════════════════ */
+    function resolveFilterValues(ctrl, mapObj, extraKeys) {
+        extraKeys = extraKeys || [];
+        let selectedLabels = (ctrl.get_value() || []);
+        let realValues = [];
+        let extras = {};
+        extraKeys.forEach(k => { extras[k] = []; });
+
+        selectedLabels.forEach(lbl => {
+            let meta = mapObj[lbl];
+            if (meta) {
+                realValues.push(meta.value);
+                extraKeys.forEach(k => { if (meta[k]) extras[k].push(meta[k]); });
+            }
+        });
+        return { values: realValues, ...extras };
     }
 
     /* ── Events ── */
@@ -9434,7 +11608,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         searchText = $(this).val().trim();
         if (searchText) {
             expandedHeads    = expense_heads.map(h => h.name);
-            expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+            expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads || []).map(s => h.name + "__" + s.name));
         } else {
             expandedHeads = []; expandedSubHeads = [];
             $('#expand-all-checkbox').prop('checked', false);
@@ -9445,7 +11619,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
     $(document).on('change', '#expand-all-checkbox', function () {
         if ($(this).is(':checked')) {
             expandedHeads    = expense_heads.map(h => h.name);
-            expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads||[]).map(s => h.name+"__"+s.name));
+            expandedSubHeads = expense_heads.flatMap(h => (h.sub_heads || []).map(s => h.name + "__" + s.name));
         } else { expandedHeads = []; expandedSubHeads = []; }
         renderTable();
     });
@@ -9454,60 +11628,101 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
     function exportToExcel() {
         if (typeof XLSX === "undefined") { frappe.msgprint("Excel library not loaded yet."); return; }
-        let data = [["Expense Items","Budget","Actuals","Util %","Variance"]];
+        let data = [["Expense Items", "Budget", "Actuals", "Util %", "Variance"]];
         let gB = 0, gA = 0;
         expense_heads.forEach(h => {
             let hB = rnd(h.ytd), hA = rnd(h.total_posted_amt_ytd);
             gB += hB; gA += hA;
-            data.push([h.name, hB, hA, pct(hB,hA)+"%", hB-hA]);
-            (h.sub_heads||[]).forEach(s => {
+            data.push([h.name, hB, hA, pct(hB, hA) + "%", hB - hA]);
+            (h.sub_heads || []).forEach(s => {
                 let sB = rnd(s.ytd), sA = rnd(s.total_posted_amt_ytd);
-                data.push(["   "+s.name, sB, sA, pct(sB,sA)+"%", sB-sA]);
-                (s.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["      "+i.name,b,a,pct(b,a)+"%",b-a]); });
+                data.push(["   " + s.name, sB, sA, pct(sB, sA) + "%", sB - sA]);
+                (s.items || []).forEach(i => {
+                    let b = rnd(i.ytd), a = rnd(i.total_posted_amt);
+                    data.push(["      " + i.name, b, a, pct(b, a) + "%", b - a]);
+                });
             });
-            (h.items||[]).forEach(i => { let b=rnd(i.ytd),a=rnd(i.total_posted_amt); data.push(["   "+i.name,b,a,pct(b,a)+"%",b-a]); });
+            (h.items || []).forEach(i => {
+                let b = rnd(i.ytd), a = rnd(i.total_posted_amt);
+                data.push(["   " + i.name, b, a, pct(b, a) + "%", b - a]);
+            });
         });
-        data.push(["GRAND TOTAL", gB, gA, pct(gB,gA)+"%", gB-gA]);
+        data.push(["GRAND TOTAL", gB, gA, pct(gB, gA) + "%", gB - gA]);
         let ws = XLSX.utils.aoa_to_sheet(data);
-        ws["!cols"] = [{wch:40},{wch:15},{wch:15},{wch:10},{wch:15}];
+        ws["!cols"] = [{ wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }];
         let wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Expense Report");
         XLSX.writeFile(wb, "Expense_Report.xlsx");
     }
 
-    function loadCostCenters(units) {
+    /* ── Dependent filter loaders (triggered by manual unit selection, not theme) ── */
+    function loadCostCenters(unitIds) {
         frappe.call({
             method: "annual_budget.api.filter_options.get_cost_centers_by_set_id",
-            args: { units: units.join(",") },
+            args: { units: unitIds.join(",") },
             callback(r) {
-                let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"", erp_cost_center_value:String(d.erp_cost_center_value||"") }));
-                cost_center_filter.df.options = mergeSelectedOptions(cost_center_filter, opts);
+                _costCenterLabelToMeta = {};
+                let frappe_opts = [];
+                (r.message?.data || []).filter(d => d.value).forEach(d => {
+                    let lbl = d.label;
+                    _costCenterLabelToMeta[lbl] = {
+                        value: String(d.value),
+                        erp_cost_center_value: String(d.erp_cost_center_value || "")
+                    };
+                    frappe_opts.push({ label: lbl, value: lbl, description: "" });
+                });
+                cost_center_filter.df.options = frappe_opts;
                 cost_center_filter.refresh();
             }
         });
     }
 
-    function loadLocationCodes(units) {
+    function loadLocationCodes(unitIds) {
         frappe.call({
             method: "annual_budget.api.filter_options.get_location_codes_by_unit",
-            args: { unit: units.join(",") },
+            args: { unit: unitIds.join(",") },
             callback(r) {
-                let opts = (r.message?.data||[]).filter(d=>d.value).map(d => ({ label:d.label, value:String(d.value), description:"", erp_loc_value:String(d.erp_loc_value||"") }));
-                location_code_filter.df.options = mergeSelectedOptions(location_code_filter, opts);
+                _locationLabelToMeta = {};
+                let frappe_opts = [];
+                (r.message?.data || []).filter(d => d.value).forEach(d => {
+                    let lbl = d.label;
+                    _locationLabelToMeta[lbl] = {
+                        value: String(d.value),
+                        erp_loc_value: String(d.erp_loc_value || "")
+                    };
+                    frappe_opts.push({ label: lbl, value: lbl, description: "" });
+                });
+                location_code_filter.df.options = frappe_opts;
                 location_code_filter.refresh();
             }
         });
     }
 
+    /* ── Load report data ── */
     function loadData() {
-        let fy   = fiscal_year_filter.get_value();
-        let mon  = month_filter.get_value();
-        let unit = (unit_filter.get_value()||[]).join(",") || null;
+        let fy  = fiscal_year_filter.get_value();
+        let mon = month_filter.get_value();
+
+        // Resolve unit labels → real IDs
+        let unitResolved = resolveFilterValues(unit_filter, _unitLabelToMeta, []);
+        let unitIds      = unitResolved.values;
+
         let missing = [];
-        if (!fy)   missing.push("Financial Year");
-        if (!mon)  missing.push("Month");
-        if (!unit) missing.push("Unit");
-        if (missing.length) { frappe.msgprint({ title:"Required Filters", message:"Please select: "+missing.join(", "), indicator:"orange" }); return; }
+        if (!fy)             missing.push("Financial Year");
+        if (!mon)            missing.push("Month");
+        if (!unitIds.length) missing.push("Unit");
+        if (missing.length) {
+            frappe.msgprint({
+                title: "Required Filters",
+                message: "Please select: " + missing.join(", "),
+                indicator: "orange"
+            });
+            return;
+        }
+
+        // Resolve cost center and location code labels → real IDs + ERP values
+        let ccResolved  = resolveFilterValues(cost_center_filter, _costCenterLabelToMeta, ['erp_cost_center_value']);
+        let locResolved = resolveFilterValues(location_code_filter, _locationLabelToMeta, ['erp_loc_value']);
 
         Loader.show("We're crafting your report with care…");
         $('#expand-all-checkbox').prop('checked', false);
@@ -9517,27 +11732,26 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         frappe.call({
             method: "annual_budget.api.phase_sheet.get_combined_actuals",
             args: {
-                financial_year: fy, month: mon, unit,
-                cost_center:           (getKey(cost_center_filter,"value")||[]).join(",") || null,
-                location_code:         (getKey(location_code_filter,"value")||[]).join(",") || null,
-                erp_cost_center_value: (getKey(cost_center_filter,"erp_cost_center_value")||[]).join(",") || null,
-                erp_loc_value:         (getKey(location_code_filter,"erp_loc_value")||[]).join(",") || null
+                financial_year:        fy,
+                month:                 mon,
+                unit:                  unitIds.join(",") || null,
+                cost_center:           ccResolved.values.join(",")                      || null,
+                location_code:         locResolved.values.join(",")                     || null,
+                erp_cost_center_value: (ccResolved.erp_cost_center_value || []).join(",") || null,
+                erp_loc_value:         (locResolved.erp_loc_value        || []).join(",") || null
             }
         })
         .done(r => {
             expense_heads = Array.isArray(r.message) ? r.message : (r.message?.message || []);
-
-            // Reveal everything only after data is ready
             $('#report-content').show();
-
             renderCards(expense_heads);
             renderTable();
         })
-        .fail(() => frappe.msgprint({ title:"Error", message:"Failed to load data.", indicator:"red" }))
+        .fail(() => frappe.msgprint({ title: "Error", message: "Failed to load data.", indicator: "red" }))
         .always(() => Loader.hide());
     }
 
-    /* ── Build card ── */
+    /* ── Build number card ── */
     function buildCard(name, budget, actual, color, isSub) {
         let u  = pct(budget, actual);
         let bw = Math.min(u, 100);
@@ -9592,12 +11806,18 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             ];
 
             let labels = [], budgets = [], actuals = [];
-            (data||[]).forEach(h => {
-                let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0 || rnd(s.total_posted_amt_ytd) !== 0);
+            (data || []).forEach(h => {
+                let validSubs = (h.sub_heads || []).filter(s => rnd(s.ytd) !== 0 || rnd(s.total_posted_amt_ytd) !== 0);
                 if (validSubs.length) {
-                    validSubs.forEach(s => { labels.push(s.name); budgets.push(rnd(s.ytd)); actuals.push(rnd(s.total_posted_amt_ytd)); });
+                    validSubs.forEach(s => {
+                        labels.push(s.name);
+                        budgets.push(rnd(s.ytd));
+                        actuals.push(rnd(s.total_posted_amt_ytd));
+                    });
                 } else {
-                    labels.push(h.name); budgets.push(rnd(h.ytd)); actuals.push(rnd(h.total_posted_amt_ytd));
+                    labels.push(h.name);
+                    budgets.push(rnd(h.ytd));
+                    actuals.push(rnd(h.total_posted_amt_ytd));
                 }
             });
 
@@ -9609,12 +11829,12 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                 afterDatasetDraw(chart) {
                     let { ctx, data } = chart;
                     let ds = data.datasets[0];
-                    let total = ds.data.reduce((a,b)=>a+b,0);
+                    let total = ds.data.reduce((a, b) => a + b, 0);
                     if (!total) return;
                     let meta = chart.getDatasetMeta(0);
                     ctx.save();
                     meta.data.forEach((arc, i) => {
-                        let p = Math.round((ds.data[i]/total)*100);
+                        let p = Math.round((ds.data[i] / total) * 100);
                         if (p < 4) return;
                         let { x, y } = arc.tooltipPosition();
                         ctx.fillStyle = '#fff';
@@ -9628,10 +11848,10 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
             };
 
             function buildLegend(id, values, colors) {
-                let total = values.reduce((a,b)=>a+b,0);
+                let total = values.reduce((a, b) => a + b, 0);
                 let $leg = $('#' + id).empty();
                 labels.forEach((lbl, i) => {
-                    let p = total ? Math.round((values[i]/total)*100) : 0;
+                    let p = total ? Math.round((values[i] / total) * 100) : 0;
                     $leg.append(`
                         <div class="pie-legend-item">
                             <div class="pie-legend-dot" style="background:${colors[i]};"></div>
@@ -9648,7 +11868,13 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                 if (!ctx) return null;
                 return new Chart(ctx, {
                     type: 'doughnut',
-                    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 10 }] },
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: values, backgroundColor: colors,
+                            borderColor: '#fff', borderWidth: 2, hoverOffset: 10
+                        }]
+                    },
                     options: {
                         responsive: false,
                         cutout: '50%',
@@ -9657,15 +11883,13 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                enabled: true,
-                                mode: 'nearest',
-                                intersect: true,
-                                position: 'average',
+                                enabled: true, mode: 'nearest',
+                                intersect: true, position: 'average',
                                 callbacks: {
                                     title(items) { return items[0]?.label || ''; },
                                     label(ctx) {
-                                        let total = ctx.dataset.data.reduce((a,b)=>a+b,0);
-                                        let p = total ? Math.round((ctx.parsed/total)*100) : 0;
+                                        let total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        let p = total ? Math.round((ctx.parsed / total) * 100) : 0;
                                         return ` ₹${ctx.parsed.toLocaleString('en-IN')}  (${p}%)`;
                                     }
                                 }
@@ -9749,7 +11973,7 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
         mainHeads.forEach((h, i) => {
             let color     = headColor(i);
-            let validSubs = (h.sub_heads||[]).filter(s => rnd(s.ytd) !== 0);
+            let validSubs = (h.sub_heads || []).filter(s => rnd(s.ytd) !== 0);
             if (!validSubs.length) return;
             $area.append(`
                 <div class="cards-section-label" style="color:${color};">
@@ -9791,8 +12015,8 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         expense_heads.forEach(head => {
             if (searchText &&
                 !mtch(head.name) &&
-                !(head.items||[]).some(i => mtch(i.name)) &&
-                !(head.sub_heads||[]).some(s => mtch(s.name) || (s.items||[]).some(i => mtch(i.name)))
+                !(head.items || []).some(i => mtch(i.name)) &&
+                !(head.sub_heads || []).some(s => mtch(s.name) || (s.items || []).some(i => mtch(i.name)))
             ) return;
 
             let hB = rnd(head.ytd), hA = rnd(head.total_posted_amt_ytd);
@@ -9802,35 +12026,35 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
 
             $tbody.append(`
                 <tr class="expense-head" data-head="${frappe.utils.escape_html(head.name)}">
-                    <td>${hasC ? (exp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(head.name)}</td>
+                    <td>${hasC ? (exp ? '▼ ' : '▶ ') : ''}${frappe.utils.escape_html(head.name)}</td>
                     <td>${fmt(hB)}</td><td>${fmt(hA)}</td>
-                    <td class="text-blue">${pct(hB,hA)}%</td>
-                    <td class="text-blue">${fmt(hB-hA)}</td>
+                    <td class="text-blue">${pct(hB, hA)}%</td>
+                    <td class="text-blue">${fmt(hB - hA)}</td>
                 </tr>
             `);
 
             if (exp) {
-                (head.items||[]).forEach(item => {
+                (head.items || []).forEach(item => {
                     if (searchText && !mtch(item.name)) return;
                     let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
-                    $tbody.append(`<tr class="line-item"><td>${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+                    $tbody.append(`<tr class="line-item"><td>${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b, a)}%</td><td>${fmt(b - a)}</td></tr>`);
                 });
-                (head.sub_heads||[]).forEach(sub => {
-                    let key  = head.name+"__"+sub.name;
+                (head.sub_heads || []).forEach(sub => {
+                    let key  = head.name + "__" + sub.name;
                     let sB   = rnd(sub.ytd), sA = rnd(sub.total_posted_amt_ytd);
                     let sExp = expandedSubHeads.includes(key);
                     $tbody.append(`
                         <tr class="sub-head" data-sub="${frappe.utils.escape_html(key)}">
-                            <td>${sub.items?.length ? (sExp?'▼ ':'▶ ') : ''}${frappe.utils.escape_html(sub.name)}</td>
+                            <td>${sub.items?.length ? (sExp ? '▼ ' : '▶ ') : ''}${frappe.utils.escape_html(sub.name)}</td>
                             <td>${fmt(sB)}</td><td>${fmt(sA)}</td>
-                            <td class="text-blue">${pct(sB,sA)}%</td>
-                            <td class="text-blue">${fmt(sB-sA)}</td>
+                            <td class="text-blue">${pct(sB, sA)}%</td>
+                            <td class="text-blue">${fmt(sB - sA)}</td>
                         </tr>
                     `);
                     if (sExp) {
-                        (sub.items||[]).forEach(item => {
+                        (sub.items || []).forEach(item => {
                             let b = rnd(item.ytd), a = rnd(item.total_posted_amt);
-                            $tbody.append(`<tr class="line-item"><td style="padding-left:55px">${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b,a)}%</td><td>${fmt(b-a)}</td></tr>`);
+                            $tbody.append(`<tr class="line-item"><td style="padding-left:55px">${frappe.utils.escape_html(item.name)}</td><td>${fmt(b)}</td><td>${fmt(a)}</td><td>${pct(b, a)}%</td><td>${fmt(b - a)}</td></tr>`);
                         });
                     }
                 });
@@ -9840,25 +12064,31 @@ frappe.pages['budget-actuals-phase'].on_page_load = function(wrapper) {
         $tbody.append(`
             <tr class="grand-total-row">
                 <td>GRAND TOTAL</td><td>${fmt(gB)}</td><td>${fmt(gA)}</td>
-                <td>${pct(gB,gA)}%</td><td>${fmt(gB-gA)}</td>
+                <td>${pct(gB, gA)}%</td><td>${fmt(gB - gA)}</td>
             </tr>
         `);
         $table.append($tbody);
 
-        let allH = expense_heads.map(h=>h.name);
-        let allS = expense_heads.flatMap(h=>(h.sub_heads||[]).map(s=>h.name+"__"+s.name));
+        let allH = expense_heads.map(h => h.name);
+        let allS = expense_heads.flatMap(h => (h.sub_heads || []).map(s => h.name + "__" + s.name));
         $('#expand-all-checkbox').prop('checked',
-            allH.length > 0 && allH.every(n=>expandedHeads.includes(n)) && allS.every(k=>expandedSubHeads.includes(k))
+            allH.length > 0 &&
+            allH.every(n => expandedHeads.includes(n)) &&
+            allS.every(k => expandedSubHeads.includes(k))
         );
 
-        $tbody.on('click','.expense-head', function () {
+        $tbody.on('click', '.expense-head', function () {
             let n = $(this).data('head');
-            expandedHeads.includes(n) ? expandedHeads=expandedHeads.filter(x=>x!==n) : expandedHeads.push(n);
+            expandedHeads.includes(n)
+                ? expandedHeads = expandedHeads.filter(x => x !== n)
+                : expandedHeads.push(n);
             renderTable();
         });
-        $tbody.on('click','.sub-head', function () {
+        $tbody.on('click', '.sub-head', function () {
             let k = $(this).data('sub');
-            expandedSubHeads.includes(k) ? expandedSubHeads=expandedSubHeads.filter(x=>x!==k) : expandedSubHeads.push(k);
+            expandedSubHeads.includes(k)
+                ? expandedSubHeads = expandedSubHeads.filter(x => x !== k)
+                : expandedSubHeads.push(k);
             renderTable();
         });
     }
