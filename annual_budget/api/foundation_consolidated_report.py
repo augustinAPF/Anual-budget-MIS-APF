@@ -1999,7 +1999,7 @@ def get_unit_wise_plan_1(financial_year, month, table_name_filter=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_unit_wise_plan(financial_year, month, table_name_filter=None):
+def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous=None):
 
     def safe_join(arr):
         return ",".join([str(x).strip() for x in (arr or []) if x])
@@ -2137,11 +2137,12 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None):
         return list(head_map.values())
 
     # ---------------- MAIN ----------------
-
-    previous_financial_year = get_previous_financial_year(financial_year)
+    if is_previous == 1:
+    # previous_financial_year = get_previous_financial_year(financial_year)
+        financial_year = get_previous_financial_year(financial_year)
     settings = get_combination_table_settings_1(table_name_filter)
 
-    formatted = get_accounting_period_from_month(month, previous_financial_year)
+    formatted = get_accounting_period_from_month(month, financial_year)
 
     grouped_actuals_data = get_grouped_actuals(
         fiscal_year=formatted.get("fiscal_year"),
@@ -3974,7 +3975,7 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_headcount(financial_year=None, month=None, table_name_filter=None):
+def get_headcount(financial_year=None, month=None, table_name_filter=None,is_previous=int):
     try:
         filters = {}
 
@@ -4023,7 +4024,8 @@ def get_headcount(financial_year=None, month=None, table_name_filter=None):
             plan_data = get_unit_wise_plan(
                 financial_year,
                 month,
-                table_name_filter
+                table_name_filter,
+                is_previous
             )
 
         # ✅ Final Response (NO merging)

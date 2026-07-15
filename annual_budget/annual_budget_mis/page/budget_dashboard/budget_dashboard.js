@@ -1561,7 +1561,7 @@ frappe.pages['budget-dashboard'].on_page_load = function(wrapper) {
         Loader.show('Loading…');
         frappe.call({
             method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan_budget',
-            args: { financial_year: fy, month: month, table_name_filter: filter }
+            args: { financial_year: fy, month: month, table_name_filter: filter,}
         }).done(r => {
             Loader.hide();
             if (r.message?.length) _apiCache[key] = r.message;

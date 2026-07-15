@@ -4547,7 +4547,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		unitWisePlanOpexCapex: function (fy, resolve, reject) {
 			frappe.call({
 				method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
-				args: { financial_year: fy, month: 'March', table_name_filter: 'Opex Capex' },
+				args: { financial_year: fy, month: 'March', table_name_filter: 'Opex Capex',is_previous:1 },
 				callback: function (r) {
 					var d = Array.isArray(r.message) ? r.message
 						: ((r.message && Array.isArray(r.message.message)) ? r.message.message : []);
@@ -4561,7 +4561,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		unitWisePlanSummary: function (fy, resolve, reject) {
 			frappe.call({
 				method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
-				args: { financial_year: fy, month: 'March', table_name_filter: 'Unit Wise Plan' },
+				args: { financial_year: fy, month: 'March', table_name_filter: 'Unit Wise Plan',is_previous:1 },
 				callback: function (r) {
 					var d = Array.isArray(r.message) ? r.message
 						: ((r.message && Array.isArray(r.message.message)) ? r.message.message : null);
@@ -4575,7 +4575,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		unitWisePlanBE: function (fy, resolve, reject) {
 			frappe.call({
 				method: 'annual_budget.api.foundation_consolidated_report.get_unit_wise_plan',
-				args: { financial_year: fy, month: 'March', table_name_filter: 'Budget & Estimate' },
+				args: { financial_year: fy, month: 'March', table_name_filter: 'Budget & Estimate',is_previous:1 },
 				callback: function (r) {
 					var d = Array.isArray(r.message) ? r.message
 						: ((r.message && Array.isArray(r.message.message)) ? r.message.message : []);
