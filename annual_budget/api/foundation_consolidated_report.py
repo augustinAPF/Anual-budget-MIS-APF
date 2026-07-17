@@ -5344,7 +5344,354 @@ def get_unit_wise_plan_test(financial_year, month):
 
 
 
+@frappe.whitelist(allow_guest=True)
+def get_stat_wise_budget_actual(financial_year, month, table_name_filter=None, is_previous=None):
 
+    def safe_join(arr):
+        return ",".join([str(x).strip() for x in (arr or []) if x])
+
+    # ---------------- STATE LOOKUP ----------------
+    def get_location_state_map(location_codes):
+        location_codes = [c for c in set(location_codes) if c]
+        if not location_codes:
+            return {}
+
+        rows = frappe.get_all(
+            "Location code Link",
+            filters={"location_code": ["in", location_codes]},
+            fields=["location_code", "location_code_erp", "state"],
+            ignore_permissions=True
+        )
+
+        state_map = {}
+        erp_map = {}
+
+        for row in rows:
+            code = row.get("location_code")
+            state = row.get("state") or "Unknown"
+            erp = row.get("location_code_erp") or ""
+            if code:
+                if code not in state_map:
+                    state_map[code] = state
+                if code not in erp_map:
+                    erp_map[code] = erp
+
+        for code in location_codes:
+            if code not in state_map:
+                state_map[code] = "Unknown"
+            if code not in erp_map:
+                erp_map[code] = ""
+
+        return state_map, erp_map
+
+    # ---------------- TOTAL CALCULATIONS ----------------
+    def calculate_totals(actuals):
+        for head in actuals:
+            total_ytd = 0
+            total_actual = 0
+            if head.get("sub_heads"):
+                for sub in head.get("sub_heads", []):
+                    sub_ytd = 0
+                    sub_actual = 0
+                    for item in sub.get("items", []):
+                        sub_ytd += item.get("ytd", 0) or 0
+                        sub_actual += item.get("total_posted_amt", 0) or 0
+                    sub["ytd"] = round(sub_ytd, 2)
+                    sub["total_posted_amt_ytd"] = round(sub_actual, 2)
+                    total_ytd += sub_ytd
+                    total_actual += sub_actual
+            else:
+                for item in head.get("items", []):
+                    total_ytd += item.get("ytd", 0) or 0
+                    total_actual += item.get("total_posted_amt", 0) or 0
+            head["ytd"] = round(total_ytd, 2)
+            head["total_posted_amt_ytd"] = round(total_actual, 2)
+        return actuals
+
+    def calculate_grand_total(actuals):
+        grand_ytd = 0
+        grand_actual = 0
+        for head in actuals:
+            grand_ytd += head.get("ytd", 0) or 0
+            grand_actual += head.get("total_posted_amt_ytd", 0) or 0
+        return {
+            "grand_total_ytd": round(grand_ytd, 2),
+            "grand_total_actual": round(grand_actual, 2)
+        }
+
+    # ---------------- CONSOLIDATION ----------------
+    def consolidate_actuals(all_unit_actuals):
+        head_map = {}
+        for unit_data in all_unit_actuals:
+            for head in unit_data:
+                key = head["name"]
+                if key not in head_map:
+                    head_map[key] = {
+                        "name": head["name"],
+                        "sequence_id": head["sequence_id"],
+                        "sub_heads": [],
+                        "items": [],
+                        "ytd": 0,
+                        "total_posted_amt_ytd": 0
+                    }
+                head_map[key]["ytd"] += head.get("ytd", 0)
+                head_map[key]["total_posted_amt_ytd"] += head.get("total_posted_amt_ytd", 0)
+
+                if head.get("sub_heads"):
+                    sub_map = {s["name"]: s for s in head_map[key]["sub_heads"]}
+                    for sub in head.get("sub_heads", []):
+                        if sub["name"] not in sub_map:
+                            new_sub = {
+                                "name": sub["name"],
+                                "sequence_id": sub["sequence_id"],
+                                "items": [],
+                                "ytd": 0,
+                                "total_posted_amt_ytd": 0
+                            }
+                            head_map[key]["sub_heads"].append(new_sub)
+                            sub_map[sub["name"]] = new_sub
+                        sub_map[sub["name"]]["ytd"] += sub.get("ytd", 0)
+                        sub_map[sub["name"]]["total_posted_amt_ytd"] += sub.get("total_posted_amt_ytd", 0)
+                        item_map = {i["name"]: i for i in sub_map[sub["name"]]["items"]}
+                        for item in sub.get("items", []):
+                            if item["name"] not in item_map:
+                                new_item = {
+                                    "name": item["name"],
+                                    "sequence_id": item["sequence_id"],
+                                    "gl_code": item.get("gl_code"),
+                                    "ytd": 0,
+                                    "total_posted_amt": 0
+                                }
+                                sub_map[sub["name"]]["items"].append(new_item)
+                                item_map[item["name"]] = new_item
+                            item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                            item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+                else:
+                    item_map = {i["name"]: i for i in head_map[key]["items"]}
+                    for item in head.get("items", []):
+                        if item["name"] not in item_map:
+                            new_item = {
+                                "name": item["name"],
+                                "sequence_id": item["sequence_id"],
+                                "gl_code": item.get("gl_code"),
+                                "ytd": 0,
+                                "total_posted_amt": 0
+                            }
+                            head_map[key]["items"].append(new_item)
+                            item_map[item["name"]] = new_item
+                        item_map[item["name"]]["ytd"] += item.get("ytd", 0)
+                        item_map[item["name"]]["total_posted_amt"] += item.get("total_posted_amt", 0)
+
+        return list(head_map.values())
+
+    # ---------------- MAIN ----------------
+    if is_previous == 1:
+        financial_year = get_previous_financial_year(financial_year)
+
+    settings = get_combination_table_settings_1(table_name_filter)
+
+    formatted = get_accounting_period_from_month(month, financial_year)
+
+    grouped_actuals_data = get_grouped_actuals(
+        fiscal_year=formatted.get("fiscal_year"),
+        accounting_period=formatted.get("accounting_period")
+    ).get("data", [])
+
+    # ✅ Pre-fetch all location codes -> state AND erp_loc_value once
+    all_location_codes = []
+    for s in settings:
+        for gu in s.get("grouped_units", []):
+            all_location_codes.extend(gu.get("locations") or [])
+
+    location_state_map, location_erp_map = get_location_state_map(all_location_codes)
+
+    # ✅ Overall accumulators
+    overall_ytd = 0
+    overall_actual = 0
+    capex_total_ytd = 0
+    capex_total_actual = 0
+    opex_total_ytd = 0
+    opex_total_actual = 0
+
+    # ✅ Global state-wise totals for STATE_WISE summary block
+    global_state_totals = {}
+
+    def add_to_global_state_totals(state, ytd, actual):
+        if state not in global_state_totals:
+            global_state_totals[state] = {"ytd": 0, "total_posted_amt": 0}
+        global_state_totals[state]["ytd"] += ytd or 0
+        global_state_totals[state]["total_posted_amt"] += actual or 0
+
+    final_results = []
+
+    for s in settings:
+
+        for combo in s.get("combination_settings", []):
+
+            all_unit_actuals = []
+
+            # ✅ State-wise actuals accumulator for THIS combo
+            # { state_name: [list of loc_actuals per location] }
+            state_actuals_map = {}
+
+            for gu in s.get("grouped_units", []):
+
+                locations = gu.get("locations") or []
+
+                # ── existing combined call (unit-wise, unchanged) ──
+                actuals = get_combined_actuals(
+                    financial_year=financial_year,
+                    month=month,
+                    unit=gu.get("unit"),
+                    cost_center=safe_join(gu.get("cost_centers")),
+                    location_code=safe_join(locations),
+                    erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),
+                    erp_loc_value=safe_join(gu.get("locations_erp")),
+                    grouped_actuals_data=grouped_actuals_data
+                )
+                actuals = calculate_totals(actuals)
+                all_unit_actuals.append(actuals)
+
+                # ── state-wise: one call per individual location code ──
+                if combo.get("is_this_sub_item") == 0:
+                    for loc_code in locations:
+                        state = location_state_map.get(loc_code, "Unknown")
+                        erp_loc = location_erp_map.get(loc_code, "")
+
+                        # ✅ Pass cost_center from the unit as well
+                        # because budget (ytd) in get_consolidated_report_actual_ytd
+                        # may be stored at cost_center + location_code level
+                        loc_actuals = get_combined_actuals(
+                            financial_year=financial_year,
+                            month=month,
+                            unit=gu.get("unit"),
+                            cost_center=safe_join(gu.get("cost_centers")),  # ✅ keep cost_center
+                            location_code=loc_code,                          # ✅ single loc for budget
+                            erp_cost_center_value=safe_join(gu.get("cost_centers_erp")),  # ✅ keep erp cc
+                            erp_loc_value=erp_loc,                           # ✅ single erp loc for actual
+                            grouped_actuals_data=grouped_actuals_data
+                        )
+                        loc_actuals = calculate_totals(loc_actuals)
+
+                        if state not in state_actuals_map:
+                            state_actuals_map[state] = []
+                        state_actuals_map[state].append(loc_actuals)
+
+            # ── consolidate unit-wise (unchanged) ──
+            consolidated = consolidate_actuals(all_unit_actuals)
+            totals = calculate_grand_total(consolidated)
+
+            # ── consolidate state-wise ──
+            state_wise_consolidated = {}
+            for state, loc_actuals_list in state_actuals_map.items():
+                state_consolidated = consolidate_actuals(loc_actuals_list)
+                state_totals_val = calculate_grand_total(state_consolidated)
+
+                state_consolidated.append({
+                    "name": "GRAND TOTAL",
+                    "sequence_id": 9999,
+                    "sub_heads": [],
+                    "items": [],
+                    "ytd": state_totals_val["grand_total_ytd"],
+                    "total_posted_amt_ytd": state_totals_val["grand_total_actual"]
+                })
+
+                state_wise_consolidated[state] = state_consolidated
+
+                add_to_global_state_totals(
+                    state,
+                    state_totals_val["grand_total_ytd"],
+                    state_totals_val["grand_total_actual"]
+                )
+
+            # ── CAPEX / OPEX extraction ──
+            capex_local = 0
+            capex_actual_local = 0
+            opex_local = 0
+            opex_actual_local = 0
+
+            for head in consolidated:
+                name = (head.get("name") or "").upper()
+                if "CAPITAL" in name:
+                    capex_local += head.get("ytd", 0)
+                    capex_actual_local += head.get("total_posted_amt_ytd", 0)
+                elif "OPERATING" in name:
+                    opex_local += head.get("ytd", 0)
+                    opex_actual_local += head.get("total_posted_amt_ytd", 0)
+
+            if combo.get("is_this_sub_item") == 0:
+                overall_ytd += totals["grand_total_ytd"]
+                overall_actual += totals["grand_total_actual"]
+                capex_total_ytd += capex_local
+                capex_total_actual += capex_actual_local
+                opex_total_ytd += opex_local
+                opex_total_actual += opex_actual_local
+
+            consolidated.append({
+                "name": "GRAND TOTAL",
+                "sequence_id": 9999,
+                "sub_heads": [],
+                "items": [],
+                "ytd": totals["grand_total_ytd"],
+                "total_posted_amt_ytd": totals["grand_total_actual"]
+            })
+
+            final_results.append({
+                "settings_doc": s.get("settings_doc"),
+                "label": s.get("label"),
+                "table_name": combo.get("table_name"),
+                "sequence_id": combo.get("sequence_id"),
+                "is_this_sub_item": combo.get("is_this_sub_item"),
+                "actuals": consolidated,
+                "state_wise": state_wise_consolidated
+            })
+
+    # ✅ CONSOLIDATED TOTAL block
+    final_results.append({
+        "settings_doc": "CONSOLIDATED",
+        "label": "CONSOLIDATED TOTAL",
+        "table_name": "CONSOLIDATED",
+        "sequence_id": 9999,
+        "is_this_sub_item": 0,
+        "actuals": [
+            {
+                "name": "CAPEX TOTAL",
+                "ytd": round(capex_total_ytd, 2),
+                "total_posted_amt_ytd": round(capex_total_actual, 2)
+            },
+            {
+                "name": "OPEX TOTAL",
+                "ytd": round(opex_total_ytd, 2),
+                "total_posted_amt_ytd": round(opex_total_actual, 2)
+            },
+            {
+                "name": "OVERALL GRAND TOTAL",
+                "ytd": round(overall_ytd, 2),
+                "total_posted_amt_ytd": round(overall_actual, 2)
+            }
+        ],
+        "state_wise": {}
+    })
+
+    # ✅ STATE-WISE SUMMARY block
+    final_results.append({
+        "settings_doc": "STATE_WISE",
+        "label": "STATE WISE TOTAL",
+        "table_name": "STATE_WISE",
+        "sequence_id": 9998,
+        "is_this_sub_item": 0,
+        "actuals": [
+            {
+                "name": state,
+                "ytd": round(data["ytd"], 2),
+                "total_posted_amt_ytd": round(data["total_posted_amt"], 2)
+            }
+            for state, data in sorted(global_state_totals.items())
+        ],
+        "state_wise": {}
+    })
+
+    return final_results
 
 
 
