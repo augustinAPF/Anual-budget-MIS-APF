@@ -5345,7 +5345,7 @@ def get_unit_wise_plan_test(financial_year, month):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_stat_wise_budget_actual(financial_year, month, table_name_filter=None, is_previous=None):
+def get_state_wise_budget_and_actual(financial_year, month, table_name_filter=None, is_previous=None):
 
     def safe_join(arr):
         return ",".join([str(x).strip() for x in (arr or []) if x])
