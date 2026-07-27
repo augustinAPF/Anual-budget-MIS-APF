@@ -60,20 +60,18 @@
    "options": "\nBudget\nActual\nBoth"
   },
   {
-   "fetch_from": "location_code.state",
    "fieldname": "state",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "State",
-   "read_only": 1
+   "label": "State"
   }
  ],
  "grid_page_length": 100,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-21 11:18:00.226704",
+ "modified": "2026-07-21 15:58:03.443873",
  "modified_by": "Administrator",
  "module": "Annual Budget Child",
  "name": "Location code Link",

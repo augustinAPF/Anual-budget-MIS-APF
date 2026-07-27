@@ -7,7 +7,11 @@
  "field_order": [
   "number_card_title",
   "set_group_id",
+  "column_break_gsnh",
+  "description_for_this_settings",
+  "section_break_tngy",
   "combination_table_settings",
+  "section_break_pazy",
   "select_units",
   "select_cost_centers",
   "select_location_codes"
@@ -52,12 +56,30 @@
    "fieldtype": "Table",
    "label": "Combination of unit  Table settings",
    "options": "Combination of unit settings"
+  },
+  {
+   "fieldname": "description_for_this_settings",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description for this settings"
+  },
+  {
+   "fieldname": "column_break_gsnh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_tngy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_pazy",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-09 10:15:21.492566",
+ "modified": "2026-07-27 14:16:40.295158",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Overview number cards settings",

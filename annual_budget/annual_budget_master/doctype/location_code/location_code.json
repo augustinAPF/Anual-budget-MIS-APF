@@ -45,7 +45,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-10 14:58:33.750699",
+ "modified": "2026-07-25 09:01:42.510300",
  "modified_by": "Administrator",
  "module": "Annual Budget Master",
  "name": "Location Code",
@@ -71,5 +71,7 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "location_code"
+ "title_field": "location_code",
+ "track_changes": 1,
+ "track_seen": 1
 }
