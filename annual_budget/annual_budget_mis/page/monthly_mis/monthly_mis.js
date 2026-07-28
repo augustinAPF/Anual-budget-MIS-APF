@@ -5768,25 +5768,25 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	// =============================================================================
 	// STATE-WISE FETCH — dedicated endpoint, used by Education table
 	// =============================================================================
-	// function fetchStateData(fy, month) {
-	// 	return new Promise(function(resolve) {
-	// 		frappe.call({
-	// 			method: 'annual_budget.api.foundation_consolidated_report.get_combination_table_settings_test',
-	// 			args: {
-	// 				financial_year: fy,
-	// 				month: month,
-	// 				table_name_filter: 'Unit Wise Plan,Opex Capex'
-	// 			},
-	// 			callback: function(r) {
-	// 				var d = Array.isArray(r.message) ? r.message
-	// 					: (r.message && Array.isArray(r.message.message)) ? r.message.message
-	// 					: (r.message && Array.isArray(r.message.data)) ? r.message.data : [];
-	// 				resolve(d);
-	// 			},
-	// 			error: function() { resolve([]); }
-	// 		});
-	// 	});
-	// }
+	function fetchStateData(fy, month) {
+		return new Promise(function(resolve) {
+			frappe.call({
+				method: 'annual_budget.api.foundation_consolidated_report.get_combination_table_settings_test',
+				args: {
+					financial_year: fy,
+					month: month,
+					table_name_filter: 'Unit Wise Plan,Opex Capex'
+				},
+				callback: function(r) {
+					var d = Array.isArray(r.message) ? r.message
+						: (r.message && Array.isArray(r.message.message)) ? r.message.message
+						: (r.message && Array.isArray(r.message.data)) ? r.message.data : [];
+					resolve(d);
+				},
+				error: function() { resolve([]); }
+			});
+		});
+	}
 
 	// =============================================================================
 	// EDUCATION TABLE — State-wise, placed after Overall table
