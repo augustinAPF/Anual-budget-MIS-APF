@@ -7082,6 +7082,10 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 							if(!found)pm[n].items.push({name:iname,b:ib,a:ia});
 						});
 					});
+				} else if(nm.indexOf('COVID')!==-1){
+					/* COVID also part of opex total — matches extractSection */
+					opexTot.b+=parseFloat(sec.ytd||0)/10000000;
+					opexTot.a+=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
 				}
 			});
 			pm.__opex_total=opexTot;
@@ -7118,6 +7122,10 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 							if(!found)allCurMap[n].items.push({name:iname,b:ib,a:ia});
 						});
 					});
+				} else if(nm.indexOf('COVID')!==-1){
+					/* Include COVID in allCurOpexTot — matches extractSection OPEX_NAMES */
+					allCurOpexTot.b+=parseFloat(sec.ytd||0)/10000000;
+					allCurOpexTot.a+=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
 				}
 			});
 			var pm=prevLookup[unit]||{};
@@ -7255,7 +7263,7 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			(entry.actuals||[]).forEach(function(sec){
 				var nm=(sec.name||'').replace(/\s+/g,' ').trim().toUpperCase();
 				if(OPEX_NAMES.indexOf(nm)!==-1){
-					/* Section-level total for this unit (matches Operating Expense table) */
+					/* Section-level total — same source as Operating Expense table */
 					curOpexTot.b+=parseFloat(sec.ytd||0)/10000000;
 					curOpexTot.a+=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
 					(sec.sub_heads||[]).forEach(function(sh){
@@ -7263,7 +7271,6 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 						var items=[];
 						(sh.items||[]).forEach(function(it){
 							var iname=(it.name||'').trim(); if(!iname)return;
-							/* Handle both field name variants from the API */
 							var ib=parseFloat(it.ytd||it.total_ytd||it.budget||0)/10000000;
 							var ia=parseFloat(it.total_posted_amt||it.total_posted_amt_ytd||it.actual||0)/10000000;
 							items.push({name:iname,b:ib,a:ia});
@@ -7271,6 +7278,10 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 						curMap[n]={b:parseFloat(sh.ytd||0)/10000000,a:parseFloat(sh.total_posted_amt_ytd||0)/10000000,items:items};
 						if(!catSeen[n]){catSeen[n]=true;catOrder.push(n);}
 					});
+				} else if(nm.indexOf('COVID')!==-1){
+					/* Include COVID in opex total — matches extractSection OPEX_NAMES return */
+					curOpexTot.b+=parseFloat(sec.ytd||0)/10000000;
+					curOpexTot.a+=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
 				}
 			});
 			var pm=prevLookup[unit]||{};
@@ -7293,28 +7304,6 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			});
 		}, 60);
 	}
-
-	// =============================================================================
-	// STATE-WISE BUDGET VS ACTUALS
-	// Uses the SAME API as fetchData — no extra call.
-	// Each entry in the response has a `state_wise` dict:
-	//   { "Assam": [ actuals_array ], "Karnataka": [...], ... }
-	// We aggregate Opex + Capex from each state's actuals[] to build the table.
-	//
-	// Layout (matches image):
-	//   Section header row  = unit label (e.g. "Education - District Institutes")
-	//   Body rows           = one per state under that unit
-	//   Sub-total row       = sum of all states for that unit
-	//   Grand Total row     = sum of all top-level units
-	//
-	//   Columns: States | Opex(Bud|Act|%) | Capex(Bud|Act|%) | Total(Bud|Act|%)
-	// =============================================================================
-
-	// =============================================================================
-	// BREAKUP FETCH — get_monthly_mis_break_up
-	// Returns dict keyed by label e.g. "Education - District Institutes"
-	// Each value has sub_units: [ { label, actuals:[] } ]
-	// =============================================================================
 	function fetchBreakupData(fy, month) {
 		return new Promise(function(resolve) {
 			frappe.call({
@@ -7322,7 +7311,6 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 				args: {
 					financial_year: fy,
 					month: month,
-					// table_name_filter: 'Unit Wise Plan,Opex Capex,Enablers,Livelihoods',
 					table_name_filter: 'Education - District Institutes,Education- Azim Premji Schools,Azim Premji University (Bangalore Campus),Azim Premji University (Bhopal Campus),Azim Premji University (Ranchi Campus),Enablers,Livelihoods,Urban Primary care work,Rural Primary care work,Central Initiatives,Hospital,Health Programs Team & Enablers',
 					is_previous: 0
 				},
@@ -7348,20 +7336,40 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		$('#'+subtitleId).text('Budget vs. Actuals \u2013 YTD ' + ytd);
 		$('#'+titleId).text(titleText);
 
-		// Collect all matching top-level keys
+		/* Find entries for a key — handles all API response shapes */
+		function findEntries(key) {
+			if (!breakupData) return [];
+			/* Shape 1: flat — key directly */
+			if (breakupData[key] && Array.isArray(breakupData[key])) return breakupData[key];
+			/* Shape 2 & 3: nested */
+			var grps = Object.values(breakupData);
+			for (var i=0; i<grps.length; i++) {
+				var grp = grps[i];
+				if (grp && typeof grp==='object' && !Array.isArray(grp) && grp[key] && Array.isArray(grp[key]))
+					return grp[key];
+				if (Array.isArray(grp)) {
+					var m = grp.filter(function(e){ return (e.label||'').trim()===key && e.settings_doc!=='CONSOLIDATED'; });
+					if (m.length) return m;
+				}
+			}
+			return [];
+		}
+
 		var sections = [];
 		keys.forEach(function(k) {
-			var val = breakupData[k];
-			if (val) sections.push({ label: k, data: val });
+			var entries = findEntries(k)
+				.filter(function(e){ return e.settings_doc!=='CONSOLIDATED' && (e.label||'')!=='CONSOLIDATED TOTAL'; })
+				.sort(function(a,b){ return (a.sequence_id||0)-(b.sequence_id||0); });
+			sections.push({ label: k, entries: entries });
 		});
 
-		if (!sections.length) {
+		var hasAny = sections.some(function(s){ return s.entries.length>0; });
+		if (!hasAny) {
 			$('#'+tblId+' thead').empty();
 			$('#'+tblId+' tbody').html('<tr><td colspan="10" style="text-align:center;padding:28px;color:#aaa;">No data available.</td></tr>');
 			return;
 		}
 
-		// ── 2-row header ──
 		$('#'+tblId+' thead').empty().append(
 			'<tr class="hdr-blue">' +
 			'<th rowspan="2" class="col-lbl bl" style="text-align:left;min-width:240px;">'+titleText+'</th>' +
@@ -7376,13 +7384,13 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			'</tr>'
 		);
 
-		// Extract opex + capex from actuals[]
 		function exAct(arr) {
 			var ob=0,oa=0,cb=0,ca=0;
-			(arr||[]).forEach(function(sec){
+			(arr||[]).sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);}).forEach(function(sec){
 				var nm=(sec.name||'').replace(/\s+/g,' ').trim().toUpperCase();
 				var b=parseFloat(sec.ytd||0)/10000000;
 				var a=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
+				if(!b&&!a){(sec.sub_heads||[]).forEach(function(sh){b+=parseFloat(sh.ytd||0)/10000000;a+=parseFloat(sh.total_posted_amt_ytd||0)/10000000;});}
 				if(nm==='OPERATING EXPENSES'||nm==='OPERATING  EXPENSES'){ob+=b;oa+=a;}
 				else if(nm==='CAPITAL EXPENSES'||nm==='CAPITAL  EXPENSES'){cb+=b;ca+=a;}
 			});
@@ -7393,53 +7401,34 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			var cls=rc?' class="'+rc+'"':'';
 			var lS=indent?'padding-left:'+indent+'px;':'';
 			var bg=isGrand?'background:#1565C0!important;color:#fff!important;':'';
-			return '<tr'+cls+'>' +
-				'<td class="col-lbl" style="'+lS+bg+'">'+label+'</td>' +
-				mkTdCr(v.ob,'',label,'Opex Budget',isGrand) +
-				mkTdCr(v.oa,'ex-act',label,'Opex Actuals',isGrand) +
+			return '<tr'+cls+'><td class="col-lbl" style="'+lS+bg+'">'+label+'</td>' +
+				mkTdCr(v.ob,'',label,'Opex Budget',isGrand)+mkTdCr(v.oa,'ex-act',label,'Opex Actuals',isGrand)+
 				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.oa,v.ob)+'</td>' +
-				mkTdCr(v.cb,'sep-yr',label,'Capex Budget',isGrand) +
-				mkTdCr(v.ca,'ex-act',label,'Capex Actuals',isGrand) +
+				mkTdCr(v.cb,'sep-yr',label,'Capex Budget',isGrand)+mkTdCr(v.ca,'ex-act',label,'Capex Actuals',isGrand)+
 				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ca,v.cb)+'</td>' +
-				mkTdCr(v.tb,'sep-yr',label,'Total Budget',isGrand) +
-				mkTdCr(v.ta,'ex-act',label,'Total Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ta,v.tb)+'</td>' +
-				'</tr>';
+				mkTdCr(v.tb,'sep-yr',label,'Total Budget',isGrand)+mkTdCr(v.ta,'ex-act',label,'Total Actuals',isGrand)+
+				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ta,v.tb)+'</td></tr>';
 		}
 
 		function addV(a,b){return{ob:a.ob+b.ob,oa:a.oa+b.oa,cb:a.cb+b.cb,ca:a.ca+b.ca,tb:a.tb+b.tb,ta:a.ta+b.ta};}
-		var zV={ob:0,oa:0,cb:0,ca:0,tb:0,ta:0};
-		var html='', grand=Object.assign({},zV);
+		var zV={ob:0,oa:0,cb:0,ca:0,tb:0,ta:0}, html='', grand=Object.assign({},zV);
 
 		sections.forEach(function(sec) {
-			// Section header row
 			html += '<tr class="sw-section"><td class="col-lbl" colspan="10"><strong>'+sec.label+'</strong></td></tr>';
-
-			var subUnits = sec.data.sub_units || sec.data;
-			if (!Array.isArray(subUnits)) subUnits = Object.values(subUnits);
-			subUnits = subUnits.slice().sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});
-			/* Fix 2: sort by sequence_id */
-			subUnits = subUnits.slice().sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});
-
 			var secTot = Object.assign({},zV);
-
-			subUnits.forEach(function(su) {
+			sec.entries.forEach(function(su) {
 				var suLabel = su.label || su.name || '';
-				/* Skip the CONSOLIDATED TOTAL — it is a summary, not a data row */
-				if (!suLabel || suLabel === 'CONSOLIDATED TOTAL' || (su.settings_doc && su.settings_doc === 'CONSOLIDATED')) return;
+				if (!suLabel || suLabel==='CONSOLIDATED TOTAL') return;
 				var v = exAct(su.actuals || []);
 				secTot = addV(secTot, v);
 				html += mkRow(suLabel, v, '', 16, false);
 			});
-
 			html += mkRow('Total', secTot, 'sw-unit-total', 0, false);
 			grand = addV(grand, secTot);
 		});
 
-		// Grand total label depends on table
-		var grandLabel = titleText === 'Education' ? 'Total Education' : 'Total '+titleText;
+		var grandLabel = titleText==='Education' ? 'Total Education' : 'Total '+titleText;
 		html += mkRow(grandLabel, grand, 'sw-grand-total', 0, true);
-
 		$('#'+tblId+' tbody').empty().html(html);
 		setStickyTops('#'+tblId);
 	}
@@ -7470,179 +7459,16 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 
 	// Enablers — flat list (no section grouping), uses "Enablers" key
 	function renderEnablersBreakup(breakupData, fy, month) {
-		var ytd = monthYearLabel(month, fy);
-		$('#enablers-subtitle').text('Budget vs. Actuals \u2013 YTD ' + ytd);
-		$('#enablers-title').text('Enablers');
-
-		// Try both table groups for the Enablers key
-		var raw = null;
-		var groups = ['Unit Wise Plan','Opex Capex'];
-		for (var g=0; g<groups.length; g++) {
-			var grp = breakupData && breakupData[groups[g]];
-			if (grp && grp['Enablers']) { raw = grp['Enablers']; break; }
-		}
-		if (!raw && breakupData && breakupData['Enablers']) raw = breakupData['Enablers'];
-
-		if (!raw) {
-			$('#enablers-tbl thead').empty();
-			$('#enablers-tbl tbody').html('<tr><td colspan="10" style="text-align:center;padding:28px;color:#aaa;">No data available.</td></tr>');
-			return;
-		}
-
-		// ── 2-row header — "Functions" label matches image ──
-		$('#enablers-tbl thead').empty().append(
-			'<tr class="hdr-blue">' +
-			'<th rowspan="2" class="col-lbl bl" style="text-align:left;min-width:240px;">Functions</th>' +
-			'<th colspan="3">Operating Expense</th>' +
-			'<th colspan="3" class="sep-yr">Capital Expense</th>' +
-			'<th colspan="3" class="sep-yr">Total Expense</th>' +
-			'</tr>' +
-			'<tr class="hdr-orange">' +
-			'<th>Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'</tr>'
-		);
-
-		function exAct(arr) {
-			var ob=0,oa=0,cb=0,ca=0;
-			(arr||[]).forEach(function(sec){
-				var nm=(sec.name||'').replace(/\s+/g,' ').trim().toUpperCase();
-				var b=parseFloat(sec.ytd||0)/10000000;
-				var a=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
-				if(nm==='OPERATING EXPENSES'||nm==='OPERATING  EXPENSES'){ob+=b;oa+=a;}
-				else if(nm==='CAPITAL EXPENSES'||nm==='CAPITAL  EXPENSES'){cb+=b;ca+=a;}
-			});
-			return{ob:ob,oa:oa,cb:cb,ca:ca,tb:ob+cb,ta:oa+ca};
-		}
-
-		function mkRow(label,v,rc,isGrand) {
-			var cls=rc?' class="'+rc+'"':'';
-			var bg=isGrand?'background:#1565C0!important;color:#fff!important;':'';
-			return '<tr'+cls+'>' +
-				'<td class="col-lbl" style="'+bg+'">'+label+'</td>' +
-				mkTdCr(v.ob,'',label,'Opex Budget',isGrand) +
-				mkTdCr(v.oa,'ex-act',label,'Opex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.oa,v.ob)+'</td>' +
-				mkTdCr(v.cb,'sep-yr',label,'Capex Budget',isGrand) +
-				mkTdCr(v.ca,'ex-act',label,'Capex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ca,v.cb)+'</td>' +
-				mkTdCr(v.tb,'sep-yr',label,'Total Budget',isGrand) +
-				mkTdCr(v.ta,'ex-act',label,'Total Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ta,v.tb)+'</td>' +
-				'</tr>';
-		}
-
-		function addV(a,b){return{ob:a.ob+b.ob,oa:a.oa+b.oa,cb:a.cb+b.cb,ca:a.ca+b.ca,tb:a.tb+b.tb,ta:a.ta+b.ta};}
-		var zV={ob:0,oa:0,cb:0,ca:0,tb:0,ta:0};
-		var html='', tot=Object.assign({},zV);
-
-		var subUnits = raw.sub_units || raw;
-		if (!Array.isArray(subUnits)) subUnits = Object.values(subUnits);
-		subUnits = subUnits.slice().sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});
-
-		subUnits.forEach(function(su) {
-			var lbl = su.label || su.name || '';
-			if (!lbl || lbl==='CONSOLIDATED TOTAL' || (su.settings_doc && su.settings_doc==='CONSOLIDATED')) return;
-			var v = exAct(su.actuals || []);
-			tot = addV(tot, v);
-			html += mkRow(lbl, v, '', false);
-		});
-
-		html += mkRow('Total', tot, 'sw-unit-total', false);
-
-		$('#enablers-tbl tbody').empty().html(html);
-		setStickyTops('#enablers-tbl');
+		renderBreakupTable('enablers-tbl','enablers-subtitle','enablers-title','Enablers',
+			['Enablers'], breakupData, fy, month);
 	}
 
 	// Enablers table — flat rows (Functions), no section headers
 
 	// Livelihoods — state-wise breakup table
 	function renderLivelihoodsBreakup(breakupData, fy, month) {
-		var ytd = monthYearLabel(month, fy);
-		$('#livelihoods-subtitle').text('Budget vs. Actuals \u2013 YTD ' + ytd);
-		$('#livelihoods-title').text('Livelihoods');
-
-		// Find Livelihoods data from any table group
-		var raw = null;
-		var groups = ['Unit Wise Plan','Opex Capex'];
-		for (var g=0; g<groups.length; g++) {
-			var grp = breakupData && breakupData[groups[g]];
-			if (grp && grp['Livelihoods']) { raw = grp['Livelihoods']; break; }
-		}
-		if (!raw && breakupData && breakupData['Livelihoods']) raw = breakupData['Livelihoods'];
-
-		if (!raw) {
-			$('#livelihoods-tbl thead').empty();
-			$('#livelihoods-tbl tbody').html('<tr><td colspan="10" style="text-align:center;padding:28px;color:#aaa;">No data available.</td></tr>');
-			return;
-		}
-
-		// ── 2-row header — "States" label (same layout as Education table) ──
-		$('#livelihoods-tbl thead').empty().append(
-			'<tr class="hdr-blue">' +
-			'<th rowspan="2" class="col-lbl bl" style="text-align:left;min-width:220px;">States</th>' +
-			'<th colspan="3">Operating Expense</th>' +
-			'<th colspan="3" class="sep-yr">Capital Expense</th>' +
-			'<th colspan="3" class="sep-yr">Total Expense</th>' +
-			'</tr>' +
-			'<tr class="hdr-orange">' +
-			'<th>Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'</tr>'
-		);
-
-		function exAct(arr) {
-			var ob=0,oa=0,cb=0,ca=0;
-			(arr||[]).forEach(function(sec){
-				var nm=(sec.name||'').replace(/\s+/g,' ').trim().toUpperCase();
-				var b=parseFloat(sec.ytd||0)/10000000;
-				var a=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
-				if(nm==='OPERATING EXPENSES'||nm==='OPERATING  EXPENSES'){ob+=b;oa+=a;}
-				else if(nm==='CAPITAL EXPENSES'||nm==='CAPITAL  EXPENSES'){cb+=b;ca+=a;}
-			});
-			return{ob:ob,oa:oa,cb:cb,ca:ca,tb:ob+cb,ta:oa+ca};
-		}
-
-		function mkRow(label,v,rc,isGrand) {
-			var cls=rc?' class="'+rc+'"':'';
-			var bg=isGrand?'background:#1565C0!important;color:#fff!important;':'';
-			return '<tr'+cls+'>' +
-				'<td class="col-lbl" style="'+bg+'">'+label+'</td>' +
-				mkTdCr(v.ob,'',label,'Opex Budget',isGrand) +
-				mkTdCr(v.oa,'ex-act',label,'Opex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.oa,v.ob)+'</td>' +
-				mkTdCr(v.cb,'sep-yr',label,'Capex Budget',isGrand) +
-				mkTdCr(v.ca,'ex-act',label,'Capex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ca,v.cb)+'</td>' +
-				mkTdCr(v.tb,'sep-yr',label,'Total Budget',isGrand) +
-				mkTdCr(v.ta,'ex-act',label,'Total Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ta,v.tb)+'</td>' +
-				'</tr>';
-		}
-
-		function addV(a,b){return{ob:a.ob+b.ob,oa:a.oa+b.oa,cb:a.cb+b.cb,ca:a.ca+b.ca,tb:a.tb+b.tb,ta:a.ta+b.ta};}
-		var zV={ob:0,oa:0,cb:0,ca:0,tb:0,ta:0};
-		var html='', tot=Object.assign({},zV);
-
-		var subUnits = raw.sub_units || raw;
-		if (!Array.isArray(subUnits)) subUnits = Object.values(subUnits);
-		subUnits = subUnits.slice().sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});
-
-		subUnits.forEach(function(su) {
-			var lbl = su.label || su.name || '';
-			if (!lbl || lbl==='CONSOLIDATED TOTAL' || (su.settings_doc && su.settings_doc==='CONSOLIDATED')) return;
-			var v = exAct(su.actuals || []);
-			/* hide zero rows */
-			if(!v.ob&&!v.oa&&!v.cb&&!v.ca) return;
-			tot = addV(tot, v);
-			html += mkRow(lbl, v, '', false);
-		});
-
-		html += mkRow('Total', tot, 'sw-unit-total', false);
-		$('#livelihoods-tbl tbody').empty().html(html);
-		setStickyTops('#livelihoods-tbl');
+		renderBreakupTable('livelihoods-tbl','livelihoods-subtitle','livelihoods-title','Livelihoods',
+			['Livelihoods'], breakupData, fy, month);
 	}
 
 	// Health — breakup by area of work (sub_units with section headers)
@@ -7655,142 +7481,8 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	];
 
 	function renderHealthBreakup(breakupData, fy, month) {
-		var ytd = monthYearLabel(month, fy);
-		$('#health-subtitle').text('Budget vs. Actuals \u2013 YTD ' + ytd);
-		$('#health-title').text('Health');
-
-		// Find Health data from any table group or flat dict
-		var raw = null;
-		var groups = ['Unit Wise Plan','Opex Capex'];
-		for (var g=0; g<groups.length; g++) {
-			var grp = breakupData && breakupData[groups[g]];
-			if (grp) {
-				// Check if any health keys exist under this group
-				for (var k=0; k<HEALTH_BREAKUP_KEYS.length; k++) {
-					if (grp[HEALTH_BREAKUP_KEYS[k]]) { raw = grp; break; }
-				}
-				if (raw) break;
-			}
-		}
-		if (!raw) raw = breakupData || {};
-
-		// Build sub_units from matching keys (each key is a section)
-		var sections = [];
-		HEALTH_BREAKUP_KEYS.forEach(function(k) {
-			var val = raw[k];
-			if (val) sections.push({ label: k, data: val });
-		});
-
-		if (!sections.length) {
-			$('#health-tbl thead').empty();
-			$('#health-tbl tbody').html('<tr><td colspan="10" style="text-align:center;padding:28px;color:#aaa;">No data available.</td></tr>');
-			return;
-		}
-
-		$('#health-tbl thead').empty().append(
-			'<tr class="hdr-blue">' +
-			'<th rowspan="2" class="col-lbl bl" style="text-align:left;min-width:220px;">Areas of Work</th>' +
-			'<th colspan="3">Operating Expense</th>' +
-			'<th colspan="3" class="sep-yr">Capital Expense</th>' +
-			'<th colspan="3" class="sep-yr">Total Expense</th>' +
-			'</tr>' +
-			'<tr class="hdr-orange">' +
-			'<th>Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'<th class="sep-yr">Budget</th><th class="act-hdr">Actuals</th><th class="pct-hdr">% of Budget</th>' +
-			'</tr>'
-		);
-
-		function exAct(arr) {
-			var ob=0,oa=0,cb=0,ca=0;
-			(arr||[]).forEach(function(sec){
-				var nm=(sec.name||'').replace(/\s+/g,' ').trim().toUpperCase();
-				/* Use section-level totals first; fall back to summing sub_heads */
-				var b=parseFloat(sec.ytd||0)/10000000;
-				var a=parseFloat(sec.total_posted_amt_ytd||0)/10000000;
-				if(!b&&!a){
-					(sec.sub_heads||[]).forEach(function(sh){
-						b+=parseFloat(sh.ytd||0)/10000000;
-						a+=parseFloat(sh.total_posted_amt_ytd||0)/10000000;
-					});
-				}
-				if(nm==='OPERATING EXPENSES'||nm==='OPERATING  EXPENSES'){ob+=b;oa+=a;}
-				else if(nm==='CAPITAL EXPENSES'||nm==='CAPITAL  EXPENSES'){cb+=b;ca+=a;}
-			});
-			return{ob:ob,oa:oa,cb:cb,ca:ca,tb:ob+cb,ta:oa+ca};
-		}
-
-		function mkRow(label,v,rc,indent,isGrand) {
-			var cls=rc?' class="'+rc+'"':'';
-			var lS=indent?'padding-left:'+indent+'px;':'';
-			var bg=isGrand?'background:#1565C0!important;color:#fff!important;':'';
-			return '<tr'+cls+'>' +
-				'<td class="col-lbl" style="'+lS+bg+'">'+label+'</td>' +
-				mkTdCr(v.ob,'',label,'Opex Budget',isGrand) +
-				mkTdCr(v.oa,'ex-act',label,'Opex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.oa,v.ob)+'</td>' +
-				mkTdCr(v.cb,'sep-yr',label,'Capex Budget',isGrand) +
-				mkTdCr(v.ca,'ex-act',label,'Capex Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ca,v.cb)+'</td>' +
-				mkTdCr(v.tb,'sep-yr',label,'Total Budget',isGrand) +
-				mkTdCr(v.ta,'ex-act',label,'Total Actuals',isGrand) +
-				'<td class="ex-pct"'+(isGrand?' style="'+bg+'"':'')+'>'+fmtPct(v.ta,v.tb)+'</td>' +
-				'</tr>';
-		}
-
-		function addV(a,b){return{ob:a.ob+b.ob,oa:a.oa+b.oa,cb:a.cb+b.cb,ca:a.ca+b.ca,tb:a.tb+b.tb,ta:a.ta+b.ta};}
-		var zV={ob:0,oa:0,cb:0,ca:0,tb:0,ta:0};
-		var html='', grand=Object.assign({},zV);
-
-		sections.forEach(function(sec) {
-			var secKey = sec.label;
-			var subUnits = sec.data.sub_units || sec.data;
-			if (!Array.isArray(subUnits)) subUnits = Object.values(subUnits);
-			subUnits = subUnits.slice().sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});
-
-			// If section has sub_units — show section header + indented sub rows
-			if (subUnits.length > 0 && subUnits[0] && (subUnits[0].label || subUnits[0].name)) {
-				var secTot = Object.assign({},zV);
-				var hasRows = false;
-
-				// Check if this is a flat entry (no real sub_units, just the section itself)
-				var firstItem = subUnits[0];
-				if (firstItem.actuals) {
-					// Section header row
-					html += '<tr class="sw-section"><td class="col-lbl" colspan="10">'+secKey+'</td></tr>';
-					subUnits.forEach(function(su) {
-						var lbl = su.label || su.name || '';
-						if (!lbl || lbl==='CONSOLIDATED TOTAL' || (su.settings_doc && su.settings_doc==='CONSOLIDATED')) return;
-						var v = exAct(su.actuals || []);
-						secTot = addV(secTot, v);
-						html += mkRow(lbl, v, '', 16, false);
-						hasRows = true;
-					});
-					if (hasRows) {
-						html += mkRow('Total', secTot, 'sw-unit-total', 0, false);
-						grand = addV(grand, secTot);
-					}
-				} else {
-					// Flat section — render as single row
-					var v = exAct(sec.data.actuals || []);
-					if(v.ob||v.oa||v.cb||v.ca) {
-						html += mkRow(secKey, v, '', 0, false);
-						grand = addV(grand, v);
-					}
-				}
-			} else {
-				// Single flat row
-				var v = exAct(sec.data.actuals || []);
-				if(v.ob||v.oa||v.cb||v.ca) {
-					html += mkRow(secKey, v, '', 0, false);
-					grand = addV(grand, v);
-				}
-			}
-		});
-
-		html += mkRow('Total', grand, 'sw-grand-total', 0, true);
-		$('#health-tbl tbody').empty().html(html);
-		setStickyTops('#health-tbl');
+		renderBreakupTable('health-tbl','health-subtitle','health-title','Health',
+			HEALTH_BREAKUP_KEYS, breakupData, fy, month);
 	}
 
 	// =============================================================================

@@ -93,7 +93,6 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
     )
     breakup_raw = get_monthly_mis_break_up(
         financial_year, month,
-        # table_name_filter="Unit Wise Plan,Opex Capex",
         table_name_filter=BREAKUP_LABELS,
     ) or {}
 
@@ -135,8 +134,10 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
                     r["cb"] += b; r["ca"] += a
                 elif "COVID" in nm:
                     r["vb"] += b; r["va"] += a
-            r["tb"] = r["ob"] + r["cb"] + r["vb"]
-            r["ta"] = r["oa"] + r["ca"] + r["va"]
+                    # Include COVID in opex total (matches extractSection OPEX_NAMES logic)
+                    r["ob"] += b; r["oa"] += a
+            r["tb"] = r["ob"] + r["cb"]   # ob already includes covid
+            r["ta"] = r["oa"] + r["ca"]
             out[lbl] = r
             if lbl not in seen:
                 order.append(lbl); seen.add(lbl)
@@ -146,12 +147,46 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
     prev_map, _    = parse_main(prev_raw)
 
     def get_breakup_entries(key):
+        """
+        Find entries for a given label key from breakup_raw.
+        Handles multiple response shapes:
+          1. { "table_name": { "label": [entries] } }   ← nested dict of dicts
+          2. { "label": [entries] }                       ← flat dict
+          3. { "table_name": [entries_with_label_field] } ← list of dicts
+        """
+        def _filter(entries):
+            if not isinstance(entries, list):
+                return []
+            return [e for e in sorted(entries, key=lambda x: x.get("sequence_id", 0))
+                    if (e.get("label") or "") not in ("CONSOLIDATED TOTAL", "")
+                    and e.get("settings_doc") != "CONSOLIDATED"]
+
+        if not breakup_raw:
+            return []
+
+        # Shape 1: flat dict with key directly
+        if key in breakup_raw:
+            val = breakup_raw[key]
+            if isinstance(val, list):
+                return _filter(val)
+            if isinstance(val, dict):
+                # value is a sub-dict; entries might be inside
+                return _filter(list(val.values()))
+
+        # Shape 2: nested — iterate over top-level values
         for grp in breakup_raw.values():
-            if isinstance(grp, dict) and key in grp:
-                return [e for e in sorted(grp[key],
-                            key=lambda x: x.get("sequence_id", 0))
-                        if (e.get("label") or "") not in ("CONSOLIDATED TOTAL", "")
-                        and e.get("settings_doc") != "CONSOLIDATED"]
+            if isinstance(grp, dict):
+                if key in grp:
+                    return _filter(grp[key] if isinstance(grp[key], list) else [])
+            elif isinstance(grp, list):
+                # List of entries — filter by label field
+                matched = [e for e in grp
+                           if (e.get("label") or "").strip() == key
+                           and (e.get("label") or "") not in ("CONSOLIDATED TOTAL",)
+                           and e.get("settings_doc") != "CONSOLIDATED"]
+                if matched:
+                    return sorted(matched, key=lambda x: x.get("sequence_id", 0))
+
         return []
 
     def exAct(actuals):
