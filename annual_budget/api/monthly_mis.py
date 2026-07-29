@@ -31,18 +31,32 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
     C_SUBROW = "F8F9FA"
     C_BLACK  = "000000"
 
-    def _fill(c):
-        return PatternFill("solid", fgColor=c)
+    # ── Style cache (Fix 3: create once, reuse — much faster) ─────────────────
+    _fill_cache  = {}
+    _border_cache = {}
+    _font_cache  = {}
 
-    def _font(bold=False, color=C_BLACK, size=9, italic=False):
-        return Font(name="Arial", bold=bold, color=color, size=size, italic=italic)
+    def _fill(c):
+        if c not in _fill_cache:
+            _fill_cache[c] = PatternFill("solid", fgColor=c)
+        return _fill_cache[c]
+
+    def _font(bold=False, color=C_BLACK, size=9, italic=False, underline=None):
+        key = (bold, color, size, italic, underline)
+        if key not in _font_cache:
+            _font_cache[key] = Font(name="Arial", bold=bold, color=color,
+                                     size=size, italic=italic,
+                                     underline=underline or "none" if underline else None)
+        return _font_cache[key]
+
+    def _border(color=C_BLACK):
+        if color not in _border_cache:
+            s = Side(style="thin", color=color)
+            _border_cache[color] = Border(left=s, right=s, top=s, bottom=s)
+        return _border_cache[color]
 
     def _align(h="left", v="center"):
         return Alignment(horizontal=h, vertical=v, wrap_text=False)
-
-    def _border(color=C_BLACK):
-        s = Side(style="thin", color=color)
-        return Border(left=s, right=s, top=s, bottom=s)
 
     def prev_fy(fy):
         p = fy.split("-")
@@ -201,19 +215,16 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
     def section_title(r, text, c_start=1, c_end=7):
         merge(r, c_start, c_end)
         c = ws.cell(row=r, column=c_start, value=text.upper())
-        # Fix 2: white bg, bold blue underlined text — clean heading style
         c.fill = _fill(C_WHITE)
-        c.font = Font(name="Arial", bold=True, color=C_BLUE, size=11,
-                      underline="single")
+        c.font = Font(name="Arial", bold=True, color=C_BLUE, size=11, underline="single")
         c.alignment = _align("left", "center")
-        # Bottom border as a thick blue underline block
-        from openpyxl.styles import Border, Side
         thick = Side(style="medium", color=C_BLUE)
         none  = Side(style=None)
-        c.border = Border(bottom=thick, left=none, right=none, top=none)
+        from openpyxl.styles import Border as B2
+        c.border = B2(bottom=thick, left=none, right=none, top=none)
         for col in range(c_start+1, c_end+1):
             ws.cell(row=r, column=col).fill   = _fill(C_WHITE)
-            ws.cell(row=r, column=col).border = Border(bottom=thick, left=none, right=none, top=none)
+            ws.cell(row=r, column=col).border = B2(bottom=thick, left=none, right=none, top=none)
         ws.row_dimensions[r].height = 18
         return r + 1
 
@@ -428,6 +439,15 @@ def export_monthly_mis(financial_year, month, export_format="excel"):
     # ── Freeze & finish ───────────────────────────────────────────────────────
     ws.freeze_panes = "A3"
     ws.row_dimensions[1].height = 20
+
+    # Fix 2: Portrait page setup for PDF export
+    from openpyxl.worksheet.page import PageMargins, PrintPageSetup
+    ws.page_setup.orientation = ws.ORIENTATION_PORTRAIT
+    ws.page_setup.fitToPage   = True
+    ws.page_setup.fitToWidth  = 1
+    ws.page_setup.fitToHeight = 0
+    ws.page_margins = PageMargins(left=0.4, right=0.4, top=0.5, bottom=0.5)
+    ws.print_title_rows = "1:2"   # repeat title on every page
 
     buf = io.BytesIO()
     wb.save(buf)

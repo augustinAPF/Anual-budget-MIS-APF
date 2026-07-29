@@ -6259,7 +6259,7 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	// =============================================================================
 	// EXPORT BUTTON
 	// =============================================================================
-	/* Fix 1: Export — single button with two click options via Frappe dialog */
+	/* Fix 4: Export button — clean Frappe primary action with dropdown */
 	page.set_primary_action('Export', function () {
 		var fy    = fyCtrl ? fyCtrl.get_value() : '';
 		var month = moCtrl ? moCtrl.get_value() : '';
@@ -6268,19 +6268,22 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		var d = new frappe.ui.Dialog({
 			title: 'Export Monthly MIS',
 			fields: [{
+				fieldtype: 'HTML',
+				options: '<p style="color:#555;margin-bottom:12px;">Select export format for <strong>' + fy + ' — ' + month + '</strong></p>'
+			},{
 				fieldtype: 'Select',
 				fieldname: 'fmt',
-				label: 'Export Format',
+				label: 'Format',
 				options: 'Excel\nPDF',
 				default: 'Excel',
 				reqd: 1
 			}],
-			primary_action_label: 'Download',
+			primary_action_label: '<i class="fa fa-download" style="margin-right:4px;"></i> Download',
 			primary_action: function(vals) {
 				d.hide();
 				var fmt = (vals.fmt || 'Excel').toLowerCase();
 				if (fmt === 'pdf') {
-					frappe.show_alert({message:'Generating PDF, please wait…', indicator:'blue'}, 5);
+					frappe.show_alert({message:'Generating PDF…', indicator:'blue'}, 5);
 				}
 				var url = frappe.urllib.get_full_url(
 					'/api/method/annual_budget.api.monthly_mis.export_monthly_mis'
@@ -6292,7 +6295,7 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			}
 		});
 		d.show();
-	}, 'octicon octicon-cloud-download');
+	}, 'fa fa-download');
 
 	// =============================================================================
 	// STYLES
@@ -6468,32 +6471,38 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'.ud-card-note strong{font-style:normal;font-weight:var(--fw-b);color:#1a1a1a;}' +
 
 		/* ── Responsive — all screen sizes ── */
+		/* XL desktop: 2-col grid */
 		'@media(min-width:1400px){.ud-grid{grid-template-columns:repeat(2,1fr);}}' +
+		/* Large tablet */
 		'@media(max-width:1200px){' +
 		'  .ud-grid{grid-template-columns:1fr;}' +
 		'  .ud-grid .ud-total-card{grid-column:1;}' +
-		'  .mis-tbl th,.mis-tbl td{padding:6px 8px;font-size:13px;}' +
+		'  .mis-tbl th,.mis-tbl td{padding:5px 7px;font-size:12px;}' +
 		'}' +
+		/* Tablet */
 		'@media(max-width:1024px){' +
 		'  .mis-filters{flex-wrap:wrap;}' +
-		'  .mis-fc{min-width:130px;}' +
+		'  .mis-fc{flex:1 1 140px;min-width:120px;}' +
 		'  .tbl-scroll{max-height:55vh;}' +
 		'}' +
+		/* Mobile landscape */
 		'@media(max-width:768px){' +
 		'  #mis-wrap{padding:6px 8px;}' +
-		'  .mis-fc{max-width:100%;}' +
-		'  .mis-tbl th,.mis-tbl td{padding:5px 6px;font-size:12px;white-space:normal;word-break:break-word;}' +
+		'  .mis-fc{max-width:100%;flex:1 1 100%;}' +
+		'  .mis-fc-btn{width:100%;}' +
+		'  #mis-refresh-btn{width:100%;}' +
+		'  .mis-tbl th,.mis-tbl td{padding:4px 6px;font-size:12px;white-space:normal;word-break:break-word;}' +
 		'  .mis-tbl thead th.col-lbl,.mis-tbl tbody td.col-lbl{min-width:100px;}' +
 		'  .tbl-scroll{max-height:50vh;}' +
 		'  .sec-heading .sh-line1{font-size:13px;}' +
-		'  .sec-heading .sh-line2{font-size:13px;}' +
+		'  .sec-heading .sh-line2{font-size:12px;}' +
 		'  .ud-grid{gap:12px;}' +
-		'  .mis-fc-btn{width:100%;}' +
-		'  #mis-refresh-btn{width:100%;}' +
 		'}' +
+		/* Mobile portrait */
 		'@media(max-width:480px){' +
-		'  .mis-tbl th,.mis-tbl td{padding:4px 5px;font-size:11px;}' +
+		'  .mis-tbl th,.mis-tbl td{padding:3px 4px;font-size:11px;}' +
 		'  .ud-card-title{font-size:12px;}' +
+		'  .sec-note{font-size:11px;}' +
 		'}' +
 
 		/* ── Tooltip ── */
@@ -6796,18 +6805,21 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	// =============================================================================
 	// FORMATTERS
 	// =============================================================================
+	/* Cr conversion: exact divide by 10000000, no rounding — display with 1dp */
 	function fmtCr(v){
 		var n=parseFloat(v)||0; if(!isFinite(n)||n===0)return'-';
-		/* Fix 2: round to 1dp first to avoid floating point artifacts like 1229.40000000001 */
-		var res=Math.round(n/10000000*10)/10;
-		var neg=res<0,s=Math.abs(res).toFixed(1).split('.');
-		var ip=s[0]; if(ip.length>3)ip=ip.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+ip.slice(-3);
-		return(neg?'-':'')+ip+'.'+s[1];
+		var res=n/10000000;
+		var neg=res<0,abs=Math.abs(res);
+		/* display to 1 decimal place — parseFloat ensures exact representation */
+		var s=(+abs.toFixed(1)).toString().split('.');
+		var ip=s[0]||'0', dp=s[1]||'0';
+		if(ip.length>3)ip=ip.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+ip.slice(-3);
+		return(neg?'-':'')+ip+'.'+dp;
 	}
 	function fmtPct(act,bud){
 		var a=parseFloat(act)||0,b=parseFloat(bud)||0;
 		if(!b)return'-';
-		return(Math.round(a/b*1000)/10).toFixed(1)+'%';
+		return(a/b*100).toFixed(1)+'%';
 	}
 	/* Raw paisa value → formatted td with tooltip */
 	function mkTd(val,cls,rowLbl,colKey){
@@ -6821,19 +6833,18 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	/* Cr value already converted → td with tooltip */
 	function mkTdCr(crVal,cls,rowLbl,colKey,forceBlue){
 		var n=parseFloat(crVal)||0;
-		/* Fix 2: round at 1dp to avoid floating point artifacts */
-		var rounded=Math.round(n*10)/10;
-		var txt=rounded===0?'-':(function(){
-			var neg=rounded<0,abs=Math.abs(rounded),s=abs.toFixed(1).split('.');
-			var ip=s[0];
+		var txt=n===0?'-':(function(){
+			var neg=n<0,abs=Math.abs(n);
+			var s=(+abs.toFixed(1)).toString().split('.');
+			var ip=s[0]||'0', dp=s[1]||'0';
 			if(ip.length>3)ip=ip.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+ip.slice(-3);
-			return(neg?'-':'')+ip+'.'+s[1];
+			return(neg?'-':'')+ip+'.'+dp;
 		})();
 		var c=cls?' class="'+cls+'"':'';
 		var inlineStyle=forceBlue?' style="background:#1565C0!important;color:#fff!important;"':'';
-		if(rounded!==0&&isFinite(rounded)){
+		if(n!==0&&isFinite(n)){
 			var ctx=(rowLbl||'')+(colKey?' \u00B7 '+colKey:'');
-			return '<td'+c+inlineStyle+' data-raw="'+(rounded*10000000)+'" data-ctx="'+ctx.replace(/"/g,'&quot;')+'">'+txt+'</td>';
+			return '<td'+c+inlineStyle+' data-raw="'+(n*10000000)+'" data-ctx="'+ctx.replace(/"/g,'&quot;')+'">'+txt+'</td>';
 		}
 		return '<td'+c+inlineStyle+'>'+txt+'</td>';
 	}
