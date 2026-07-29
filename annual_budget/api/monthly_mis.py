@@ -1,465 +1,490 @@
-# annual_budget/api/monthly_mis_export.py
-#
-# Frappe whitelisted API — returns a formatted Excel workbook with 2 sheets:
-#   Sheet 1 "Unit Wise Detail"    — full Opex / Capex / Covid / Total breakdown
-#   Sheet 2 "Consolidated"        — Budget | Actuals | % of Budget summary
-#
-# Usage:
-#   /api/method/annual_budget.api.monthly_mis_export.export_monthly_mis
-#       ?financial_year=2026-27&month=May&prev_financial_year=2025-26
-#
-# Requirements:  pip install openpyxl
+# =============================================================================
+# File: apps/annual_budget/annual_budget/api/monthly_mis.py
+# Endpoint: /api/method/annual_budget.api.monthly_mis.export_monthly_mis
+# =============================================================================
 
 import frappe
-import openpyxl
-from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
-import io, re
-
-
-# ── Colour palette ────────────────────────────────────────────────────────────
-BLUE        = "1565C0"   # Year header / Grand total / sticky label bg
-ORANGE      = "F26B21"   # Budget/Actual group header
-STEEL       = "455A64"   # Sub-col header
-BLUE_BD     = "0d47a1"   # Blue border
-ORANGE_BD   = "BF360C"   # Orange border
-STEEL_BD    = "263238"   # Steel border
-TOTAL_BG    = "DBEAFE"   # Section / summary total fill
-TOTAL_FG    = "1E3A5F"   # Section total text
-ACT_BG      = "FFF8F5"   # Actual column wash
-COVID_BG    = "FFFDE7"   # Covid column tint
-WHITE       = "FFFFFF"
-BD_COL      = "475569"   # Uniform body border
-
-
-def _side(c=BD_COL, w="thin"):
-    return Side(border_style=w, color=c)
-
-def _border(c=BD_COL, w="thin"):
-    s = _side(c, w)
-    return Border(left=s, right=s, top=s, bottom=s)
-
-def _med_left(c=BD_COL):
-    return Border(left=_side(c,"medium"), right=_side(c), top=_side(c), bottom=_side(c))
-
-BODY_BD   = _border()
-HDR_BD_BL = _border(BLUE_BD)
-HDR_BD_OR = _border(ORANGE_BD)
-HDR_BD_ST = _border(STEEL_BD)
-TOTAL_BD  = _border(TOTAL_FG, "thin")
-
-def fill(h):  return PatternFill("solid", fgColor=h)
-def font(bold=False, color="000000", size=11, italic=False):
-    return Font(bold=bold, color=color, size=size, italic=italic, name="Calibri")
-def align(h="right", v="center"):
-    return Alignment(horizontal=h, vertical=v, wrap_text=False)
-
-def apply(cell, bg=None, fg="000000", bold=False, italic=False,
-          h="right", border=None, size=11):
-    if bg: cell.fill = fill(bg)
-    cell.font      = font(bold=bold, color=fg, size=size, italic=italic)
-    cell.alignment = align(h=h)
-    cell.border    = border or BODY_BD
-
-CR_FMT  = '#,##0.00'
-PCT_FMT = '0.0%'
-
-
-# ── Data helpers ──────────────────────────────────────────────────────────────
-def norm(s):
-    return re.sub(r'\s+', ' ', (s or '').strip()).upper()
-
-def zero():
-    return dict(opex_b=0,capex_b=0,covid_b=0,total_b=0,
-                opex_a=0,capex_a=0,covid_a=0,total_a=0)
-
-def add_z(a, b):
-    return {k: a[k]+b[k] for k in a}
-
-def extract_row(entry):
-    r = zero()
-    for sec in (entry.get("actuals") or []):
-        nm  = norm(sec.get("name",""))
-        bud = float(sec.get("ytd") or 0)
-        act = float(sec.get("total_posted_amt_ytd") or 0)
-        if nm in ("OPERATING EXPENSES","OPERATING  EXPENSES"):
-            r["opex_b"]+=bud; r["opex_a"]+=act
-        elif nm in ("CAPITAL EXPENSES","CAPITAL  EXPENSES"):
-            r["capex_b"]+=bud; r["capex_a"]+=act
-        elif "COVID" in nm:
-            r["covid_b"]+=bud; r["covid_a"]+=act
-    r["total_b"] = r["opex_b"]+r["capex_b"]+r["covid_b"]
-    r["total_a"] = r["opex_a"]+r["capex_a"]+r["covid_a"]
-    return r
-
-def extract_cons(entry):
-    r = zero()
-    for a in (entry.get("actuals") or []):
-        nm  = norm(a.get("name",""))
-        bud = float(a.get("ytd") or 0)
-        act = float(a.get("total_posted_amt_ytd") or 0)
-        if nm=="OPEX TOTAL":          r["opex_b"]+=bud; r["opex_a"]+=act
-        elif nm=="CAPEX TOTAL":       r["capex_b"]+=bud; r["capex_a"]+=act
-        elif "COVID" in nm:           r["covid_b"]+=bud; r["covid_a"]+=act
-        elif nm=="OVERALL GRAND TOTAL": r["total_b"]=bud; r["total_a"]=act
-    if not r["total_b"] and not r["total_a"]:
-        r["total_b"]=r["opex_b"]+r["capex_b"]+r["covid_b"]
-        r["total_a"]=r["opex_a"]+r["capex_a"]+r["covid_a"]
-    return r
-
-def build_map(data):
-    srt = sorted(data or [], key=lambda e: e.get("sequence_id",0))
-    rows,sub_flags,order,grand = {},{},{},None   # changed order to dict to preserve insertion
-    order_list = []
-    for e in srt:
-        tbl = (e.get("table_name") or "").upper()
-        if e.get("sequence_id")==9999 or tbl=="CONSOLIDATED":
-            grand = extract_cons(e); continue
-        lbl = (e.get("label") or "").strip()
-        if not lbl: continue
-        rows[lbl]      = extract_row(e)
-        sub_flags[lbl] = e.get("is_this_sub_item")==1
-        order_list.append(lbl)
-    if grand is None:
-        grand = zero()
-        for l in order_list:
-            if not sub_flags.get(l): grand = add_z(grand, rows[l])
-    return {"order":order_list,"rows":rows,"sub_flags":sub_flags,"grand":grand}
-
-def to_cr(v):
-    n = float(v or 0)
-    return round(n/10_000_000, 4) if n else None
-
-def month_year(month, fy):
-    start = int((fy or "2025-26").split("-")[0])
-    cal   = start+1 if month in ("January","February","March") else start
-    return f"{month}-{cal}"
-
-
-# ── Sheet 1 helper: write one header cell ────────────────────────────────────
-def hdr(ws, row, col, val, bg, bd, fg=WHITE, bold=True, h="center",
-        rowspan=1, colspan=1, size=11):
-    cell = ws.cell(row=row, column=col, value=val)
-    apply(cell, bg=bg, fg=fg, bold=bold, h=h, border=bd, size=size)
-    if colspan>1:
-        ws.merge_cells(start_row=row, start_column=col,
-                       end_row=row+rowspan-1, end_column=col+colspan-1)
-    return cell
-
-
-# ── Sheet 1: Unit Wise Detail ─────────────────────────────────────────────────
-def write_detail_sheet(wb, cm, pm, financial_year, prev_financial_year, month):
-    ws = wb.active
-    ws.title = "Unit Wise Detail"
-    ws.sheet_view.showGridLines = False
-
-    ytd = month_year(month, financial_year)
-    prev_ytd = month_year(month, prev_financial_year)
-
-    # ── Title rows ──
-    ws.merge_cells("A1:Q1")
-    t = ws["A1"]
-    t.value = (f"Foundation Budget vs. Actuals – "
-               f"FY {financial_year} & FY {prev_financial_year} | YTD {ytd}")
-    t.font      = Font(bold=True, size=14, color="1a1a1a", name="Calibri")
-    t.alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[1].height = 28
-
-    ws.merge_cells("A2:Q2")
-    n = ws["A2"]
-    n.value = "₹ Cr."
-    n.font  = Font(italic=True, size=10, color="777777", name="Calibri")
-    n.alignment = Alignment(horizontal="right", vertical="center")
-    ws.row_dimensions[2].height = 14
-
-    # ── 3-row header ──
-    # Row 3: Year labels
-    hdr(ws,3,1,"Unit / Function",BLUE,HDR_BD_BL,rowspan=3,h="left",size=12)
-    hdr(ws,3,2,f"Current Year  {financial_year}",BLUE,HDR_BD_BL,colspan=8,size=12)
-    hdr(ws,3,10,f"Last Year  {prev_financial_year}",BLUE,HDR_BD_BL,colspan=8,size=12)
-    # fill merged tails row 3
-    for c in [3,4,5,6,7,8,9,11,12,13,14,15,16,17]:
-        apply(ws.cell(row=3,column=c), bg=BLUE, fg=WHITE, bold=True, h="center",
-              border=HDR_BD_BL, size=12)
-
-    # Row 4: Budget/Actual (orange)
-    for col,label in [(2,"Budget"),(6,"Actual"),(10,"Budget"),(14,"Actual")]:
-        hdr(ws,4,col,label,ORANGE,HDR_BD_OR,colspan=4,size=11)
-    for c in [3,4,5,7,8,9,11,12,13,15,16,17]:
-        apply(ws.cell(row=4,column=c),bg=ORANGE,fg=WHITE,bold=True,h="center",
-              border=HDR_BD_OR,size=11)
-
-    # Row 5: Opex/Capex/Covid/Total (steel)
-    sub_labels = ["Opex","Capex","Covid","Total","Opex","Capex","Covid","Total",
-                  "Opex","Capex","Covid","Total","Opex","Capex","Covid","Total"]
-    for i,lbl in enumerate(sub_labels):
-        c = ws.cell(row=5, column=i+2, value=lbl)
-        is_cv = lbl=="Covid"
-        apply(c, bg=STEEL, fg="FFD54F" if is_cv else WHITE,
-              bold=True, italic=is_cv, h="center", border=HDR_BD_ST, size=10)
-
-    for r in [3,4,5]: ws.row_dimensions[r].height = 20
-
-    # ── Data rows ──
-    ACTUAL_COLS = {4,5,6,7,12,13,14,15}  # 0-based within the 16 value columns
-    COVID_COLS  = {2,6,10,14}
-
-    all_labels = list(cm["order"])
-    for l in pm["order"]:
-        if l not in cm["rows"]: all_labels.append(l)
-
-    cur_row = 6
-    for lbl in all_labels:
-        is_sub  = cm["sub_flags"].get(lbl) or pm["sub_flags"].get(lbl,False)
-        cv      = cm["rows"].get(lbl) or zero()
-        pv      = pm["rows"].get(lbl) or zero()
-        vals    = [cv["opex_b"],cv["capex_b"],cv["covid_b"],cv["total_b"],
-                   cv["opex_a"],cv["capex_a"],cv["covid_a"],cv["total_a"],
-                   pv["opex_b"],pv["capex_b"],pv["covid_b"],pv["total_b"],
-                   pv["opex_a"],pv["capex_a"],pv["covid_a"],pv["total_a"]]
-
-        # Label cell
-        lc = ws.cell(row=cur_row, column=1, value=("    "+lbl if is_sub else lbl))
-        apply(lc, fg="555555" if is_sub else "1a1a1a", bold=False, h="left",
-              border=BODY_BD, size=11)
-
-        for i,val in enumerate(vals):
-            cr_val = to_cr(val)
-            cell   = ws.cell(row=cur_row, column=i+2, value=cr_val)
-            cell.number_format = CR_FMT
-            if i in COVID_COLS: cell_bg,cell_fg = COVID_BG,"5D4037"
-            elif i in ACTUAL_COLS: cell_bg,cell_fg = ACT_BG,"1a1a1a"
-            else: cell_bg,cell_fg = WHITE,"1a1a1a"
-            apply(cell, bg=cell_bg, fg=cell_fg, italic=(i in COVID_COLS), size=11)
-
-        ws.row_dimensions[cur_row].height = 18
-        cur_row += 1
-
-    # Grand Total row
-    gc,gp = cm["grand"],pm["grand"]
-    g_vals=[gc["opex_b"],gc["capex_b"],gc["covid_b"],gc["total_b"],
-            gc["opex_a"],gc["capex_a"],gc["covid_a"],gc["total_a"],
-            gp["opex_b"],gp["capex_b"],gp["covid_b"],gp["total_b"],
-            gp["opex_a"],gp["capex_a"],gp["covid_a"],gp["total_a"]]
-    gc_lbl = ws.cell(row=cur_row, column=1, value="Grand Total")
-    apply(gc_lbl, bg=BLUE, fg=WHITE, bold=True, h="left",
-          border=_border(BLUE_BD), size=11)
-    for i,val in enumerate(g_vals):
-        cell = ws.cell(row=cur_row, column=i+2, value=to_cr(val))
-        cell.number_format = CR_FMT
-        apply(cell, bg=BLUE, fg=WHITE, bold=True, border=_border(BLUE_BD), size=11)
-    ws.row_dimensions[cur_row].height = 20
-
-    # Column widths
-    ws.column_dimensions["A"].width = 34
-    for i in range(2,18): ws.column_dimensions[get_column_letter(i)].width = 11
-
-    ws.freeze_panes = ws["B6"]
-
-
-# ── Sheet 2: Consolidated Summary ────────────────────────────────────────────
-def write_consolidated_sheet(wb, cm, pm, financial_year, prev_financial_year, month):
-    ws = wb.create_sheet("Consolidated Summary")
-    ws.sheet_view.showGridLines = False
-
-    ytd = month_year(month, financial_year)
-
-    # ── Title ──
-    ws.merge_cells("A1:G1")
-    t = ws["A1"]
-    t.value = f"Consolidated Summary – FY {financial_year} & FY {prev_financial_year} | YTD {ytd}"
-    t.font      = Font(bold=True, size=14, color="1a1a1a", name="Calibri")
-    t.alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[1].height = 28
-
-    ws.merge_cells("A2:G2")
-    n = ws["A2"]
-    n.value = "₹ Cr."
-    n.font  = Font(italic=True, size=10, color="777777", name="Calibri")
-    n.alignment = Alignment(horizontal="right", vertical="center")
-    ws.row_dimensions[2].height = 14
-
-    # ── 2-row header (matches JS page: blue year + steel sub-cols) ──
-
-    # Row 3: Label col spans 2 rows; Year group headers
-    ws.merge_cells("A3:A4")
-    lbl_hdr = ws["A3"]
-    lbl_hdr.value = "Areas of Work"
-    apply(lbl_hdr, bg=BLUE, fg=WHITE, bold=True, h="left",
-          border=HDR_BD_BL, size=12)
-    # Style A4 merged cell
-    apply(ws["A4"], bg=BLUE, fg=WHITE, bold=True, h="left",
-          border=HDR_BD_BL, size=12)
-
-    # Current Year group (B3:D3)
-    ws.merge_cells("B3:D3")
-    cy = ws["B3"]
-    cy.value = f"Current Year YTD  {financial_year}"
-    apply(cy, bg=BLUE, fg=WHITE, bold=True, h="center", border=HDR_BD_BL, size=12)
-    for c in ["C3","D3"]:
-        apply(ws[c], bg=BLUE, fg=WHITE, bold=True, h="center", border=HDR_BD_BL, size=12)
-
-    # Last Year group (E3:G3)
-    ws.merge_cells("E3:G3")
-    ly = ws["E3"]
-    ly.value = f"Last Year YTD  {prev_financial_year}"
-    apply(ly, bg=BLUE, fg=WHITE, bold=True, h="center", border=HDR_BD_BL, size=12)
-    for c in ["F3","G3"]:
-        apply(ws[c], bg=BLUE, fg=WHITE, bold=True, h="center", border=HDR_BD_BL, size=12)
-
-    # Row 4: Sub-cols (steel) — Budget | Actuals | % of Budget for each year
-    sub_labels = [
-        (2, "Budget",       False),
-        (3, "Actuals",      False),
-        (4, "% of Budget",  True),
-        (5, "Budget",       False),
-        (6, "Actuals",      False),
-        (7, "% of Budget",  True),
-    ]
-    for col, label, is_pct in sub_labels:
-        c = ws.cell(row=4, column=col, value=label)
-        apply(c, bg=STEEL, fg="90CAF9" if is_pct else WHITE,
-              bold=True, h="center", border=HDR_BD_ST, size=11)
-
-    ws.row_dimensions[3].height = 22
-    ws.row_dimensions[4].height = 20
-
-    # ── Data rows (starting row 5) ──
-    all_labels = list(cm["order"])
-    for lbl in pm["order"]:
-        if lbl not in cm["rows"]:
-            all_labels.append(lbl)
-
-    cur_row = 5
-    tot_cb = tot_ca = tot_pb = tot_pa = 0.0
-
-    for lbl in all_labels:
-        is_sub = cm["sub_flags"].get(lbl) or pm["sub_flags"].get(lbl, False)
-        cv = cm["rows"].get(lbl) or zero()
-        pv = pm["rows"].get(lbl) or zero()
-
-        cb = float(cv.get("total_b") or 0) / 10_000_000
-        ca = float(cv.get("total_a") or 0) / 10_000_000
-        pb = float(pv.get("total_b") or 0) / 10_000_000
-        pa = float(pv.get("total_a") or 0) / 10_000_000
-
-        # Only non-sub rows contribute to totals
-        if not is_sub:
-            tot_cb += cb; tot_ca += ca
-            tot_pb += pb; tot_pa += pa
-
-        # Label cell
-        lc = ws.cell(row=cur_row, column=1,
-                     value=("    " + lbl if is_sub else lbl))
-        apply(lc, fg="555555" if is_sub else "1a1a1a",
-              bold=False, h="left", border=BODY_BD, size=11)
-
-        # Data cells: Budget | Actuals | % of Budget  ×2
-        data_cols = [
-            (2, cb,  "value",  WHITE),
-            (3, ca,  "value",  ACT_BG),
-            (4, ca/cb if cb else None, "pct", WHITE),
-            (5, pb,  "value",  WHITE),
-            (6, pa,  "value",  ACT_BG),
-            (7, pa/pb if pb else None, "pct", WHITE),
-        ]
-        for col, val, kind, bg in data_cols:
-            cell = ws.cell(row=cur_row, column=col)
-            if kind == "pct":
-                cell.value = val
-                cell.number_format = PCT_FMT
-                apply(cell, fg="1565C0", bold=True, border=BODY_BD, size=11)
-            else:
-                cell.value = round(val, 4) if val else None
-                cell.number_format = CR_FMT
-                apply(cell, bg=bg, fg="1a1a1a", border=BODY_BD, size=11)
-
-        ws.row_dimensions[cur_row].height = 18
-        cur_row += 1
-
-    # ── Total row ──
-    tl = ws.cell(row=cur_row, column=1, value="Total")
-    apply(tl, bg=TOTAL_BG, fg=TOTAL_FG, bold=True, h="left",
-          border=TOTAL_BD, size=11)
-
-    total_data = [
-        (2, tot_cb, "value"),
-        (3, tot_ca, "value"),
-        (4, tot_ca/tot_cb if tot_cb else None, "pct"),
-        (5, tot_pb, "value"),
-        (6, tot_pa, "value"),
-        (7, tot_pa/tot_pb if tot_pb else None, "pct"),
-    ]
-    for col, val, kind in total_data:
-        cell = ws.cell(row=cur_row, column=col)
-        if kind == "pct":
-            cell.value = val
-            cell.number_format = PCT_FMT
-        else:
-            cell.value = round(val, 4) if val else None
-            cell.number_format = CR_FMT
-        apply(cell, bg=TOTAL_BG, fg=TOTAL_FG, bold=True,
-              border=TOTAL_BD, size=11)
-
-    ws.row_dimensions[cur_row].height = 22
-
-    # ── Column widths ──
-    ws.column_dimensions["A"].width = 36
-    for i in range(2, 8):
-        ws.column_dimensions[get_column_letter(i)].width = 15
-
-    # Freeze header + label column
-    ws.freeze_panes = ws["B5"]
-
-
-# ── Main API endpoint ─────────────────────────────────────────────────────────
-@frappe.whitelist(allow_guest=False)
-def export_monthly_mis(financial_year, month, prev_financial_year):
-    """
-    Fetches data for both financial years, builds two formatted Excel sheets,
-    and streams the workbook as a binary download.
-    """
-
-    # Import the data function directly — avoids frappe.call() wrapper issues
-    from annual_budget.api.foundation_consolidated_report import get_unit_wise_plan
-
-    def _fetch(fy):
-        try:
-            result = get_unit_wise_plan(
-                financial_year=fy,
-                month=month,
-                table_name_filter="Unit Wise Plan"
-            )
-            if isinstance(result, list):
-                return result
-            if isinstance(result, dict):
-                return result.get("message") or result.get("data") or []
-        except Exception as e:
-            frappe.log_error(f"Monthly MIS export fetch error for {fy}: {e}")
+import io
+from frappe.utils import flt
+
+
+@frappe.whitelist()
+def export_monthly_mis(financial_year, month, export_format="excel"):
+    """Export full Monthly MIS as Excel or PDF."""
+    try:
+        import openpyxl
+        from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+    except ImportError:
+        frappe.throw("openpyxl required. Run: bench pip install openpyxl")
+
+    from annual_budget.api.foundation_consolidated_report import (
+        get_unit_wise_plan,
+        get_monthly_mis_break_up,
+    )
+
+    # ── Palette ───────────────────────────────────────────────────────────────
+    C_BLUE   = "1565C0"
+    C_ORANGE = "F26B21"
+    C_LTBLUE = "E3F2FD"
+    C_WHITE  = "FFFFFF"
+    C_GREY   = "F0F4FF"
+    C_SUBROW = "F8F9FA"
+    C_BLACK  = "000000"
+
+    def _fill(c):
+        return PatternFill("solid", fgColor=c)
+
+    def _font(bold=False, color=C_BLACK, size=9, italic=False):
+        return Font(name="Arial", bold=bold, color=color, size=size, italic=italic)
+
+    def _align(h="left", v="center"):
+        return Alignment(horizontal=h, vertical=v, wrap_text=False)
+
+    def _border(color=C_BLACK):
+        s = Side(style="thin", color=color)
+        return Border(left=s, right=s, top=s, bottom=s)
+
+    def prev_fy(fy):
+        p = fy.split("-")
+        return f"{int(p[0])-1}-{str(int(p[1])-1).zfill(2)}"
+
+    def to_cr(paisa):
+        if not paisa: return None
+        v = round(flt(paisa) / 10_000_000, 1)
+        return v if v else None
+
+    def pct_val(act, bud):
+        if not bud: return None
+        p = round(flt(act) / flt(bud) * 100, 1)
+        return p if p else None
+
+    PREV_FY     = prev_fy(financial_year)
+    CUR_LBL     = f"Current Year YTD  {financial_year}"
+    PREV_LBL    = f"Last Year YTD  {PREV_FY}"
+    GRANTS_NAME = "Grants & Donations"
+
+    # ── Fetch ─────────────────────────────────────────────────────────────────
+    cur_raw  = get_unit_wise_plan(financial_year, month,
+                                   table_name_filter="Monthly MIS Capex & Opex")
+    prev_raw = get_unit_wise_plan(PREV_FY, month,
+                                   table_name_filter="Monthly MIS Capex & Opex")
+    BREAKUP_LABELS = (
+        "Education - District Institutes,Education- Azim Premji Schools,"
+        "Azim Premji University (Bangalore Campus),"
+        "Azim Premji University (Bhopal Campus),"
+        "Azim Premji University (Ranchi Campus),"
+        "Enablers,Livelihoods,"
+        "Urban Primary care work,Rural Primary care work,"
+        "Central Initiatives,Hospital,Health Programs Team & Enablers"
+    )
+    breakup_raw = get_monthly_mis_break_up(
+        financial_year, month,
+        # table_name_filter="Unit Wise Plan,Opex Capex",
+        table_name_filter=BREAKUP_LABELS,
+    ) or {}
+
+    def parse_main(raw):
+        out, order, seen = {}, [], set()
+        for row in sorted(raw or [], key=lambda x: x.get("sequence_id", 0)):
+            lbl = (row.get("label") or "").strip()
+            if not lbl or row.get("sequence_id") == 9999: continue
+            r = dict(ob=0, oa=0, cb=0, ca=0, vb=0, va=0, tb=0, ta=0,
+                     is_sub=int(row.get("is_this_sub_item") or 0), sub_heads=[])
+            for sec in sorted(row.get("actuals") or [],
+                               key=lambda x: x.get("sequence_id", 0)):
+                nm = (sec.get("name") or "").replace("  ", " ").strip().upper()
+                b  = flt(sec.get("ytd") or 0)
+                a  = flt(sec.get("total_posted_amt_ytd") or 0)
+                if nm == "OPERATING EXPENSES":
+                    r["ob"] += b; r["oa"] += a
+                    for sh in sorted(sec.get("sub_heads") or [],
+                                      key=lambda x: x.get("sequence_id", 0)):
+                        sn = (sh.get("name") or "").strip()
+                        if not sn: continue
+                        items = []
+                        for it in sorted(sh.get("items") or [],
+                                          key=lambda x: x.get("sequence_id", 0)):
+                            iname = (it.get("name") or "").strip()
+                            if iname:
+                                items.append(dict(
+                                    name=iname,
+                                    b=flt(it.get("ytd") or 0) / 10_000_000,
+                                    a=flt(it.get("total_posted_amt") or 0) / 10_000_000,
+                                ))
+                        r["sub_heads"].append(dict(
+                            name=sn,
+                            b=flt(sh.get("ytd") or 0) / 10_000_000,
+                            a=flt(sh.get("total_posted_amt_ytd") or 0) / 10_000_000,
+                            items=items,
+                        ))
+                elif nm == "CAPITAL EXPENSES":
+                    r["cb"] += b; r["ca"] += a
+                elif "COVID" in nm:
+                    r["vb"] += b; r["va"] += a
+            r["tb"] = r["ob"] + r["cb"] + r["vb"]
+            r["ta"] = r["oa"] + r["ca"] + r["va"]
+            out[lbl] = r
+            if lbl not in seen:
+                order.append(lbl); seen.add(lbl)
+        return out, order
+
+    cur_map, order = parse_main(cur_raw)
+    prev_map, _    = parse_main(prev_raw)
+
+    def get_breakup_entries(key):
+        for grp in breakup_raw.values():
+            if isinstance(grp, dict) and key in grp:
+                return [e for e in sorted(grp[key],
+                            key=lambda x: x.get("sequence_id", 0))
+                        if (e.get("label") or "") not in ("CONSOLIDATED TOTAL", "")
+                        and e.get("settings_doc") != "CONSOLIDATED"]
         return []
 
-    cur_data  = _fetch(financial_year)
-    prev_data = _fetch(prev_financial_year)
+    def exAct(actuals):
+        ob = oa = cb = ca = 0.0
+        for sec in sorted(actuals or [], key=lambda x: x.get("sequence_id", 0)):
+            nm = (sec.get("name") or "").replace("  ", " ").strip().upper()
+            b  = flt(sec.get("ytd") or 0) / 10_000_000
+            a  = flt(sec.get("total_posted_amt_ytd") or 0) / 10_000_000
+            if not b and not a:
+                for sh in (sec.get("sub_heads") or []):
+                    b += flt(sh.get("ytd") or 0) / 10_000_000
+                    a += flt(sh.get("total_posted_amt_ytd") or 0) / 10_000_000
+            if nm == "OPERATING EXPENSES":   ob += b; oa += a
+            elif nm == "CAPITAL EXPENSES":   cb += b; ca += a
+        return dict(ob=ob, oa=oa, cb=cb, ca=ca, tb=ob+cb, ta=oa+ca)
 
-    cm = build_map(cur_data)
-    pm = build_map(prev_data)
-
+    # ── Workbook — columns A-G (card 1) + spacer H + I-O (card 2) ────────────
     wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Monthly MIS"
+    ws.sheet_view.showGridLines = False
+    # Card 1: A-G (cols 1-7)
+    ws.column_dimensions["A"].width = 30
+    for col in list("BCDEFG"): ws.column_dimensions[col].width = 11
+    # Spacer: H (col 8)
+    ws.column_dimensions["H"].width = 2
+    # Card 2: I-O (cols 9-15)
+    ws.column_dimensions["I"].width = 30
+    for col in ["J","K","L","M","N","O"]: ws.column_dimensions[col].width = 11
 
-    # Sheet 1 — Unit Wise Detail (full Opex/Capex/Covid/Total breakdown)
-    write_detail_sheet(wb, cm, pm, financial_year, prev_financial_year, month)
+    # ── Cell helpers — offset-aware ───────────────────────────────────────────
+    def _cell(r, c, val, bg, bold=False, fg=C_BLACK, size=9, h="left", italic=False):
+        cell = ws.cell(row=r, column=c, value=val)
+        cell.fill      = _fill(bg)
+        cell.font      = _font(bold=bold, color=fg, size=size, italic=italic)
+        cell.alignment = _align(
+            h if h != "auto" else
+            ("right" if isinstance(val, (int, float)) and val is not None else "left"),
+            "center"
+        )
+        cell.border    = _border(C_WHITE if bg in (C_BLUE, C_ORANGE) else C_BLACK)
+        if isinstance(val, float):
+            cell.number_format = "#,##0.0"
+        return cell
 
-    # Sheet 2 — Consolidated Summary (Budget | Actuals | % of Budget)
-    write_consolidated_sheet(wb, cm, pm, financial_year, prev_financial_year, month)
+    def hdr(r, c, val, bg, fg=C_WHITE, h="center"):
+        return _cell(r, c, val, bg, bold=True, fg=fg, size=9, h=h)
 
-    # Stream as binary download
+    def dat(r, c, val, bg=C_WHITE, bold=False):
+        return _cell(r, c, val, bg, bold=bold, fg=C_WHITE if bg==C_BLUE else C_BLACK,
+                     size=9, h="auto")
+
+    # Merge helper
+    def merge(r, c1, c2):
+        from openpyxl.utils import get_column_letter
+        ws.merge_cells(
+            f"{get_column_letter(c1)}{r}:{get_column_letter(c2)}{r}"
+        )
+
+    # ── Layout builders — offset = 0 (left card) or 8 (right card, skip H) ──
+    def section_title(r, text, c_start=1, c_end=7):
+        merge(r, c_start, c_end)
+        c = ws.cell(row=r, column=c_start, value=text.upper())
+        # Fix 2: white bg, bold blue underlined text — clean heading style
+        c.fill = _fill(C_WHITE)
+        c.font = Font(name="Arial", bold=True, color=C_BLUE, size=11,
+                      underline="single")
+        c.alignment = _align("left", "center")
+        # Bottom border as a thick blue underline block
+        from openpyxl.styles import Border, Side
+        thick = Side(style="medium", color=C_BLUE)
+        none  = Side(style=None)
+        c.border = Border(bottom=thick, left=none, right=none, top=none)
+        for col in range(c_start+1, c_end+1):
+            ws.cell(row=r, column=col).fill   = _fill(C_WHITE)
+            ws.cell(row=r, column=col).border = Border(bottom=thick, left=none, right=none, top=none)
+        ws.row_dimensions[r].height = 18
+        return r + 1
+
+    def two_row_hdr(r, col_label, grp1, grp2, off=0):
+        # off=0 → cols 1-7, off=8 → cols 9-15
+        c = off + 1
+        merge(r, c, c); merge(r+1, c, c)
+        hdr(r, c, col_label, C_BLUE, h="left")
+        hdr(r+1, c, "", C_BLUE, h="left")
+        merge(r, c+1, c+3); hdr(r, c+1, grp1, C_BLUE, h="center")
+        merge(r, c+4, c+6); hdr(r, c+4, grp2, C_BLUE, h="center")
+        for i, lbl in enumerate(["Budget","Actuals","% of Budget",
+                                   "Budget","Actuals","% of Budget"]):
+            hdr(r+1, c+1+i, lbl, C_ORANGE, h="center")
+        ws.row_dimensions[r].height   = 14
+        ws.row_dimensions[r+1].height = 14
+        return r + 2
+
+    def section_hdr_row(r, text, c_start=1, c_end=7):
+        merge(r, c_start, c_end)
+        c = ws.cell(row=r, column=c_start, value=text)
+        c.fill = _fill(C_GREY); c.font = _font(bold=True, color=C_BLUE, size=9)
+        c.alignment = _align("left", "center")
+        for col in range(c_start+1, c_end+1):
+            ws.cell(row=r, column=col).fill   = _fill(C_GREY)
+            ws.cell(row=r, column=col).border = _border()
+        return r + 1
+
+    def data_row_7(r, lbl, v1, v2, v3, v4, v5, v6, off=0, bg=C_WHITE, bold=False):
+        c = off + 1
+        dat(r, c,   lbl, bg, bold=bold)
+        for i, v in enumerate([v1,v2,v3,v4,v5,v6]):
+            dat(r, c+1+i, v, bg, bold=bold)
+
+    def total_row_7(r, cb, ca, pb, pa, off=0, bg=C_LTBLUE):
+        c = off + 1
+        dat(r, c, "Total", bg, bold=True)
+        for i, v in enumerate([cb, ca, pct_val(ca,cb), pb, pa, pct_val(pa,pb)]):
+            dat(r, c+1+i, round(v,1) if isinstance(v,float) else v, bg, bold=True)
+
+    def grand_row_7(r, label, cb, ca, pb, pa, off=0):
+        c = off + 1
+        for col in range(c, c+7):
+            ws.cell(row=r, column=col).fill   = _fill(C_BLUE)
+            ws.cell(row=r, column=col).font   = _font(bold=True, color=C_WHITE, size=9)
+            ws.cell(row=r, column=col).border = _border(C_WHITE)
+            ws.cell(row=r, column=col).alignment = _align("right","center")
+        ws.cell(row=r, column=c).value     = label
+        ws.cell(row=r, column=c).alignment = _align("left","center")
+        for i, v in enumerate([cb, ca, pct_val(ca,cb), pb, pa, pct_val(pa,pb)]):
+            ws.cell(row=r, column=c+1+i).value = round(v,1) if isinstance(v,float) else v
+            if isinstance(ws.cell(row=r, column=c+1+i).value, float):
+                ws.cell(row=r, column=c+1+i).number_format = "#,##0.0"
+
+    # ── SECTION WRITERS ───────────────────────────────────────────────────────
+
+    def write_main_section(row, title, bk, ak):
+        row = section_title(row, title)
+        row = two_row_hdr(row, "Unit", CUR_LBL, PREV_LBL)
+        tCB = tCA = tPB = tPA = 0.0
+        for lbl in order:
+            cm = cur_map.get(lbl, {}); pm = prev_map.get(lbl, {})
+            is_sub = cm.get("is_sub",0) or pm.get("is_sub",0)
+            bg  = C_SUBROW if is_sub else C_WHITE
+            cb  = to_cr(cm.get(bk,0)); ca = to_cr(cm.get(ak,0))
+            pb  = to_cr(pm.get(bk,0)); pa = to_cr(pm.get(ak,0))
+            data_row_7(row, ("  " if is_sub else "")+lbl,
+                       cb, ca, pct_val(ca,cb), pb, pa, pct_val(pa,pb), bg=bg)
+            row += 1
+            if not is_sub:
+                tCB+=flt(cb); tCA+=flt(ca); tPB+=flt(pb); tPA+=flt(pa)
+        total_row_7(row, tCB, tCA, tPB, tPA)
+        row += 2
+        return row
+
+    def write_breakup_section(row, title, keys, col_label="Areas of Work"):
+        row = section_title(row, title)
+        row = two_row_hdr(row, col_label, "Operating Expense", "Capital Expense")
+        g_ob=g_oa=g_cb=g_ca=0.0
+        for key in keys:
+            entries = get_breakup_entries(key)
+            row = section_hdr_row(row, key)
+            s_ob=s_oa=s_cb=s_ca=0.0
+            for e in entries:
+                lbl2 = (e.get("label") or "").strip()
+                if not lbl2: continue
+                v = exAct(e.get("actuals",[]))
+                data_row_7(row, "  "+lbl2,
+                           round(v["ob"],1), round(v["oa"],1), pct_val(v["oa"],v["ob"]),
+                           round(v["cb"],1), round(v["ca"],1), pct_val(v["ca"],v["cb"]))
+                row += 1
+                s_ob+=v["ob"]; s_oa+=v["oa"]; s_cb+=v["cb"]; s_ca+=v["ca"]
+            total_row_7(row, s_ob, s_oa, s_cb, s_ca)
+            row += 1
+            g_ob+=s_ob; g_oa+=s_oa; g_cb+=s_cb; g_ca+=s_ca
+        grand_row_7(row, f"Total {title}", g_ob, g_oa, g_cb, g_ca)
+        row += 2
+        return row
+
+    def write_unit_card(ws_row, start_col, display_lbl,
+                        sub_heads_cur, sub_heads_prev, opex_bud, opex_act,
+                        prev_opex_bud, prev_opex_act):
+        """Write one breakdown card starting at (ws_row, start_col)."""
+        off = start_col - 1   # offset: 0 for left (col1), 8 for right (col9)
+        c_start = start_col; c_end = start_col + 6
+        row = section_hdr_row(ws_row, display_lbl, c_start, c_end)
+        row = two_row_hdr(row, "Expense Category", CUR_LBL, PREV_LBL, off=off)
+        prev_sh_map = {sh["name"]: sh for sh in (sub_heads_prev or [])}
+        for sh in (sub_heads_cur or []):
+            sn = sh["name"]; psh = prev_sh_map.get(sn, {"b":0,"a":0,"items":[]})
+            g_cb=g_ca=g_pb=g_pa=0.0
+            if sn.upper().replace("  "," ") == "PROGRAM EXPENSES":
+                for it in sh.get("items",[]): 
+                    if it["name"]==GRANTS_NAME: g_cb=it["b"]; g_ca=it["a"]
+                for it in psh.get("items",[]):
+                    if it["name"]==GRANTS_NAME: g_pb=it["b"]; g_pa=it["a"]
+            dcb=sh["b"]-g_cb; dca=sh["a"]-g_ca; dpb=psh["b"]-g_pb; dpa=psh["a"]-g_pa
+            if not any([dcb,dca,dpb,dpa]): continue
+            data_row_7(row, sn, round(dcb,1), round(dca,1), pct_val(dca,dcb),
+                       round(dpb,1), round(dpa,1), pct_val(dpa,dpb), off=off)
+            row += 1
+            if g_cb or g_ca or g_pb or g_pa:
+                data_row_7(row, "  Grants", round(g_cb,1), round(g_ca,1), pct_val(g_ca,g_cb),
+                           round(g_pb,1), round(g_pa,1), pct_val(g_pa,g_pb), off=off)
+                row += 1
+        total_row_7(row, opex_bud, opex_act, prev_opex_bud, prev_opex_act, off=off)
+        row += 1
+        return row
+
+    def write_breakdown_section(start_row):
+        """Fix 4: two unit cards side-by-side per row."""
+        start_row = section_title(start_row, "Operating Expenses Breakdown", 1, 15)
+
+        # Aggregate for Total Foundation
+        agg_cur, agg_prev = {}, {}
+        for lbl in order:
+            if cur_map.get(lbl,{}).get("is_sub"): continue
+            for sh in cur_map.get(lbl,{}).get("sub_heads",[]):
+                if sh["name"] not in agg_cur:
+                    agg_cur[sh["name"]] = dict(name=sh["name"],b=0.0,a=0.0,items=[])
+                agg_cur[sh["name"]]["b"] += sh["b"]; agg_cur[sh["name"]]["a"] += sh["a"]
+                agg_cur[sh["name"]]["items"] = sh["items"]
+            for sh in prev_map.get(lbl,{}).get("sub_heads",[]):
+                if sh["name"] not in agg_prev:
+                    agg_prev[sh["name"]] = dict(name=sh["name"],b=0.0,a=0.0,items=[])
+                agg_prev[sh["name"]]["b"] += sh["b"]; agg_prev[sh["name"]]["a"] += sh["a"]
+
+        tf_cb  = to_cr(sum(cm.get("ob",0) for cm in cur_map.values()  if not cm.get("is_sub")))
+        tf_ca  = to_cr(sum(cm.get("oa",0) for cm in cur_map.values()  if not cm.get("is_sub")))
+        tf_pb  = to_cr(sum(pm.get("ob",0) for pm in prev_map.values() if not pm.get("is_sub")))
+        tf_pa  = to_cr(sum(pm.get("oa",0) for pm in prev_map.values() if not pm.get("is_sub")))
+
+        # Build unit list: Total Foundation first, then all units
+        cards = [("Total Foundation",
+                  list(agg_cur.values()), list(agg_prev.values()),
+                  tf_cb, tf_ca, tf_pb, tf_pa)]
+        for lbl in order:
+            cm = cur_map.get(lbl,{}); pm = prev_map.get(lbl,{})
+            cards.append((lbl, cm.get("sub_heads",[]), pm.get("sub_heads",[]),
+                          to_cr(cm.get("ob",0)), to_cr(cm.get("oa",0)),
+                          to_cr(pm.get("ob",0)), to_cr(pm.get("oa",0))))
+
+        # Write in pairs (left col=1, right col=9)
+        row = start_row
+        i = 0
+        while i < len(cards):
+            left  = cards[i]
+            right = cards[i+1] if i+1 < len(cards) else None
+            # Find max row both cards will reach
+            row_l = write_unit_card(row, 1, left[0],  left[1],  left[2],
+                                    left[3],  left[4],  left[5],  left[6])
+            if right:
+                row_r = write_unit_card(row, 9, right[0], right[1], right[2],
+                                        right[3], right[4], right[5], right[6])
+                row = max(row_l, row_r)
+            else:
+                row = row_l
+            row += 1
+            i += 2
+        return row
+
+    # ── TITLE ROW (Fix 1: smaller text) ──────────────────────────────────────
+    row = 1
+    # Full width title covers A to O (cols 1-15)
+    for col in range(1, 16):
+        ws.cell(row=row, column=col).fill = _fill(C_BLUE)
+    ws.merge_cells("A1:O1")
+    t = ws.cell(row=1, column=1,
+                value=f"MIS – Azim Premji Foundation   |   YTD {month}-{financial_year.split('-')[0]}   |   ₹ Cr.")
+    t.font      = _font(bold=True, size=10, color=C_WHITE)   # Fix 1: size 10 (was 13)
+    t.alignment = _align("center", "center")
+    ws.row_dimensions[1].height = 20
+    row = 3   # blank row 2 then start
+
+    # ── WRITE ALL SECTIONS ────────────────────────────────────────────────────
+    row = write_main_section(row, "Operating Expense",  "ob", "oa")
+    row = write_main_section(row, "Capital Expense",    "cb", "ca")
+    row = write_main_section(row, "Overall Foundation", "tb", "ta")
+    row = write_breakup_section(row, "Education",
+          ["Education - District Institutes","Education- Azim Premji Schools"],"States")
+    row = write_breakup_section(row, "Health",
+          ["Urban Primary care work","Rural Primary care work",
+           "Central Initiatives","Hospital","Health Programs Team & Enablers"],"Areas of Work")
+    row = write_breakup_section(row, "Livelihoods", ["Livelihoods"], "States")
+    row = write_breakup_section(row, "University",
+          ["Azim Premji University (Bangalore Campus)",
+           "Azim Premji University (Bhopal Campus)",
+           "Azim Premji University (Ranchi Campus)"], "Campus / Unit")
+    row = write_breakup_section(row, "Enablers", ["Enablers"], "Functions")
+    row = write_breakdown_section(row)   # Fix 4: 2 cards per row
+
+    # ── Freeze & finish ───────────────────────────────────────────────────────
+    ws.freeze_panes = "A3"
+    ws.row_dimensions[1].height = 20
+
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
+    excel_bytes = buf.read()
 
-    frappe.response["filename"]      = f"Monthly_MIS_{financial_year}_{month}.xlsx"
-    frappe.response["filecontent"]   = buf.read()
-    frappe.response["type"]          = "binary"
-    frappe.response["content_type"]  = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    fname_base = f"MIS_APF_{financial_year}_YTD_{month}"
+
+    if str(export_format).lower() == "pdf":
+        # Try soffice (LibreOffice via Frappe's configured path) first
+        import subprocess, tempfile, os, shutil
+
+        # Frappe bench installs soffice; find it
+        soffice_candidates = [
+            shutil.which("soffice"),
+            shutil.which("libreoffice"),
+            "/usr/bin/soffice",
+            "/usr/bin/libreoffice",
+            "/usr/local/bin/soffice",
+            "/opt/libreoffice/program/soffice",
+        ]
+        soffice_path = next((p for p in soffice_candidates if p and os.path.isfile(p)), None)
+
+        if soffice_path:
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    xlsx_path = os.path.join(tmpdir, "report.xlsx")
+                    with open(xlsx_path, "wb") as f:
+                        f.write(excel_bytes)
+                    subprocess.run(
+                        [soffice_path, "--headless", "--convert-to", "pdf",
+                         "--outdir", tmpdir, xlsx_path],
+                        check=True, capture_output=True, timeout=60
+                    )
+                    pdf_path = os.path.join(tmpdir, "report.pdf")
+                    with open(pdf_path, "rb") as f:
+                        pdf_bytes = f.read()
+                frappe.response["filename"]    = fname_base + ".pdf"
+                frappe.response["filecontent"] = pdf_bytes
+                frappe.response["type"]        = "binary"
+                frappe.response["doctype"]     = None
+                return
+            except Exception as e:
+                frappe.log_error(f"soffice PDF failed: {e}")
+
+        # Fallback: return Excel with a message
+        frappe.msgprint(
+            "PDF export requires LibreOffice (soffice) to be installed on the server. "
+            "Downloading Excel instead.",
+            title="PDF Not Available", indicator="orange"
+        )
+        frappe.response["filename"]    = fname_base + ".xlsx"
+        frappe.response["filecontent"] = excel_bytes
+        frappe.response["type"]        = "binary"
+        frappe.response["doctype"]     = None
+    else:
+        frappe.response["filename"]    = fname_base + ".xlsx"
+        frappe.response["filecontent"] = excel_bytes
+        frappe.response["type"]        = "binary"
+        frappe.response["doctype"]     = None
