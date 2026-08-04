@@ -1,3 +1,4 @@
+from annual_budget.utils import guest_api
 import frappe
 import re
 from decimal import Decimal
@@ -463,7 +464,7 @@ from annual_budget.api.actual_format import get_filtered_actuals, sum_of_actuals
 #     return final
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_consolidated_report(financial_year=None, units=None, cost_center=None, location_code=None, template_name="Budget Templat Master"):
 
     if not financial_year:
@@ -715,7 +716,7 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
 
     return final
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_consolidated_report_actual_ytd(
     financial_year=None,
     units=None,
@@ -1354,7 +1355,7 @@ def get_consolidated_report_actual_ytd(
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combined_actuals(
     financial_year=None,
     month=None,
@@ -1807,7 +1808,7 @@ def get_combined_actuals(
 #     }
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_number_card_totals(financial_year=None, set_group_id="3"):
 
     results = []
@@ -2133,7 +2134,7 @@ def calc_ytd(row, till_month):
     idx = MONTHS.index(till_month) + 1
     return sum(_num(getattr(row, m)) for m in MONTHS[:idx])
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_consolidated_report_ytd(
     financial_year=None,
     units=None,
@@ -2407,7 +2408,7 @@ def get_consolidated_report_ytd(
 #     return results
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_number_card_settings(set_group_id=None):
 
     results = []
@@ -2472,7 +2473,7 @@ def get_number_card_settings(set_group_id=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def format_api(financial_year=None, month=None):
 
     settings = get_number_card_settings()

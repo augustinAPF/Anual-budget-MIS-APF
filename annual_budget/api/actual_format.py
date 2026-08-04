@@ -1,3 +1,4 @@
+from annual_budget.utils import guest_api
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 import json
@@ -6,7 +7,7 @@ import frappe
 from annual_budget.api.actuals import get_actuals_from_erp, get_actuals_from_erp_month_wise, get_grouped_actuals_month_wise
 from annual_budget.api.actuals import get_grouped_actuals
 
-@frappe.whitelist(allow_guest=True)  
+@guest_api
 def format_actuals_for_ppt_report(fiscal_year, month, entity):
     accounting_period = get_accounting_period_from_month(month)
 
@@ -143,7 +144,7 @@ def format_actuals_for_ppt_report(fiscal_year, month, entity):
 #     }
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
     expenses = frappe.get_list(
         "Expenses",
@@ -290,7 +291,7 @@ def get_actuals_university_ppt(fiscal_year, accounting_period, Unit):
 #     }
 
 # #============================= Formatting Year and Month =============================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_accounting_period_from_month(month, financial_year=None):
     month_map = {
         "march":12,
@@ -327,7 +328,7 @@ def get_accounting_period_from_month(month, financial_year=None):
         "fiscal_year": fiscal_year_start
     }
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_previous_financial_year(financial_year):
 
     start_year = int(financial_year.split("-")[0])
@@ -365,7 +366,7 @@ def get_previous_financial_year(financial_year):
 #     return result
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,location_code=None):
     formatted = get_accounting_period_from_month(
         month,
@@ -406,7 +407,7 @@ def get_filtered_actuals(month,financial_year,unit=None,cost_center=None,locatio
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def sum_of_actuals_by_sequence(month, financial_year, unit=None, cost_center=None, location_code=None):
 
     response = get_filtered_actuals(month, financial_year, unit, cost_center, location_code)
@@ -434,7 +435,7 @@ def sum_of_actuals_by_sequence(month, financial_year, unit=None, cost_center=Non
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
     try:
         response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
@@ -501,7 +502,7 @@ def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_total(fiscal_year, accounting_period):
     try:
         response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)

@@ -26,7 +26,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/annual_budget/css/annual_budget.css"
-# app_include_js = "/assets/annual_budget/js/annual_budget.js"
+app_include_js = "/assets/annual_budget/js/response_decrypt.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/annual_budget/css/annual_budget.css"
@@ -143,23 +143,11 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"annual_budget.tasks.all"
-# 	],
-# 	"daily": [
-# 		"annual_budget.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"annual_budget.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"annual_budget.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"annual_budget.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"hourly": [
+		"annual_budget.tasks.expire_testing_mode"
+	],
+}
 
 # Testing
 # -------

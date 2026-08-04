@@ -1,3 +1,4 @@
+from annual_budget.utils import guest_api
 import frappe
 from frappe import _
 from frappe.utils import flt
@@ -124,7 +125,7 @@ from annual_budget.api.actual_format import get_actuals_university_ppt
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_university_budget_summary(financial_year=None, month=None, entity=None):
     if not financial_year:
         frappe.throw("Financial year is required")
@@ -442,7 +443,7 @@ def get_school_budget_summary(financial_year=None, month=None, cost_center=None)
 
 import frappe
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_both_methods_data(financial_year=None, month=None, entity=None):
 
     # Call budget method
@@ -468,7 +469,7 @@ def get_both_methods_data(financial_year=None, month=None, entity=None):
 
 import frappe
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combined_university_budget_and_actuals(financial_year=None, month=None, entity=None):
 
     # First call: this already returns both datasets

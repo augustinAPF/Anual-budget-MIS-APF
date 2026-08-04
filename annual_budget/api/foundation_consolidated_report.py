@@ -1,3 +1,4 @@
+from annual_budget.utils import guest_api
 from annual_budget.api.actual_format import get_accounting_period_from_month, get_previous_financial_year, sum_of_actuals_by_sequence
 from annual_budget.api.actuals import get_actuals_from_erp_month_wise, get_grouped_actuals
 from annual_budget.api.phase_sheet import  get_consolidated_report, get_consolidated_report_actual_ytd, get_number_card_settings
@@ -7,7 +8,7 @@ import traceback
 from decimal import Decimal
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_period):
     try:
 
@@ -699,7 +700,7 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def format_api(financial_year=None, month=None, set_group_id=None, previous_financial_year=None):
 
     def safe_join(arr):
@@ -762,7 +763,7 @@ def format_api(financial_year=None, month=None, set_group_id=None, previous_fina
 
     return final_results
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combined_actuals(
     financial_year=None,
     month=None,
@@ -1084,7 +1085,7 @@ def get_combined_actuals(
 
 #     return result
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def add_expense_totals(financial_year=None, month=None, set_group_id=None):
 
     # -------- GET CURRENT DATA --------
@@ -1418,7 +1419,7 @@ def add_expense_totals(financial_year=None, month=None, set_group_id=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combination_table_settings(table_name_filter=None):
 
     results = []
@@ -1490,7 +1491,7 @@ def get_combination_table_settings(table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combination_table_settings_1(table_name_filter=None):
 
     results = []
@@ -1635,7 +1636,7 @@ def get_combination_table_settings_1(table_name_filter=None):
 import frappe
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_combination_table_settings_test(table_name_filter=None):
 
     results = {}
@@ -1827,7 +1828,7 @@ def get_combination_table_settings_test(table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_unit_wise_plan_1(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
@@ -2186,7 +2187,7 @@ def get_unit_wise_plan_1(financial_year, month, table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous=None):
 
     def safe_join(arr):
@@ -2659,7 +2660,7 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
 #     return final_results
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_unit_wise_plan_budget(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
@@ -2946,7 +2947,7 @@ def get_unit_wise_plan_budget(financial_year, month, table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
@@ -3603,7 +3604,7 @@ def get_foundation_overall_1(financial_year, month, table_name_filter=None):
 #     return final_results
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_foundation_overall(financial_year, month, table_name_filter=None):
 
     def safe_join(arr):
@@ -4162,7 +4163,7 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_headcount(financial_year=None, month=None, table_name_filter=None,is_previous=int):
     try:
         filters = {}
@@ -4233,7 +4234,7 @@ def get_headcount(financial_year=None, month=None, table_name_filter=None,is_pre
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_reports_table_settings():
 
     results = []
@@ -4376,7 +4377,7 @@ def get_reports_table_settings():
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_unit_wise_plan_budget_common(financial_year, month):
 
     # =========================================================
@@ -4884,7 +4885,7 @@ def get_unit_wise_plan_budget_common(financial_year, month):
 
     return final_results
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_unit_wise_plan_test(financial_year, month):
 
     # =========================================================
@@ -5530,7 +5531,7 @@ def get_unit_wise_plan_test(financial_year, month):
 import frappe
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_monthly_mis_break_up(financial_year, month, table_name_filter=None, is_previous=None):
 
     def safe_join(arr):

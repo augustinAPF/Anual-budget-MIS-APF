@@ -1,6 +1,7 @@
+from annual_budget.utils import guest_api
 import frappe
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_consolidated_report(financial_year=None):
     """
     Consolidated Budget Report grouped by:

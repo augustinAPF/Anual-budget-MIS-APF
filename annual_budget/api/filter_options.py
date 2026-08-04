@@ -1,7 +1,8 @@
+from annual_budget.utils import guest_api
 import frappe
 from frappe.desk.page.setup_wizard.install_fixtures import _
 # # ! =======================================================  Units filter values =============================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_units():
 
     current_user = frappe.session.user
@@ -62,7 +63,7 @@ def get_units():
 
     return {"data": data}
 # # ! ======================================================= Cost center filter values =============================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_cost_centers_by_set_id(units=None):
 
     if not units:
@@ -193,7 +194,7 @@ def get_cost_centers_by_set_id(units=None):
 #     }
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_location_codes_by_unit(unit=None):
 
     if not unit:
@@ -285,7 +286,7 @@ def get_location_codes_by_unit(unit=None):
 #     )
 #     return theme
 # ! =======================================================  User permission level filter values =============================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_user_mappings():
 
     current_user = frappe.session.user
@@ -333,7 +334,7 @@ def get_user_mappings():
 
 
 # ! =======================================================  Financial Year filter values =============================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_financial_year_list():
 
     fy_docs = frappe.get_all(
@@ -357,7 +358,7 @@ def get_financial_year_list():
 import frappe
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_theme():
     """
     Return only the Operating Unit cards (Overview number cards settings)
@@ -446,7 +447,7 @@ def get_theme():
     return visible_cards
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_theme_mappings(theme_name):
     """
     For a given 'Overview number cards settings' doc, return the

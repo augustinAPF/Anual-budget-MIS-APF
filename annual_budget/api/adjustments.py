@@ -1,3 +1,4 @@
+from annual_budget.utils import guest_api
 # import frappe
 
 # @frappe.whitelist(allow_guest=True)
@@ -454,7 +455,7 @@ import frappe
 from collections import defaultdict
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_adjustments_month_wise(financial_year=None, month=None):
 
     month_map = {
@@ -548,7 +549,7 @@ import frappe
 from collections import defaultdict
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_monthly_adjustments(financial_year=None, month=None):
 
     month_map = {

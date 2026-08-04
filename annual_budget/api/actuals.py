@@ -5,16 +5,13 @@ import xmltodict
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
+from annual_budget.utils import guest_api, get_peoplesoft_uat_credentials, get_peoplesoft_prod_credentials
+
 # ! =======================================================  Actuals API Testing server  ================================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_actuals_from_erp(fiscal_year, accounting_period):
 
-    doc = frappe.get_single("ERP Credentials")
-    print(doc)
-    # PEOPLESOFT_USER = doc.user_name
-    # PEOPLESOFT_PASSWORD = doc.password
-    PEOPLESOFT_USER = "MISUSER"
-    PEOPLESOFT_PASSWORD = "[REDACTED-CREDENTIAL]"
+    PEOPLESOFT_USER, PEOPLESOFT_PASSWORD = get_peoplesoft_uat_credentials()
 
     base_url = (
         "https://erp.azimpremjifoundation.org:8663/PSIGW/RESTListeningConnector/"
@@ -311,11 +308,10 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 # * ==============================================================  Actual API Prod with accounting period without opening balance  =====================================================================================
 def get_financial_year(year):
     return f"{year}-{str(year + 1)[-2:]}"
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):
     try:
-        username = "MISUSER"
-        password = "[REDACTED-CREDENTIAL]"
+        username, password = get_peoplesoft_prod_credentials()
 
         base_url = (
             "https://pserp.azimpremjifoundation.org:8053/"
@@ -708,12 +704,11 @@ import requests
 import xml.etree.ElementTree as ET
 def convert_year(year):
     return f"{year}-{str(int(year) + 1)[-2:]}"
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 
     try:
-        username = "MISUSER"
-        password = "[REDACTED-CREDENTIAL]"
+        username, password = get_peoplesoft_uat_credentials()
 
         if not username or not password:
             frappe.throw("ERP credentials are not configured")
@@ -788,11 +783,10 @@ def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 import requests
 import xml.etree.ElementTree as ET
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_erp_actuals_grouped_by_dimensions(fiscal_year, accounting_period):
     try:
-        username = "MISUSER"
-        password = "[REDACTED-CREDENTIAL]"
+        username, password = get_peoplesoft_uat_credentials()
 
         base_url = (
             "https://pserp.azimpremjifoundation.org:8053/"
@@ -973,7 +967,7 @@ def get_erp_actuals_grouped_by_dimensions(fiscal_year, accounting_period):
 
 # * ==============================================================  Actual API Prod with accounting period  =====================================================================================
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_erp_and_expenses(fiscal_year,accounting_period):
 
     # 1️⃣ ERP Data
@@ -1010,7 +1004,7 @@ def get_erp_and_expenses(fiscal_year,accounting_period):
     }
 
 # * ==============================================================  Actual API Prod Grouped Actuals Detailed Gl wise =====================================================================================
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_detailed_gl(fiscal_year,accounting_period):
 
     # --------------------------------------------------
@@ -1317,7 +1311,7 @@ def get_grouped_actuals_detailed_gl(fiscal_year,accounting_period):
 import frappe
 from collections import defaultdict
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals(fiscal_year,accounting_period):
 
     # ----------------------------
@@ -1436,7 +1430,7 @@ def get_grouped_actuals(fiscal_year,accounting_period):
     }
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_month_wise(fiscal_year, accounting_period):
 
     # ----------------------------
@@ -1564,7 +1558,7 @@ def get_grouped_actuals_month_wise(fiscal_year, accounting_period):
 
 
 
-@frappe.whitelist(allow_guest=True)
+@guest_api
 def get_grouped_actuals_quarter_wise(fiscal_year, accounting_period):
     try:
         response = get_actuals_from_erp_month_wise(fiscal_year, accounting_period)
