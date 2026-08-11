@@ -5,13 +5,13 @@ import xmltodict
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-from annual_budget.utils import guest_api, get_peoplesoft_uat_credentials, get_peoplesoft_prod_credentials
+from annual_budget.utils import guest_api, get_peoplesoft_prod_credentials
 
 # ! =======================================================  Actuals API Testing server  ================================================================================
 @guest_api
 def get_actuals_from_erp(fiscal_year, accounting_period):
 
-    PEOPLESOFT_USER, PEOPLESOFT_PASSWORD = get_peoplesoft_uat_credentials()
+    PEOPLESOFT_USER, PEOPLESOFT_PASSWORD = get_peoplesoft_prod_credentials()
 
     base_url = (
         "https://erp.azimpremjifoundation.org:8663/PSIGW/RESTListeningConnector/"
@@ -708,7 +708,7 @@ def convert_year(year):
 def get_actuals_from_erp_month_wise(fiscal_year, accounting_period):
 
     try:
-        username, password = get_peoplesoft_uat_credentials()
+        username, password = get_peoplesoft_prod_credentials()
 
         if not username or not password:
             frappe.throw("ERP credentials are not configured")
@@ -786,7 +786,7 @@ import xml.etree.ElementTree as ET
 @guest_api
 def get_erp_actuals_grouped_by_dimensions(fiscal_year, accounting_period):
     try:
-        username, password = get_peoplesoft_uat_credentials()
+        username, password = get_peoplesoft_prod_credentials()
 
         base_url = (
             "https://pserp.azimpremjifoundation.org:8053/"

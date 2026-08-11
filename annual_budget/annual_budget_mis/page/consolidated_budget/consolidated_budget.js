@@ -4615,7 +4615,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		groupedActuals: function (yearStr, resolve, reject) {
 			frappe.call({
 				method: 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
-				args: { fiscal_year: yearStr, accounting_period: '12' },
+				args: { fiscal_year: yearStr, accounting_period:"12" },
 				callback: function (r) {
 					var msg = r.message || {};
 					var data;
@@ -5520,12 +5520,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 				var row = { display: lbl, isSub: e.is_this_sub_item === 1, isCovid: lbl.toLowerCase().indexOf('covid') !== -1, vals: extractA(e.actuals) };
 				(row.isCovid ? covid : norm).push(row);
 			});
-			var gtVals = getConsolidatedTotals(data);
-			if (!gtVals) {
-				gtVals = zero();
-				norm.forEach(function (r) { if (!r.isSub) { gtVals = addV(gtVals, r.vals); } });
-				covid.forEach(function (r) { if (!r.isSub) { gtVals = addV(gtVals, r.vals); } });
-			}
+			var gtVals = getConsolidatedTotals(data) || zero();
 			var out = norm.slice();
 			if (covid.length) { out = out.concat(covid); }
 			out.push({ display: 'Grand Total', isTotal: true, isGrandTotal: true, vals: gtVals });
@@ -6216,7 +6211,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 	// =============================================================================
 
 	var BudgetActuals = (function () {
-		var rawData=[], currentFY='', openSec={}, openSub={}, expandItems=false, bound=false;
+		var rawData=[], mainItemBreakdown=[], currentFY='', openSec={}, openSub={}, expandItems=false, bound=false;
 		function pl(){return getFYLabels(currentFY).plan;}
 		function el(){return getFYLabels(currentFY).actual;}
 		function isGT(sec){return sec.sequence_id===9999||(sec.name||'').toUpperCase().replace(/\s+/g,' ').trim()==='GRAND TOTAL';}
@@ -6224,14 +6219,16 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		function subVal(e,sn,subn,f){var v=0;(e.actuals||[]).forEach(function(s){if(isGT(s)||s.name!==sn){return;}(s.sub_heads||[]).forEach(function(sub){if(sub.name!==subn){return;}v+=parseFloat(f==='plan'?(sub.ytd||0):(sub.total_posted_amt_ytd||0));});});return v;}
 		function itemVal(e,nm,f){var v=0;(e.actuals||[]).forEach(function(s){if(isGT(s)){return;}(s.items||[]).forEach(function(i){if(i.name===nm){v+=parseFloat(f==='plan'?(i.ytd||0):(i.total_posted_amt||0));}});(s.sub_heads||[]).forEach(function(sub){(sub.items||[]).forEach(function(i){if(i.name===nm){v+=parseFloat(f==='plan'?(i.ytd||0):(i.total_posted_amt||0));}});});});return v;}
 		function grandVal(e,f){var gt=0,found=false;(e.actuals||[]).forEach(function(s){if(isGT(s)){gt+=parseFloat(f==='plan'?(s.ytd||0):(s.total_posted_amt_ytd||0));found=true;}});if(!found){(e.actuals||[]).forEach(function(s){gt+=parseFloat(f==='plan'?(s.ytd||0):(s.total_posted_amt_ytd||0));});}return gt;}
-		function secTP(sn){var v=0;rawData.forEach(function(e){v+=secVal(e,sn,'plan');});return v;}
-		function secTE(sn){var v=0;rawData.forEach(function(e){v+=secVal(e,sn,'est');});return v;}
-		function subTP(sn,subn){var v=0;rawData.forEach(function(e){v+=subVal(e,sn,subn,'plan');});return v;}
-		function subTE(sn,subn){var v=0;rawData.forEach(function(e){v+=subVal(e,sn,subn,'est');});return v;}
-		function iTotP(n){var v=0;rawData.forEach(function(e){v+=itemVal(e,n,'plan');});return v;}
-		function iTotE(n){var v=0;rawData.forEach(function(e){v+=itemVal(e,n,'est');});return v;}
-		function allGP(){var v=0;rawData.forEach(function(e){v+=grandVal(e,'plan');});return v;}
-		function allGE(){var v=0;rawData.forEach(function(e){v+=grandVal(e,'est');});return v;}
+		// Grand-total column values come from the backend's main_item_breakdown
+		// (get_unit_wise_plan), not a client-side resum across rawData units.
+		function secTP(sn){return secVal({actuals:mainItemBreakdown},sn,'plan');}
+		function secTE(sn){return secVal({actuals:mainItemBreakdown},sn,'est');}
+		function subTP(sn,subn){return subVal({actuals:mainItemBreakdown},sn,subn,'plan');}
+		function subTE(sn,subn){return subVal({actuals:mainItemBreakdown},sn,subn,'est');}
+		function iTotP(n){return itemVal({actuals:mainItemBreakdown},n,'plan');}
+		function iTotE(n){return itemVal({actuals:mainItemBreakdown},n,'est');}
+		function allGP(){return grandVal({actuals:mainItemBreakdown},'plan');}
+		function allGE(){return grandVal({actuals:mainItemBreakdown},'est');}
 		function cellsPair(getP,getE,rowLbl){var h='';rawData.forEach(function(e){var u=(e.label||'').trim();h+='<td>'+fmtINRCrTip(getP(e), rowLbl+' \u00b7 '+u+' \u00b7 '+pl())+'</td><td>'+fmtINRCrTip(getE(e), rowLbl+' \u00b7 '+u+' \u00b7 '+el())+'</td>';});return h;}
 		function tc2(plan,est,cls,rowLbl){cls=cls||'';return '<td class="be-total-plan '+cls+'" style="font-weight:700;">'+fmtINRCrTip(plan, rowLbl+' \u00b7 Grand Total \u00b7 '+pl())+'</td><td class="be-total-est '+cls+'" style="font-weight:700;">'+fmtINRCrTip(est, rowLbl+' \u00b7 Grand Total \u00b7 '+el())+'</td>';}
 		function buildStruct(){
@@ -6292,13 +6289,15 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		}
 		function load(fy){
 			if(!bound){bindEvents();bound=true;}
-			currentFY=fy; rawData=[]; openSec={}; openSub={}; expandItems=false;
+			currentFY=fy; rawData=[]; mainItemBreakdown=[]; openSec={}; openSub={}; expandItems=false;
 			$('#be-expand-items').prop('checked',false);
 			Loader.show('Building Budget & Actuals\u2026', 'budget_actuals');
 
 			DataCache.get('unitWisePlanBE', fy, function(res,rej){Fetchers.unitWisePlanBE(fy,res,rej);}, []).then(function(d){
 				Loader.hide('budget_actuals');
 				if(!d||!d.length){frappe.msgprint('No data returned for Budget & Actuals.');renderTable();TabLoader.reportResult('budget_actuals', fy, false);return;}
+				var consolidatedBlock = d.filter(function(e){return (e.table_name||'').toUpperCase()==='CONSOLIDATED';})[0];
+				mainItemBreakdown = (consolidatedBlock && consolidatedBlock.main_item_breakdown) || [];
 				rawData = d.filter(function(e){
 					return e.is_this_sub_item===0 && e.sequence_id!==9999 && (e.table_name||'').toUpperCase()!=='CONSOLIDATED';
 				}).sort(function(a,b){return(a.sequence_id||0)-(b.sequence_id||0);});

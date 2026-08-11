@@ -2,13 +2,13 @@ import frappe
 import requests
 import xml.etree.ElementTree as ET
 
-from annual_budget.utils import guest_api, get_peoplesoft_uat_credentials
+from annual_budget.utils import guest_api, get_peoplesoft_prod_credentials
 
 # ! ======================================================= ERP Accounts(Gl) master =============================================================================
 @guest_api
 def get_gl_from_erp():
     try:
-        username, password = get_peoplesoft_uat_credentials()
+        username, password = get_peoplesoft_prod_credentials()
 
         base_url = (
             "https://erp.azimpremjifoundation.org:8663/"
