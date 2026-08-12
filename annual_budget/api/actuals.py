@@ -97,6 +97,7 @@ def get_actuals_from_erp(fiscal_year, accounting_period):
 
 # * ==============================================================  Actual API Prod with accounting period without opening balance  =====================================================================================
 def get_financial_year(year):
+    year = int(year)
     return f"{year}-{str(year + 1)[-2:]}"
 @guest_api
 def get_actuals_from_erp_prod(fiscal_year, accounting_period):

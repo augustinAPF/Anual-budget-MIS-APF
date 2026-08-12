@@ -1635,6 +1635,58 @@ def get_combination_table_settings_1(table_name_filter=None):
     return results
 
 
+def warn_on_overlapping_main_items(settings, grouped_actuals_data, table_name_filter):
+    """Log a warning if two main-item (is_this_sub_item == 0) cards under the
+    same table_name_filter both match the same ERP actuals row.
+
+    This is the exact failure mode behind past Foundation Overall / Actuals
+    Consolidated mismatches: two cards share a cost center and one of them
+    has no location restriction, so a GL row gets counted twice. The
+    settings data is the right place to fix an overlap once found -- this
+    just makes sure it can't happen silently again.
+    """
+    main_criteria = []
+    for s in settings:
+        if not any(c.get("is_this_sub_item") == 0 for c in s.get("combination_settings", [])):
+            continue
+        for gu in s.get("grouped_units", []):
+            main_criteria.append({
+                "label": s.get("label"),
+                "unit": gu.get("unit"),
+                "ccs": set(gu.get("cost_centers_erp") or []),
+                "locs": set(gu.get("locations_erp") or []),
+            })
+
+    overlap_amounts = {}
+
+    for row in grouped_actuals_data or []:
+        matched_by = set()
+        for crit in main_criteria:
+            if crit["unit"] and row.get("business_unit") != crit["unit"]:
+                continue
+            if crit["ccs"] and row.get("deptid") not in crit["ccs"]:
+                continue
+            if crit["locs"] and row.get("operating_unit") not in crit["locs"]:
+                continue
+            matched_by.add(crit["label"])
+
+        if len(matched_by) > 1:
+            pair = tuple(sorted(matched_by))
+            amount = float(row.get("total_posted_amt") or 0)
+            overlap_amounts[pair] = overlap_amounts.get(pair, 0) + amount * (len(matched_by) - 1)
+
+    if overlap_amounts:
+        details = "\n".join(f"{pair}: {amount:.2f}" for pair, amount in overlap_amounts.items())
+        frappe.log_error(
+            title="Overlapping cost centers in Overview number cards settings",
+            message=(
+                f"table_name_filter={table_name_filter!r} -- the following main-item card "
+                f"pairs claim overlapping ERP cost centers, double-counting actuals:\n{details}"
+            ),
+        )
+
+
+
 
 
 
@@ -3717,6 +3769,8 @@ def get_foundation_overall(financial_year, month, table_name_filter=None):
         fiscal_year=formatted.get("fiscal_year"),
         accounting_period=formatted.get("accounting_period")
     ).get("data", [])
+
+    warn_on_overlapping_main_items(settings, grouped_actuals_data, table_name_filter)
 
     final_results = []
 
