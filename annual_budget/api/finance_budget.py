@@ -1,4 +1,4 @@
-from annual_budget.utils import guest_api
+from annual_budget.utils import guest_api, get_allowed_units, require_unit_access
 # import frappe
 # from frappe import _
 
@@ -20,6 +20,7 @@ def get_finance_budget(budget_id):
         frappe.throw(_("Finance Budget ID is required"))
 
     doc = frappe.get_doc("Finance Budget", budget_id)
+    require_unit_access(doc.set_id)
     data = doc.as_dict()
 
     if data.get("cost_center"):
@@ -35,9 +36,17 @@ import frappe
 
 @frappe.whitelist()
 def get_all_finance_budgets():
-    """Return all Finance Budget records with all fields and child tables."""
+    """Return all Finance Budget records with all fields and child tables,
+    scoped to the caller's Finance user access mapping."""
     try:
-        docs = frappe.get_all("Finance Budget", pluck="name")
+        filters = {}
+        allowed_units = get_allowed_units()
+        if allowed_units is not None:
+            if not allowed_units:
+                return []
+            filters["set_id"] = ["in", list(allowed_units)]
+
+        docs = frappe.get_all("Finance Budget", filters=filters, pluck="name")
         data = []
         for name in docs:
             doc = frappe.get_doc("Finance Budget", name)
@@ -45,7 +54,7 @@ def get_all_finance_budgets():
         return data
     except Exception as e:
         frappe.log_error("Finance Budget API Error", str(e))
-        frappe.throw(str(e))
+        frappe.throw("Unable to fetch Finance Budget records. Please contact your administrator.")
     
 # import frappe
 
@@ -147,6 +156,12 @@ def get_consolidated_finance_data(financial_year=None):
     filters = {}
     if financial_year:
         filters["financial_year"] = financial_year
+
+    allowed_units = get_allowed_units()
+    if allowed_units is not None:
+        if not allowed_units:
+            return {"entities": [], "expenses": []}
+        filters["set_id"] = ["in", list(allowed_units)]
 
     # --- Fetch all distinct entities (set_id or organization/unit) ---
     entities = frappe.db.get_all(

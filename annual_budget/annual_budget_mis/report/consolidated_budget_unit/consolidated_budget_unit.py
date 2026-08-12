@@ -54,11 +54,6 @@ def normalize_filter(value):
     return []
 
 
-def make_sql_list(values):
-    """Convert Python list to SQL-safe IN (...) clause string."""
-    return ", ".join(f"'{v}'" for v in values) if values else ""
-
-
 # ---------- Core Logic ----------
 
 def get_data(filters):
@@ -75,21 +70,24 @@ def get_data(filters):
     cost_center_list = normalize_filter(filters.get("cost_center"))
     location_list = normalize_filter(filters.get("location_code"))
 
-    formatted_units = make_sql_list(unit_list)
-    formatted_cc = make_sql_list(cost_center_list)
-    formatted_locs = make_sql_list(location_list)
+    # Build dynamic conditions with bound parameters (no string interpolation)
+    conditions = ["fb.financial_year = %s"]
+    values = [financial_year]
 
-    # Build dynamic conditions
-    conditions = [f"fb.financial_year = '{financial_year}'"]
+    if unit_list:
+        placeholders = ", ".join(["%s"] * len(unit_list))
+        conditions.append(f"fb.set_id IN ({placeholders})")
+        values.extend(unit_list)
 
-    if formatted_units:
-        conditions.append(f"fb.set_id IN ({formatted_units})")
+    if cost_center_list:
+        placeholders = ", ".join(["%s"] * len(cost_center_list))
+        conditions.append(f"fb.cost_center IN ({placeholders})")
+        values.extend(cost_center_list)
 
-    if formatted_cc:
-        conditions.append(f"fb.cost_center IN ({formatted_cc})")
-
-    if formatted_locs:
-        conditions.append(f"fb.location_code IN ({formatted_locs})")
+    if location_list:
+        placeholders = ", ".join(["%s"] * len(location_list))
+        conditions.append(f"fb.location_code IN ({placeholders})")
+        values.extend(location_list)
 
     where_clause = "WHERE " + " AND ".join(conditions)
 
@@ -123,7 +121,7 @@ def get_data(filters):
             fba.type_of_expense
     """
 
-    data = frappe.db.sql(query, as_dict=True)
+    data = frappe.db.sql(query, values, as_dict=True)
 
     # Calculate quarters & yearly total
     for row in data:

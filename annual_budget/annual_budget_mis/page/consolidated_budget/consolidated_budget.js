@@ -4615,7 +4615,7 @@ frappe.pages['consolidated-budget'].on_page_load = function (wrapper) {
 		groupedActuals: function (yearStr, resolve, reject) {
 			frappe.call({
 				method: 'annual_budget.api.foundation_consolidated_report.get_grouped_actuals_quarter_and_month_wise_total',
-				args: { fiscal_year: yearStr, accounting_period:"12" },
+				args: { fiscal_year: yearStr, accounting_period: '12' },
 				callback: function (r) {
 					var msg = r.message || {};
 					var data;

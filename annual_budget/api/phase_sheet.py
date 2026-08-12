@@ -1,8 +1,9 @@
-from annual_budget.utils import guest_api
+from annual_budget.utils import guest_api, get_allowed_units, require_unit_access
 import frappe
 import re
 from decimal import Decimal
 from annual_budget.api.actual_format import get_filtered_actuals, sum_of_actuals_by_sequence
+from annual_budget.api.response_crypto import is_direct_http_call
 
 # ! =======================================================  Consolidated report Line item wise Grouping  ================================================================================
 # @frappe.whitelist(allow_guest=True)
@@ -473,6 +474,19 @@ def get_consolidated_report(financial_year=None, units=None, cost_center=None, l
     if not template_name:
         frappe.throw("Template Name is required")
 
+    # Only scope on a genuine direct HTTP call — internal callers pass
+    # units=None intentionally to get an already-scoped, admin-configured
+    # result and must not be narrowed by the current session user.
+    if is_direct_http_call(get_consolidated_report):
+        if units:
+            require_unit_access(units)
+        else:
+            allowed_units = get_allowed_units()
+            if allowed_units is not None:
+                if not allowed_units:
+                    return []
+                units = ",".join(sorted(allowed_units))
+
     import re
     from decimal import Decimal
 
@@ -730,6 +744,19 @@ def get_consolidated_report_actual_ytd(
 
     if not month:
         frappe.throw("Month is required")
+
+    # Only scope on a genuine direct HTTP call — internal callers pass
+    # units=None intentionally to get an already-scoped, admin-configured
+    # result and must not be narrowed by the current session user.
+    if is_direct_http_call(get_consolidated_report_actual_ytd):
+        if units:
+            require_unit_access(units)
+        else:
+            allowed_units = get_allowed_units()
+            if allowed_units is not None:
+                if not allowed_units:
+                    return []
+                units = ",".join(sorted(allowed_units))
 
     # ---------------------------------------------------
     # Safe Numeric Conversion

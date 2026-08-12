@@ -97,6 +97,14 @@ def encrypted_response(fn):
 	return wrapper
 
 
+def is_direct_http_call(fn):
+	"""Whether the currently-executing request is an actual HTTP dispatch to
+	fn (frappe.local.form_dict.cmd matches it), as opposed to fn being called
+	directly from other Python code in this app."""
+	cmd = frappe.local.form_dict.get("cmd") if getattr(frappe, "local", None) else None
+	return cmd == f"{fn.__module__}.{fn.__name__}"
+
+
 def encrypted_response_if_direct_call(fn):
 	"""Like encrypted_response, but only encrypts when reached via an actual
 	HTTP dispatch (frappe.local.form_dict.cmd matches this function), not
@@ -105,9 +113,7 @@ def encrypted_response_if_direct_call(fn):
 	@functools.wraps(fn)
 	def wrapper(*args, **kwargs):
 		result = fn(*args, **kwargs)
-		cmd = frappe.local.form_dict.get("cmd") if getattr(frappe, "local", None) else None
-		is_direct_call = cmd == f"{fn.__module__}.{fn.__name__}"
-		if not is_direct_call or is_testing_mode():
+		if not is_direct_http_call(fn) or is_testing_mode():
 			return result
 		return encrypt_payload(result)
 

@@ -1,4 +1,4 @@
-from annual_budget.utils import guest_api
+from annual_budget.utils import guest_api, get_allowed_units
 import frappe
 
 @guest_api
@@ -16,6 +16,12 @@ def get_consolidated_report(financial_year=None):
     filters = {}
     if financial_year:
         filters["financial_year"] = financial_year
+
+    allowed_units = get_allowed_units()
+    if allowed_units is not None:
+        if not allowed_units:
+            return {"entities": []}
+        filters["set_id"] = ["in", list(allowed_units)]
 
     # 1️⃣ Fetch all Finance Budgets (Parent records)
     budgets = frappe.get_all(

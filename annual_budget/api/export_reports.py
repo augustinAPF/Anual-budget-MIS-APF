@@ -513,7 +513,7 @@ def export_phase_sheet_excel(
 #             cell.protection = Protection(locked=False)
 
 #     ws.protection.sheet = True
-#     ws.protection.password = "[REDACTED-PASSWORD]"
+#     ws.protection.password = "[removed]"
 
 #     # Auto column width
 #     for column in ws.columns:

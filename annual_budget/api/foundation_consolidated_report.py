@@ -168,6 +168,12 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
 
                 month = str(period)
 
+                # Period 0 is PeopleSoft's opening/beginning-balance period,
+                # not fiscal-year activity — excluded from this report on
+                # purpose, not via the KeyError empty_months() would raise.
+                if month == "0":
+                    continue
+
                 parent_expense_name = gl_parent_map.get(account)
                 expense = expense_lookup.get(parent_expense_name)
 
@@ -263,14 +269,13 @@ def get_grouped_actuals_quarter_and_month_wise_total(fiscal_year, accounting_per
             "data":final
         }
 
-    except Exception as e:
+    except Exception:
 
         frappe.log_error(frappe.get_traceback(),"Actuals API Error")
 
         return {
             "status":"error",
-            "message":str(e),
-            "trace":traceback.format_exc()
+            "message":"Unable to fetch actuals data. Please contact your administrator."
         }
 
 
