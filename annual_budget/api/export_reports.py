@@ -1,4 +1,5 @@
 from annual_budget.api.phase_sheet import get_consolidated_report
+from annual_budget.api.actuals import get_actuals_from_erp_prod, get_actuals_from_erp_month_wise
 import frappe,io
 from frappe import _
 import frappe
@@ -6503,3 +6504,71 @@ def export_all(financial_year,
         "filename": f"Foundation_Consolidated_Budget_{fy}.xlsx",
         "data"    : _wb_to_b64(wb),
     }
+
+
+# * ==============================================================  Excel export for the ERP Actuals page  =====================================================================================
+# Maps the page's API picker labels to the actual functions — kept as an
+# explicit allowlist so the export endpoint can't be pointed at arbitrary
+# server functions via method_key.
+ERP_ACTUALS_EXPORT_METHODS = {
+    "get_actuals_from_erp_prod": get_actuals_from_erp_prod,
+    "get_actuals_from_erp_month_wise": get_actuals_from_erp_month_wise,
+}
+
+
+@frappe.whitelist()
+def export_erp_actuals_excel(method_key, fiscal_year, accounting_period):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    fn = ERP_ACTUALS_EXPORT_METHODS.get(method_key)
+    if not fn:
+        frappe.throw("Invalid export method")
+
+    result = fn(fiscal_year=fiscal_year, accounting_period=accounting_period)
+
+    if result.get("status") != "success":
+        frappe.throw(result.get("error") or "ERP request failed")
+
+    rows = result.get("data") or []
+    # fiscal_year is dropped — same as the on-screen table, it just repeats
+    # the fiscal_year/accounting_period already shown for the whole export.
+    columns = []
+    for row in rows:
+        for key in (row or {}).keys():
+            if key != "fiscal_year" and key not in columns:
+                columns.append(key)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "ERP Actuals"
+
+    header_fill = PatternFill("solid", fgColor="0076B6")
+    header_font = Font(bold=True, color="FFFFFF")
+
+    ws.append(columns)
+    for col_idx in range(1, len(columns) + 1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_fill
+        cell.font = header_font
+
+    for row in rows:
+        values = []
+        for col in columns:
+            value = row.get(col)
+            if col == "is_adjustment":
+                value = "True" if str(value).strip().lower() in ("1", "true", "yes") else "False"
+            values.append(value)
+        ws.append(values)
+
+    for col_idx, col in enumerate(columns, start=1):
+        max_len = max([len(col)] + [len(str(r.get(col, "") or "")) for r in rows]) if rows else len(col)
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 2, 40)
+
+    stream = io.BytesIO()
+    wb.save(stream)
+
+    frappe.response["filename"] = f"ERP_Actuals_{fiscal_year}_P{accounting_period}.xlsx"
+    frappe.response["filecontent"] = stream.getvalue()
+    frappe.response["type"] = "binary"

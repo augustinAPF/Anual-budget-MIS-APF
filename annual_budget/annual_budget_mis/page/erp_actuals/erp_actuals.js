@@ -103,6 +103,9 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 	).appendTo(filter_area);
 	fetch_btn.find("button").on("click", () => fetch_data());
 
+	// Populated after a successful fetch so Export always downloads what's on screen.
+	let last_query = null;
+
 	function fetch_data() {
 		const api_label = filters.api_choice.get_value();
 		const method = API_OPTIONS[api_label];
@@ -121,6 +124,7 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 		// "2026-27" -> 2026 ; "April" -> 1
 		const fiscal_year = parseInt(financial_year.split("-")[0], 10);
 		const accounting_period = MONTH_TO_PERIOD[month];
+		last_query = { method_key: method.split(".").pop(), fiscal_year, accounting_period };
 
 		summary_area.html("");
 		result_area.html("");
@@ -177,10 +181,30 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 				<div><span class="text-blue">Fiscal Year:</span> ${frappe.utils.escape_html(String(message.fiscal_year ?? ""))}</div>
 				<div><span class="text-blue">Accounting Period:</span> ${frappe.utils.escape_html(String(message.accounting_period ?? ""))}</div>
 				<div><span class="text-blue">Row Count:</span> ${rows.length}</div>
+				<div class="summary-export">
+					<button class="btn btn-default btn-xs erp-export-btn">
+						${frappe.utils.icon("download", "xs")} Export to Excel
+					</button>
+				</div>
 			</div>
 		`);
 
+		summary_area.find(".erp-export-btn").on("click", export_to_excel);
+
 		render_table(rows);
+	}
+
+	function export_to_excel() {
+		if (!last_query) return;
+
+		const params = new URLSearchParams({
+			method_key: last_query.method_key,
+			fiscal_year: last_query.fiscal_year,
+			accounting_period: last_query.accounting_period,
+		});
+		window.open(
+			`/api/method/annual_budget.api.export_reports.export_erp_actuals_excel?${params.toString()}`
+		);
 	}
 
 	// --- Excel-style column AutoFilter state ---
@@ -480,6 +504,7 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 			}
 			#erp-actuals-summary .summary-card {
 				display: flex;
+				align-items: center;
 				gap: 28px;
 				padding: 12px 18px;
 				font-size: 13px;
@@ -490,6 +515,8 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 				margin: 4px 0 16px;
 				flex-wrap: wrap;
 			}
+			.summary-export { margin-left: auto; }
+			.erp-export-btn { display: inline-flex; align-items: center; gap: 6px; }
 
 			/* Full screen overlay – soft light black glass look */
 			#global-loader.loader-overlay {

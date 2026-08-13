@@ -529,7 +529,7 @@ def get_adjustments_month_wise(financial_year=None, month=None):
         for period in sorted(period_totals.keys()):
             result.append({
                 "business_unit": key[0],
-                "ledger": "ACTUALS",
+                "ledger": "ADJUSTMENT",
                 "account": key[1],
                 "deptid": key[3],
                 "operating_unit": key[2],
@@ -617,7 +617,7 @@ def get_monthly_adjustments(financial_year=None, month=None):
     for key, total in grouped_data.items():
         result.append({
             "business_unit": key[0],
-            "ledger": "ACTUALS",
+            "ledger": "ADJUSTMENT",
             "account": key[1],
             "deptid": key[3],
             "operating_unit": key[2],
