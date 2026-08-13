@@ -2383,13 +2383,12 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
         return list(head_map.values())
 
     # ---------------- MAIN ----------------
-    # Actuals (ERP data) always lag by one fiscal year — fetch them for the
-    # year before whatever financial_year was requested. Budget (ytd, via
-    # get_combined_actuals below) stays on the requested financial_year.
-    actuals_financial_year = get_previous_financial_year(financial_year)
+    if is_previous == 1:
+    # previous_financial_year = get_previous_financial_year(financial_year)
+        financial_year = get_previous_financial_year(financial_year)
     settings = get_combination_table_settings_1(table_name_filter)
 
-    formatted = get_accounting_period_from_month(month, actuals_financial_year)
+    formatted = get_accounting_period_from_month(month, financial_year)
 
     grouped_actuals_data = get_grouped_actuals(
         fiscal_year=formatted.get("fiscal_year"),
@@ -2406,8 +2405,6 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
 
     opex_total_ytd = 0
     opex_total_actual = 0
-
-    main_item_breakdowns = []
 
     for s in settings:
 
@@ -2447,7 +2444,7 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
                     capex_local += head.get("ytd", 0)
                     capex_actual_local += head.get("total_posted_amt_ytd", 0)
 
-                elif "OPERATING" in name or "COVID" in name:
+                elif "OPERATING" in name:
                     opex_local += head.get("ytd", 0)
                     opex_actual_local += head.get("total_posted_amt_ytd", 0)
 
@@ -2460,8 +2457,6 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
 
                 opex_total_ytd += opex_local
                 opex_total_actual += opex_actual_local
-
-                main_item_breakdowns.append(list(consolidated))
 
             consolidated.append({
                 "name": "GRAND TOTAL",
@@ -2480,20 +2475,6 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
                 "is_this_sub_item": combo.get("is_this_sub_item"),
                 "actuals": consolidated
             })
-
-    # ✅ CROSS-UNIT BREAKDOWN (heads/sub_heads/items summed across all main
-    # items) — backs the "Grand Total" column of tables that show one
-    # plan/actual column per unit plus a combined total column.
-    main_item_breakdown = consolidate_actuals(main_item_breakdowns)
-    main_item_breakdown_totals = calculate_grand_total(main_item_breakdown)
-    main_item_breakdown.append({
-        "name": "GRAND TOTAL",
-        "sequence_id": 9999,
-        "sub_heads": [],
-        "items": [],
-        "ytd": main_item_breakdown_totals["grand_total_ytd"],
-        "total_posted_amt_ytd": main_item_breakdown_totals["grand_total_actual"]
-    })
 
     # ✅ FINAL CONSOLIDATED TOTAL
     final_results.append({
@@ -2518,8 +2499,7 @@ def get_unit_wise_plan(financial_year, month, table_name_filter=None,is_previous
                 "ytd": round(overall_ytd, 2),
                 "total_posted_amt_ytd": round(overall_actual, 2)
             }
-        ],
-        "main_item_breakdown": main_item_breakdown
+        ]
     })
 
     return final_results
