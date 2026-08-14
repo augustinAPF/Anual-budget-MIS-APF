@@ -9,9 +9,9 @@ is enforced by require_login().
 Testing Mode (ERP Credentials.testing_mode) is a System-Manager-only escape
 hatch for local development / Postman: while it is on, require_login() is a
 no-op (guest calls are accepted) and encrypted_response returns plain JSON
-instead of an envelope. It auto-expires after TESTING_MODE_MAX_MINUTES via
-the scheduled task in tasks.py, so it can't be left on indefinitely by
-accident.
+instead of an envelope. It auto-expires after ERP Credentials'
+testing_mode_duration_minutes via the scheduled task in tasks.py, so it
+can't be left on indefinitely by accident.
 """
 
 import base64
@@ -24,7 +24,7 @@ import frappe
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from frappe.utils import now_datetime, get_datetime
 
-TESTING_MODE_MAX_MINUTES = 60
+DEFAULT_TESTING_MODE_MAX_MINUTES = 60
 
 _KEY_HEX = "555798abb956b8fb14293010eab1fec7ac706904bddc29756505f866a913bc0b"[:64]
 _KEY = bytes.fromhex(_KEY_HEX)
@@ -44,8 +44,9 @@ def is_testing_mode():
 def _testing_mode_expired(doc):
 	if not doc.testing_mode_enabled_at:
 		return False
+	max_minutes = doc.testing_mode_duration_minutes or DEFAULT_TESTING_MODE_MAX_MINUTES
 	elapsed = now_datetime() - get_datetime(doc.testing_mode_enabled_at)
-	return elapsed > timedelta(minutes=TESTING_MODE_MAX_MINUTES)
+	return elapsed > timedelta(minutes=max_minutes)
 
 
 @frappe.whitelist(allow_guest=True)
