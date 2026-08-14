@@ -103,40 +103,4 @@
 
 		return promise;
 	};
-
-	// Persistent warning banner while Testing Mode is on (see
-	// api/response_crypto.py — testing mode disables auth + encryption on
-	// every annual_budget endpoint). Only System Managers get a truthy
-	// response from this check; everyone else silently sees no banner.
-	function showTestingModeBanner() {
-		if (document.getElementById("annual-budget-testing-mode-banner")) return;
-		var bar = document.createElement("div");
-		bar.id = "annual-budget-testing-mode-banner";
-		bar.textContent =
-			"⚠ Annual Budget Testing Mode is ON — API endpoints accept unauthenticated " +
-			"requests and return unencrypted data. Turn this off in ERP Credentials when done testing.";
-		bar.style.cssText = [
-			"position:fixed", "top:0", "left:0", "right:0", "z-index:99999",
-			"background:#c0392b", "color:#fff", "font-weight:600",
-			"text-align:center", "padding:6px 12px", "font-size:13px",
-		].join(";");
-		document.body.appendChild(bar);
-	}
-
-	function checkTestingMode() {
-		original_call.call(frappe, {
-			method: "annual_budget.api.response_crypto.get_testing_mode_status",
-			callback: function (r) {
-				if (r && r.message && r.message.testing_mode) {
-					showTestingModeBanner();
-				}
-			},
-		});
-	}
-
-	if (document.readyState === "complete") {
-		checkTestingMode();
-	} else {
-		window.addEventListener("load", checkTestingMode);
-	}
 })();
