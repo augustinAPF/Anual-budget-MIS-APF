@@ -197,13 +197,16 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 	function export_to_excel() {
 		if (!last_query) return;
 
-		const params = new URLSearchParams({
-			method_key: last_query.method_key,
-			fiscal_year: last_query.fiscal_year,
-			accounting_period: last_query.accounting_period,
-		});
-		window.open(
-			`/api/method/annual_budget.api.export_reports.export_erp_actuals_excel?${params.toString()}`
+		// Export exactly what's on screen (post column-filter), not a fresh
+		// unfiltered re-fetch — sent as a POST since the filtered row set can
+		// be far larger than a GET URL can hold.
+		open_url_post(
+			"/api/method/annual_budget.api.export_reports.export_erp_actuals_excel",
+			{
+				fiscal_year: last_query.fiscal_year,
+				accounting_period: last_query.accounting_period,
+				rows: JSON.stringify(get_visible_rows()),
+			}
 		);
 	}
 
@@ -306,6 +309,8 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 			);
 		}
 
+		render_total_row(visible_rows);
+
 		result_area
 			.find(".erp-filter-icon")
 			.removeClass("active")
@@ -318,6 +323,44 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 		$(`<span class="erp-row-count">Showing ${visible_rows.length} of ${all_rows.length} rows</span>`).insertAfter(
 			result_area.find("h2.table-title")
 		);
+	}
+
+	function render_total_row(visible_rows) {
+		const $tfoot_wrap = result_area.find("table.university-table tfoot");
+		if (!all_columns.includes("posted_total_amt")) {
+			$tfoot_wrap.remove();
+			return;
+		}
+
+		const total = visible_rows.reduce(
+			(sum, row) => sum + (parseFloat(row.posted_total_amt) || 0),
+			0
+		);
+
+		const $table = result_area.find("table.university-table");
+		let $tfoot = $table.find("tfoot");
+		if (!$tfoot.length) {
+			$tfoot = $('<tfoot><tr></tr></tfoot>').appendTo($table);
+		}
+		const $row = $tfoot.find("tr").empty();
+
+		all_columns.forEach((c) => {
+			if (c === "posted_total_amt") {
+				$row.append(
+					`<td class="erp-total-cell">${frappe.utils.escape_html(
+						format_currency(total)
+					)}</td>`
+				);
+			} else if (c === all_columns[0]) {
+				$row.append(`<td class="erp-total-label">Total</td>`);
+			} else {
+				$row.append("<td></td>");
+			}
+		});
+	}
+
+	function format_currency(value) {
+		return value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 	}
 
 	function open_filter_menu($icon, col) {
@@ -441,6 +484,17 @@ frappe.pages["erp-actuals"].on_page_load = function (wrapper) {
 			table.university-table th { background-color: #0076B6; color: #fff; position: sticky; top: 0; z-index: 25; }
 			table.university-table tbody tr:nth-child(even) { background-color: #f8fafc; }
 			table.university-table tbody tr:hover { background-color: #eef6fb; }
+			table.university-table tfoot td {
+				position: sticky;
+				bottom: 0;
+				background-color: #eaf3fa;
+				font-weight: 700;
+				color: #0076B6;
+				border-top: 2px solid #0076B6;
+				z-index: 20;
+			}
+			table.university-table tfoot .erp-total-label { text-align: left; }
+			table.university-table tfoot .erp-total-cell { text-align: right; }
 			.text-blue { color: #0076B6; font-weight: 600; }
 
 			/* --- Excel-style column filter --- */

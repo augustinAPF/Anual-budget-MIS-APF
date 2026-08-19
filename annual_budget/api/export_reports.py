@@ -6517,21 +6517,28 @@ ERP_ACTUALS_EXPORT_METHODS = {
 
 
 @frappe.whitelist()
-def export_erp_actuals_excel(method_key, fiscal_year, accounting_period):
+def export_erp_actuals_excel(fiscal_year, accounting_period, rows=None, method_key=None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
     from openpyxl.utils import get_column_letter
 
-    fn = ERP_ACTUALS_EXPORT_METHODS.get(method_key)
-    if not fn:
-        frappe.throw("Invalid export method")
+    # `rows` carries exactly what's on screen (post column-filter) as JSON, sent
+    # from erp_actuals.js so the export matches whatever the user filtered to.
+    # method_key is kept only as a fallback for old cached JS / direct API callers.
+    if rows is not None:
+        rows = frappe.parse_json(rows) if isinstance(rows, str) else rows
+    else:
+        fn = ERP_ACTUALS_EXPORT_METHODS.get(method_key)
+        if not fn:
+            frappe.throw("Invalid export method")
 
-    result = fn(fiscal_year=fiscal_year, accounting_period=accounting_period)
+        result = fn(fiscal_year=fiscal_year, accounting_period=accounting_period)
 
-    if result.get("status") != "success":
-        frappe.throw(result.get("error") or "ERP request failed")
+        if result.get("status") != "success":
+            frappe.throw(result.get("error") or "ERP request failed")
 
-    rows = result.get("data") or []
+        rows = result.get("data") or []
+
     # fiscal_year is dropped — same as the on-screen table, it just repeats
     # the fiscal_year/accounting_period already shown for the whole export.
     columns = []
@@ -6553,14 +6560,42 @@ def export_erp_actuals_excel(method_key, fiscal_year, accounting_period):
         cell.fill = header_fill
         cell.font = header_font
 
+    # Amount columns get real Excel numbers (right-aligned, thousands separator);
+    # code-like columns (account, deptid, accounting_period, ...) stay as text so
+    # leading zeros / exact codes aren't mangled by Excel's numeric coercion.
+    AMOUNT_COLUMNS = {"posted_total_amt"}
+    AMOUNT_FORMAT = "#,##0.00;[Red]-#,##0.00"
+
     for row in rows:
         values = []
         for col in columns:
             value = row.get(col)
             if col == "is_adjustment":
                 value = "True" if str(value).strip().lower() in ("1", "true", "yes") else "False"
+            elif col in AMOUNT_COLUMNS:
+                value = frappe.utils.flt(value)
             values.append(value)
         ws.append(values)
+        if AMOUNT_COLUMNS:
+            for col_idx, col in enumerate(columns, start=1):
+                if col in AMOUNT_COLUMNS:
+                    ws.cell(row=ws.max_row, column=col_idx).number_format = AMOUNT_FORMAT
+
+    if "posted_total_amt" in columns:
+        total = sum(frappe.utils.flt(row.get("posted_total_amt")) for row in rows)
+        total_row = ["" for _ in columns]
+        total_row[0] = "Total"
+        total_row[columns.index("posted_total_amt")] = total
+        ws.append(total_row)
+
+        total_fill = PatternFill("solid", fgColor="EAF3FA")
+        total_font = Font(bold=True, color="0076B6")
+        for col_idx, col in enumerate(columns, start=1):
+            cell = ws.cell(row=ws.max_row, column=col_idx)
+            cell.fill = total_fill
+            cell.font = total_font
+            if col in AMOUNT_COLUMNS:
+                cell.number_format = AMOUNT_FORMAT
 
     for col_idx, col in enumerate(columns, start=1):
         max_len = max([len(col)] + [len(str(r.get(col, "") or "")) for r in rows]) if rows else len(col)
