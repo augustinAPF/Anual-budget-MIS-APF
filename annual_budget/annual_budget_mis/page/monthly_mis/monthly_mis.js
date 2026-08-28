@@ -6785,7 +6785,11 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			var today=new Date(),y=today.getFullYear(),m=today.getMonth()+1;
 			var curFY=(m>=4?y:y-1)+'-'+String(m>=4?y+1:y).slice(-2);
 			var target=years.indexOf(curFY)!==-1?curFY:years[0];
-			var mName=['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];
+			/* Default to the previous month — the current month is usually
+			   still in progress, so "YTD up to" the last completed month is
+			   the more useful default. */
+			var prevM=m===1?12:m-1;
+			var mName=['January','February','March','April','May','June','July','August','September','October','November','December'][prevM-1];
 			fyCtrl.set_value(target);
 			moCtrl.set_value(MONTHS.indexOf(mName)!==-1?mName:'March');
 			_ready=true; loadData();
