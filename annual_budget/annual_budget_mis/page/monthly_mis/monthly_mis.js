@@ -7371,7 +7371,7 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 				args: {
 					financial_year: fy,
 					month: month,
-					table_name_filter: 'Education - District Institutes,Education- Azim Premji Schools,Azim Premji University (Bangalore Campus),Azim Premji University (Bhopal Campus),Azim Premji University (Ranchi Campus),Enablers,Livelihoods,Urban Primary care work,Rural Primary care work,Central Initiatives,Hospital,Health Programs Team & Enablers',
+					table_name_filter: 'Education - District Institutes,Education- Azim Premji Schools,Azim Premji University (Bangalore Campus),Azim Premji University (Bhopal Campus),Azim Premji University (Ranchi Campus),Azim Premji University (Guwahati Campus),Enablers,Livelihoods,Urban Primary care work,Rural Primary care work,Central Initiatives,Hospital,Health Programs Team & Enablers',
 					is_previous: 0
 				},
 				callback: function(r) {
@@ -7507,7 +7507,8 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	var UNIV_BREAKUP_KEYS = [
 		'Azim Premji University (Bangalore Campus)',
 		'Azim Premji University (Bhopal Campus)',
-		'Azim Premji University (Ranchi Campus)'
+		'Azim Premji University (Ranchi Campus)',
+		'Azim Premji University (Guwahati Campus)'
 	];
 
 	function renderUnivBreakup(breakupData, fy, month) {
