@@ -6322,6 +6322,8 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'.mis-fc{min-width:150px;flex:1 1 150px;max-width:240px;}' +
 		'.mis-fc-btn{min-width:auto;flex:0 0 auto;max-width:none;display:flex;align-items:center;padding-bottom:0;}' +
 		'#mis-wrap .btn:not(.btn-md):not(.btn-lg):not(.btn-xs){padding:4px 8px;margin-top:10px;}' +
+		'.mis-full-num-label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#333;cursor:pointer;white-space:nowrap;margin-top:20px;}' +
+		'.mis-full-num-label input{transform:scale(1.15);cursor:pointer;}' +
 
 		/* ── Section headings ── */
 		'.sec-wrap{padding-top:28px;}' +
@@ -6332,7 +6334,26 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'.sec-note strong{font-style:normal;font-weight:var(--fw-b);font-size:14px;color:#1a1a1a;}' +
 
 		/* ── Scroll container ── */
-		'.tbl-scroll{overflow-x:auto;overflow-y:auto;max-height:60vh;background:#fff;-webkit-overflow-scrolling:touch;isolation:isolate;}' +
+		/* Fading edge shadow that shows whenever a table has more columns
+		   hidden to the left/right, so a scrollable table never looks like
+		   a dead end. Two background-attachment:local layers (white, mask
+		   the shadow near the visible edge) move with content and cover
+		   the shadow once scrolled past it; two background-attachment:scroll
+		   layers (the shadow itself) stay pinned to the container edges —
+		   so each shadow only shows while there's more to scroll that way. */
+		'.tbl-scroll{' +
+		'  position:relative;overflow-x:auto;overflow-y:auto;max-height:60vh;' +
+		'  background:#fff;-webkit-overflow-scrolling:touch;isolation:isolate;' +
+		'  background-image:' +
+		'    linear-gradient(to right, #fff, #fff),' +
+		'    linear-gradient(to left, #fff, #fff),' +
+		'    linear-gradient(to right, rgba(0,0,0,.16), rgba(0,0,0,0)),' +
+		'    linear-gradient(to left, rgba(0,0,0,.16), rgba(0,0,0,0));' +
+		'  background-position:left center,right center,left center,right center;' +
+		'  background-repeat:no-repeat;' +
+		'  background-size:20px 100%,20px 100%,10px 100%,10px 100%;' +
+		'  background-attachment:local,local,scroll,scroll;' +
+		'}' +
 		'.tbl-scroll.no-maxh{max-height:none;}' +
 
 		/* ══ TABLE BASE — black borders on every cell ══ */
@@ -6342,6 +6363,13 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'  padding:9px 12px;white-space:nowrap;text-align:right;vertical-align:middle;' +
 		'  font-size:var(--fs-cell);color:#1a1a1a;' +   /* Fix 1: bigger cell text */
 		'}' +
+		/* Cards in the Operating Expenses Breakdown grid are only half the
+		   viewport wide (2-up grid), so a 10-column table can't fit at
+		   width:100% without clipping columns. width:max-content lets the
+		   table grow to fit its (nowrap) cells, so .tbl-scroll's
+		   overflow-x:auto can reach the clipped columns instead of cutting
+		   them off silently. */
+		'#ud-grid .mis-tbl{width:max-content;min-width:100%;}' +
 
 		/* ── ROW 1: Blue year-group header ── */
 		'.hdr-blue th{' +
@@ -6462,8 +6490,16 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'.mis-tbl tbody tr.sw-unit-total td.ex-act{background:var(--tot-bg)!important;color:var(--tot-fg)!important;}' +
 		'.mis-tbl tbody tr.sw-unit-total td.sep-yr{background:var(--tot-bg)!important;border-left:2px solid #90CAF9!important;}' +
 
-		/* ── UNIT DETAIL GRID — always 2 tables per row ── */
-		'.ud-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:8px;}' +
+		/* ── UNIT DETAIL GRID — always 2 cards per row down to tablet width ── */
+		/* min-width:0 on the grid items is required: grid items default to
+		   min-width:auto, which for a 1fr track refuses to shrink below the
+		   content's intrinsic (max-content) width — and since #ud-grid
+		   .mis-tbl now demands width:max-content, without this override the
+		   columns would grow unevenly to match each table's full content
+		   width and overflow the page instead of letting .tbl-scroll handle
+		   the overflow internally, as intended. */
+		'.ud-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:8px;align-items:start;}' +
+		'.ud-grid>div{min-width:0;}' +
 		/* Total Foundation card spans full width (first card) */
 		'.ud-grid .ud-total-card{grid-column:1/-1;}' +
 		'.ud-card-title{margin:0 0 2px;font-size:14px;font-weight:var(--fw-b);color:#1a1a1a;border-bottom:2px solid var(--r1);padding-bottom:3px;}' +
@@ -6471,12 +6507,9 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'.ud-card-note strong{font-style:normal;font-weight:var(--fw-b);color:#1a1a1a;}' +
 
 		/* ── Responsive — all screen sizes ── */
-		/* XL desktop: 2-col grid */
-		'@media(min-width:1400px){.ud-grid{grid-template-columns:repeat(2,1fr);}}' +
-		/* Large tablet */
+		/* Large tablet: shrink cell padding/font a bit so tables need less
+		   horizontal scroll at this size. */
 		'@media(max-width:1200px){' +
-		'  .ud-grid{grid-template-columns:1fr;}' +
-		'  .ud-grid .ud-total-card{grid-column:1;}' +
 		'  .mis-tbl th,.mis-tbl td{padding:5px 7px;font-size:12px;}' +
 		'}' +
 		/* Tablet */
@@ -6485,14 +6518,26 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'  .mis-fc{flex:1 1 140px;min-width:120px;}' +
 		'  .tbl-scroll{max-height:55vh;}' +
 		'}' +
+		/* Below tablet: a half-width card is too cramped even with its own
+		   internal scroll — drop the Operating Expenses Breakdown grid to
+		   1 card per row (Total Foundation was already full-width). */
+		'@media(max-width:900px){' +
+		'  .ud-grid{grid-template-columns:1fr;}' +
+		'}' +
 		/* Mobile landscape */
 		'@media(max-width:768px){' +
 		'  #mis-wrap{padding:6px 8px;}' +
 		'  .mis-fc{max-width:100%;flex:1 1 100%;}' +
-		'  .mis-fc-btn{width:100%;}' +
-		'  #mis-refresh-btn{width:100%;}' +
-		'  .mis-tbl th,.mis-tbl td{padding:4px 6px;font-size:12px;white-space:normal;word-break:break-word;}' +
-		'  .mis-tbl thead th.col-lbl,.mis-tbl tbody td.col-lbl{min-width:100px;}' +
+		/* Refresh + "Show full numbers" stay grouped side-by-side on their
+		   own row rather than each stretching to 100% width. */
+		'  .mis-filters .mis-fc-btn{flex:0 0 auto;width:auto;}' +
+		'  #mis-refresh-btn{width:auto;}' +
+		'  .mis-tbl th,.mis-tbl td{padding:4px 6px;font-size:12px;}' +
+		/* Only the label column wraps; every numeric column stays on one
+		   line (inherited nowrap from the base .mis-tbl rule) so financial
+		   figures never break mid-number — the table scrolls horizontally
+		   inside .tbl-scroll instead. */
+		'  .mis-tbl th.col-lbl,.mis-tbl td.col-lbl{white-space:normal;word-break:break-word;min-width:100px;}' +
 		'  .tbl-scroll{max-height:50vh;}' +
 		'  .sec-heading .sh-line1{font-size:13px;}' +
 		'  .sec-heading .sh-line2{font-size:12px;}' +
@@ -6575,6 +6620,10 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		'      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>' +
 		'      Refresh' +
 		'    </button>' +
+		'  </div>' +
+		'  <div class="mis-fc mis-fc-btn">' +
+		'    <label class="control-label" style="visibility:hidden;display:block;">&#8203;</label>' +
+		'    <label class="mis-full-num-label"><input type="checkbox" id="mis-full-num-cb"> Show full numbers</label>' +
 		'  </div>' +
 		'</div>' +
 
@@ -6722,6 +6771,11 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 		loadData();
 	});
 
+	$(page.body).on('change', '#mis-full-num-cb', function(){
+		misShowFullNumbers=this.checked;
+		reRenderFromCache();
+	});
+
 	frappe.call({
 		method:'annual_budget.api.filter_options.get_financial_year_list',
 		callback:function(r){
@@ -6805,9 +6859,15 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	// =============================================================================
 	// FORMATTERS
 	// =============================================================================
-	/* Cr conversion: exact divide by 10000000, no rounding — display with 1dp */
+	var misShowFullNumbers=false;
+	function updateUnitLabels(){
+		$('#mis-wrap .sec-note').html(misShowFullNumbers?'&#8377;':'&#8377;&nbsp;<strong>Cr.</strong>');
+	}
+	/* Cr conversion: exact divide by 10000000, no rounding — display with 1dp
+	   (or, with the "Show full numbers" toggle on, the raw rupee value). */
 	function fmtCr(v){
 		var n=parseFloat(v)||0; if(!isFinite(n)||n===0)return'-';
+		if(misShowFullNumbers)return Math.round(n).toLocaleString('en-IN');
 		var res=n/10000000;
 		var neg=res<0,abs=Math.abs(res);
 		/* display to 1 decimal place — parseFloat ensures exact representation */
@@ -6833,13 +6893,13 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	/* Cr value already converted → td with tooltip */
 	function mkTdCr(crVal,cls,rowLbl,colKey,forceBlue){
 		var n=parseFloat(crVal)||0;
-		var txt=n===0?'-':(function(){
+		var txt=n===0?'-':(misShowFullNumbers?Math.round(n*10000000).toLocaleString('en-IN'):(function(){
 			var neg=n<0,abs=Math.abs(n);
 			var s=(+abs.toFixed(1)).toString().split('.');
 			var ip=s[0]||'0', dp=s[1]||'0';
 			if(ip.length>3)ip=ip.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+ip.slice(-3);
 			return(neg?'-':'')+ip+'.'+dp;
-		})();
+		})());
 		var c=cls?' class="'+cls+'"':'';
 		var inlineStyle=forceBlue?' style="background:#1565C0!important;color:#fff!important;"':'';
 		if(n!==0&&isFinite(n)){
@@ -7227,7 +7287,7 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 			var divClass=isTotal?'ud-total-card':'';
 			return '<div class="'+divClass+'">'+
 				'<p class="ud-card-title">'+(isSub?'\u2514\u00A0':'')+cardTitle+'</p>'+
-				'<p class="ud-card-note">&#8377;&nbsp;<strong>Cr.</strong></p>'+
+				'<p class="ud-card-note">&#8377;'+(misShowFullNumbers?'':'&nbsp;<strong>Cr.</strong>')+'</p>'+
 				'<div class="tbl-scroll no-maxh">'+
 				'<table id="'+tblId+'" class="mis-tbl">'+
 				'<thead>'+
@@ -7488,6 +7548,24 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 	// =============================================================================
 	// LOAD
 	// =============================================================================
+	var _lastLoad=null;  // {cur,prev,breakupData,fy,month} \u2014 lets the "Show full numbers" toggle re-render without refetching
+	function renderAll(cur,prev,breakupData,fy,month){
+		var maps=renderDetailTable(cur,prev,fy,_prevFY);
+		renderConTable(maps.cm,maps.pm,fy,_prevFY,month);
+		renderExpTable('opex-tbl','opex-subtitle',buildExpRows(cur,prev,OPEX_NAMES),fy,_prevFY,month);
+		renderExpTable('capex-tbl','capex-subtitle',buildExpRows(cur,prev,CAPEX_NAMES),fy,_prevFY,month);
+		renderEduBreakup(breakupData, fy, month);
+		renderHealthBreakup(breakupData, fy, month);
+		renderLivelihoodsBreakup(breakupData, fy, month);
+		renderUnivBreakup(breakupData, fy, month);
+		renderEnablersBreakup(breakupData, fy, month);
+		renderUnitDetailGrid(cur, prev, fy, month);
+		updateUnitLabels();
+	}
+	function reRenderFromCache(){
+		if(!_lastLoad)return;
+		renderAll(_lastLoad.cur,_lastLoad.prev,_lastLoad.breakupData,_lastLoad.fy,_lastLoad.month);
+	}
 	function loadData(){
 		if(!fyCtrl||!moCtrl)return;
 		var fy=fyCtrl.get_value(),month=moCtrl.get_value();
@@ -7507,16 +7585,8 @@ frappe.pages['monthly-mis'].on_page_load = function (wrapper) {
 				$('#ud-grid').html('<p style="color:#aaa;">No data.</p>');
 				return;
 			}
-			var maps=renderDetailTable(cur,prev,fy,_prevFY);
-			renderConTable(maps.cm,maps.pm,fy,_prevFY,month);
-			renderExpTable('opex-tbl','opex-subtitle',buildExpRows(cur,prev,OPEX_NAMES),fy,_prevFY,month);
-			renderExpTable('capex-tbl','capex-subtitle',buildExpRows(cur,prev,CAPEX_NAMES),fy,_prevFY,month);
-			renderEduBreakup(breakupData, fy, month);
-			renderHealthBreakup(breakupData, fy, month);
-			renderLivelihoodsBreakup(breakupData, fy, month);
-			renderUnivBreakup(breakupData, fy, month);
-			renderEnablersBreakup(breakupData, fy, month);
-			renderUnitDetailGrid(cur, prev, fy, month);
+			_lastLoad={cur:cur,prev:prev,breakupData:breakupData,fy:fy,month:month};
+			renderAll(cur,prev,breakupData,fy,month);
 		})
 		.catch(function(err){
 			Loader.hide();
